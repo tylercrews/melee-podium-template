@@ -1,11 +1,17 @@
 """Create a bottom-aligned comparison sheet for every character's 00a/00b pose."""
 
 from pathlib import Path
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from height_adjustment_to_character_relativity import get_pose_scale
+
+
 POSES_DIR = PROJECT_ROOT / "char_poses_meleecsproject"
 OUTPUT_PATH = Path(__file__).with_name("sizing_test_output.png")
 
@@ -42,15 +48,22 @@ def find_default_poses() -> list[tuple[str, str, Path]]:
 
 def main() -> None:
     poses = find_default_poses()
-    loaded = [
-        (character, pose_code, Image.open(path).convert("RGBA"))
-        for character, pose_code, path in poses
-    ]
+    loaded = []
+    for character, pose_code, path in poses:
+        image = Image.open(path).convert("RGBA")
+        scale = get_pose_scale(character, pose_code)
+        if scale != 1.0:
+            scaled_size = (
+                max(1, round(image.width * scale)),
+                max(1, round(image.height * scale)),
+            )
+            image = image.resize(scaled_size, Image.Resampling.LANCZOS)
+        loaded.append((character, pose_code, scale, image))
 
-    max_height = max(image.height for _, _, image in loaded)
+    max_height = max(image.height for _, _, _, image in loaded)
     content_bottom = TOP_PADDING + max_height
     canvas_width = SIDE_PADDING + sum(
-        image.width + SIDE_PADDING for _, _, image in loaded
+        image.width + SIDE_PADDING for _, _, _, image in loaded
     )
     canvas_height = content_bottom + BOTTOM_PADDING + LABEL_HEIGHT
 
@@ -61,11 +74,11 @@ def main() -> None:
     # Pillow uses a top-left origin, so subtracting each height from the shared
     # bottom edge makes the images build upward from the same baseline.
     x = SIDE_PADDING
-    for character, pose_code, image in loaded:
+    for character, pose_code, scale, image in loaded:
         y = content_bottom - image.height
         canvas.alpha_composite(image, (x, y))
 
-        label = f"{character}\n{pose_code}"
+        label = f"{character}\n{pose_code} ({scale:.1%})"
         label_box = draw.multiline_textbbox((0, 0), label, font=font, align="center")
         label_width = label_box[2] - label_box[0]
         draw.multiline_text(
@@ -86,7 +99,7 @@ def main() -> None:
     canvas.convert("RGB").save(OUTPUT_PATH)
 
     print(f"Compared {len(loaded)} images ({len(loaded) // 2} characters).")
-    print(f"Maximum source height: {max_height}px")
+    print(f"Maximum adjusted height: {max_height}px")
     print(f"Output size: {canvas_width}x{canvas_height}px")
     print(f"Saved: {OUTPUT_PATH}")
 
