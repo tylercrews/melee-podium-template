@@ -1,0 +1,52 @@
+After figuring out the sizing test, this was the major prompt to kick off the main function. Used 5.6 Sol with High reasoning
+
+ok now I need a new python file in the main part of the repository called DrawPodium.
+We're going to have 5 different versions for these different kinds of modes:
+doubles top 3
+doubles top 4
+singles top 3
+singles top 4
+singles top 8
+
+There are a lot of parameters we will have to pass to these functions, so I want to create two classes to simplify them. We should also create a models.py to represent them:
+
+Character
+- melee fighter name (will be one of the 26 folder names in char_poses_meleecsproject)
+- color (will be one of the options available in the folder)
+- pose (a or b, but could potentially add more poses later)
+SinglesEntrant
+- seed (nullable)
+- placement
+- character
+- tag
+  
+DoublesTeam
+- seed (nullable)
+- placement
+- character 1
+- character 2
+- tag 1
+- tag 2
+- team name
+
+so then the input parameters will be simple
+doubles top 3 - 1stPlaceDoublesTeam type DoublesTeam, 2ndPlaceDoublesTeam typeDoublesTeam, 3rdPlaceDoublesTeam type 
+expand to 4 for top 4.
+
+singles top 3 - 1stPlaceEntrant type SinglesEntrant, 2ndPlaceEntrant type SinglesEntrant, 3rdPlaceEntrant type 
+and expand to 4 for top 4 and  8 of them for top 8.
+
+In addition to the entrants parameters, I need a good way to differentiate if the function is singles or doubles,
+and input parameters for 
+- Tournament Name
+- Tournament Date
+- Entrants Count
+- Location (nullable)
+- Time (nullable)
+
+I have created corresponding images in the folder podium_char_position_markings.
+Basically for the doubles images, I want to mark two positions spaced evenly from the center for each podium for each of the two characters to sit on. The feet should hang just past the top of the podium, so I want the positions to be where I drew WHITE STARS, Just below the top line, evenly spaced. Similarly for the singles images I want the positions of the characters to be in the center of the podium, starting just below the top of the podium, about where I drew the white stars 
+
+So the point of the function should specify whether it's singles or doubles, put in the info for all of the entrants to be represented, describe the tournament name and date and entrants count, 
+and we'll end up drawing all of that together on the background with the corresponding characters.
+There will be text fields we have to write in later from the other input properties
