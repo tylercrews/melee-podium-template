@@ -25,7 +25,7 @@ LABEL_HEIGHT = 44
 
 
 def find_default_poses() -> list[tuple[str, str, Path]]:
-    """Return each character's 00a and 00b images in alphabetical order."""
+    """Return each character's 00gita and 00b images in alphabetical order."""
     poses: list[tuple[str, str, Path]] = []
 
     for character_dir in sorted(POSES_DIR.iterdir(), key=lambda path: path.name.lower()):
