@@ -24,7 +24,7 @@ CHARACTER_FOLDER = PROJECT_ROOT / "char_poses_meleecsproject"
 
 # Positive values move every portrait's bottom anchor farther down onto the
 # podium. Keep this centralized so the vertical position is easy to tune.
-PORTRAIT_ANCHOR_Y_OFFSET = 15
+PORTRAIT_ANCHOR_Y_OFFSET = 9
 
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
