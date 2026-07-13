@@ -70,3 +70,10 @@ For example, doubles is going to need to be a little smaller than singles becaus
 So do your best to estimate the approximate scaling that we'll need to have to draw these images into our top_x.png files, and I'll make adjustments as necessary.
 
 Also write a test script in test_images that will be podiums_test.py so I can start looking at how it turns out. You should use bowser once and pichu once in each test because they're the biggest and smallest character, so I want to see how they look on the podium.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+in each mode, the characters are being drawn a bit too high above the podium. Lower every anchor by a bit
+Also I want you to reverse the draw order - the lower placements should be drawn first, so that the higher placing characters are in front if there is any overlap.
+also in addition to the previous bowser used, make one of the other characters the other pose of bowser (so that way we have bowser pose b, what is currently being used, the widest portrait, as well as bowser pose a, the biggest overall portrait)
+

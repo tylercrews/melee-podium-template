@@ -22,6 +22,10 @@ from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 PROJECT_ROOT = Path(__file__).resolve().parent
 CHARACTER_FOLDER = PROJECT_ROOT / "char_poses_meleecsproject"
 
+# Positive values move every portrait's bottom anchor farther down onto the
+# podium. Keep this centralized so the vertical position is easy to tune.
+PORTRAIT_ANCHOR_Y_OFFSET = 15
+
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
     DOUBLES_TOP_4 = "doubles_top_4"
@@ -146,7 +150,7 @@ def _place_character(
 ) -> None:
     image = _load_character(character, mode_scale)
     x = round(anchor[0] - image.width / 2)
-    y = anchor[1] - image.height
+    y = anchor[1] + PORTRAIT_ANCHOR_Y_OFFSET - image.height
     canvas.alpha_composite(image, (x, y))
 
 
@@ -233,14 +237,15 @@ def draw_podium(
     background = Image.open(_background_path(mode)).convert("RGBA")
     if mode.is_doubles:
         anchors = DOUBLES_ANCHORS[mode.placement_count]
-        for podium_slot, team in enumerate(entrants, start=1):
+        # Draw lower placements first so higher placements remain in front.
+        for podium_slot, team in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(team, DoublesTeam)
             first_anchor, second_anchor = anchors[podium_slot]
             _place_character(background, team.character_1, first_anchor, mode_scale)
             _place_character(background, team.character_2, second_anchor, mode_scale)
     else:
         anchors = SINGLES_ANCHORS[mode.placement_count]
-        for podium_slot, entrant in enumerate(entrants, start=1):
+        for podium_slot, entrant in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(entrant, SinglesEntrant)
             _place_character(
                 background,

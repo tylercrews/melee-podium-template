@@ -100,7 +100,7 @@ def main() -> None:
 
     doubles_top_3 = [
         doubles_team(1, "Bowser", "Fox", pose_1="b"),
-        doubles_team(2, "Sheik", "Falco"),
+        doubles_team(2, "Bowser", "Falco", pose_1="a"),
         doubles_team(3, "Kirby", "Pichu"),
     ]
     path = OUTPUT_FOLDER / "doubles_top_3.png"
@@ -109,7 +109,7 @@ def main() -> None:
 
     doubles_top_4 = [
         doubles_team(1, "Bowser", "Captain Falcon", pose_1="b"),
-        doubles_team(2, "Donkey Kong", "Peach"),
+        doubles_team(2, "Bowser", "Peach", pose_1="a"),
         doubles_team(3, "Marth", "Jigglypuff"),
         doubles_team(4, "Pichu", "Pikachu"),
     ]
@@ -120,7 +120,7 @@ def main() -> None:
     singles_top_3 = [
         singles_entrant(1, "Bowser", pose="b"),
         singles_entrant(2, "Pichu"),
-        singles_entrant(3, "Fox"),
+        singles_entrant(3, "Bowser", pose="a"),
     ]
     path = OUTPUT_FOLDER / "singles_top_3.png"
     draw_singles_top_3(*singles_top_3, **TOURNAMENT_DETAILS, output_path=path)
@@ -128,7 +128,7 @@ def main() -> None:
 
     singles_top_4 = [
         singles_entrant(1, "Bowser", pose="b"),
-        singles_entrant(2, "Sheik"),
+        singles_entrant(2, "Bowser", pose="a"),
         singles_entrant(3, "Marth"),
         singles_entrant(4, "Pichu"),
     ]
@@ -137,19 +137,19 @@ def main() -> None:
     outputs.append(("Singles Top 4", path))
 
     top_8_placements = [1, 2, 3, 4, 5, 5, 7, 7]
-    top_8_fighters = [
-        "Bowser",
-        "Captain Falcon",
-        "Donkey Kong",
-        "Sheik",
-        "Fox",
-        "Falco",
-        "Kirby",
-        "Pichu",
+    top_8_characters = [
+        ("Bowser", "b"),
+        ("Bowser", "a"),
+        ("Donkey Kong", "a"),
+        ("Sheik", "a"),
+        ("Fox", "a"),
+        ("Falco", "a"),
+        ("Kirby", "a"),
+        ("Pichu", "a"),
     ]
     singles_top_8 = [
-        singles_entrant(placement, fighter, pose="b" if fighter == "Bowser" else "a")
-        for placement, fighter in zip(top_8_placements, top_8_fighters)
+        singles_entrant(placement, fighter, pose=pose)
+        for placement, (fighter, pose) in zip(top_8_placements, top_8_characters)
     ]
     path = OUTPUT_FOLDER / "singles_top_8.png"
     draw_singles_top_8(*singles_top_8, **TOURNAMENT_DETAILS, output_path=path)
