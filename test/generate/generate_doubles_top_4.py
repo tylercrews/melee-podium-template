@@ -11,22 +11,51 @@ from models import Character, DoublesTeam
 
 
 TOURNAMENT = {
-    "tournament_name": "Example Tournament",
-    "tournament_date": "July 12, 2026",
-    "entrants_count": 64,
+    "tournament_name": "Shenfest Randubs",
+    "tournament_date": "7/10/2026",
+    "entrants_count": 14,
 }
 
 
-def team(seed: int | None, placement: int, name: str, player_1: str, player_2: str, color: str | None) -> DoublesTeam:
-    return DoublesTeam(seed, placement, Character(player_1), Character(player_2), player_1, player_2, name, color)
+def team(
+    placement: int,
+    name: str,
+    tag_1: str,
+    character_1: Character,
+    tag_2: str,
+    character_2: Character,
+    team_color: str | None = None,
+) -> DoublesTeam:
+    return DoublesTeam(
+        seed=None,
+        placement=placement,
+        character_1=character_1,
+        character_2=character_2,
+        tag_1=tag_1,
+        tag_2=tag_2,
+        team_name=name,
+        team_color=team_color,
+    )
 
 
 if __name__ == "__main__":
     draw_doubles_top_4(
-        team(1, 1, "Team One", "Fox", "Falco", "red"),
-        team(2, 2, "Team Two", "Marth", "Sheik", "blue"),
-        team(3, 3, "Team Three", "Peach", "Pikachu", "green"),
-        team(4, 4, "Team Four", "Captain Falcon", "Samus", None),
+        team(
+            1, "Baldur's Gate Baddies", "shenal",
+            Character("Mr. Game and Watch"), "killbugs", Character("Peach"), "green",
+        ),
+        team(
+            2, "Hyrule Hustle", "HBK", Character("Sheik", pose="b"),
+            "Subie", Character("Samus"), "red",
+        ),
+        team(
+            3, "Judgement", "Geoux", Character("Marth"),
+            "Silent Skyler", Character("Sheik", pose="b"), "red",
+        ),
+        team(
+            4, "BarelyBusta", "Busta", Character("Fox", pose="b"),
+            "Barely", Character("Fox"), "green",
+        ),
         **TOURNAMENT,
         output_path=Path(__file__).with_name("doubles_top_4.png"),
     )
