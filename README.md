@@ -8,6 +8,7 @@ Team names need to be a little bigger underneath
 * and also make it so that long names roll over to the next line
 Increase the tournament name font size too
 Fit in tournament location?
+more font support - like IMPACT bold, and maybe another option that's far less memey
 
 Redo the background image so the podium is 3d instead of just a square box, the characters should be standing on something lol
 
