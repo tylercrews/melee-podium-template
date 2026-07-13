@@ -50,11 +50,15 @@ def _validate_text(value: str, field_name: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class Character:
-    """A Melee fighter costume and portrait pose."""
+    """A Melee fighter costume and portrait pose.
+
+    An explicit ``None`` for ``color`` or ``pose`` requests a random available
+    selection. Omitting them remains predictable: default color and Pose A.
+    """
 
     melee_fighter_name: str
-    color: str = "default"
-    pose: str = "a"
+    color: str | None = "default"
+    pose: str | None = "a"
 
     def __post_init__(self) -> None:
         if self.melee_fighter_name not in MELEE_FIGHTERS:
@@ -63,10 +67,12 @@ class Character:
                 f"Unknown Melee fighter {self.melee_fighter_name!r}. "
                 f"Expected one of: {choices}"
             )
-        _validate_text(self.color, "Character color")
-        _validate_text(self.pose, "Character pose")
-        object.__setattr__(self, "color", self.color.strip().lower())
-        object.__setattr__(self, "pose", self.pose.strip().lower())
+        if self.color is not None:
+            _validate_text(self.color, "Character color")
+            object.__setattr__(self, "color", self.color.strip().lower())
+        if self.pose is not None:
+            _validate_text(self.pose, "Character pose")
+            object.__setattr__(self, "pose", self.pose.strip().lower())
 
 
 @dataclass(frozen=True, slots=True)

@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
+from random import choice
 import re
 
 from PIL import Image
@@ -99,8 +100,10 @@ def _resolve_character_path(character: Character) -> Path:
 
     matches: list[Path] = []
     available: set[str] = set()
-    requested_color = character.color.casefold()
-    requested_pose = character.pose.casefold()
+    requested_color = character.color.casefold() if character.color is not None else None
+    requested_pose = character.pose.casefold() if character.pose is not None else None
+    random_color = requested_color is None
+    random_pose = requested_pose is None
 
     for path in sorted(folder.glob("*.png")):
         match = _POSE_FILENAME.match(path.name)
@@ -110,17 +113,30 @@ def _resolve_character_path(character: Character) -> Path:
         color_code = match.group("color_code").casefold()
         color_name = match.group("color").casefold()
         pose = match.group("pose").casefold()
-        if pose == requested_pose:
-            available.add(color_name)
-            if requested_color in {color_name, color_code, f"{color_code}_{color_name}"}:
-                matches.append(path)
+        available.add(f"{color_name}/{pose}")
 
-    if len(matches) != 1:
-        colors = ", ".join(sorted(available)) or "none"
+        pose_matches = random_pose or pose == requested_pose
+        color_matches = random_color or requested_color in {
+            color_name,
+            color_code,
+            f"{color_code}_{color_name}",
+        }
+        if pose_matches and color_matches:
+            matches.append(path)
+
+    if not matches:
+        options = ", ".join(sorted(available)) or "none"
         raise ValueError(
-            f"Expected one {character.melee_fighter_name} pose "
-            f"{character.pose!r} image for color {character.color!r}; "
-            f"found {len(matches)}. Available colors for this pose: {colors}"
+            f"No {character.melee_fighter_name} image exists for color "
+            f"{character.color!r} and pose {character.pose!r}. "
+            f"Available color/pose combinations: {options}"
+        )
+    if random_color or random_pose:
+        return choice(matches)
+    if len(matches) > 1:
+        raise ValueError(
+            f"Expected one {character.melee_fighter_name} image for color "
+            f"{character.color!r} and pose {character.pose!r}; found {len(matches)}"
         )
     return matches[0]
 
@@ -128,9 +144,13 @@ def _resolve_character_path(character: Character) -> Path:
 def _load_character(character: Character, mode_scale: float) -> Image.Image:
     path = _resolve_character_path(character)
     image = Image.open(path).convert("RGBA")
+    selected = _POSE_FILENAME.match(path.name)
+    if selected is None:
+        raise ValueError(f"Cannot determine pose from portrait filename: {path.name}")
+    selected_pose = selected.group("pose").casefold()
     pose_scale = get_pose_scale(
         character.melee_fighter_name,
-        f"00{character.pose}",
+        f"00{selected_pose}",
     )
     # Scaling always happens in two stages: first character relativity, then
     # the size appropriate for the selected singles/doubles podium layout.
