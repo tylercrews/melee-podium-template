@@ -292,7 +292,7 @@ def _draw_text_fields(
         label = entrant.team_name if isinstance(entrant, DoublesTeam) else entrant.character.melee_fighter_name
         _draw_text(draw, anchors["label"], label, anchor="ma", max_width=180 if placement_count == 8 else 290, preferred_size=28)
         if entrant.seed is not None:
-            _draw_text(draw, anchors["seed"], f"#{entrant.seed}", anchor="ra", max_width=80, preferred_size=24)
+            _draw_text(draw, anchors["seed"], f"{entrant.seed}s", anchor="ra", max_width=80, preferred_size=24)
 
 
 def draw_podium(
