@@ -97,6 +97,7 @@ class DoublesTeam:
     tag_1: str
     tag_2: str
     team_name: str
+    team_color: str | None = None
 
     def __post_init__(self) -> None:
         _validate_seed(self.seed)
@@ -104,3 +105,9 @@ class DoublesTeam:
         _validate_text(self.tag_1, "First entrant tag")
         _validate_text(self.tag_2, "Second entrant tag")
         _validate_text(self.team_name, "Team name")
+        if self.team_color is not None:
+            _validate_text(self.team_color, "Team color")
+            normalized_color = self.team_color.strip().lower()
+            if normalized_color not in {"red", "blue", "green"}:
+                raise ValueError("Team color must be one of: red, blue, green, or None")
+            object.__setattr__(self, "team_color", normalized_color)

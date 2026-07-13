@@ -52,6 +52,7 @@ def doubles_team(
     *,
     pose_1: str = "a",
     pose_2: str = "b",
+    team_color: str | None = None,
 ) -> DoublesTeam:
     return DoublesTeam(
         seed=placement,
@@ -61,6 +62,7 @@ def doubles_team(
         tag_1=fighter_1,
         tag_2=fighter_2,
         team_name=f"{fighter_1} / {fighter_2}",
+        team_color=team_color,
     )
 
 
@@ -99,19 +101,19 @@ def main() -> None:
     outputs: list[tuple[str, Path]] = []
 
     doubles_top_3 = [
-        doubles_team(1, "Bowser", "Fox", pose_1="b"),
-        doubles_team(2, "Bowser", "Falco", pose_1="a"),
-        doubles_team(3, "Kirby", "Pichu"),
+        doubles_team(1, "Bowser", "Fox", pose_1="b", team_color="red"),
+        doubles_team(2, "Bowser", "Falco", pose_1="a", team_color="blue"),
+        doubles_team(3, "Kirby", "Pichu", team_color="green"),
     ]
     path = OUTPUT_FOLDER / "doubles_top_3.png"
     draw_doubles_top_3(*doubles_top_3, **TOURNAMENT_DETAILS, output_path=path)
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
-        doubles_team(1, "Bowser", "Captain Falcon", pose_1="b"),
-        doubles_team(2, "Bowser", "Peach", pose_1="a"),
-        doubles_team(3, "Marth", "Jigglypuff"),
-        doubles_team(4, "Pichu", "Pikachu"),
+        doubles_team(1, "Bowser", "Captain Falcon", pose_1="b", team_color="red"),
+        doubles_team(2, "Bowser", "Peach", pose_1="a", team_color="blue"),
+        doubles_team(3, "Marth", "Jigglypuff", team_color="green"),
+        doubles_team(4, "Pichu", "Pikachu", team_color="red"),
     ]
     path = OUTPUT_FOLDER / "doubles_top_4.png"
     draw_doubles_top_4(*doubles_top_4, **TOURNAMENT_DETAILS, output_path=path)

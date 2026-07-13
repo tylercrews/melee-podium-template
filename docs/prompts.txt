@@ -77,3 +77,15 @@ in each mode, the characters are being drawn a bit too high above the podium. Lo
 Also I want you to reverse the draw order - the lower placements should be drawn first, so that the higher placing characters are in front if there is any overlap.
 also in addition to the previous bowser used, make one of the other characters the other pose of bowser (so that way we have bowser pose b, what is currently being used, the widest portrait, as well as bowser pose a, the biggest overall portrait)
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+I have ensured that every character now has a red, blue, and green coloration.
+Make a nullable field on the DoublesTeam for team_color that lets you override the character color to one of those three team colors.
+Additionally I want you to make some text anchors:
+top left for Tournament Name, 
+Top right for Date
+below top right for Entrants that should say "# Entrants"
+anchors above every character's head for the tag of that player
+anchors below the podium that puts in the team name for doubles, or character name for singles.
+anchors in the bottom right corner of each podium that says the seed number of the player
+and update the test script accordingly
