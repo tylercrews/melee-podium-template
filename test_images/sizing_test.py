@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from height_adjustment_to_character_relativity import get_pose_scale
+from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 
 POSES_DIR = PROJECT_ROOT / "char_poses_meleecsproject"

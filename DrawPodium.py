@@ -14,17 +14,13 @@ import re
 
 from PIL import Image
 
-from height_adjustment_to_character_relativity import get_pose_scale
 from models import Character, DoublesTeam, SinglesEntrant
+from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
+from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 CHARACTER_FOLDER = PROJECT_ROOT / "char_poses_meleecsproject"
-
-# This is applied after the individual values in POSE_SCALE. Change it to make
-# every character larger or smaller on every podium without losing relativity.
-DEFAULT_PODIUM_CHARACTER_SCALE = 0.40
-
 
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
@@ -125,14 +121,16 @@ def _resolve_character_path(character: Character) -> Path:
     return matches[0]
 
 
-def _load_character(character: Character, podium_scale: float) -> Image.Image:
+def _load_character(character: Character, mode_scale: float) -> Image.Image:
     path = _resolve_character_path(character)
     image = Image.open(path).convert("RGBA")
     pose_scale = get_pose_scale(
         character.melee_fighter_name,
         f"00{character.pose}",
     )
-    total_scale = pose_scale * podium_scale
+    # Scaling always happens in two stages: first character relativity, then
+    # the size appropriate for the selected singles/doubles podium layout.
+    total_scale = pose_scale * mode_scale
     size = (
         max(1, round(image.width * total_scale)),
         max(1, round(image.height * total_scale)),
@@ -144,9 +142,9 @@ def _place_character(
     canvas: Image.Image,
     character: Character,
     anchor: tuple[int, int],
-    podium_scale: float,
+    mode_scale: float,
 ) -> None:
-    image = _load_character(character, podium_scale)
+    image = _load_character(character, mode_scale)
     x = round(anchor[0] - image.width / 2)
     y = anchor[1] - image.height
     canvas.alpha_composite(image, (x, y))
@@ -203,7 +201,7 @@ def draw_podium(
     entrants_count: int,
     location: str | None = None,
     tournament_time: str | time | None = None,
-    character_scale: float = DEFAULT_PODIUM_CHARACTER_SCALE,
+    character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     """Draw entrants for one of the five supported podium modes."""
@@ -219,7 +217,10 @@ def draw_podium(
         raise ValueError(
             f"Entrants count must be at least {mode.placement_count} for this layout"
         )
-    if character_scale <= 0:
+    mode_scale = (
+        get_mode_portrait_scale(mode) if character_scale is None else character_scale
+    )
+    if mode_scale <= 0:
         raise ValueError("Character scale must be greater than 0")
 
     _validate_placements(entrants, mode.placement_count)
@@ -235,8 +236,8 @@ def draw_podium(
         for podium_slot, team in enumerate(entrants, start=1):
             assert isinstance(team, DoublesTeam)
             first_anchor, second_anchor = anchors[podium_slot]
-            _place_character(background, team.character_1, first_anchor, character_scale)
-            _place_character(background, team.character_2, second_anchor, character_scale)
+            _place_character(background, team.character_1, first_anchor, mode_scale)
+            _place_character(background, team.character_2, second_anchor, mode_scale)
     else:
         anchors = SINGLES_ANCHORS[mode.placement_count]
         for podium_slot, entrant in enumerate(entrants, start=1):
@@ -245,7 +246,7 @@ def draw_podium(
                 background,
                 entrant.character,
                 anchors[podium_slot],
-                character_scale,
+                mode_scale,
             )
 
     _draw_text_fields(
@@ -275,7 +276,7 @@ def draw_doubles_top_3(
     entrants_count: int,
     location: str | None = None,
     tournament_time: str | time | None = None,
-    character_scale: float = DEFAULT_PODIUM_CHARACTER_SCALE,
+    character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
@@ -302,7 +303,7 @@ def draw_doubles_top_4(
     entrants_count: int,
     location: str | None = None,
     tournament_time: str | time | None = None,
-    character_scale: float = DEFAULT_PODIUM_CHARACTER_SCALE,
+    character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
@@ -328,7 +329,7 @@ def draw_singles_top_3(
     entrants_count: int,
     location: str | None = None,
     tournament_time: str | time | None = None,
-    character_scale: float = DEFAULT_PODIUM_CHARACTER_SCALE,
+    character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
@@ -355,7 +356,7 @@ def draw_singles_top_4(
     entrants_count: int,
     location: str | None = None,
     tournament_time: str | time | None = None,
-    character_scale: float = DEFAULT_PODIUM_CHARACTER_SCALE,
+    character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
@@ -391,7 +392,7 @@ def draw_singles_top_8(
     entrants_count: int,
     location: str | None = None,
     tournament_time: str | time | None = None,
-    character_scale: float = DEFAULT_PODIUM_CHARACTER_SCALE,
+    character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(

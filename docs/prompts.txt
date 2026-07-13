@@ -50,3 +50,23 @@ Basically for the doubles images, I want to mark two positions spaced evenly fro
 So the point of the function should specify whether it's singles or doubles, put in the info for all of the entrants to be represented, describe the tournament name and date and entrants count, 
 and we'll end up drawing all of that together on the background with the corresponding characters.
 There will be text fields we have to write in later from the other input properties
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ok I want to rename height_adjustment_to_character_relativity
+to 
+portrait_scale_adjustment_to_character_relativity
+
+and now I want a second py file that is called
+portrait_scale_adjustment_for_each_mode
+
+We have a working adjustment to how big the characters should be relative to each other by default now, and now when a character gets selected I want it to pass through that first relativity scaling adjustment, and THEN get adjusted again through this second file.
+
+For example, doubles is going to need to be a little smaller than singles because the characters need to share the podium, but top 8 is going to be much smaller than top 4 and top 4 will be slightly smaller than top 3.
+
+So do your best to estimate the approximate scaling that we'll need to have to draw these images into our top_x.png files, and I'll make adjustments as necessary.
+
+Also write a test script in test_images that will be podiums_test.py so I can start looking at how it turns out. You should use bowser once and pichu once in each test because they're the biggest and smallest character, so I want to see how they look on the podium.

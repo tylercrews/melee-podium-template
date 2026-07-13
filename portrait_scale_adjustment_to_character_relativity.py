@@ -1,15 +1,15 @@
 """Relative scale settings for character portrait poses.
 
-Edit a value below to adjust that character pose in the sizing comparison.
-For example, 0.80 displays the pose at 80% of its source dimensions, while
-1.25 displays it at 125%.
+Edit a value below to adjust that character pose relative to the other
+characters. For example, 0.80 displays the pose at 80% of its source
+dimensions, while 1.25 displays it at 125%.
 
-The initial values cap portraits at the height of the taller default Donkey
-Kong pose (1055 px). Donkey Kong's two poses remain at 100% as the reference.
+These values are the first scaling stage. The result is scaled a second time
+for the selected podium layout in portrait_scale_adjustment_for_each_mode.py.
 """
 
 
-POSE_SCALE = { # the comment at the side are the original scaling, matching all chars to donkey kong's portrait height
+POSE_SCALE = {  # Side comments show the original Donkey Kong-relative values.
     "Bowser": {"00a": 0.96, "00b": 1.25},  # {"00a": 0.9336, "00b": 1.0}
     "Captain Falcon": {"00a": 0.69, "00b": 0.69},  # {"00a": 0.7143, "00b": 0.7162}
     "Donkey Kong": {"00a": 1.0, "00b": 0.86},  # {"00a": 1.0, "00b": 1.0}
@@ -38,15 +38,14 @@ POSE_SCALE = { # the comment at the side are the original scaling, matching all 
     "Zelda": {"00a": 0.6253, "00b": 0.6219},  # {"00a": 0.7153, "00b": 0.7119}
 }
 
+
 def get_pose_scale(character: str, pose_code: str) -> float:
-    """Return and validate the configured scale for a character pose."""
+    """Return and validate the configured relative scale for a portrait pose."""
     try:
         scale = POSE_SCALE[character][pose_code]
     except KeyError as error:
         raise KeyError(f"Missing scale for {character} {pose_code}") from error
 
     if scale <= 0:
-        raise ValueError(
-            f"Scale for {character} {pose_code} must be greater than 0"
-        )
+        raise ValueError(f"Scale for {character} {pose_code} must be greater than 0")
     return scale
