@@ -89,25 +89,25 @@ DOUBLES_ANCHORS = {
 # can be fine-tuned without affecting character placement.
 PODIUM_TEXT_ANCHORS = {
     3: {
-        1: {"label": (828, 875), "seed": (990, 815)},
-        2: {"label": (443, 875), "seed": (590, 815)},
-        3: {"label": (1200, 875), "seed": (1345, 815)},
+        1: {"label": (828, 875), "seed": (1000, 805)},
+        2: {"label": (443, 875), "seed": (600, 805)},
+        3: {"label": (1200, 875), "seed": (1355, 805)},
     },
     4: {
-        1: {"label": (312, 840), "seed": (450, 780)},
-        2: {"label": (668, 840), "seed": (810, 780)},
-        3: {"label": (1023, 840), "seed": (1160, 780)},
-        4: {"label": (1375, 840), "seed": (1495, 780)},
+        1: {"label": (312, 840), "seed": (460, 770)},
+        2: {"label": (668, 840), "seed": (820, 770)},
+        3: {"label": (1023, 840), "seed": (1170, 770)},
+        4: {"label": (1375, 840), "seed": (1505, 770)},
     },
     8: {
-        1: {"label": (181, 865), "seed": (250, 810)},
-        2: {"label": (376, 865), "seed": (440, 810)},
-        3: {"label": (566, 865), "seed": (630, 810)},
-        4: {"label": (754, 865), "seed": (820, 810)},
-        5: {"label": (939, 865), "seed": (1005, 810)},
-        6: {"label": (1126, 865), "seed": (1190, 810)},
-        7: {"label": (1305, 865), "seed": (1370, 810)},
-        8: {"label": (1491, 865), "seed": (1555, 810)},
+        1: {"label": (181, 865), "seed": (260, 800)},
+        2: {"label": (376, 865), "seed": (450, 800)},
+        3: {"label": (566, 865), "seed": (640, 800)},
+        4: {"label": (754, 865), "seed": (830, 800)},
+        5: {"label": (939, 865), "seed": (1015, 800)},
+        6: {"label": (1126, 865), "seed": (1200, 800)},
+        7: {"label": (1305, 865), "seed": (1380, 800)},
+        8: {"label": (1491, 865), "seed": (1565, 800)},
     },
 }
 
@@ -225,13 +225,25 @@ def _draw_text(
     max_width: int,
     preferred_size: int,
 ) -> None:
+    font = _font_to_fit(text, max_width, preferred_size)
     draw.text(
         position,
         text,
-        font=_font_to_fit(text, max_width, preferred_size),
+        font=font,
         fill="white",
         stroke_width=3,
         stroke_fill="black",
+        anchor=anchor,
+    )
+    # The project ships only a regular font. A one-pixel white expansion gives
+    # it a consistent bold weight while preserving the black contrast outline.
+    draw.text(
+        position,
+        text,
+        font=font,
+        fill="white",
+        stroke_width=1,
+        stroke_fill="white",
         anchor=anchor,
     )
 
