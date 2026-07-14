@@ -14,6 +14,8 @@ Redo the background image so the podium is 3d instead of just a square box, the 
 
 support for twitter and bluesky handles - need to come up with some place to put them.
 
+blend the #seed color into the podium by making it the outline color, instead of sticking out with more white
+
 
 frontend to fill stuff out
 * preview mode to make adjustments

@@ -11,7 +11,7 @@ from models import Character, DoublesTeam
 
 
 TOURNAMENT = {
-    "tournament_name": "Take Your Medicine 2 Doubles",
+    "tournament_name": "take your med.icine! 2 Doubles!!",
     "tournament_date": "7/11/2026",
     "entrants_count": 11,
 }
@@ -42,19 +42,19 @@ def team(
 if __name__ == "__main__":
     draw_doubles_top_4(
         team(
-            None, 1, "Bl@ckChris + 1", "Bl@ckChris",
-            Character("Fox"), "Timebones", Character("Marth"), "green",
+            1, 1, "Bl@ckChris + 1", "Bl@ckChris",
+            Character("Fox", pose="b"), "Timebones", Character("Marth"), "green",
         ),
         team(
-            None, 2, "LabubuRave", "meenis tiny", Character("Fox", pose="a"),
+            2, 2, "LabubuRave", "meenis tiny", Character("Fox", pose="a"),
             "Jennifer", Character("Fox", pose="a"), "red",
         ),
         team(
-            None, 3, "Naan Believers", "Siddward", Character("Luigi"),
+            6, 3, "Naan Believers", "Siddward", Character("Luigi"),
             "Biscuit", Character("Captain Falcon", pose="b"), "red",
         ),
         team(
-            None, 4, "qwain gang", "qwain", Character("Fox", pose="a"),
+            4, 4, "qwain gang", "qwain", Character("Fox", pose="b"),
             "BU$TA", Character("Fox", pose="a"), "green",
         ),
         **TOURNAMENT,

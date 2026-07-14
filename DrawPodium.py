@@ -16,6 +16,7 @@ import re
 
 from PIL import Image, ImageDraw, ImageFont
 
+from constants import PODIUM_BOX_COLORS_BY_SLOT
 from models import Character, DoublesTeam, SinglesEntrant
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
@@ -246,6 +247,7 @@ def _draw_text(
     max_width: int,
     preferred_size: int,
     wrap: bool = False,
+    fill: tuple[int, int, int] | str = "white",
 ) -> None:
     if wrap:
         text = _wrap_text(text, max_width, preferred_size)
@@ -254,11 +256,11 @@ def _draw_text(
         position,
         text,
         font=font,
-        fill="white",
+        fill=fill,
         # The project has only a regular font; a same-color stroke gives it a
         # single-pass bold weight without desynchronizing wrapped text lines.
         stroke_width=1,
-        stroke_fill="white",
+        stroke_fill=fill,
         anchor=anchor,
         align="center",
     )
@@ -341,7 +343,15 @@ def _draw_text_fields(
                 preferred_size=28,
             )
         if entrant.seed is not None:
-            _draw_text(draw, anchors["seed"], f"{entrant.seed}s", anchor="ra", max_width=80, preferred_size=24)
+            _draw_text(
+                draw,
+                anchors["seed"],
+                f"{entrant.seed}s",
+                anchor="ra",
+                max_width=80,
+                preferred_size=24,
+                fill=PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line,
+            )
 
 
 def draw_podium(
