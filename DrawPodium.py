@@ -28,6 +28,7 @@ FONT_PATH = PROJECT_ROOT / "Tyrowo-Inked-Regular.ttf"
 # Positive values move every portrait's bottom anchor farther down onto the
 # podium. Keep this centralized so the vertical position is easy to tune.
 PORTRAIT_ANCHOR_Y_OFFSET = 9
+DOUBLES_TEAM_NAME_Y_OFFSET = -30
 
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
@@ -254,18 +255,8 @@ def _draw_text(
         text,
         font=font,
         fill="white",
-        stroke_width=3,
-        stroke_fill="black",
-        anchor=anchor,
-        align="center",
-    )
-    # The project ships only a regular font. A one-pixel white expansion gives
-    # it a consistent bold weight while preserving the black contrast outline.
-    draw.multiline_text(
-        position,
-        text,
-        font=font,
-        fill="white",
+        # The project has only a regular font; a same-color stroke gives it a
+        # single-pass bold weight without desynchronizing wrapped text lines.
         stroke_width=1,
         stroke_fill="white",
         anchor=anchor,
@@ -314,10 +305,10 @@ def _draw_text_fields(
     del location, tournament_time
     draw = ImageDraw.Draw(canvas)
     width = canvas.width
-    _draw_text(draw, (45, 38), tournament_name, anchor="la", max_width=width // 2, preferred_size=54)
-    _draw_text(draw, (width - 45, 38), str(tournament_date), anchor="ra", max_width=width // 3, preferred_size=36)
+    _draw_text(draw, (45, 38), tournament_name, anchor="la", max_width=width // 2, preferred_size=62)
+    _draw_text(draw, (width - 45, 38), str(tournament_date), anchor="ra", max_width=width // 3, preferred_size=42)
     count_label = "Teams" if isinstance(entrants[0], DoublesTeam) else "Entrants"
-    _draw_text(draw, (width - 45, 82), f"{entrants_count} {count_label}", anchor="ra", max_width=width // 3, preferred_size=30)
+    _draw_text(draw, (width - 45, 92), f"{entrants_count} {count_label}", anchor="ra", max_width=width // 3, preferred_size=36)
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.
@@ -330,7 +321,10 @@ def _draw_text_fields(
         if isinstance(entrant, DoublesTeam):
             _draw_text(
                 draw,
-                anchors["label"],
+                (
+                    anchors["label"][0],
+                    anchors["label"][1] + DOUBLES_TEAM_NAME_Y_OFFSET,
+                ),
                 entrant.team_name,
                 anchor="ma",
                 max_width=300,
