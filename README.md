@@ -12,6 +12,14 @@ more font support - like IMPACT bold, and maybe another option that's far less m
 
 Redo the background image so the podium is 3d instead of just a square box, the characters should be standing on something lol
 
+support for twitter and bluesky handles - need to come up with some place to put them.
+
+
 frontend to fill stuff out
 * preview mode to make adjustments
+* counter for how often the generator has been used, keep a cute counter on the page lol.
 start.gg and challonge support from top8er to plug in brackets easily
+
+
+way down the road:
+player profiles - have auto selections for frequently used people, maybe by some kind of profile system so you can log in and have people you know.

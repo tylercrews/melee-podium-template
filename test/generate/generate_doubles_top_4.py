@@ -18,6 +18,7 @@ TOURNAMENT = {
 
 
 def team(
+    seed: int | None,
     placement: int,
     name: str,
     tag_1: str,
@@ -27,7 +28,7 @@ def team(
     team_color: str | None = None,
 ) -> DoublesTeam:
     return DoublesTeam(
-        seed=None,
+        seed=seed,
         placement=placement,
         character_1=character_1,
         character_2=character_2,
@@ -41,20 +42,20 @@ def team(
 if __name__ == "__main__":
     draw_doubles_top_4(
         team(
-            1, "Baldur's Gate Baddies", "shenal",
-            Character("Mr. Game and Watch"), "killbugs", Character("Peach"), "green",
+            None, 1, "Bl@ckChris + 1", "Bl@ckChris",
+            Character("Fox"), "Timebones", Character("Marth"), "green",
         ),
         team(
-            2, "Hyrule Hustle", "HBK", Character("Sheik", pose="b"),
-            "Subie", Character("Samus"), "red",
+            None, 2, "LabubuRave", "meenis tiny", Character("Fox", pose="a"),
+            "Jennifer", Character("Fox", pose="a"), "red",
         ),
         team(
-            3, "Judgement", "Geoux", Character("Marth"),
-            "Silent Skyler", Character("Sheik", pose="b"), "red",
+            None, 3, "Naan Believers", "Siddward", Character("Luigi"),
+            "Biscuit", Character("Captain Falcon", pose="b"), "red",
         ),
         team(
-            4, "BarelyBusta", "Busta", Character("Fox", pose="b"),
-            "Barely", Character("Fox"), "green",
+            None, 4, "qwain gang", "qwain", Character("Fox", pose="a"),
+            "BU$TA", Character("Fox", pose="a"), "green",
         ),
         **TOURNAMENT,
         output_path=Path(__file__).with_name("doubles_top_4.png"),
