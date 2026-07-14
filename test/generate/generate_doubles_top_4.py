@@ -11,9 +11,9 @@ from models import Character, DoublesTeam
 
 
 TOURNAMENT = {
-    "tournament_name": "Shenfest Randubs",
-    "tournament_date": "7/10/2026",
-    "entrants_count": 14,
+    "tournament_name": "Take Your Medicine 2 Doubles",
+    "tournament_date": "7/11/2026",
+    "entrants_count": 11,
 }
 
 

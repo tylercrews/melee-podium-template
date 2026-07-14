@@ -7,8 +7,8 @@ portraits in one layout without changing character sizes relative to each other.
 
 
 PORTRAIT_SCALE_BY_MODE = {
-    "doubles_top_3": 0.30,
-    "doubles_top_4": 0.27,
+    "doubles_top_3": 0.29,
+    "doubles_top_4": 0.26,
     "singles_top_3": 0.40,
     "singles_top_4": 0.36,
     "singles_top_8": 0.22,
