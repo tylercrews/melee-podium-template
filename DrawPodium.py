@@ -211,9 +211,29 @@ def _character_with_team_color(character: Character, team_color: str | None) -> 
 def _font_to_fit(text: str, max_width: int, preferred_size: int) -> ImageFont.FreeTypeFont:
     for size in range(preferred_size, 11, -1):
         font = ImageFont.truetype(FONT_PATH, size)
-        if font.getlength(text) <= max_width:
+        if max(font.getlength(line) for line in text.splitlines()) <= max_width:
             return font
     return ImageFont.truetype(FONT_PATH, 11)
+
+
+def _wrap_text(text: str, max_width: int, preferred_size: int) -> str:
+    """Wrap whole words to a podium's available label width."""
+    font = ImageFont.truetype(FONT_PATH, preferred_size)
+    words = text.split()
+    if not words:
+        return text
+
+    lines: list[str] = []
+    line = words[0]
+    for word in words[1:]:
+        candidate = f"{line} {word}"
+        if font.getlength(candidate) <= max_width:
+            line = candidate
+        else:
+            lines.append(line)
+            line = word
+    lines.append(line)
+    return "\n".join(lines)
 
 
 def _draw_text(
@@ -224,9 +244,12 @@ def _draw_text(
     anchor: str,
     max_width: int,
     preferred_size: int,
+    wrap: bool = False,
 ) -> None:
+    if wrap:
+        text = _wrap_text(text, max_width, preferred_size)
     font = _font_to_fit(text, max_width, preferred_size)
-    draw.text(
+    draw.multiline_text(
         position,
         text,
         font=font,
@@ -234,10 +257,11 @@ def _draw_text(
         stroke_width=3,
         stroke_fill="black",
         anchor=anchor,
+        align="center",
     )
     # The project ships only a regular font. A one-pixel white expansion gives
     # it a consistent bold weight while preserving the black contrast outline.
-    draw.text(
+    draw.multiline_text(
         position,
         text,
         font=font,
@@ -245,6 +269,7 @@ def _draw_text(
         stroke_width=1,
         stroke_fill="white",
         anchor=anchor,
+        align="center",
     )
 
 
@@ -291,7 +316,8 @@ def _draw_text_fields(
     width = canvas.width
     _draw_text(draw, (45, 38), tournament_name, anchor="la", max_width=width // 2, preferred_size=54)
     _draw_text(draw, (width - 45, 38), str(tournament_date), anchor="ra", max_width=width // 3, preferred_size=36)
-    _draw_text(draw, (width - 45, 82), f"{entrants_count} Entrants", anchor="ra", max_width=width // 3, preferred_size=30)
+    count_label = "Teams" if isinstance(entrants[0], DoublesTeam) else "Entrants"
+    _draw_text(draw, (width - 45, 82), f"{entrants_count} {count_label}", anchor="ra", max_width=width // 3, preferred_size=30)
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.
@@ -301,8 +327,25 @@ def _draw_text_fields(
     placement_count = len(entrants)
     for podium_slot, entrant in enumerate(entrants, start=1):
         anchors = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]
-        label = entrant.team_name if isinstance(entrant, DoublesTeam) else entrant.character.melee_fighter_name
-        _draw_text(draw, anchors["label"], label, anchor="ma", max_width=180 if placement_count == 8 else 290, preferred_size=28)
+        if isinstance(entrant, DoublesTeam):
+            _draw_text(
+                draw,
+                anchors["label"],
+                entrant.team_name,
+                anchor="ma",
+                max_width=300,
+                preferred_size=42, # doubles team font size
+                wrap=True,
+            )
+        else:
+            _draw_text(
+                draw,
+                anchors["label"],
+                entrant.character.melee_fighter_name,
+                anchor="ma",
+                max_width=180 if placement_count == 8 else 290,
+                preferred_size=28,
+            )
         if entrant.seed is not None:
             _draw_text(draw, anchors["seed"], f"{entrant.seed}s", anchor="ra", max_width=80, preferred_size=24)
 
