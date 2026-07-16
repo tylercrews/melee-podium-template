@@ -28,7 +28,7 @@ FONT_PATH = PROJECT_ROOT / "Tyrowo-Inked-Regular.ttf"
 
 # Positive values move every portrait's bottom anchor farther down onto the
 # podium. Keep this centralized so the vertical position is easy to tune.
-PORTRAIT_ANCHOR_Y_OFFSET = 5
+PORTRAIT_ANCHOR_Y_OFFSET = 2
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
 
 class PodiumMode(str, Enum):
@@ -75,13 +75,13 @@ SINGLES_ANCHORS = {
 
 DOUBLES_ANCHORS = {
     3: {
-        1: ((733, 497), (901, 497)),
-        2: ((306, 579), (480, 579)),
+        1: ((743, 497), (911, 497)),
+        2: ((316, 579), (490, 579)),
         3: ((1242, 614), (1400, 614)),
     },
     4: {
-        1: ((166, 505), (306, 505)),
-        2: ((575, 540), (715, 540)),
+        1: ((176, 505), (316, 505)),
+        2: ((585, 540), (725, 540)),
         3: ((980, 577), (1128, 577)),
         4: ((1370, 618), (1510, 618)),
     },
