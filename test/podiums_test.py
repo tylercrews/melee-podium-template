@@ -129,8 +129,8 @@ def main() -> None:
     outputs.append(("Singles Top 3", path))
 
     singles_top_4 = [
-        singles_entrant(1, "Bowser", pose="b"),
-        singles_entrant(2, "Bowser", pose="a"),
+        singles_entrant(1, "Bowser", pose="a"),
+        singles_entrant(2, "Bowser", pose="b"),
         singles_entrant(3, "Marth"),
         singles_entrant(4, "Pichu"),
     ]
