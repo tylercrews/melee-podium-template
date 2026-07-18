@@ -192,17 +192,38 @@ def _load_character(character: Character, mode_scale: float) -> Image.Image:
     return image.resize(size, Image.Resampling.LANCZOS)
 
 
-def _place_character(
+def _place_image(
     canvas: Image.Image,
-    character: Character,
+    image: Image.Image,
     anchor: tuple[int, int],
-    mode_scale: float,
 ) -> tuple[int, int, Image.Image]:
-    image = _load_character(character, mode_scale)
     x = round(anchor[0] - image.width / 2)
     y = anchor[1] + PORTRAIT_ANCHOR_Y_OFFSET - image.height
     canvas.alpha_composite(image, (x, y))
     return x, y, image
+
+
+def _place_characters(
+    canvas: Image.Image,
+    characters: Sequence[Character],
+    anchor: tuple[int, int],
+    mode_scale: float,
+) -> tuple[int, int, Image.Image]:
+    """Layer an entrant's portraits from tallest to shortest at one anchor.
+
+    Python's stable sort preserves the supplied character order when two
+    portraits have equal rendered heights.
+    """
+    loaded_characters = [
+        _load_character(character, mode_scale) for character in characters
+    ]
+    draw_order = sorted(
+        loaded_characters,
+        key=lambda image: image.height,
+        reverse=True,
+    )
+    placements = [_place_image(canvas, image, anchor) for image in draw_order]
+    return placements[-1]
 
 
 def _character_with_team_color(character: Character, team_color: str | None) -> Character:
@@ -400,20 +421,19 @@ def draw_podium(
         for podium_slot, team in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(team, DoublesTeam)
             first_anchor, second_anchor = anchors[podium_slot]
-            # Multiple-character selection is represented by the model now;
-            # its rendering policy will be added separately.  Until then use
-            # the first selected character for each team member.
-            first_character = _character_with_team_color(
-                team.entrant_1.characters[0], team.team_color
+            first_characters = [
+                _character_with_team_color(character, team.team_color)
+                for character in team.entrant_1.characters
+            ]
+            second_characters = [
+                _character_with_team_color(character, team.team_color)
+                for character in team.entrant_2.characters
+            ]
+            first_x, first_y, first_image = _place_characters(
+                background, first_characters, first_anchor, mode_scale
             )
-            second_character = _character_with_team_color(
-                team.entrant_2.characters[0], team.team_color
-            )
-            first_x, first_y, first_image = _place_character(
-                background, first_character, first_anchor, mode_scale
-            )
-            second_x, second_y, second_image = _place_character(
-                background, second_character, second_anchor, mode_scale
+            second_x, second_y, second_image = _place_characters(
+                background, second_characters, second_anchor, mode_scale
             )
             character_tags.extend(
                 [
@@ -425,9 +445,9 @@ def draw_podium(
         anchors = SINGLES_ANCHORS[mode.placement_count]
         for podium_slot, entrant in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(entrant, SinglesEntrant)
-            x, y, image = _place_character(
+            x, y, image = _place_characters(
                 background,
-                entrant.characters[0],
+                entrant.characters,
                 anchors[podium_slot],
                 mode_scale,
             )
