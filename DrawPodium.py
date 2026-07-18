@@ -93,7 +93,7 @@ PODIUM_TEXT_ANCHORS = {
     3: {
         1: {"label": (817, 840), "seed": (1005, 767)},
         2: {"label": (393, 840), "seed": (528, 767)},
-        3: {"label": (1321, 840), "seed": (1460, 767)},
+        3: {"label": (1321, 840), "seed": (1470, 770)},
     },
     4: {
         1: {"label": (236, 848), "seed": (390, 785)},
@@ -103,13 +103,13 @@ PODIUM_TEXT_ANCHORS = {
     },
     8: {
         1: {"label": (139, 848), "seed": (215, 792)},
-        2: {"label": (354, 848), "seed": (422, 792)},
-        3: {"label": (553, 848), "seed": (622, 792)},
-        4: {"label": (755, 848), "seed": (824, 792)},
-        5: {"label": (955, 848), "seed": (1020, 797)},
-        6: {"label": (1150, 848), "seed": (1220, 797)},
-        7: {"label": (1345, 848), "seed": (1419, 797)},
-        8: {"label": (1545, 848), "seed": (1620, 797)},
+        2: {"label": (354, 848), "seed": (422, 794)},
+        3: {"label": (553, 848), "seed": (622, 795)},
+        4: {"label": (755, 848), "seed": (824, 796)},
+        5: {"label": (955, 848), "seed": (1023, 799)},
+        6: {"label": (1150, 848), "seed": (1222, 800)},
+        7: {"label": (1345, 848), "seed": (1417, 802)},
+        8: {"label": (1545, 848), "seed": (1618, 804)},
     },
 }
 
@@ -370,7 +370,7 @@ def _draw_text_fields(
                 f"{entrant.seed}s",
                 anchor="ra",
                 max_width=80,
-                preferred_size=22 if placement_count == 8 else 24,
+                preferred_size=20 if placement_count == 8 else 24,
                 fill=PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line,
             )
 
