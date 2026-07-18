@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from DrawPodium import draw_doubles_top_3
-from models import Character, DoublesTeam
+from models import Character, DoublesTeam, Entrant
 
 
 TOURNAMENT = {
@@ -18,7 +18,14 @@ TOURNAMENT = {
 
 
 def team(seed: int | None, placement: int, name: str, player_1: str, player_2: str, color: str | None) -> DoublesTeam:
-    return DoublesTeam(seed, placement, Character(player_1), Character(player_2), player_1, player_2, name, color)
+    return DoublesTeam(
+        seed=seed,
+        placement=placement,
+        entrant_1=Entrant(characters=[Character(player_1)], tag=player_1),
+        entrant_2=Entrant(characters=[Character(player_2)], tag=player_2),
+        team_name=name,
+        team_color=color,
+    )
 
 
 if __name__ == "__main__":

@@ -337,7 +337,7 @@ def _draw_text_fields(
             _draw_text(
                 draw,
                 anchors["label"],
-                entrant.character.melee_fighter_name,
+                entrant.characters[0].melee_fighter_name,
                 anchor="ma",
                 max_width=180 if placement_count == 8 else 290,
                 preferred_size=28,
@@ -400,8 +400,15 @@ def draw_podium(
         for podium_slot, team in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(team, DoublesTeam)
             first_anchor, second_anchor = anchors[podium_slot]
-            first_character = _character_with_team_color(team.character_1, team.team_color)
-            second_character = _character_with_team_color(team.character_2, team.team_color)
+            # Multiple-character selection is represented by the model now;
+            # its rendering policy will be added separately.  Until then use
+            # the first selected character for each team member.
+            first_character = _character_with_team_color(
+                team.entrant_1.characters[0], team.team_color
+            )
+            second_character = _character_with_team_color(
+                team.entrant_2.characters[0], team.team_color
+            )
             first_x, first_y, first_image = _place_character(
                 background, first_character, first_anchor, mode_scale
             )
@@ -410,8 +417,8 @@ def draw_podium(
             )
             character_tags.extend(
                 [
-                    (_tag_anchor(first_x, first_y, first_image), team.tag_1),
-                    (_tag_anchor(second_x, second_y, second_image), team.tag_2),
+                    (_tag_anchor(first_x, first_y, first_image), team.entrant_1.tag),
+                    (_tag_anchor(second_x, second_y, second_image), team.entrant_2.tag),
                 ]
             )
     else:
@@ -420,7 +427,7 @@ def draw_podium(
             assert isinstance(entrant, SinglesEntrant)
             x, y, image = _place_character(
                 background,
-                entrant.character,
+                entrant.characters[0],
                 anchors[podium_slot],
                 mode_scale,
             )

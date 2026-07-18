@@ -75,35 +75,60 @@ class Character:
             object.__setattr__(self, "pose", self.pose.strip().lower())
 
 
-@dataclass(frozen=True, slots=True)
-class SinglesEntrant:
-    seed: int | None
-    placement: int
-    character: Character
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Entrant:
+    """A player and the characters they used in an event.
+
+    Character-selection and rendering policies are intentionally left to the
+    drawing layer; this model only retains the full selection.
+    """
+
+    characters: list[Character]
     tag: str
+    bluesky_handle: str | None = None
+    x_handle: str | None = None
 
     def __post_init__(self) -> None:
+        if not self.characters:
+            raise ValueError("Entrant must have at least one character")
+        if any(not isinstance(character, Character) for character in self.characters):
+            raise TypeError("Entrant characters must all be Character instances")
+        _validate_text(self.tag, "Entrant tag")
+        if self.bluesky_handle is not None:
+            _validate_text(self.bluesky_handle, "Bluesky handle")
+        if self.x_handle is not None:
+            _validate_text(self.x_handle, "X handle")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SinglesEntrant(Entrant):
+    """An entrant's result in a singles bracket."""
+
+    seed: int | None
+    placement: int
+
+    def __post_init__(self) -> None:
+        super(SinglesEntrant, self).__post_init__()
         _validate_seed(self.seed)
         _validate_placement(self.placement)
-        _validate_text(self.tag, "Entrant tag")
 
 
 @dataclass(frozen=True, slots=True)
 class DoublesTeam:
     seed: int | None
     placement: int
-    character_1: Character
-    character_2: Character
-    tag_1: str
-    tag_2: str
+    entrant_1: Entrant
+    entrant_2: Entrant
     team_name: str
     team_color: str | None = None
 
     def __post_init__(self) -> None:
         _validate_seed(self.seed)
         _validate_placement(self.placement)
-        _validate_text(self.tag_1, "First entrant tag")
-        _validate_text(self.tag_2, "Second entrant tag")
+        if not isinstance(self.entrant_1, Entrant):
+            raise TypeError("First team member must be an Entrant")
+        if not isinstance(self.entrant_2, Entrant):
+            raise TypeError("Second team member must be an Entrant")
         _validate_text(self.team_name, "Team name")
         if self.team_color is not None:
             _validate_text(self.team_color, "Team color")

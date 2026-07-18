@@ -16,7 +16,7 @@ from DrawPodium import (
     draw_singles_top_4,
     draw_singles_top_8,
 )
-from models import Character, DoublesTeam, SinglesEntrant
+from models import Character, DoublesTeam, Entrant, SinglesEntrant
 
 
 OUTPUT_FOLDER = Path(__file__).with_name("podiums_test_outputs")
@@ -40,7 +40,7 @@ def singles_entrant(
     return SinglesEntrant(
         seed=placement,
         placement=placement,
-        character=Character(fighter, color, pose),
+        characters=[Character(fighter, color, pose)],
         tag=fighter,
     )
 
@@ -57,10 +57,12 @@ def doubles_team(
     return DoublesTeam(
         seed=placement,
         placement=placement,
-        character_1=Character(fighter_1, "default", pose_1),
-        character_2=Character(fighter_2, "default", pose_2),
-        tag_1=fighter_1,
-        tag_2=fighter_2,
+        entrant_1=Entrant(
+            characters=[Character(fighter_1, "default", pose_1)], tag=fighter_1
+        ),
+        entrant_2=Entrant(
+            characters=[Character(fighter_2, "default", pose_2)], tag=fighter_2
+        ),
         team_name=f"{fighter_1} / {fighter_2}",
         team_color=team_color,
     )

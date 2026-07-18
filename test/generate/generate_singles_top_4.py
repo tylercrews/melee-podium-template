@@ -14,7 +14,7 @@ TOURNAMENT = {"tournament_name": "Example Tournament", "tournament_date": "July 
 
 
 def entrant(seed: int | None, placement: int, tag: str, fighter: str) -> SinglesEntrant:
-    return SinglesEntrant(seed, placement, Character(fighter), tag)
+    return SinglesEntrant(seed=seed, placement=placement, characters=[Character(fighter)], tag=tag)
 
 
 if __name__ == "__main__":
