@@ -11,9 +11,9 @@ from models import Character, DoublesTeam, Entrant
 
 
 TOURNAMENT = {
-    "tournament_name": "take your med.icine! 2 Doubles!!",
-    "tournament_date": "7/11/2026",
-    "entrants_count": 11,
+    "tournament_name": "Moon Dog Melee #11: med1cinal's Birthday Bash! RanDubs",
+    "tournament_date": "7/17/2026",
+    "entrants_count": 10,
 }
 
 
@@ -40,20 +40,22 @@ def team(
 if __name__ == "__main__":
     draw_doubles_top_4(
         team(
-            1, 1, "Bl@ckChris + 1", "Bl@ckChris",
-            Character("Fox", pose="b"), "Timebones", Character("Marth"), "green",
+            None, 1, "meenis tiny + brooke bustamove", "meenis tiny",
+            Character("Donkey Kong", pose=None), "brooke bustamove",
+            Character("Donkey Kong", pose=None), "red",
         ),
         team(
-            2, 2, "LabubuRave", "meenis tiny", Character("Fox", pose="a"),
-            "Jennifer", Character("Fox", pose="a"), "red",
+            None, 2, "Subie + DukDota", "Subie", Character("Fox", pose=None),
+            "DukDota", Character("Fox", pose=None), "blue",
         ),
         team(
-            6, 3, "Naan Believers", "Siddward", Character("Luigi"),
-            "Biscuit", Character("Captain Falcon", pose="b"), "red",
+            None, 3, "HBK + rosier", "HBK", Character("Fox", pose=None),
+            "rosier", Character("Fox", pose=None), "red",
         ),
         team(
-            4, 4, "qwain gang", "qwain", Character("Fox", pose="b"),
-            "BU$TA", Character("Fox", pose="a"), "green",
+            None, 4, "Felipé + wrht", "Felipé",
+            Character("Captain Falcon", pose=None), "wrht",
+            Character("Captain Falcon", pose=None), "green",
         ),
         **TOURNAMENT,
         output_path=Path(__file__).with_name("doubles_top_4.png"),

@@ -21,3 +21,6 @@ SILENT_SKYLER = Entrant(
     characters=[Character("Sheik", "white", "b")],
     tag="Silent Skyler",
 )
+SUBIE = Entrant(characters=[Character("Samus", "blue", "b")], tag="Subie")
+MEENIS_TINY = Entrant(characters=[Character("Fox", "red", "a")], tag="meenis tiny")
+FELIPE = Entrant(characters=[Character("Marth", "green", "b")], tag="Felipé")
