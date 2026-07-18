@@ -3,14 +3,7 @@ Inspired by Top8er and using assets from Melee-CSProject, this program creates t
 
 
 TODO LIST:
-Entrant class rework:
-* Entrant should have the properties tag, and Characters[].
-* an array of characters allows for multiple char selection, and putting tag with the char in one place simplifies the parameters
-support Multiple Character Selection: (thanks for the idea, Zach)
-* each entrant should have an array of the characters they used
-* the characters need to be filtered via a set or something, so that the same char isn't repeated multiple times.
 * * need to have a way of keeping track of the colors used so that the most frequent color is the one that shows up. (not sure if startgg keeps track of color use, but that's why it would be helpful)
-* the characters need to have a sort order in the backend, so that way the larger characters are drawn first, and then smaller chars like pichu are drawn later.
 
 Fit in tournament location?
 more font support - like IMPACT bold, and maybe another option that's far less memey
