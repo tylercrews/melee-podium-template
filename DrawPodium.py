@@ -334,9 +334,33 @@ def _draw_text_fields(
             max_width=width // 2,
             preferred_size=48,
         )
-    _draw_text(draw, (width - 45, 38), str(tournament.date), anchor="ra", max_width=width // 3, preferred_size=42)
-    count_label = "Teams" if isinstance(entrants[0], DoublesTeam) else "Entrants"
-    _draw_text(draw, (width - 45, 92), f"{tournament.entrants_count} {count_label}", anchor="ra", max_width=width // 3, preferred_size=36)
+    is_doubles = isinstance(entrants[0], DoublesTeam)
+    event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
+    count_label = "Teams" if is_doubles else "Entrants"
+    _draw_text(
+        draw,
+        (width - 45, 38),
+        event_label,
+        anchor="ra",
+        max_width=width // 3,
+        preferred_size=42,
+    )
+    _draw_text(
+        draw,
+        (width - 45, 92),
+        str(tournament.date),
+        anchor="ra",
+        max_width=width // 3,
+        preferred_size=36,
+    )
+    _draw_text(
+        draw,
+        (width - 45, 140),
+        f"{tournament.entrants_count} {count_label}",
+        anchor="ra",
+        max_width=width // 3,
+        preferred_size=32,
+    )
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.

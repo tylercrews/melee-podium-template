@@ -13,6 +13,7 @@ from models import Character, SinglesEntrant, Tournament
 TOURNAMENT = Tournament(
     title="Moon Dog Melee #11",
     subtitle="med1cinal's Birthday Bash!",
+    event="Secondaries Only Singles",
     date="7/17/2026",
     entrants_count=19,
 )
