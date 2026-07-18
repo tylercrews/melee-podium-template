@@ -8,7 +8,6 @@ Tournament text is accepted and validated now; its eventual drawing belongs in
 
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import date, time
 from enum import Enum
 from pathlib import Path
 from random import choice
@@ -17,7 +16,7 @@ import re
 from PIL import Image, ImageDraw, ImageFont
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
-from models import Character, DoublesTeam, SinglesEntrant
+from models import Character, DoublesTeam, SinglesEntrant, Tournament
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
@@ -223,7 +222,9 @@ def _place_characters(
         reverse=True,
     )
     placements = [_place_image(canvas, image, anchor) for image in draw_order]
-    return placements[-1]
+    # The first placement is the tallest portrait, which provides the
+    # outermost silhouette and therefore the best location for the entrant tag.
+    return placements[0]
 
 
 def _character_with_team_color(character: Character, team_color: str | None) -> Character:
@@ -319,19 +320,23 @@ def _draw_text_fields(
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
     character_tags: Sequence[tuple[tuple[int, int], str]],
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None,
-    tournament_time: str | time | None,
+    tournament: Tournament,
 ) -> None:
-    del location, tournament_time
     draw = ImageDraw.Draw(canvas)
     width = canvas.width
-    _draw_text(draw, (45, 38), tournament_name, anchor="la", max_width=width // 2, preferred_size=62)
-    _draw_text(draw, (width - 45, 38), str(tournament_date), anchor="ra", max_width=width // 3, preferred_size=42)
+    _draw_text(draw, (45, 38), tournament.title, anchor="la", max_width=width // 2, preferred_size=62)
+    if tournament.subtitle is not None:
+        _draw_text(
+            draw,
+            (45, 111),
+            tournament.subtitle,
+            anchor="la",
+            max_width=width // 2,
+            preferred_size=48,
+        )
+    _draw_text(draw, (width - 45, 38), str(tournament.date), anchor="ra", max_width=width // 3, preferred_size=42)
     count_label = "Teams" if isinstance(entrants[0], DoublesTeam) else "Entrants"
-    _draw_text(draw, (width - 45, 92), f"{entrants_count} {count_label}", anchor="ra", max_width=width // 3, preferred_size=36)
+    _draw_text(draw, (width - 45, 92), f"{tournament.entrants_count} {count_label}", anchor="ra", max_width=width // 3, preferred_size=36)
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.
@@ -379,11 +384,7 @@ def draw_podium(
     mode: PodiumMode,
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None = None,
-    tournament_time: str | time | None = None,
+    tournament: Tournament,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -394,9 +395,7 @@ def draw_podium(
         except ValueError as error:
             choices = ", ".join(item.value for item in PodiumMode)
             raise ValueError(f"Unknown podium mode. Expected one of: {choices}") from error
-    if not tournament_name.strip():
-        raise ValueError("Tournament name cannot be empty")
-    if entrants_count < mode.placement_count:
+    if tournament.entrants_count < mode.placement_count:
         raise ValueError(
             f"Entrants count must be at least {mode.placement_count} for this layout"
         )
@@ -457,11 +456,7 @@ def draw_podium(
         background,
         entrants,
         character_tags,
-        tournament_name=tournament_name,
-        tournament_date=tournament_date,
-        entrants_count=entrants_count,
-        location=location,
-        tournament_time=tournament_time,
+        tournament=tournament,
     )
 
     if output_path is not None:
@@ -476,22 +471,14 @@ def draw_doubles_top_3(
     second_place_team: DoublesTeam,
     third_place_team: DoublesTeam,
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None = None,
-    tournament_time: str | time | None = None,
+    tournament: Tournament,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
         PodiumMode.DOUBLES_TOP_3,
         [first_place_team, second_place_team, third_place_team],
-        tournament_name=tournament_name,
-        tournament_date=tournament_date,
-        entrants_count=entrants_count,
-        location=location,
-        tournament_time=tournament_time,
+        tournament=tournament,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -503,22 +490,14 @@ def draw_doubles_top_4(
     third_place_team: DoublesTeam,
     fourth_place_team: DoublesTeam,
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None = None,
-    tournament_time: str | time | None = None,
+    tournament: Tournament,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
         PodiumMode.DOUBLES_TOP_4,
         [first_place_team, second_place_team, third_place_team, fourth_place_team],
-        tournament_name=tournament_name,
-        tournament_date=tournament_date,
-        entrants_count=entrants_count,
-        location=location,
-        tournament_time=tournament_time,
+        tournament=tournament,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -529,22 +508,14 @@ def draw_singles_top_3(
     second_place_entrant: SinglesEntrant,
     third_place_entrant: SinglesEntrant,
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None = None,
-    tournament_time: str | time | None = None,
+    tournament: Tournament,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
     return draw_podium(
         PodiumMode.SINGLES_TOP_3,
         [first_place_entrant, second_place_entrant, third_place_entrant],
-        tournament_name=tournament_name,
-        tournament_date=tournament_date,
-        entrants_count=entrants_count,
-        location=location,
-        tournament_time=tournament_time,
+        tournament=tournament,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -556,11 +527,7 @@ def draw_singles_top_4(
     third_place_entrant: SinglesEntrant,
     fourth_place_entrant: SinglesEntrant,
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None = None,
-    tournament_time: str | time | None = None,
+    tournament: Tournament,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -572,11 +539,7 @@ def draw_singles_top_4(
             third_place_entrant,
             fourth_place_entrant,
         ],
-        tournament_name=tournament_name,
-        tournament_date=tournament_date,
-        entrants_count=entrants_count,
-        location=location,
-        tournament_time=tournament_time,
+        tournament=tournament,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -592,11 +555,7 @@ def draw_singles_top_8(
     seventh_place_entrant: SinglesEntrant,
     eighth_place_entrant: SinglesEntrant,
     *,
-    tournament_name: str,
-    tournament_date: str | date,
-    entrants_count: int,
-    location: str | None = None,
-    tournament_time: str | time | None = None,
+    tournament: Tournament,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -612,11 +571,7 @@ def draw_singles_top_8(
             seventh_place_entrant,
             eighth_place_entrant,
         ],
-        tournament_name=tournament_name,
-        tournament_date=tournament_date,
-        entrants_count=entrants_count,
-        location=location,
-        tournament_time=tournament_time,
+        tournament=tournament,
         character_scale=character_scale,
         output_path=output_path,
     )

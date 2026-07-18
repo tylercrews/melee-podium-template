@@ -1,6 +1,7 @@
 """Data models used to describe podium entrants and their characters."""
 
 from dataclasses import dataclass
+from datetime import date
 
 
 MELEE_FIGHTERS = (
@@ -46,6 +47,23 @@ def _validate_placement(placement: int) -> None:
 def _validate_text(value: str, field_name: str) -> None:
     if not value.strip():
         raise ValueError(f"{field_name} cannot be empty")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Tournament:
+    """Metadata displayed at the top of a podium image."""
+
+    title: str
+    entrants_count: int
+    date: str | date
+    subtitle: str | None = None
+
+    def __post_init__(self) -> None:
+        _validate_text(self.title, "Tournament title")
+        if self.subtitle is not None:
+            _validate_text(self.subtitle, "Tournament subtitle")
+        if self.entrants_count <= 0:
+            raise ValueError("Entrants count must be greater than 0")
 
 
 @dataclass(frozen=True, slots=True)

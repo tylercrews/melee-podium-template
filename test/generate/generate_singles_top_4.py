@@ -7,10 +7,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from DrawPodium import draw_singles_top_4
-from models import Character, SinglesEntrant
+from models import Character, SinglesEntrant, Tournament
 
 
-TOURNAMENT = {"tournament_name": "Example Tournament", "tournament_date": "July 12, 2026", "entrants_count": 64}
+TOURNAMENT = Tournament(
+    title="Example Tournament",
+    date="July 12, 2026",
+    entrants_count=64,
+)
 
 
 def entrant(seed: int | None, placement: int, tag: str, fighter: str) -> SinglesEntrant:
@@ -23,6 +27,6 @@ if __name__ == "__main__":
         entrant(2, 2, "Player Two", "Marth"),
         entrant(3, 3, "Player Three", "Pikachu"),
         entrant(4, 4, "Player Four", "Peach"),
-        **TOURNAMENT,
+        tournament=TOURNAMENT,
         output_path=Path(__file__).with_name("singles_top_4.png"),
     )

@@ -7,14 +7,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from DrawPodium import draw_doubles_top_4
-from models import Character, DoublesTeam, Entrant
+from models import Character, DoublesTeam, Entrant, Tournament
 
 
-TOURNAMENT = {
-    "tournament_name": "Moon Dog Melee #11: med1cinal's Birthday Bash! RanDubs",
-    "tournament_date": "7/17/2026",
-    "entrants_count": 10,
-}
+TOURNAMENT = Tournament(
+    title="Moon Dog Melee #11",
+    subtitle="med1cinal's Birthday Bash!",
+    date="7/17/2026",
+    entrants_count=10,
+)
 
 
 def team(
@@ -57,6 +58,6 @@ if __name__ == "__main__":
             Character("Captain Falcon", pose=None), "wrht",
             Character("Captain Falcon", pose=None), "green",
         ),
-        **TOURNAMENT,
+        tournament=TOURNAMENT,
         output_path=Path(__file__).with_name("doubles_top_4.png"),
     )
