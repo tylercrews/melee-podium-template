@@ -3,6 +3,7 @@ Inspired by Top8er and using assets from Melee-CSProject, this program creates t
 
 
 TODO LIST:
+* fix centering of text underneath of podiums
 * * need to have a way of keeping track of the colors used so that the most frequent color is the one that shows up. (not sure if startgg keeps track of color use, but that's why it would be helpful)
 
 Fit in tournament location?
@@ -20,6 +21,12 @@ frontend to fill stuff out
 * counter for how often the generator has been used, keep a cute counter on the page lol.
 start.gg and challonge support from top8er to plug in brackets easily
 
+LocalStorage and LocalStorage Management page.
+* should be able to store 300-350 entrants per MB, and localstorage can have up to 5MB, but I don't really want to push it.
+* should be able to specify whether or not you want to save entrants when creating them
+* should be able to import+export
+* should be able to add/remove from the management screen
+* also warn people that if they clear storage or use another device they'll disappear
 
 way down the road:
 player profiles - have auto selections for frequently used people, maybe by some kind of profile system so you can log in and have people you know.
