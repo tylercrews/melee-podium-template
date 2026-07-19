@@ -90,15 +90,15 @@ DOUBLES_ANCHORS = {
 # can be fine-tuned without affecting character placement.
 PODIUM_TEXT_ANCHORS = {
     3: {
-        1: {"label": (817, 840), "seed": (1005, 767)},
-        2: {"label": (365, 840), "seed": (528, 767)},
-        3: {"label": (1206, 840), "seed": (1470, 770)},
+        1: {"label": (825, 840), "seed": (1005, 767)},
+        2: {"label": (335, 840), "seed": (528, 767)},
+        3: {"label": (1295, 840), "seed": (1470, 770)},
     },
     4: {
         1: {"label": (236, 848), "seed": (390, 785)},
         2: {"label": (635, 848), "seed": (785, 785)},
         3: {"label": (1025, 848), "seed": (1175, 785)},
-        4: {"label": (1400, 848), "seed": (1560, 785)},
+        4: {"label": (1415, 848), "seed": (1560, 785)},
     },
     8: {
         1: {"label": (128, 848), "seed": (215, 792)},
@@ -390,7 +390,8 @@ def _draw_text_fields(
                 entrant.characters[0].melee_fighter_name,
                 anchor="ma",
                 max_width=180 if placement_count == 8 else 290,
-                preferred_size=28,
+                preferred_size=28 if placement_count == 8 else 34,
+                wrap=True,
             )
         if entrant.seed is not None:
             _draw_text(
