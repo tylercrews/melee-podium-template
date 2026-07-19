@@ -10,7 +10,7 @@ PORTRAIT_SCALE_BY_MODE = {
     "doubles_top_3": 0.29,
     "doubles_top_4": 0.26,
     "singles_top_3": 0.40,
-    "singles_top_4": 0.32,
+    "singles_top_4": 0.28,
     "singles_top_8": 0.22,
 }
 
