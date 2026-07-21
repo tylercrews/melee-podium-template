@@ -113,6 +113,7 @@ class BracketImport:
             date=self.date.date() if self.date else "Date unavailable",
             entrants_count=self.entrants_count,
             subtitle=self.location,
+            link=self.link.url,
         )
 
     def to_singles_entrants(self) -> tuple[SinglesEntrant, ...]:

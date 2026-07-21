@@ -361,6 +361,18 @@ def _draw_text_fields(
         max_width=width // 3,
         preferred_size=32,
     )
+    if tournament.link is not None:
+        # Keep the source bracket present but visually subordinate to results.
+        # ``ra`` locks its right edge to the image margin even for long URLs.
+        _draw_text(
+            draw,
+            (width - 18, canvas.height - 14),
+            tournament.link,
+            anchor="ra",
+            max_width=width - 36,
+            preferred_size=11,
+            fill=(210, 210, 210),
+        )
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.

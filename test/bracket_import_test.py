@@ -29,6 +29,11 @@ class BracketImportTests(unittest.TestCase):
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Second", "seed": 3, "final_rank": 2}}, {"participant": {"id": 2, "display_name": "First", "seed": 1, "final_rank": 1}}]}}, link)
         self.assertEqual([player.tag for player in result.players], ["First", "Second"])
 
+    def test_tournament_conversion_keeps_the_source_link(self):
+        link = identify_bracket_link("https://challonge.com/melee")
+        result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Winner", "final_rank": 1}}]}}, link)
+        self.assertEqual(result.to_tournament().link, "https://challonge.com/melee")
+
 
 if __name__ == "__main__":
     unittest.main()

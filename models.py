@@ -51,13 +51,14 @@ def _validate_text(value: str, field_name: str) -> None:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Tournament:
-    """Metadata displayed at the top of a podium image."""
+    """Metadata displayed around a podium image."""
 
     title: str
     entrants_count: int
     date: str | date
     subtitle: str | None = None
     event: str | None = None
+    link: str | None = None
 
     def __post_init__(self) -> None:
         _validate_text(self.title, "Tournament title")
@@ -65,6 +66,8 @@ class Tournament:
             _validate_text(self.subtitle, "Tournament subtitle")
         if self.event is not None:
             _validate_text(self.event, "Tournament event")
+        if self.link is not None:
+            _validate_text(self.link, "Tournament link")
         if self.entrants_count <= 0:
             raise ValueError("Entrants count must be greater than 0")
 
