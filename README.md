@@ -21,6 +21,31 @@ frontend to fill stuff out
 * counter for how often the generator has been used, keep a cute counter on the page lol.
 start.gg and challonge support from top8er to plug in brackets easily
 
+## Bracket-import groundwork
+
+`bracket_import.py` now recognizes public Start.gg, Challonge, Tonamel, and
+ParryGG bracket links and normalizes the data returned by their APIs into one
+provider-neutral result format.  It deliberately retains data that cannot yet
+be drawn (source URL, event, dates, seeds, handles, country, and raw metadata)
+instead of throwing it away.
+
+Start.gg can provide tournament/event name, start time, city/country, entrant
+count, placements, seeds, player tags, linked X handles, and game character
+selections.  Character selections require the Start.gg character-ID map and
+the event's game/selection payload.  No supported provider offers a reliable
+Melee costume/color field: Start.gg score encoding has been used as a heuristic
+by Top8er, but it is not treated as verified here.  Challonge contributes names,
+seeds, and final ranks; Tonamel contributes placement/display-name data; and
+ParryGG contributes placements, tags, country, entrant count, and tournament
+date/location when present.
+
+The module currently parses API JSON rather than embedding credentials in this
+desktop project.  A future URL-import UI should obtain server-side credentials
+for Start.gg (GraphQL bearer token), Challonge (API/OAuth), Tonamel (OAuth
+client credentials), and ParryGG (API-key/gRPC), then pass each response to the
+matching `parse_*` function.  `startgg_query()` supplies the safe base GraphQL
+request for the first provider.
+
 LocalStorage and LocalStorage Management page.
 * should be able to store 300-350 entrants per MB, and localstorage can have up to 5MB, but I don't really want to push it.
 * should be able to specify whether or not you want to save entrants when creating them
