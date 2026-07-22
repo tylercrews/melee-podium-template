@@ -38,6 +38,7 @@ class BracketImportTests(unittest.TestCase):
     def test_footer_link_removes_scheme_and_www(self):
         self.assertEqual(_display_link("https://www.example.com/bracket"), "example.com/bracket")
         self.assertEqual(_display_link("www.example.com/bracket"), "example.com/bracket")
+        self.assertEqual(_display_link(" https://www.example.com/ bracket \n"), "example.com/bracket")
 
 
 if __name__ == "__main__":

@@ -290,7 +290,8 @@ def _draw_text(
 
 def _display_link(link: str) -> str:
     """Make a footer URL compact without changing the stored source link."""
-    return re.sub(r"^(?:https?://)?(?:www\.)?", "", link, flags=re.IGNORECASE)
+    compact = re.sub(r"\s+", "", link)
+    return re.sub(r"^(?:https?://)?(?:www\.)?", "", compact, flags=re.IGNORECASE)
 
 
 def _tag_anchor(x: int, y: int, image: Image.Image) -> tuple[int, int]:
