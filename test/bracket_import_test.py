@@ -6,6 +6,7 @@ import unittest
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from DrawPodium import _display_link
 from bracket_import import BracketProvider, identify_bracket_link, parse_challonge, parse_startgg
 
 
@@ -33,6 +34,10 @@ class BracketImportTests(unittest.TestCase):
         link = identify_bracket_link("https://challonge.com/melee")
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Winner", "final_rank": 1}}]}}, link)
         self.assertEqual(result.to_tournament().link, "https://challonge.com/melee")
+
+    def test_footer_link_removes_scheme_and_www(self):
+        self.assertEqual(_display_link("https://www.example.com/bracket"), "example.com/bracket")
+        self.assertEqual(_display_link("www.example.com/bracket"), "example.com/bracket")
 
 
 if __name__ == "__main__":

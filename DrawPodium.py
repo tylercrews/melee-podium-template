@@ -288,6 +288,11 @@ def _draw_text(
     )
 
 
+def _display_link(link: str) -> str:
+    """Make a footer URL compact without changing the stored source link."""
+    return re.sub(r"^(?:https?://)?(?:www\.)?", "", link, flags=re.IGNORECASE)
+
+
 def _tag_anchor(x: int, y: int, image: Image.Image) -> tuple[int, int]:
     """Return a point just above the visible (non-transparent) portrait pixels."""
     alpha_bounds = image.getchannel("A").getbbox()
@@ -366,11 +371,11 @@ def _draw_text_fields(
         # ``ra`` locks its right edge to the image margin even for long URLs.
         _draw_text(
             draw,
-            (width - 18, canvas.height - 14),
-            tournament.link,
+            (width - 10, canvas.height - 34),
+            _display_link(tournament.link),
             anchor="ra",
             max_width=width - 36,
-            preferred_size=11,
+            preferred_size=18,
             fill=(210, 210, 210),
         )
 

@@ -25,7 +25,7 @@ TOURNAMENT = Tournament(
     title="Podium Rendering Test",
     date="July 12, 2026",
     entrants_count=64,
-    link="https://example.test/brackets/podium-rendering-test",
+    link="https://www.example.test/brackets/podium-rendering-test",
 )
 
 
