@@ -36,11 +36,10 @@ MELEE_FIGHTERS = (
 
 
 class TournamentFormat(StrEnum):
-    """How entrants are grouped in the tournament event."""
+    """Whether an event is singles or the supported two-player doubles format."""
 
     SINGLES = "singles"
     DOUBLES = "doubles"
-    TEAMS = "teams"
     UNKNOWN = "unknown"
 
 

@@ -289,8 +289,6 @@ def _event_format(entrant_size: Any) -> TournamentFormat:
         return TournamentFormat.SINGLES
     if entrant_size == 2:
         return TournamentFormat.DOUBLES
-    if isinstance(entrant_size, int) and entrant_size > 2:
-        return TournamentFormat.TEAMS
     return TournamentFormat.UNKNOWN
 
 
