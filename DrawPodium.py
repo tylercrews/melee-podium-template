@@ -16,7 +16,7 @@ import re
 from PIL import Image, ImageDraw, ImageFont
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
-from models import Character, DoublesTeam, SinglesEntrant, Tournament
+from models import Character, DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
@@ -442,6 +442,10 @@ def draw_podium(
         raise ValueError(
             f"Entrants count must be at least {mode.placement_count} for this layout"
         )
+    if tournament.event_format == TournamentFormat.DOUBLES and not mode.is_doubles:
+        raise ValueError("A doubles Tournament must use a doubles podium mode")
+    if tournament.event_format == TournamentFormat.SINGLES and mode.is_doubles:
+        raise ValueError("A singles Tournament must use a singles podium mode")
     mode_scale = (
         get_mode_portrait_scale(mode) if character_scale is None else character_scale
     )

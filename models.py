@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date
+from enum import StrEnum
 
 
 MELEE_FIGHTERS = (
@@ -34,6 +35,15 @@ MELEE_FIGHTERS = (
 )
 
 
+class TournamentFormat(StrEnum):
+    """How entrants are grouped in the tournament event."""
+
+    SINGLES = "singles"
+    DOUBLES = "doubles"
+    TEAMS = "teams"
+    UNKNOWN = "unknown"
+
+
 def _validate_seed(seed: int | None) -> None:
     if seed is not None and seed <= 0:
         raise ValueError("Seed must be greater than 0 or None")
@@ -59,6 +69,7 @@ class Tournament:
     subtitle: str | None = None
     event: str | None = None
     link: str | None = None
+    event_format: TournamentFormat = TournamentFormat.UNKNOWN
 
     def __post_init__(self) -> None:
         _validate_text(self.title, "Tournament title")
@@ -68,6 +79,8 @@ class Tournament:
             _validate_text(self.event, "Tournament event")
         if self.link is not None:
             _validate_text(self.link, "Tournament link")
+        if not isinstance(self.event_format, TournamentFormat):
+            raise TypeError("Tournament event_format must be a TournamentFormat")
         if self.entrants_count <= 0:
             raise ValueError("Entrants count must be greater than 0")
 

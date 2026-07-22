@@ -39,6 +39,13 @@ seeds, and final ranks; Tonamel contributes placement/display-name data; and
 ParryGG contributes placements, tags, country, entrant count, and tournament
 date/location when present.
 
+Start.gg explicitly identifies an event's entrant size, so an entrant size of
+two imports as doubles.  Its entrant display name is retained as the team name
+and its two participant tags are retained as team members.  ParryGG can do the
+same when its entrant records expose exactly two users.  Challonge and Tonamel
+bracket-result payloads do not reliably state whether a display name is a team,
+so their imports stay `unknown` until a UI allows confirmation.
+
 The module currently parses API JSON rather than embedding credentials in this
 desktop project.  A future URL-import UI should obtain server-side credentials
 for Start.gg (GraphQL bearer token), Challonge (API/OAuth), Tonamel (OAuth

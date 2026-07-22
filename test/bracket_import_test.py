@@ -8,6 +8,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from DrawPodium import _display_link
 from bracket_import import BracketProvider, identify_bracket_link, parse_challonge, parse_startgg
+from models import Character, TournamentFormat
 
 
 class BracketImportTests(unittest.TestCase):
@@ -39,6 +40,15 @@ class BracketImportTests(unittest.TestCase):
         self.assertEqual(_display_link("https://www.example.com/bracket"), "example.com/bracket")
         self.assertEqual(_display_link("www.example.com/bracket"), "example.com/bracket")
         self.assertEqual(_display_link(" https://www.example.com/ bracket \n"), "example.com/bracket")
+
+    def test_startgg_doubles_preserves_the_team_name_and_members(self):
+        link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-doubles")
+        data = {"data": {"event": {"name": "Melee Doubles", "numEntrants": 8, "entrantSizeMin": 2, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "The Team", "initialSeedNum": 2, "participants": [{"gamerTag": "Player One"}, {"gamerTag": "Player Two"}]}}]}}}}
+        result = parse_startgg(data, link)
+        self.assertEqual(result.event_format, TournamentFormat.DOUBLES)
+        self.assertEqual([member.tag for member in result.players[0].members], ["Player One", "Player Two"])
+        teams = result.to_doubles_teams(characters_by_member={"Player One": [Character("Fox")], "Player Two": [Character("Falco")]})
+        self.assertEqual(teams[0].team_name, "The Team")
 
 
 if __name__ == "__main__":
