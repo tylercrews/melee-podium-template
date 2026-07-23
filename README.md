@@ -1,5 +1,8 @@
 # melee-podium-template
 Inspired by Top8er and using assets from Melee-CSProject, this program creates top 8 podium images for doubles tournaments specifically, which are not well supported in top8er.
+Shouts out to top8er for being open source so that I could use their bracket import code.
+Shouts out to Cell on SmashBoards in a thread from 2015 for supplying the stock images.
+Shouts out to AeonSSB for the original character render images from the MeleeCS project repo
 
 
 TODO LIST:
