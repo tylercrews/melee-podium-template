@@ -22,7 +22,7 @@ from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-CHARACTER_FOLDER = PROJECT_ROOT / "char_poses_meleecsproject"
+CHARACTER_FOLDER = PROJECT_ROOT / "char_assets" / "renders"
 FONT_PATH = PROJECT_ROOT / "Tyrowo-Inked-Regular.ttf"
 
 # Positive values move every portrait's bottom anchor farther down onto the

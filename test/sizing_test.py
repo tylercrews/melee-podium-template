@@ -12,7 +12,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 
-POSES_DIR = PROJECT_ROOT / "char_poses_meleecsproject"
+POSES_DIR = PROJECT_ROOT / "char_assets" / "renders"
 OUTPUT_PATH = Path(__file__).with_name("sizing_test_output.png")
 
 BACKGROUND = (38, 38, 42, 255)
