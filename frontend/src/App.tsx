@@ -1,4 +1,4 @@
-Ôªøimport { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -405,7 +405,7 @@ function App() {
             />
           </label>
           <button type="submit" disabled={isImporting}>
-            {isImporting ? "Importing‚Ä¶" : "Import"}
+            {isImporting ? "ImportingÖ" : "Import"}
           </button>
         </form>
         {importState && <p className="form-message">{importState}</p>}
@@ -500,7 +500,7 @@ function App() {
               <input
                 value={tournament.event}
                 onChange={(event) => setTournament((current) => ({ ...current, event: event.target.value }))}
-                placeholder="Melee Singles"
+                placeholder={`Melee ${eventFormat === "doubles" ? "Doubles" : "Singles"}`}
               />
             </label>
             <label>
@@ -656,7 +656,7 @@ function App() {
 
           <div className="form-actions">
             <button className="button-primary" type="submit" disabled={isRendering}>
-              {isRendering ? "Rendering‚Ä¶" : "Render podium"}
+              {isRendering ? "RenderingÖ" : "Render podium"}
             </button>
             {renderError && (
               <p className="error" role="alert">
@@ -687,7 +687,7 @@ function App() {
           {previewUrl ? (
             <img src={previewUrl} alt="Rendered tournament podium" />
           ) : (
-            <p>Complete the form and select ‚ÄúRender podium.‚Äù</p>
+            <p>Complete the form and select ìRender podium.î</p>
           )}
         </div>
       </section>
