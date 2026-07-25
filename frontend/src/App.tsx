@@ -22,14 +22,36 @@ interface TournamentForm {
   entrantsCount: string;
 }
 
-const initialEntrants: EntrantForm[] = [1, 2, 3].map((placement) => ({
-  tag: "",
-  seed: String(placement),
-  placement: String(placement),
-  fighter: "",
-  color: "",
-  pose: "",
-}));
+type EventFormat = "singles" | "doubles";
+type PodiumSize = 3 | 4 | 8;
+
+function createEntrants(count: number, existing: EntrantForm[] = []): EntrantForm[] {
+  return Array.from({ length: count }, (_, index) => {
+    const placement = index + 1;
+    return existing[index] ?? {
+      tag: "",
+      seed: String(placement),
+      placement: String(placement),
+      fighter: "",
+      color: "",
+      pose: "",
+    };
+  });
+}
+
+function recommendedPodiumSize(format: EventFormat, entrantsCount?: number): PodiumSize {
+  if (entrantsCount !== undefined && entrantsCount <= 9) return 3;
+  if (format === "singles" && entrantsCount !== undefined && entrantsCount <= 14) return 4;
+  return format === "singles" ? 8 : 4;
+}
+
+function importFormat(value: unknown): EventFormat | undefined {
+  if (typeof value !== "string") return undefined;
+  const format = value.toLowerCase();
+  if (format.includes("double")) return "doubles";
+  if (format.includes("single")) return "singles";
+  return undefined;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -66,7 +88,9 @@ function App() {
     date: new Date().toISOString().slice(0, 10),
     entrantsCount: "16",
   });
-  const [entrants, setEntrants] = useState<EntrantForm[]>(initialEntrants);
+const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
+  const [podiumSize, setPodiumSize] = useState<PodiumSize>(8);
+  const [entrants, setEntrants] = useState<EntrantForm[]>(() => createEntrants(8));
   const [bracketUrl, setBracketUrl] = useState("");
   const [importState, setImportState] = useState("");
   const [isImporting, setIsImporting] = useState(false);
@@ -133,7 +157,7 @@ function App() {
 
   const payload = useMemo(
     () => ({
-      mode: "singles_top_3",
+      mode: `${eventFormat}_top_${podiumSize}`,
       tournament: {
         title: tournament.title.trim(),
         date: tournament.date,
@@ -148,8 +172,20 @@ function App() {
         pose: entrant.pose,
       })),
     }),
-    [entrants, tournament],
+    [entrants, eventFormat, podiumSize, tournament],
   );
+
+  function selectFormat(format: EventFormat) {
+    const size = recommendedPodiumSize(format);
+    setEventFormat(format);
+    setPodiumSize(size);
+    setEntrants((current) => createEntrants(size, current));
+  }
+
+  function selectPodiumSize(size: PodiumSize) {
+    setPodiumSize(size);
+    setEntrants((current) => createEntrants(size, current));
+  }
 
   function fighterByName(name: string): FighterOption | undefined {
     return fighters.find((fighter) => fighter.name === name);
@@ -200,6 +236,27 @@ function App() {
     const importedTournament = isRecord(result.tournament)
       ? result.tournament
       : result;
+    const entrantsCount = Number(
+      stringValue(
+        importedTournament.entrants_count,
+        importedTournament.entrant_count,
+        result.entrants_count,
+      ),
+    );
+    const importedFormat = importFormat(
+      importedTournament.event_format ??
+        importedTournament.format ??
+        result.event_format ??
+        result.format,
+    );
+    const nextFormat = importedFormat ?? eventFormat;
+    const nextSize = recommendedPodiumSize(
+      nextFormat,
+      Number.isFinite(entrantsCount) && entrantsCount > 0 ? entrantsCount : undefined,
+    );
+
+    setEventFormat(nextFormat);
+    setPodiumSize(nextSize);
     setTournament((current) => ({
       title:
         stringValue(
@@ -219,11 +276,10 @@ function App() {
     }));
 
     const importedEntrants = Array.isArray(result.entrants)
-      ? result.entrants.slice(0, 3)
+      ? result.entrants.slice(0, nextSize)
       : [];
-    if (importedEntrants.length) {
-      setEntrants((current) =>
-        current.map((existing, index) => {
+    setEntrants((current) =>
+      createEntrants(nextSize, current).map((existing, index) => {
           const imported = importedEntrants[index];
           if (!isRecord(imported)) return existing;
           const character = firstCharacter(imported);
@@ -246,9 +302,8 @@ function App() {
               stringValue(imported.color, character.color) || existing.color,
             pose: stringValue(imported.pose, character.pose) || existing.pose,
           };
-        }),
-      );
-    }
+      }),
+    );
   }
 
   async function handleImport(event: FormEvent) {
@@ -385,7 +440,36 @@ function App() {
         <section className="panel">
           <div className="section-heading">
             <div>
-              <h2>Top three</h2>
+              <h2>Podium format</h2>
+              <p>Choose the event type and how many placements to render.</p>
+            </div>
+          </div>
+          <div className="format-controls">
+            <fieldset className="choice-group">
+              <legend>Event type</legend>
+              {(["singles", "doubles"] as const).map((format) => (
+                <label className="choice" key={format}>
+                  <input type="radio" name="event-format" checked={eventFormat === format} onChange={() => selectFormat(format)} />
+                  {format[0].toUpperCase() + format.slice(1)}
+                </label>
+              ))}
+            </fieldset>
+            <fieldset className="choice-group">
+              <legend>Podium size</legend>
+              {([3, 4, 8] as const).filter((size) => eventFormat === "singles" || size !== 8).map((size) => (
+                <label className="choice" key={size}>
+                  <input type="radio" name="podium-size" checked={podiumSize === size} onChange={() => selectPodiumSize(size)} />
+                  Top {size}
+                </label>
+              ))}
+            </fieldset>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="section-heading">
+            <div>
+              <h2>Top {podiumSize}</h2>
               <p>Character colors and poses come from the renderer.</p>
             </div>
             {optionsError && (
