@@ -19,6 +19,10 @@ export interface HealthResponse {
   [key: string]: unknown;
 }
 
+export interface StatsResponse {
+  render_count: number;
+}
+
 const configuredBase = import.meta.env.VITE_API_BASE_URL?.trim();
 const viteBase = import.meta.env.BASE_URL.endsWith("/")
   ? import.meta.env.BASE_URL
@@ -85,6 +89,11 @@ export async function request(
 export async function getHealth(): Promise<HealthResponse> {
   const response = await request("health");
   return (await response.json()) as HealthResponse;
+}
+
+export async function getStats(): Promise<StatsResponse> {
+  const response = await request("stats");
+  return (await response.json()) as StatsResponse;
 }
 
 function asStringArray(value: unknown): string[] {

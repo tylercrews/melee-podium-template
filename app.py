@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from io import BytesIO
+import os
 from pathlib import Path
+import sqlite3
 from typing import Any, Mapping
 import re
 
@@ -16,11 +18,45 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
+STATS_DATABASE_PATH = Path(
+    os.environ.get("PODIUM_STATS_DB", PROJECT_ROOT / "podium_stats.sqlite3")
+)
 _PORTRAIT_FILENAME = re.compile(
     r"^\d+(?P<pose>[a-z]+)_(?P<color>[^_]+)_", re.IGNORECASE
 )
 
 app = Flask(__name__, static_folder=None)
+
+
+def _render_count() -> int:
+    """Return the persistent count of successfully generated PNGs."""
+    STATS_DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(STATS_DATABASE_PATH) as connection:
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS application_stats "
+            "(key TEXT PRIMARY KEY, value INTEGER NOT NULL)"
+        )
+        connection.execute(
+            "INSERT INTO application_stats(key, value) VALUES ('render_count', 0) "
+            "ON CONFLICT(key) DO NOTHING"
+        )
+        row = connection.execute(
+            "SELECT value FROM application_stats WHERE key = 'render_count'"
+        ).fetchone()
+    return int(row[0]) if row else 0
+
+
+def _increment_render_count() -> int:
+    """Atomically record one completed render and return the new total."""
+    _render_count()
+    with sqlite3.connect(STATS_DATABASE_PATH) as connection:
+        connection.execute(
+            "UPDATE application_stats SET value = value + 1 WHERE key = 'render_count'"
+        )
+        row = connection.execute(
+            "SELECT value FROM application_stats WHERE key = 'render_count'"
+        ).fetchone()
+    return int(row[0]) if row else 0
 
 
 def _json_object(value: Any, name: str) -> Mapping[str, Any]:
@@ -160,6 +196,11 @@ def health() -> Any:
     return jsonify(status="ok")
 
 
+@app.get("/api/stats")
+def stats() -> Any:
+    return jsonify(render_count=_render_count())
+
+
 @app.get("/api/options")
 def options() -> Any:
     return jsonify(
@@ -178,6 +219,7 @@ def render() -> Any:
     image = draw_podium(mode, entrants, tournament=tournament)
     output = BytesIO()
     image.save(output, format="PNG")
+    _increment_render_count()
     output.seek(0)
     return send_file(output, mimetype="image/png", download_name="melee-podium.png")
 
