@@ -8,6 +8,7 @@ import {
   renderPodium,
 } from "./api";
 import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
+import Footer from "./Footer";
 import FavoritesManagement from "./FavoritesManagement";
 import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, loadFavorites, newFavoriteId, saveFavorites } from "./favorites";
 
@@ -766,7 +767,7 @@ function App() {
     .replace(/^-|-$/g, "");
 
   if (window.location.pathname.replace(/\/+$/, "").endsWith("favorites_management")) {
-    return <FavoritesManagement favorites={favorites} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
+    return <FavoritesManagement favorites={favorites} renderCount={renderCount} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
   }
 
   return (
@@ -778,9 +779,6 @@ function App() {
             Enter a top three manually or import a public bracket, then render a
             downloadable podium graphic.
           </p>
-          {renderCount !== null && (
-            <p className="render-count">Podiums rendered: {renderCount.toLocaleString()}</p>
-          )}
         </div>
         <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <div className={`health health--${health}`} role="status">
@@ -1120,6 +1118,7 @@ function App() {
           )}
         </div>
       </section>
+      <Footer renderCount={renderCount} />
     </main>
   );
 }

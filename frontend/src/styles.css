@@ -432,3 +432,12 @@ input::placeholder {
 .favorite-member-editor { display: grid; gap: 0.65rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 600px) { .inline-actions { display: grid; grid-template-columns: 1fr; width: 100%; } .favorite-choice { grid-template-columns: 1fr auto; } .favorite-choice > span:last-child { grid-column: 1 / -1; } }
+.site-footer {
+  margin-top: 2.5rem;
+  color: #a994ff;
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.7;
+  text-align: center;
+}
