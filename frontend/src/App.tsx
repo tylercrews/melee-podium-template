@@ -7,14 +7,36 @@ import {
   renderPodium,
 } from "./api";
 
-interface EntrantForm {
-  tag: string;
-  seed: string;
-  placement: string;
+interface CharacterForm {
   fighter: string;
   color: string;
   pose: string;
 }
+
+interface EntrantForm {
+  tag: string;
+  characters: CharacterForm[];
+}
+
+interface SinglesEntrantForm {
+  kind: "singles";
+  tag: string;
+  seed: string;
+  placement: string;
+  characters: CharacterForm[];
+}
+
+interface DoublesTeamForm {
+  kind: "doubles";
+  team_name: string;
+  seed: string;
+  placement: string;
+  team_color: string;
+  entrant_1: EntrantForm;
+  entrant_2: EntrantForm;
+}
+
+type EntrantFormState = SinglesEntrantForm | DoublesTeamForm;
 
 interface TournamentForm {
   title: string;
@@ -28,17 +50,101 @@ interface TournamentForm {
 type EventFormat = "singles" | "doubles";
 type PodiumSize = 3 | 4 | 8;
 
-function createEntrants(count: number, existing: EntrantForm[] = []): EntrantForm[] {
+function createCharacterForm(
+  fighter = "",
+  color = "",
+  pose = "",
+): CharacterForm {
+  return { fighter, color, pose };
+}
+
+function createEntrantForm(existing?: EntrantForm): EntrantForm {
+  return {
+    tag: existing?.tag ?? "",
+    characters: existing?.characters?.length
+      ? existing.characters.map((character) => ({ ...character }))
+      : [createCharacterForm()],
+  };
+}
+
+function createSinglesEntrant(
+  placement: number,
+  existing?: SinglesEntrantForm,
+): SinglesEntrantForm {
+  return {
+    kind: "singles",
+    tag: existing?.tag ?? "",
+    seed: existing?.seed ?? String(placement),
+    placement: existing?.placement ?? String(placement),
+    characters: existing?.characters?.length
+      ? existing.characters.map((character) => ({ ...character }))
+      : [createCharacterForm()],
+  };
+}
+
+function createDoublesTeam(
+  placement: number,
+  existing?: DoublesTeamForm | SinglesEntrantForm,
+): DoublesTeamForm {
+  const fallbackEntrant =
+    existing?.kind === "singles"
+      ? createEntrantForm({
+          tag: existing.tag,
+          characters: existing.characters,
+        })
+      : undefined;
+
+  return {
+    kind: "doubles",
+    team_name: existing?.kind === "doubles" ? existing.team_name : "",
+    seed: existing?.kind === "doubles" ? existing.seed : String(placement),
+    placement: existing?.kind === "doubles" ? existing.placement : String(placement),
+    team_color: existing?.kind === "doubles" ? existing.team_color : "",
+    entrant_1:
+      existing?.kind === "doubles"
+        ? createEntrantForm(existing.entrant_1)
+        : fallbackEntrant ?? createEntrantForm(),
+    entrant_2:
+      existing?.kind === "doubles"
+        ? createEntrantForm(existing.entrant_2)
+        : createEntrantForm(),
+  };
+}
+
+function createEntrants(
+  count: number,
+  format: EventFormat,
+  existing: EntrantFormState[] = [],
+): EntrantFormState[] {
   return Array.from({ length: count }, (_, index) => {
     const placement = index + 1;
-    return existing[index] ?? {
-      tag: "",
-      seed: String(placement),
-      placement: String(placement),
-      fighter: "",
-      color: "",
-      pose: "",
-    };
+    const existingEntry = existing[index];
+
+    if (format === "singles") {
+      if (existingEntry?.kind === "singles") {
+        return createSinglesEntrant(placement, existingEntry);
+      }
+      if (existingEntry?.kind === "doubles") {
+        return createSinglesEntrant(placement, {
+          kind: "singles",
+          tag: existingEntry.entrant_1.tag,
+          seed: existingEntry.seed,
+          placement: existingEntry.placement,
+          characters: existingEntry.entrant_1.characters,
+        });
+      }
+      return createSinglesEntrant(placement);
+    }
+
+    if (existingEntry?.kind === "doubles") {
+      return createDoublesTeam(placement, existingEntry);
+    }
+
+    if (existingEntry?.kind === "singles") {
+      return createDoublesTeam(placement, existingEntry);
+    }
+
+    return createDoublesTeam(placement);
   });
 }
 
@@ -104,7 +210,9 @@ function App() {
   });
   const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
   const [podiumSize, setPodiumSize] = useState<PodiumSize>(8);
-  const [entrants, setEntrants] = useState<EntrantForm[]>(() => createEntrants(8));
+  const [entrants, setEntrants] = useState<EntrantFormState[]>(() =>
+    createEntrants(8, "singles"),
+  );
   const [bracketUrl, setBracketUrl] = useState("");
   const [importState, setImportState] = useState("");
   const [isImporting, setIsImporting] = useState(false);
@@ -136,16 +244,48 @@ function App() {
         const firstOption = first?.options[0];
         if (first) {
           setEntrants((current) =>
-            current.map((entrant) =>
-              entrant.fighter
-                ? entrant
-                : {
-                    ...entrant,
-                    fighter: first.name,
-                    color: firstOption?.color ?? "",
-                    pose: firstOption?.pose ?? "",
-                  },
-            ),
+            current.map((entrant) => {
+              if (entrant.kind === "singles") {
+                const character = entrant.characters[0] ?? createCharacterForm();
+                if (character.fighter) return entrant;
+                return {
+                  ...entrant,
+                  characters: [
+                    {
+                      fighter: first.name,
+                      color: firstOption?.color ?? "",
+                      pose: firstOption?.pose ?? "",
+                    },
+                  ],
+                };
+              }
+
+              const firstMember = entrant.entrant_1.characters[0] ?? createCharacterForm();
+              const secondMember = entrant.entrant_2.characters[0] ?? createCharacterForm();
+              return {
+                ...entrant,
+                entrant_1: {
+                  ...entrant.entrant_1,
+                  characters: [
+                    {
+                      fighter: firstMember.fighter || first.name,
+                      color: firstMember.color || (firstOption?.color ?? ""),
+                      pose: firstMember.pose || (firstOption?.pose ?? ""),
+                    },
+                  ],
+                },
+                entrant_2: {
+                  ...entrant.entrant_2,
+                  characters: [
+                    {
+                      fighter: secondMember.fighter || first.name,
+                      color: secondMember.color || (firstOption?.color ?? ""),
+                      pose: secondMember.pose || (firstOption?.pose ?? ""),
+                    },
+                  ],
+                },
+              };
+            }),
           );
         }
       })
@@ -181,14 +321,55 @@ function App() {
         link: tournament.link.trim() || null,
         event_format: eventFormat,
       },
-      entrants: entrants.map((entrant) => ({
-        tag: entrant.tag.trim(),
-        seed: entrant.seed ? Number(entrant.seed) : null,
-        placement: Number(entrant.placement),
-        fighter: entrant.fighter,
-        color: entrant.color,
-        pose: entrant.pose,
-      })),
+      entrants: entrants.map((entrant) => {
+        if (entrant.kind === "singles") {
+          const character = entrant.characters[0] ?? createCharacterForm();
+          return {
+            tag: entrant.tag.trim(),
+            seed: entrant.seed ? Number(entrant.seed) : null,
+            placement: Number(entrant.placement),
+            characters: [
+              {
+                melee_fighter_name: character.fighter,
+                color: character.color,
+                pose: character.pose,
+              },
+            ],
+          };
+        }
+
+        const entrantOneCharacter =
+          entrant.entrant_1.characters[0] ?? createCharacterForm();
+        const entrantTwoCharacter =
+          entrant.entrant_2.characters[0] ?? createCharacterForm();
+
+        return {
+          team_name: entrant.team_name.trim(),
+          seed: entrant.seed ? Number(entrant.seed) : null,
+          placement: Number(entrant.placement),
+          team_color: entrant.team_color.trim() || null,
+          entrant_1: {
+            tag: entrant.entrant_1.tag.trim(),
+            characters: [
+              {
+                melee_fighter_name: entrantOneCharacter.fighter,
+                color: entrantOneCharacter.color,
+                pose: entrantOneCharacter.pose,
+              },
+            ],
+          },
+          entrant_2: {
+            tag: entrant.entrant_2.tag.trim(),
+            characters: [
+              {
+                melee_fighter_name: entrantTwoCharacter.fighter,
+                color: entrantTwoCharacter.color,
+                pose: entrantTwoCharacter.pose,
+              },
+            ],
+          },
+        };
+      }),
     }),
     [entrants, eventFormat, podiumSize, tournament],
   );
@@ -197,51 +378,150 @@ function App() {
     const size = recommendedPodiumSize(format);
     setEventFormat(format);
     setPodiumSize(size);
-    setEntrants((current) => createEntrants(size, current));
+    setEntrants((current) => createEntrants(size, format, current));
   }
 
   function selectPodiumSize(size: PodiumSize) {
     setPodiumSize(size);
-    setEntrants((current) => createEntrants(size, current));
+    setEntrants((current) => createEntrants(size, eventFormat, current));
   }
 
   function fighterByName(name: string): FighterOption | undefined {
     return fighters.find((fighter) => fighter.name === name);
   }
 
-  function updateEntrant(
+  function updateSinglesEntrant(
     index: number,
-    field: keyof EntrantForm,
+    field: "tag" | "seed" | "placement",
+    value: string,
+  ) {
+    setEntrants((current) =>
+      current.map((entrant, entrantIndex) => {
+        if (entrantIndex !== index || entrant.kind !== "singles") return entrant;
+        return { ...entrant, [field]: value };
+      }),
+    );
+  }
+
+  function updateDoublesTeam(
+    index: number,
+    field: "team_name" | "seed" | "placement" | "team_color",
+    value: string,
+  ) {
+    setEntrants((current) =>
+      current.map((entrant, entrantIndex) => {
+        if (entrantIndex !== index || entrant.kind !== "doubles") return entrant;
+        return { ...entrant, [field]: value };
+      }),
+    );
+  }
+
+  function updateEntrantTag(index: number, side: "entrant_1" | "entrant_2", value: string) {
+    setEntrants((current) =>
+      current.map((entrant, entrantIndex) => {
+        if (entrantIndex !== index || entrant.kind !== "doubles") return entrant;
+        return side === "entrant_1"
+          ? { ...entrant, entrant_1: { ...entrant.entrant_1, tag: value } }
+          : { ...entrant, entrant_2: { ...entrant.entrant_2, tag: value } };
+      }),
+    );
+  }
+
+  function updateCharacter(
+    index: number,
+    side: "singles" | "entrant_1" | "entrant_2",
+    field: "fighter" | "color" | "pose",
     value: string,
   ) {
     setEntrants((current) =>
       current.map((entrant, entrantIndex) => {
         if (entrantIndex !== index) return entrant;
-        if (field !== "fighter") return { ...entrant, [field]: value };
 
-        const option = fighterByName(value)?.options[0];
-        return {
-          ...entrant,
-          fighter: value,
-          color: option?.color ?? "",
-          pose: option?.pose ?? "",
-        };
-      }),
-    );
-  }
+        if (entrant.kind === "singles") {
+          const character = entrant.characters[0] ?? createCharacterForm();
+          if (field === "fighter") {
+            const option = fighterByName(value)?.options[0];
+            return {
+              ...entrant,
+              characters: [
+                {
+                  fighter: value,
+                  color: option?.color ?? "",
+                  pose: option?.pose ?? "",
+                },
+              ],
+            };
+          }
 
-  function updateColor(index: number, color: string) {
-    setEntrants((current) =>
-      current.map((entrant, entrantIndex) => {
-        if (entrantIndex !== index) return entrant;
-        const matchingOption = fighterByName(entrant.fighter)?.options.find(
-          (option) => option.color === color,
-        );
-        return {
-          ...entrant,
-          color,
-          pose: matchingOption?.pose ?? "",
+          if (field === "color") {
+            const matchingOption = fighterByName(character.fighter)?.options.find(
+              (option) => option.color === value,
+            );
+            return {
+              ...entrant,
+              characters: [
+                {
+                  ...character,
+                  color: value,
+                  pose: matchingOption?.pose ?? "",
+                },
+              ],
+            };
+          }
+
+          return {
+            ...entrant,
+            characters: [{ ...character, pose: value }],
+          };
+        }
+
+        const member = side === "entrant_1" ? entrant.entrant_1 : entrant.entrant_2;
+        const character = member.characters[0] ?? createCharacterForm();
+
+        if (field === "fighter") {
+          const option = fighterByName(value)?.options[0];
+          const nextMember = {
+            ...member,
+            characters: [
+              {
+                fighter: value,
+                color: option?.color ?? "",
+                pose: option?.pose ?? "",
+              },
+            ],
+          };
+          return side === "entrant_1"
+            ? { ...entrant, entrant_1: nextMember }
+            : { ...entrant, entrant_2: nextMember };
+        }
+
+        if (field === "color") {
+          const matchingOption = fighterByName(character.fighter)?.options.find(
+            (option) => option.color === value,
+          );
+          const nextMember = {
+            ...member,
+            characters: [
+              {
+                ...character,
+                color: value,
+                pose: matchingOption?.pose ?? "",
+              },
+            ],
+          };
+          return side === "entrant_1"
+            ? { ...entrant, entrant_1: nextMember }
+            : { ...entrant, entrant_2: nextMember };
+        }
+
+        const nextMember = {
+          ...member,
+          characters: [{ ...character, pose: value }],
         };
+
+        return side === "entrant_1"
+          ? { ...entrant, entrant_1: nextMember }
+          : { ...entrant, entrant_2: nextMember };
       }),
     );
   }
@@ -303,29 +583,108 @@ function App() {
       ? result.entrants.slice(0, nextSize)
       : [];
     setEntrants((current) =>
-      createEntrants(nextSize, current).map((existing, index) => {
-          const imported = importedEntrants[index];
-          if (!isRecord(imported)) return existing;
-          const character = firstCharacter(imported);
-          return {
+      createEntrants(nextSize, nextFormat, current).map((existing, index) => {
+        const imported = importedEntrants[index];
+        if (!isRecord(imported)) return existing;
+
+        const character = firstCharacter(imported);
+        const importedCharacter = createCharacterForm(
+          stringValue(
+            imported.fighter,
+            imported.melee_fighter_name,
+            character.fighter,
+            character.melee_fighter_name,
+          ),
+          stringValue(imported.color, character.color),
+          stringValue(imported.pose, character.pose),
+        );
+
+        if (nextFormat === "singles") {
+          return createSinglesEntrant(index + 1, {
+            kind: "singles",
             tag:
-              stringValue(imported.tag, imported.name, imported.player_tag) ||
-              existing.tag,
-            seed: stringValue(imported.seed) || existing.seed,
+              (stringValue(imported.tag, imported.name, imported.player_tag) ||
+                (existing.kind === "singles" ? existing.tag : "")),
+            seed:
+              stringValue(imported.seed) ||
+              (existing.kind === "singles" ? existing.seed : String(index + 1)),
             placement:
               stringValue(imported.placement, imported.rank) ||
-              existing.placement,
-            fighter:
+              (existing.kind === "singles" ? existing.placement : String(index + 1)),
+            characters: [importedCharacter],
+          });
+        }
+
+        const entrantOne = isRecord(imported.entrant_1)
+          ? imported.entrant_1
+          : isRecord(imported.player_1)
+            ? imported.player_1
+            : imported;
+        const entrantTwo = isRecord(imported.entrant_2)
+          ? imported.entrant_2
+          : isRecord(imported.player_2)
+            ? imported.player_2
+            : imported;
+        const entrantOneCharacter = firstCharacter(entrantOne);
+        const entrantTwoCharacter = firstCharacter(entrantTwo);
+
+        return createDoublesTeam(index + 1, {
+          kind: "doubles",
+          team_name:
+            stringValue(imported.team_name, imported.tag, imported.name) ||
+            (existing.kind === "doubles" ? existing.team_name : ""),
+          seed:
+            stringValue(imported.seed) ||
+            (existing.kind === "doubles" ? existing.seed : String(index + 1)),
+          placement:
+            stringValue(imported.placement, imported.rank) ||
+            (existing.kind === "doubles" ? existing.placement : String(index + 1)),
+          team_color:
+            stringValue(imported.team_color, imported.color) ||
+            (existing.kind === "doubles" ? existing.team_color : ""),
+          entrant_1: {
+            tag:
               stringValue(
-                imported.fighter,
-                imported.melee_fighter_name,
-                character.fighter,
-                character.melee_fighter_name,
-              ) || existing.fighter,
-            color:
-              stringValue(imported.color, character.color) || existing.color,
-            pose: stringValue(imported.pose, character.pose) || existing.pose,
-          };
+                entrantOne.tag,
+                entrantOne.name,
+                entrantOne.player_tag,
+              ) ||
+              (existing.kind === "doubles" ? existing.entrant_1.tag : ""),
+            characters: [
+              createCharacterForm(
+                stringValue(
+                  entrantOne.fighter,
+                  entrantOne.melee_fighter_name,
+                  entrantOneCharacter.fighter,
+                  entrantOneCharacter.melee_fighter_name,
+                ),
+                stringValue(entrantOne.color, entrantOneCharacter.color),
+                stringValue(entrantOne.pose, entrantOneCharacter.pose),
+              ),
+            ],
+          },
+          entrant_2: {
+            tag:
+              stringValue(
+                entrantTwo.tag,
+                entrantTwo.name,
+                entrantTwo.player_tag,
+              ) ||
+              (existing.kind === "doubles" ? existing.entrant_2.tag : ""),
+            characters: [
+              createCharacterForm(
+                stringValue(
+                  entrantTwo.fighter,
+                  entrantTwo.melee_fighter_name,
+                  entrantTwoCharacter.fighter,
+                  entrantTwoCharacter.melee_fighter_name,
+                ),
+                stringValue(entrantTwo.color, entrantTwoCharacter.color),
+                stringValue(entrantTwo.pose, entrantTwoCharacter.pose),
+              ),
+            ],
+          },
+        });
       }),
     );
   }
@@ -405,7 +764,7 @@ function App() {
             />
           </label>
           <button type="submit" disabled={isImporting}>
-            {isImporting ? "Importing…" : "Import"}
+            {isImporting ? "Importingï¿½" : "Import"}
           </button>
         </form>
         {importState && <p className="form-message">{importState}</p>}
@@ -530,13 +889,142 @@ function App() {
 
           <div className="entrant-grid">
             {entrants.map((entrant, index) => {
-              const fighter = fighterByName(entrant.fighter);
-              const colors = unique(
-                (fighter?.options ?? []).map((option) => option.color),
+              if (entrant.kind === "singles") {
+                const character = entrant.characters[0] ?? createCharacterForm();
+                const fighter = fighterByName(character.fighter);
+                const colors = unique(
+                  (fighter?.options ?? []).map((option) => option.color),
+                );
+                const poses = unique(
+                  (fighter?.options ?? [])
+                    .filter((option) => option.color === character.color)
+                    .map((option) => option.pose),
+                );
+
+                return (
+                  <fieldset className="entrant-card" key={index}>
+                    <legend>Placement {index + 1}</legend>
+                    <label>
+                      Player tag
+                      <input
+                        value={entrant.tag}
+                        onChange={(event) =>
+                          updateSinglesEntrant(index, "tag", event.target.value)
+                        }
+                        placeholder={`Player ${index + 1}`}
+                        required
+                      />
+                    </label>
+                    <div className="row-fields">
+                      <label>
+                        Seed
+                        <input
+                          type="number"
+                          min="1"
+                          value={entrant.seed}
+                          onChange={(event) =>
+                            updateSinglesEntrant(index, "seed", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        Placement
+                        <input
+                          type="number"
+                          min="1"
+                          value={entrant.placement}
+                          onChange={(event) =>
+                            updateSinglesEntrant(index, "placement", event.target.value)
+                          }
+                          required
+                        />
+                      </label>
+                    </div>
+                    <label>
+                      Fighter
+                      <select
+                        value={character.fighter}
+                        onChange={(event) =>
+                          updateCharacter(index, "singles", "fighter", event.target.value)
+                        }
+                        required
+                      >
+                        <option value="">Choose a fighter</option>
+                        {character.fighter &&
+                          !fighters.some(
+                            (option) => option.name === character.fighter,
+                          ) && (
+                            <option value={character.fighter}>{character.fighter}</option>
+                          )}
+                        {fighters.map((option) => (
+                          <option key={option.name} value={option.name}>
+                            {option.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="row-fields">
+                      <label>
+                        Color
+                        <select
+                          value={character.color}
+                          onChange={(event) =>
+                            updateCharacter(index, "singles", "color", event.target.value)
+                          }
+                          required
+                        >
+                          {character.color && !colors.includes(character.color) && (
+                            <option value={character.color}>{character.color}</option>
+                          )}
+                          {colors.map((color) => (
+                            <option key={color} value={color}>
+                              {color}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Pose
+                        <select
+                          value={character.pose}
+                          onChange={(event) =>
+                            updateCharacter(index, "singles", "pose", event.target.value)
+                          }
+                          required
+                        >
+                          {character.pose && !poses.includes(character.pose) && (
+                            <option value={character.pose}>{character.pose}</option>
+                          )}
+                          {poses.map((pose) => (
+                            <option key={pose} value={pose}>
+                              {pose}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </fieldset>
+                );
+              }
+
+              const teamCharacterOne = entrant.entrant_1.characters[0] ?? createCharacterForm();
+              const teamCharacterTwo = entrant.entrant_2.characters[0] ?? createCharacterForm();
+              const fighterOne = fighterByName(teamCharacterOne.fighter);
+              const fighterTwo = fighterByName(teamCharacterTwo.fighter);
+              const colorsOne = unique(
+                (fighterOne?.options ?? []).map((option) => option.color),
               );
-              const poses = unique(
-                (fighter?.options ?? [])
-                  .filter((option) => option.color === entrant.color)
+              const colorsTwo = unique(
+                (fighterTwo?.options ?? []).map((option) => option.color),
+              );
+              const posesOne = unique(
+                (fighterOne?.options ?? [])
+                  .filter((option) => option.color === teamCharacterOne.color)
+                  .map((option) => option.pose),
+              );
+              const posesTwo = unique(
+                (fighterTwo?.options ?? [])
+                  .filter((option) => option.color === teamCharacterTwo.color)
                   .map((option) => option.pose),
               );
 
@@ -544,13 +1032,13 @@ function App() {
                 <fieldset className="entrant-card" key={index}>
                   <legend>Placement {index + 1}</legend>
                   <label>
-                    Player tag
+                    Team name
                     <input
-                      value={entrant.tag}
+                      value={entrant.team_name}
                       onChange={(event) =>
-                        updateEntrant(index, "tag", event.target.value)
+                        updateDoublesTeam(index, "team_name", event.target.value)
                       }
-                      placeholder={`Player ${index + 1}`}
+                      placeholder={`Team ${index + 1}`}
                       required
                     />
                   </label>
@@ -562,7 +1050,7 @@ function App() {
                         min="1"
                         value={entrant.seed}
                         onChange={(event) =>
-                          updateEntrant(index, "seed", event.target.value)
+                          updateDoublesTeam(index, "seed", event.target.value)
                         }
                       />
                     </label>
@@ -573,76 +1061,190 @@ function App() {
                         min="1"
                         value={entrant.placement}
                         onChange={(event) =>
-                          updateEntrant(index, "placement", event.target.value)
+                          updateDoublesTeam(index, "placement", event.target.value)
                         }
                         required
                       />
                     </label>
                   </div>
                   <label>
-                    Fighter
+                    Team color
                     <select
-                      value={entrant.fighter}
+                      value={entrant.team_color}
                       onChange={(event) =>
-                        updateEntrant(index, "fighter", event.target.value)
+                        updateDoublesTeam(index, "team_color", event.target.value)
                       }
-                      required
                     >
-                      <option value="">Choose a fighter</option>
-                      {entrant.fighter &&
-                        !fighters.some(
-                          (option) => option.name === entrant.fighter,
-                        ) && (
-                          <option value={entrant.fighter}>
-                            {entrant.fighter}
-                          </option>
-                        )}
-                      {fighters.map((option) => (
-                        <option key={option.name} value={option.name}>
-                          {option.name}
-                        </option>
-                      ))}
+                      <option value="">None</option>
+                      <option value="red">Red</option>
+                      <option value="blue">Blue</option>
+                      <option value="green">Green</option>
                     </select>
                   </label>
+
                   <div className="row-fields">
                     <label>
-                      Color
-                      <select
-                        value={entrant.color}
+                      Entrant 1 tag
+                      <input
+                        value={entrant.entrant_1.tag}
                         onChange={(event) =>
-                          updateColor(index, event.target.value)
+                          updateEntrantTag(index, "entrant_1", event.target.value)
                         }
+                        placeholder={`Player 1 ${index + 1}`}
                         required
-                      >
-                        {entrant.color && !colors.includes(entrant.color) && (
-                          <option value={entrant.color}>{entrant.color}</option>
-                        )}
-                        {colors.map((color) => (
-                          <option key={color} value={color}>
-                            {color}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </label>
                     <label>
-                      Pose
-                      <select
-                        value={entrant.pose}
+                      Entrant 2 tag
+                      <input
+                        value={entrant.entrant_2.tag}
                         onChange={(event) =>
-                          updateEntrant(index, "pose", event.target.value)
+                          updateEntrantTag(index, "entrant_2", event.target.value)
                         }
+                        placeholder={`Player 2 ${index + 1}`}
                         required
-                      >
-                        {entrant.pose && !poses.includes(entrant.pose) && (
-                          <option value={entrant.pose}>{entrant.pose}</option>
-                        )}
-                        {poses.map((pose) => (
-                          <option key={pose} value={pose}>
-                            {pose}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </label>
+                  </div>
+
+                  <div className="row-fields">
+                    <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
+                      <legend>Entrant 1</legend>
+                      <label>
+                        Fighter
+                        <select
+                          value={teamCharacterOne.fighter}
+                          onChange={(event) =>
+                            updateCharacter(index, "entrant_1", "fighter", event.target.value)
+                          }
+                          required
+                        >
+                          <option value="">Choose a fighter</option>
+                          {teamCharacterOne.fighter &&
+                            !fighters.some(
+                              (option) => option.name === teamCharacterOne.fighter,
+                            ) && (
+                              <option value={teamCharacterOne.fighter}>
+                                {teamCharacterOne.fighter}
+                              </option>
+                            )}
+                          {fighters.map((option) => (
+                            <option key={option.name} value={option.name}>
+                              {option.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="row-fields">
+                        <label>
+                          Color
+                          <select
+                            value={teamCharacterOne.color}
+                            onChange={(event) =>
+                              updateCharacter(index, "entrant_1", "color", event.target.value)
+                            }
+                            required
+                          >
+                            {teamCharacterOne.color && !colorsOne.includes(teamCharacterOne.color) && (
+                              <option value={teamCharacterOne.color}>{teamCharacterOne.color}</option>
+                            )}
+                            {colorsOne.map((color) => (
+                              <option key={color} value={color}>
+                                {color}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Pose
+                          <select
+                            value={teamCharacterOne.pose}
+                            onChange={(event) =>
+                              updateCharacter(index, "entrant_1", "pose", event.target.value)
+                            }
+                            required
+                          >
+                            {teamCharacterOne.pose && !posesOne.includes(teamCharacterOne.pose) && (
+                              <option value={teamCharacterOne.pose}>{teamCharacterOne.pose}</option>
+                            )}
+                            {posesOne.map((pose) => (
+                              <option key={pose} value={pose}>
+                                {pose}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
+                      <legend>Entrant 2</legend>
+                      <label>
+                        Fighter
+                        <select
+                          value={teamCharacterTwo.fighter}
+                          onChange={(event) =>
+                            updateCharacter(index, "entrant_2", "fighter", event.target.value)
+                          }
+                          required
+                        >
+                          <option value="">Choose a fighter</option>
+                          {teamCharacterTwo.fighter &&
+                            !fighters.some(
+                              (option) => option.name === teamCharacterTwo.fighter,
+                            ) && (
+                              <option value={teamCharacterTwo.fighter}>
+                                {teamCharacterTwo.fighter}
+                              </option>
+                            )}
+                          {fighters.map((option) => (
+                            <option key={option.name} value={option.name}>
+                              {option.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="row-fields">
+                        <label>
+                          Color
+                          <select
+                            value={teamCharacterTwo.color}
+                            onChange={(event) =>
+                              updateCharacter(index, "entrant_2", "color", event.target.value)
+                            }
+                            required
+                          >
+                            {teamCharacterTwo.color && !colorsTwo.includes(teamCharacterTwo.color) && (
+                              <option value={teamCharacterTwo.color}>{teamCharacterTwo.color}</option>
+                            )}
+                            {colorsTwo.map((color) => (
+                              <option key={color} value={color}>
+                                {color}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Pose
+                          <select
+                            value={teamCharacterTwo.pose}
+                            onChange={(event) =>
+                              updateCharacter(index, "entrant_2", "pose", event.target.value)
+                            }
+                            required
+                          >
+                            {teamCharacterTwo.pose && !posesTwo.includes(teamCharacterTwo.pose) && (
+                              <option value={teamCharacterTwo.pose}>{teamCharacterTwo.pose}</option>
+                            )}
+                            {posesTwo.map((pose) => (
+                              <option key={pose} value={pose}>
+                                {pose}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </fieldset>
                   </div>
                 </fieldset>
               );
@@ -656,7 +1258,7 @@ function App() {
 
           <div className="form-actions">
             <button className="button-primary" type="submit" disabled={isRendering}>
-              {isRendering ? "Rendering…" : "Render podium"}
+              {isRendering ? "Renderingï¿½" : "Render podium"}
             </button>
             {renderError && (
               <p className="error" role="alert">
@@ -687,7 +1289,7 @@ function App() {
           {previewUrl ? (
             <img src={previewUrl} alt="Rendered tournament podium" />
           ) : (
-            <p>Complete the form and select “Render podium.”</p>
+            <p>Complete the form and select ï¿½Render podium.ï¿½</p>
           )}
         </div>
       </section>
