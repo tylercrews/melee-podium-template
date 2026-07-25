@@ -836,7 +836,7 @@ function App() {
         </section>
 
         <section className="panel">
-          <h2>Tournament</h2>
+          <h2>Tournament Info</h2>
           <div className="field-grid">
             <label className="field-grid__wide">
               Title
@@ -912,7 +912,7 @@ function App() {
         <section className="panel">
           <div className="section-heading">
             <div>
-              <h2>Top {podiumSize}</h2>
+              <h2>Top {podiumSize} Entrants</h2>
               <p>Character colors and poses come from the renderer.</p>
             </div>
             {optionsError && (
