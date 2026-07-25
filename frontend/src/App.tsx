@@ -67,6 +67,14 @@ function stringValue(...values: unknown[]): string {
   return match === undefined ? "" : String(match);
 }
 
+function splitTournamentName(name: string): { title: string; subtitle: string } {
+  const [title, ...subtitleParts] = name.split(":");
+  return {
+    title: title.trim() || name.trim(),
+    subtitle: subtitleParts.join(":").trim(),
+  };
+}
+
 function firstCharacter(value: unknown): Record<string, unknown> {
   if (!isRecord(value)) return {};
   if (isRecord(value.character)) return value.character;
@@ -265,15 +273,18 @@ function App() {
       Number.isFinite(entrantsCount) && entrantsCount > 0 ? entrantsCount : undefined,
     );
 
+    const importedName = stringValue(
+      importedTournament.title,
+      importedTournament.name,
+      result.title,
+    );
+    const { title: importedTitle, subtitle: titleSubtitle } =
+      splitTournamentName(importedName);
+
     setEventFormat(nextFormat);
     setPodiumSize(nextSize);
     setTournament((current) => ({
-      title:
-        stringValue(
-          importedTournament.title,
-          importedTournament.name,
-          result.title,
-        ) || current.title,
+      title: importedTitle || current.title,
       date:
         stringValue(importedTournament.date, result.date).slice(0, 10) ||
         current.date,
@@ -283,7 +294,7 @@ function App() {
           importedTournament.entrant_count,
           result.entrants_count,
         ) || current.entrantsCount,
-      subtitle: stringValue(importedTournament.subtitle, result.subtitle) || current.subtitle,
+      subtitle: titleSubtitle || stringValue(importedTournament.subtitle, result.subtitle) || current.subtitle,
       event: stringValue(importedTournament.event, result.event) || current.event,
       link: stringValue(importedTournament.link, result.link) || current.link,
     }));

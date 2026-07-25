@@ -33,8 +33,11 @@ class BracketImportTests(unittest.TestCase):
 
     def test_tournament_conversion_keeps_the_source_link(self):
         link = identify_bracket_link("https://challonge.com/melee")
-        result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Winner", "final_rank": 1}}]}}, link)
-        self.assertEqual(result.to_tournament().link, "https://challonge.com/melee")
+        result = parse_challonge({"tournament": {"name": "Weekly: Downtown", "participants": [{"participant": {"id": 1, "name": "Winner", "final_rank": 1}}]}}, link)
+        tournament = result.to_tournament()
+        self.assertEqual(tournament.link, "https://challonge.com/melee")
+        self.assertEqual(tournament.title, "Weekly")
+        self.assertEqual(tournament.subtitle, "Downtown")
 
     def test_footer_link_removes_scheme_and_www(self):
         self.assertEqual(_display_link("https://www.example.com/bracket"), "example.com/bracket")

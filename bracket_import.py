@@ -119,12 +119,13 @@ class BracketImport:
         """Create display metadata once the provider has supplied a player count."""
         if not self.entrants_count:
             raise ValueError("This import has no entrant count to build a Tournament")
+        title, subtitle = split_tournament_name(self.tournament_name)
         return Tournament(
-            title=self.tournament_name,
+            title=title,
             event=self.event_name,
             date=self.date.date() if self.date else "Date unavailable",
             entrants_count=self.entrants_count,
-            subtitle=self.location,
+            subtitle=subtitle or self.location,
             link=self.link.url,
             event_format=self.event_format,
         )
@@ -173,6 +174,14 @@ class BracketImport:
                 members.append(Entrant(tag=member.tag, characters=characters, x_handle=member.x_handle))
             teams.append(DoublesTeam(seed=team.seed, placement=team.placement, entrant_1=members[0], entrant_2=members[1], team_name=team.tag))
         return tuple(teams)
+
+
+def split_tournament_name(name: str) -> tuple[str, str | None]:
+    """Split a provider title into a display title and optional subtitle."""
+    title, separator, subtitle = name.partition(":")
+    if not separator:
+        return name.strip(), None
+    return title.strip() or name.strip(), subtitle.strip() or None
 
 
 def identify_bracket_link(url: str) -> BracketLink:
