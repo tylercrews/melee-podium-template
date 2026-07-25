@@ -70,10 +70,10 @@ player profiles - have auto selections for frequently used people, maybe by some
 
 
 # testing locally
-(whole app)
+(backend)
 flask --app app run --port 5000
 
-(just the frontend)
+(frontend)
 cd .\frontend
 $ npm run dev 
 
