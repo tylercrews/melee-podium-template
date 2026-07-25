@@ -57,8 +57,8 @@ export function DoublesFavoritePicker({ favorites, onChoose }: { favorites: Favo
         event.currentTarget.closest("details")?.removeAttribute("open");
       }}>
         <strong>{team.team_name || "Untitled team"}</strong>
-        <span className="favorite-team-member"><span>{team.entrant_1.tag || "Entrant 1"}</span><span aria-hidden="true">—</span><CharacterStockIcons characters={team.entrant_1.characters} /></span>
-        <span className="favorite-team-member"><span>{team.entrant_2.tag || "Entrant 2"}</span><span aria-hidden="true">—</span><CharacterStockIcons characters={team.entrant_2.characters} /></span>
+        <span className="favorite-team-member"><span>{team.entrant_1.tag || "Entrant 1"}</span><CharacterStockIcons characters={team.entrant_1.characters} /></span>
+        <span className="favorite-team-member"><span>{team.entrant_2.tag || "Entrant 2"}</span><CharacterStockIcons characters={team.entrant_2.characters} /></span>
       </button>) : <p className="form-message">No favorited doubles teams saved.</p>}
     </div>
   </details>;
