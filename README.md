@@ -75,5 +75,8 @@ flask --app app run --port 5000
 
 (frontend)
 cd .\frontend
-$ npm run dev 
+$ npm run dev
 
+## Render counter deployment
+
+Each successfully generated PNG increments a persistent SQLite counter, available at /api/stats and shown in the page header. By default the database is podium_stats.sqlite3 beside app.py. For deployment, mount durable storage and set PODIUM_STATS_DB to a path on that volume; otherwise providers with ephemeral filesystems will reset the total on redeploy.

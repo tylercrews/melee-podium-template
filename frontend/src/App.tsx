@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
+  getStats,
   getOptions,
   importBracket,
   renderPodium,
@@ -240,6 +241,7 @@ function App() {
   const [health, setHealth] = useState<"checking" | "online" | "offline">(
     "checking",
   );
+  const [renderCount, setRenderCount] = useState<number | null>(null);
   const [fighters, setFighters] = useState<FighterOption[]>(DEFAULT_FIGHTERS);
   const [optionsError, setOptionsError] = useState("");
   const [tournament, setTournament] = useState<TournamentForm>({
@@ -279,6 +281,14 @@ function App() {
       .catch(() => {
         if (active) setHealth("offline");
       });
+
+    getStats()
+      .then((result) => {
+        if (active && Number.isInteger(result.render_count) && result.render_count >= 0) {
+          setRenderCount(result.render_count);
+        }
+      })
+      .catch(() => {});
 
     getOptions()
       .then((result) => {
@@ -738,6 +748,9 @@ function App() {
         if (current) URL.revokeObjectURL(current);
         return nextUrl;
       });
+      void getStats()
+        .then((result) => setRenderCount(result.render_count))
+        .catch(() => {});
     } catch (error) {
       setRenderError(
         error instanceof Error ? error.message : "Could not render the podium.",
@@ -765,6 +778,9 @@ function App() {
             Enter a top three manually or import a public bracket, then render a
             downloadable podium graphic.
           </p>
+          {renderCount !== null && (
+            <p className="render-count">Podiums rendered: {renderCount.toLocaleString()}</p>
+          )}
         </div>
         <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <div className={`health health--${health}`} role="status">
