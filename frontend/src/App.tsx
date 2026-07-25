@@ -760,7 +760,6 @@ function App() {
     <main className="page-shell">
       <header className="site-header">
         <div>
-          <p className="eyebrow">tyro.work</p>
           <h1>Melee Podium Maker</h1>
           <p className="lede">
             Enter a top three manually or import a public bracket, then render a
