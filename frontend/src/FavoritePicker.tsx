@@ -41,7 +41,7 @@ export function SinglesFavoritePicker({ favorites, onChoose, label = "Use favori
         }}>
           <span>{favorite.tag || "Untitled entrant"}</span>
           <span aria-hidden="true">—</span>
-          {character?.fighter ? <img src={stockIconPath(character.fighter, character.color)} alt={character.fighter} title={character.fighter} /> : <span>Unknown fighter</span>}
+          {character?.fighter ? <CharacterStockIcons characters={favorite.characters} /> : <span>Unknown fighter</span>}
         </button>;
       }) : <p className="form-message">No favorited entrants saved.</p>}
     </div>
