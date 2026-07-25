@@ -184,8 +184,8 @@ def _fighter_options() -> list[dict[str, Any]]:
         fighters.append({
             "name": folder.name,
             "options": [
-                {"color": color, "pose": pose}
-                for _, color, pose in sorted(options)
+                {"color": color, "pose": pose, "color_order": color_order}
+                for color_order, color, pose in sorted(options)
             ],
         })
     return fighters

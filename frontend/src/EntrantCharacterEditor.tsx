@@ -5,6 +5,13 @@ export function createCharacterForm(fighter = "", color = "", pose = ""): Favori
   return { fighter, color, pose };
 }
 
+const FALLBACK_COLOR_ORDER = ["default", "red", "green", "blue", "black", "white", "yellow", "pink", "purple", "cyan"];
+
+function colorOrder(color: string, suppliedOrder?: number): number {
+  if (suppliedOrder !== undefined) return suppliedOrder;
+  const fallbackOrder = FALLBACK_COLOR_ORDER.indexOf(color.toLowerCase());
+  return fallbackOrder === -1 ? FALLBACK_COLOR_ORDER.length : fallbackOrder;
+}
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
@@ -30,8 +37,9 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
     <label>{tagLabel}<input value={tag} onChange={(event) => onTagChange(event.target.value)} placeholder={tagPlaceholder} required /></label>
     {characters.map((character, characterIndex) => {
       const fighter = fighters.find((item) => item.name === character.fighter);
-      const colors = unique((fighter?.options ?? []).map((option) => option.color));
-      const poses = unique((fighter?.options ?? []).filter((option) => !character.color || option.color === character.color).map((option) => option.pose));
+      const orderedOptions = [...(fighter?.options ?? [])].sort((left, right) => colorOrder(left.color, left.color_order) - colorOrder(right.color, right.color_order) || left.pose.localeCompare(right.pose));
+      const colors = unique(orderedOptions.map((option) => option.color));
+      const poses = unique(orderedOptions.filter((option) => !character.color || option.color === character.color).map((option) => option.pose));
       const availableFighters = fighters.filter((option) => option.name === character.fighter || !selectedFighters.has(option.name));
       return <fieldset className="character-fields__item" key={characterIndex}>
         <legend>Fighter {characterIndex + 1}</legend>

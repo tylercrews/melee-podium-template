@@ -1,6 +1,7 @@
 export interface CharacterOption {
   color: string;
   pose: string;
+  color_order?: number;
 }
 
 export interface FighterOption {
