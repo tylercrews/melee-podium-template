@@ -67,3 +67,13 @@ LocalStorage and LocalStorage Management page.
 
 way down the road:
 player profiles - have auto selections for frequently used people, maybe by some kind of profile system so you can log in and have people you know.
+
+
+# testing locally
+(whole app)
+flask --app app run --port 5000
+
+(just the frontend)
+cd .\frontend
+$ npm run dev 
+
