@@ -1,0 +1,38 @@
+import { ChangeEvent, useRef, useState } from "react";
+import { CharacterStockIcons } from "./FavoritePicker";
+import { FavoritesData, FavoriteSinglesEntrant, FavoriteDoublesTeam, characterSummary, normalizeFavorites } from "./favorites";
+
+function MemberEditor({ member, onChange }: { member: Omit<FavoriteSinglesEntrant, "id">; onChange: (next: Omit<FavoriteSinglesEntrant, "id">) => void }) {
+  const character = member.characters[0] ?? { fighter: "", color: "", pose: "" };
+  return <div className="favorite-member-editor">
+    <label>Tag<input value={member.tag} onChange={(event) => onChange({ ...member, tag: event.target.value })} /></label>
+    <div className="row-fields"><label>Fighter<input value={character.fighter} onChange={(event) => onChange({ ...member, characters: [{ ...character, fighter: event.target.value }] })} /></label><label>Color<input value={character.color} onChange={(event) => onChange({ ...member, characters: [{ ...character, color: event.target.value }] })} /></label></div>
+    <label>Pose<input value={character.pose} onChange={(event) => onChange({ ...member, characters: [{ ...character, pose: event.target.value }] })} /></label>
+  </div>;
+}
+
+export default function FavoritesManagement({ favorites, onChange, onBack }: { favorites: FavoritesData; onChange: (favorites: FavoritesData) => void; onBack: () => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState("");
+  const changeSingles = (next: FavoriteSinglesEntrant[]) => onChange({ ...favorites, singles: next });
+  const changeDoubles = (next: FavoriteDoublesTeam[]) => onChange({ ...favorites, doubles: next });
+  const download = () => {
+    const blob = new Blob([JSON.stringify(favorites, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "melee-podium-favorites.json"; link.click(); URL.revokeObjectURL(url);
+  };
+  const importFile = async (event: ChangeEvent<HTMLInputElement>, replace: boolean) => {
+    const file = event.target.files?.[0]; if (!file) return;
+    try {
+      const imported = normalizeFavorites(JSON.parse(await file.text()));
+      onChange(replace ? imported : { version: 1, singles: [...favorites.singles, ...imported.singles], doubles: [...favorites.doubles, ...imported.doubles] });
+      setMessage(replace ? "Favorites replaced from import." : "Favorites added from import.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "That favorites file could not be imported."); }
+    event.target.value = "";
+  };
+  const selectImport = (replace: boolean) => { if (inputRef.current) { inputRef.current.dataset.replace = String(replace); inputRef.current.click(); } };
+  return <main className="page-shell"><header className="site-header"><div><p className="eyebrow">tyro.work</p><h1>Favorites management</h1><p className="lede">Edit your reusable singles entrants and doubles teams. Everything stays in this browser until you export it.</p></div><button type="button" onClick={onBack}>Back to podium maker</button></header>
+    <section className="panel"><div className="section-heading"><div><h2>Import and export</h2><p>Import adds entries; Replace overwrites your current favorites.</p></div><div className="inline-actions"><button type="button" onClick={download}>Export favorites</button><button type="button" onClick={() => selectImport(false)}>Import additional</button><button type="button" className="button-danger" onClick={() => selectImport(true)}>Replace from import</button><input ref={inputRef} className="visually-hidden" type="file" accept="application/json" onChange={(event) => importFile(event, inputRef.current?.dataset.replace === "true")} /></div></div>{message && <p className="form-message">{message}</p>}</section>
+    <section className="panel"><div className="section-heading"><div><h2>Favorite singles entrants</h2><p>{favorites.singles.length} saved</p></div></div><div className="favorites-list">{favorites.singles.length ? favorites.singles.map((favorite, index) => <article className="favorite-editor" key={favorite.id}><div className="favorite-editor__heading"><strong>{favorite.tag || "Untitled entrant"}</strong><CharacterStockIcons characters={favorite.characters} /><button type="button" className="button-danger" onClick={() => changeSingles(favorites.singles.filter((_, current) => current !== index))}>Remove</button></div><MemberEditor member={favorite} onChange={(next) => changeSingles(favorites.singles.map((item, current) => current === index ? { ...next, id: item.id } : item))} /><p>{characterSummary(favorite.characters)}</p></article>) : <p className="form-message">Save an entrant from a placement card to see it here.</p>}</div></section>
+    <section className="panel"><div className="section-heading"><div><h2>Favorite doubles teams</h2><p>{favorites.doubles.length} saved</p></div></div><div className="favorites-list">{favorites.doubles.length ? favorites.doubles.map((team, index) => <article className="favorite-editor" key={team.id}><div className="favorite-editor__heading"><strong>{team.team_name || "Untitled team"}</strong><button type="button" className="button-danger" onClick={() => changeDoubles(favorites.doubles.filter((_, current) => current !== index))}>Remove</button></div><div className="row-fields"><label>Team name<input value={team.team_name} onChange={(event) => changeDoubles(favorites.doubles.map((item, current) => current === index ? { ...item, team_name: event.target.value } : item))} /></label><label>Team color<input value={team.team_color} onChange={(event) => changeDoubles(favorites.doubles.map((item, current) => current === index ? { ...item, team_color: event.target.value } : item))} /></label></div><div className="row-fields"><MemberEditor member={team.entrant_1} onChange={(entrant_1) => changeDoubles(favorites.doubles.map((item, current) => current === index ? { ...item, entrant_1 } : item))} /><MemberEditor member={team.entrant_2} onChange={(entrant_2) => changeDoubles(favorites.doubles.map((item, current) => current === index ? { ...item, entrant_2 } : item))} /></div></article>) : <p className="form-message">Save a doubles team from a placement card to see it here.</p>}</div></section>
+  </main>;
+}

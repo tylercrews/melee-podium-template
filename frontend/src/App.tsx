@@ -6,6 +6,9 @@ import {
   importBracket,
   renderPodium,
 } from "./api";
+import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
+import FavoritesManagement from "./FavoritesManagement";
+import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, loadFavorites, newFavoriteId, saveFavorites } from "./favorites";
 
 interface CharacterForm {
   fighter: string;
@@ -227,6 +230,7 @@ function App() {
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
+  const [favorites, setFavorites] = useState<FavoritesData>(() => loadFavorites());
 
   useEffect(() => {
     let active = true;
@@ -534,6 +538,39 @@ function App() {
     );
   }
 
+  function changeFavorites(next: FavoritesData) {
+    setFavorites(saveFavorites(next));
+  }
+
+  function applyFavoriteSingles(index: number, favorite: FavoriteSinglesEntrant) {
+    setEntrants((current) => current.map((entrant, currentIndex) => currentIndex === index && entrant.kind === "singles" ? { ...entrant, tag: favorite.tag, characters: favorite.characters.map((character) => ({ ...character })) } : entrant));
+  }
+
+  function applyFavoriteMember(index: number, side: "entrant_1" | "entrant_2", favorite: FavoriteSinglesEntrant) {
+    setEntrants((current) => current.map((entrant, currentIndex) => {
+      if (currentIndex !== index || entrant.kind !== "doubles") return entrant;
+      const member = { tag: favorite.tag, characters: favorite.characters.map((character) => ({ ...character })) };
+      return side === "entrant_1" ? { ...entrant, entrant_1: member } : { ...entrant, entrant_2: member };
+    }));
+  }
+
+  function applyFavoriteTeam(index: number, favorite: FavoriteDoublesTeam) {
+    setEntrants((current) => current.map((entrant, currentIndex) => currentIndex === index && entrant.kind === "doubles" ? { ...entrant, team_name: favorite.team_name, team_color: favorite.team_color, entrant_1: { tag: favorite.entrant_1.tag, characters: favorite.entrant_1.characters.map((character) => ({ ...character })) }, entrant_2: { tag: favorite.entrant_2.tag, characters: favorite.entrant_2.characters.map((character) => ({ ...character })) } } : entrant));
+  }
+
+  function toggleSinglesFavorite(entrant: SinglesEntrantForm, checked: boolean) {
+    const current = favorites.singles.find((favorite) => favorite.tag === entrant.tag);
+    if (!checked) return changeFavorites({ ...favorites, singles: favorites.singles.filter((favorite) => favorite.tag !== entrant.tag) });
+    const next = { id: current?.id ?? newFavoriteId(), tag: entrant.tag, characters: entrant.characters.map((character) => ({ ...character })) };
+    changeFavorites({ ...favorites, singles: current ? favorites.singles.map((favorite) => favorite.id === current.id ? next : favorite) : [...favorites.singles, next] });
+  }
+
+  function toggleDoublesFavorite(team: DoublesTeamForm, checked: boolean) {
+    const current = favorites.doubles.find((favorite) => favorite.team_name === team.team_name);
+    if (!checked) return changeFavorites({ ...favorites, doubles: favorites.doubles.filter((favorite) => favorite.team_name !== team.team_name) });
+    const next = { id: current?.id ?? newFavoriteId(), team_name: team.team_name, team_color: team.team_color, entrant_1: { tag: team.entrant_1.tag, characters: team.entrant_1.characters.map((character) => ({ ...character })) }, entrant_2: { tag: team.entrant_2.tag, characters: team.entrant_2.characters.map((character) => ({ ...character })) } };
+    changeFavorites({ ...favorites, doubles: current ? favorites.doubles.map((favorite) => favorite.id === current.id ? next : favorite) : [...favorites.doubles, next] });
+  }
   function applyImport(result: unknown) {
     if (!isRecord(result)) {
       throw new Error("The bracket response was not in the expected format.");
@@ -741,6 +778,10 @@ function App() {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+  if (window.location.pathname.replace(/\/+$/, "").endsWith("favorites_management")) {
+    return <FavoritesManagement favorites={favorites} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
+  }
+
   return (
     <main className="page-shell">
       <header className="site-header">
@@ -752,6 +793,7 @@ function App() {
             downloadable podium graphic.
           </p>
         </div>
+        <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <div className={`health health--${health}`} role="status">
           <span aria-hidden="true" />
           API {health}
@@ -912,6 +954,8 @@ function App() {
                 return (
                   <fieldset className="entrant-card" key={index}>
                     <legend>{ordinalPlace(index)}</legend>
+                    <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteSingles(index, favorite)} />
+                    <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                     <label>
                       Player tag
                       <input
@@ -1039,6 +1083,8 @@ function App() {
               return (
                 <fieldset className="entrant-card" key={index}>
                   <legend>{ordinalPlace(index)}</legend>
+                  <DoublesFavoritePicker favorites={favorites.doubles} onChoose={(favorite) => applyFavoriteTeam(index, favorite)} />
+                  <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name === entrant.team_name)} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>
                   <label>
                     Team name
                     <input
@@ -1118,6 +1164,7 @@ function App() {
                   <div className="row-fields">
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 1</legend>
+                      <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} label="Use a favorite singles entrant" />
                       <label>
                         Fighter
                         <select
@@ -1187,6 +1234,7 @@ function App() {
 
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 2</legend>
+                      <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} label="Use a favorite singles entrant" />
                       <label>
                         Fighter
                         <select
