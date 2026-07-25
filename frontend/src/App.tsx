@@ -786,7 +786,7 @@ function App() {
             />
           </label>
           <button type="submit" disabled={isImporting}>
-            {isImporting ? "Importingï¿½" : "Import"}
+            {isImporting ? "Importing..." : "Import"}
           </button>
         </form>
         {importState && <p className="form-message">{importState}</p>}
@@ -1068,7 +1068,7 @@ function App() {
 
           <div className="form-actions">
             <button className="button-primary" type="submit" disabled={isRendering}>
-              {isRendering ? "Renderingï¿½" : "Render podium"}
+              {isRendering ? "Rendering..." : "Render podium"}
             </button>
             {renderError && (
               <p className="error" role="alert">
@@ -1099,7 +1099,7 @@ function App() {
           {previewUrl ? (
             <img src={previewUrl} alt="Rendered tournament podium" />
           ) : (
-            <p>Complete the form and select ï¿½Render podium.ï¿½</p>
+            <p>Complete the form and select "Render podium."</p>
           )}
         </div>
       </section>
