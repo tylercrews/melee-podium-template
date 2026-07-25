@@ -931,24 +931,13 @@ function App() {
                   <fieldset className="entrant-card" key={index}>
                     <legend>{ordinalPlace(index)}</legend>
                     <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteSingles(index, favorite)} />
-                    <label>
-                      Player tag
-                      <input
-                        value={entrant.tag}
-                        onChange={(event) =>
-                          updateSinglesEntrant(index, "tag", event.target.value)
-                        }
-                        placeholder={`Player ${index + 1}`}
-                        required
-                      />
-                    </label>
-                    {includeSeeds && (
+{includeSeeds && (
                       <label>
                         Seed
                         <input type="number" min="1" value={entrant.seed} onChange={(event) => updateSinglesEntrant(index, "seed", event.target.value)} />
                       </label>
                     )}
-                    <EntrantCharacterEditor characters={entrant.characters} fighters={fighters} onChange={(characters) => setEntrantCharacters(index, "singles", characters)} />
+                    <EntrantCharacterEditor tag={entrant.tag} tagPlaceholder={`Player ${index + 1}`} characters={entrant.characters} fighters={fighters} onTagChange={(tag) => updateSinglesEntrant(index, "tag", tag)} onChange={(characters) => setEntrantCharacters(index, "singles", characters)} />
                     <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                   </fieldset>
                 );
@@ -1010,43 +999,17 @@ function App() {
                       <option value="green">Green</option>
                     </select>
                   </label>
-
-                  <div className="row-fields">
-                    <label>
-                      Entrant 1 tag
-                      <input
-                        value={entrant.entrant_1.tag}
-                        onChange={(event) =>
-                          updateEntrantTag(index, "entrant_1", event.target.value)
-                        }
-                        placeholder={`Player 1 ${index + 1}`}
-                        required
-                      />
-                    </label>
-                    <label>
-                      Entrant 2 tag
-                      <input
-                        value={entrant.entrant_2.tag}
-                        onChange={(event) =>
-                          updateEntrantTag(index, "entrant_2", event.target.value)
-                        }
-                        placeholder={`Player 2 ${index + 1}`}
-                        required
-                      />
-                    </label>
-                  </div>
-
-                  <div className="row-fields">
+<div className="row-fields">
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 1</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} />
-                      <EntrantCharacterEditor characters={entrant.entrant_1.characters} fighters={fighters} onChange={(characters) => setEntrantCharacters(index, "entrant_1", characters)} />
+                      <EntrantCharacterEditor tag={entrant.entrant_1.tag} tagLabel="Entrant 1 tag" tagPlaceholder={`Player 1 ${index + 1}`} characters={entrant.entrant_1.characters} fighters={fighters} onTagChange={(tag) => updateEntrantTag(index, "entrant_1", tag)} onChange={(characters) => setEntrantCharacters(index, "entrant_1", characters)} />
                     </fieldset>
 
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 2</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} />
-                      <EntrantCharacterEditor characters={entrant.entrant_2.characters} fighters={fighters} onChange={(characters) => setEntrantCharacters(index, "entrant_2", characters)} />
+                      <EntrantCharacterEditor tag={entrant.entrant_2.tag} tagLabel="Entrant 2 tag" tagPlaceholder={`Player 2 ${index + 1}`} characters={entrant.entrant_2.characters} fighters={fighters} onTagChange={(tag) => updateEntrantTag(index, "entrant_2", tag)} onChange={(characters) => setEntrantCharacters(index, "entrant_2", characters)} />
                     </fieldset>
                   </div>
                   <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name === entrant.team_name)} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>

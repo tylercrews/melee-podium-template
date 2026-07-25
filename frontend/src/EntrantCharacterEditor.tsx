@@ -9,7 +9,7 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
-export default function EntrantCharacterEditor({ characters, fighters, onChange }: { characters: FavoriteCharacter[]; fighters: FighterOption[]; onChange: (characters: FavoriteCharacter[]) => void }) {
+export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", tagPlaceholder, characters, fighters, onTagChange, onChange }: { tag: string; tagLabel?: string; tagPlaceholder?: string; characters: FavoriteCharacter[]; fighters: FighterOption[]; onTagChange: (tag: string) => void; onChange: (characters: FavoriteCharacter[]) => void }) {
   const selectedFighters = new Set(characters.map((character) => character.fighter).filter(Boolean));
   const updateCharacter = (characterIndex: number, field: "fighter" | "color" | "pose", value: string) => {
     onChange(characters.map((character, currentIndex) => {
@@ -27,6 +27,7 @@ export default function EntrantCharacterEditor({ characters, fighters, onChange 
   };
 
   return <div className="character-fields">
+    <label>{tagLabel}<input value={tag} onChange={(event) => onTagChange(event.target.value)} placeholder={tagPlaceholder} required /></label>
     {characters.map((character, characterIndex) => {
       const fighter = fighters.find((item) => item.name === character.fighter);
       const colors = unique((fighter?.options ?? []).map((option) => option.color));
