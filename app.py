@@ -246,6 +246,11 @@ def bad_request(error: Exception) -> Any:
     return jsonify(error=str(error)), 400
 
 
+@app.get("/char_assets/<path:path>")
+@app.get("/melee-podium-template/char_assets/<path:path>")
+def character_assets(path: str) -> Any:
+    return send_from_directory(PROJECT_ROOT / "char_assets", path)
+
 @app.get("/")
 @app.get("/<path:path>")
 def frontend(path: str = "") -> Any:
