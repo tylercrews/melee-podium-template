@@ -61,6 +61,25 @@ function createCharacterForm(
   return { fighter, color, pose };
 }
 
+function CharacterFields({ characters, fighters, onUpdate, onAdd, onRemove }: { characters: CharacterForm[]; fighters: FighterOption[]; onUpdate: (characterIndex: number, field: "fighter" | "color" | "pose", value: string) => void; onAdd: () => void; onRemove: (characterIndex: number) => void }) {
+  return <div className="character-fields">
+    {characters.map((character, characterIndex) => {
+      const fighter = fighters.find((item) => item.name === character.fighter);
+      const colors = unique((fighter?.options ?? []).map((option) => option.color));
+      const poses = unique((fighter?.options ?? []).filter((option) => option.color === character.color).map((option) => option.pose));
+      return <fieldset className="character-fields__item" key={characterIndex}>
+        <legend>Fighter {characterIndex + 1}</legend>
+        {characters.length > 1 && <button type="button" className="button-danger" onClick={() => onRemove(characterIndex)}>Remove fighter</button>}
+        <label>Fighter<select value={character.fighter} onChange={(event) => onUpdate(characterIndex, "fighter", event.target.value)} required><option value="">Choose a fighter</option>{character.fighter && !fighters.some((option) => option.name === character.fighter) && <option value={character.fighter}>{character.fighter}</option>}{fighters.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}</select></label>
+        <div className="row-fields">
+          <label>Color<select value={character.color} onChange={(event) => onUpdate(characterIndex, "color", event.target.value)} required>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
+          <label>Pose<select value={character.pose} onChange={(event) => onUpdate(characterIndex, "pose", event.target.value)} required>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
+        </div>
+      </fieldset>;
+    })}
+    <button type="button" onClick={onAdd}>Add fighter</button>
+  </div>;
+}
 function createEntrantForm(existing?: EntrantForm): EntrantForm {
   return {
     tag: existing?.tag ?? "",
@@ -439,105 +458,47 @@ function App() {
     );
   }
 
-  function updateCharacter(
-    index: number,
-    side: "singles" | "entrant_1" | "entrant_2",
-    field: "fighter" | "color" | "pose",
-    value: string,
-  ) {
-    setEntrants((current) =>
-      current.map((entrant, entrantIndex) => {
-        if (entrantIndex !== index) return entrant;
-
-        if (entrant.kind === "singles") {
-          const character = entrant.characters[0] ?? createCharacterForm();
-          if (field === "fighter") {
-            const option = fighterByName(value)?.options[0];
-            return {
-              ...entrant,
-              characters: [
-                {
-                  fighter: value,
-                  color: option?.color ?? "",
-                  pose: option?.pose ?? "",
-                },
-              ],
-            };
-          }
-
-          if (field === "color") {
-            const matchingOption = fighterByName(character.fighter)?.options.find(
-              (option) => option.color === value,
-            );
-            return {
-              ...entrant,
-              characters: [
-                {
-                  ...character,
-                  color: value,
-                  pose: matchingOption?.pose ?? "",
-                },
-              ],
-            };
-          }
-
-          return {
-            ...entrant,
-            characters: [{ ...character, pose: value }],
-          };
-        }
-
-        const member = side === "entrant_1" ? entrant.entrant_1 : entrant.entrant_2;
-        const character = member.characters[0] ?? createCharacterForm();
-
+  function updateCharacter(index: number, side: "singles" | "entrant_1" | "entrant_2", characterIndex: number, field: "fighter" | "color" | "pose", value: string) {
+    setEntrants((current) => current.map((entrant, entrantIndex) => {
+      if (entrantIndex !== index) return entrant;
+      const updateCharacters = (characters: CharacterForm[]) => characters.map((character, currentIndex) => {
+        if (currentIndex !== characterIndex) return character;
         if (field === "fighter") {
           const option = fighterByName(value)?.options[0];
-          const nextMember = {
-            ...member,
-            characters: [
-              {
-                fighter: value,
-                color: option?.color ?? "",
-                pose: option?.pose ?? "",
-              },
-            ],
-          };
-          return side === "entrant_1"
-            ? { ...entrant, entrant_1: nextMember }
-            : { ...entrant, entrant_2: nextMember };
+          return { fighter: value, color: option?.color ?? "", pose: option?.pose ?? "" };
         }
-
         if (field === "color") {
-          const matchingOption = fighterByName(character.fighter)?.options.find(
-            (option) => option.color === value,
-          );
-          const nextMember = {
-            ...member,
-            characters: [
-              {
-                ...character,
-                color: value,
-                pose: matchingOption?.pose ?? "",
-              },
-            ],
-          };
-          return side === "entrant_1"
-            ? { ...entrant, entrant_1: nextMember }
-            : { ...entrant, entrant_2: nextMember };
+          const option = fighterByName(character.fighter)?.options.find((item) => item.color === value);
+          return { ...character, color: value, pose: option?.pose ?? "" };
         }
-
-        const nextMember = {
-          ...member,
-          characters: [{ ...character, pose: value }],
-        };
-
-        return side === "entrant_1"
-          ? { ...entrant, entrant_1: nextMember }
-          : { ...entrant, entrant_2: nextMember };
-      }),
-    );
+        return { ...character, pose: value };
+      });
+      if (entrant.kind === "singles") return { ...entrant, characters: updateCharacters(entrant.characters) };
+      const member = side === "entrant_1" ? entrant.entrant_1 : entrant.entrant_2;
+      const nextMember = { ...member, characters: updateCharacters(member.characters) };
+      return side === "entrant_1" ? { ...entrant, entrant_1: nextMember } : { ...entrant, entrant_2: nextMember };
+    }));
   }
 
+  function addCharacter(index: number, side: "singles" | "entrant_1" | "entrant_2") {
+    setEntrants((current) => current.map((entrant, entrantIndex) => {
+      if (entrantIndex !== index) return entrant;
+      if (entrant.kind === "singles") return { ...entrant, characters: [...entrant.characters, createCharacterForm()] };
+      const member = side === "entrant_1" ? entrant.entrant_1 : entrant.entrant_2;
+      const nextMember = { ...member, characters: [...member.characters, createCharacterForm()] };
+      return side === "entrant_1" ? { ...entrant, entrant_1: nextMember } : { ...entrant, entrant_2: nextMember };
+    }));
+  }
+
+  function removeCharacter(index: number, side: "singles" | "entrant_1" | "entrant_2", characterIndex: number) {
+    setEntrants((current) => current.map((entrant, entrantIndex) => {
+      if (entrantIndex !== index) return entrant;
+      if (entrant.kind === "singles") return { ...entrant, characters: entrant.characters.filter((_, currentIndex) => currentIndex !== characterIndex) };
+      const member = side === "entrant_1" ? entrant.entrant_1 : entrant.entrant_2;
+      const nextMember = { ...member, characters: member.characters.filter((_, currentIndex) => currentIndex !== characterIndex) };
+      return side === "entrant_1" ? { ...entrant, entrant_1: nextMember } : { ...entrant, entrant_2: nextMember };
+    }));
+  }
   function changeFavorites(next: FavoritesData) {
     setFavorites(saveFavorites(next));
   }
@@ -994,69 +955,7 @@ function App() {
                         />
                       </label>
                     </div>
-                    <label>
-                      Fighter
-                      <select
-                        value={character.fighter}
-                        onChange={(event) =>
-                          updateCharacter(index, "singles", "fighter", event.target.value)
-                        }
-                        required
-                      >
-                        <option value="">Choose a fighter</option>
-                        {character.fighter &&
-                          !fighters.some(
-                            (option) => option.name === character.fighter,
-                          ) && (
-                            <option value={character.fighter}>{character.fighter}</option>
-                          )}
-                        {fighters.map((option) => (
-                          <option key={option.name} value={option.name}>
-                            {option.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <div className="row-fields">
-                      <label>
-                        Color
-                        <select
-                          value={character.color}
-                          onChange={(event) =>
-                            updateCharacter(index, "singles", "color", event.target.value)
-                          }
-                          required
-                        >
-                          {character.color && !colors.includes(character.color) && (
-                            <option value={character.color}>{character.color}</option>
-                          )}
-                          {colors.map((color) => (
-                            <option key={color} value={color}>
-                              {color}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Pose
-                        <select
-                          value={character.pose}
-                          onChange={(event) =>
-                            updateCharacter(index, "singles", "pose", event.target.value)
-                          }
-                          required
-                        >
-                          {character.pose && !poses.includes(character.pose) && (
-                            <option value={character.pose}>{character.pose}</option>
-                          )}
-                          {poses.map((pose) => (
-                            <option key={pose} value={pose}>
-                              {pose}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
+                    <CharacterFields characters={entrant.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "singles", characterIndex, field, value)} onAdd={() => addCharacter(index, "singles")} onRemove={(characterIndex) => removeCharacter(index, "singles", characterIndex)} />
                     <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                   </fieldset>
                 );
@@ -1167,141 +1066,13 @@ function App() {
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 1</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} />
-                      <label>
-                        Fighter
-                        <select
-                          value={teamCharacterOne.fighter}
-                          onChange={(event) =>
-                            updateCharacter(index, "entrant_1", "fighter", event.target.value)
-                          }
-                          required
-                        >
-                          <option value="">Choose a fighter</option>
-                          {teamCharacterOne.fighter &&
-                            !fighters.some(
-                              (option) => option.name === teamCharacterOne.fighter,
-                            ) && (
-                              <option value={teamCharacterOne.fighter}>
-                                {teamCharacterOne.fighter}
-                              </option>
-                            )}
-                          {fighters.map((option) => (
-                            <option key={option.name} value={option.name}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <div className="row-fields">
-                        <label>
-                          Color
-                          <select
-                            value={teamCharacterOne.color}
-                            onChange={(event) =>
-                              updateCharacter(index, "entrant_1", "color", event.target.value)
-                            }
-                            required
-                          >
-                            {teamCharacterOne.color && !colorsOne.includes(teamCharacterOne.color) && (
-                              <option value={teamCharacterOne.color}>{teamCharacterOne.color}</option>
-                            )}
-                            {colorsOne.map((color) => (
-                              <option key={color} value={color}>
-                                {color}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Pose
-                          <select
-                            value={teamCharacterOne.pose}
-                            onChange={(event) =>
-                              updateCharacter(index, "entrant_1", "pose", event.target.value)
-                            }
-                            required
-                          >
-                            {teamCharacterOne.pose && !posesOne.includes(teamCharacterOne.pose) && (
-                              <option value={teamCharacterOne.pose}>{teamCharacterOne.pose}</option>
-                            )}
-                            {posesOne.map((pose) => (
-                              <option key={pose} value={pose}>
-                                {pose}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
+                      <CharacterFields characters={entrant.entrant_1.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "entrant_1", characterIndex, field, value)} onAdd={() => addCharacter(index, "entrant_1")} onRemove={(characterIndex) => removeCharacter(index, "entrant_1", characterIndex)} />
                     </fieldset>
 
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 2</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} />
-                      <label>
-                        Fighter
-                        <select
-                          value={teamCharacterTwo.fighter}
-                          onChange={(event) =>
-                            updateCharacter(index, "entrant_2", "fighter", event.target.value)
-                          }
-                          required
-                        >
-                          <option value="">Choose a fighter</option>
-                          {teamCharacterTwo.fighter &&
-                            !fighters.some(
-                              (option) => option.name === teamCharacterTwo.fighter,
-                            ) && (
-                              <option value={teamCharacterTwo.fighter}>
-                                {teamCharacterTwo.fighter}
-                              </option>
-                            )}
-                          {fighters.map((option) => (
-                            <option key={option.name} value={option.name}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <div className="row-fields">
-                        <label>
-                          Color
-                          <select
-                            value={teamCharacterTwo.color}
-                            onChange={(event) =>
-                              updateCharacter(index, "entrant_2", "color", event.target.value)
-                            }
-                            required
-                          >
-                            {teamCharacterTwo.color && !colorsTwo.includes(teamCharacterTwo.color) && (
-                              <option value={teamCharacterTwo.color}>{teamCharacterTwo.color}</option>
-                            )}
-                            {colorsTwo.map((color) => (
-                              <option key={color} value={color}>
-                                {color}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Pose
-                          <select
-                            value={teamCharacterTwo.pose}
-                            onChange={(event) =>
-                              updateCharacter(index, "entrant_2", "pose", event.target.value)
-                            }
-                            required
-                          >
-                            {teamCharacterTwo.pose && !posesTwo.includes(teamCharacterTwo.pose) && (
-                              <option value={teamCharacterTwo.pose}>{teamCharacterTwo.pose}</option>
-                            )}
-                            {posesTwo.map((pose) => (
-                              <option key={pose} value={pose}>
-                                {pose}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
+                      <CharacterFields characters={entrant.entrant_2.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "entrant_2", characterIndex, field, value)} onAdd={() => addCharacter(index, "entrant_2")} onRemove={(characterIndex) => removeCharacter(index, "entrant_2", characterIndex)} />
                     </fieldset>
                   </div>
                   <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name === entrant.team_name)} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>
