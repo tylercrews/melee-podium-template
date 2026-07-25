@@ -467,12 +467,13 @@ def draw_podium(
         for podium_slot, team in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(team, DoublesTeam)
             first_anchor, second_anchor = anchors[podium_slot]
+            team_color = choice(["red", "green", "blue"]) if team.team_color == "random" else team.team_color
             first_characters = [
-                _character_with_team_color(character, team.team_color)
+                _character_with_team_color(character, team_color)
                 for character in team.entrant_1.characters
             ]
             second_characters = [
-                _character_with_team_color(character, team.team_color)
+                _character_with_team_color(character, team_color)
                 for character in team.entrant_2.characters
             ]
             first_x, first_y, first_image = _place_characters(

@@ -22,7 +22,7 @@ STATS_DATABASE_PATH = Path(
     os.environ.get("PODIUM_STATS_DB", PROJECT_ROOT / "podium_stats.sqlite3")
 )
 _PORTRAIT_FILENAME = re.compile(
-    r"^\d+(?P<pose>[a-z]+)_(?P<color>[^_]+)_", re.IGNORECASE
+    r"^(?P<color_code>\d+)(?P<pose>[a-z]+)_(?P<color>[^_]+)_", re.IGNORECASE
 )
 
 app = Flask(__name__, static_folder=None)
@@ -180,12 +180,12 @@ def _fighter_options() -> list[dict[str, Any]]:
         for portrait in folder.glob("*.png"):
             match = _PORTRAIT_FILENAME.match(portrait.name)
             if match:
-                options.add((match.group("color").lower(), match.group("pose").lower()))
+                options.add((int(match.group("color_code")), match.group("color").lower(), match.group("pose").lower()))
         fighters.append({
             "name": folder.name,
             "options": [
                 {"color": color, "pose": pose}
-                for color, pose in sorted(options)
+                for _, color, pose in sorted(options)
             ],
         })
     return fighters
@@ -206,7 +206,7 @@ def options() -> Any:
     return jsonify(
         modes=[item.value for item in PodiumMode],
         fighters=_fighter_options(),
-        team_colors=["red", "blue", "green"],
+        team_colors=["red", "green", "blue"],
     )
 
 

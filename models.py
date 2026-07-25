@@ -169,6 +169,6 @@ class DoublesTeam:
         if self.team_color is not None:
             _validate_text(self.team_color, "Team color")
             normalized_color = self.team_color.strip().lower()
-            if normalized_color not in {"red", "blue", "green"}:
-                raise ValueError("Team color must be one of: red, blue, green, or None")
+            if normalized_color not in {"red", "green", "blue", "random"}:
+                raise ValueError("Team color must be one of: red, green, blue, random, or None")
             object.__setattr__(self, "team_color", normalized_color)

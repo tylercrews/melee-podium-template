@@ -103,7 +103,7 @@ function createDoublesTeam(
     kind: "doubles",
     team_name: existing?.kind === "doubles" ? existing.team_name : "",
     seed: existing?.kind === "doubles" ? existing.seed : String(placement),
-    team_color: existing?.kind === "doubles" ? existing.team_color : "",
+    team_color: existing?.kind === "doubles" ? existing.team_color || "random" : "random",
     entrant_1:
       existing?.kind === "doubles"
         ? createEntrantForm(existing.entrant_1)
@@ -988,15 +988,15 @@ function App() {
                   <label>
                     Team color
                     <select
-                      value={entrant.team_color}
+                      value={entrant.team_color || "random"}
                       onChange={(event) =>
                         updateDoublesTeam(index, "team_color", event.target.value)
                       }
                     >
-                      <option value="">None</option>
+                      <option value="random">Random</option>
                       <option value="red">Red</option>
-                      <option value="blue">Blue</option>
                       <option value="green">Green</option>
+                      <option value="blue">Blue</option>
                     </select>
                   </label>
 <div className="row-fields">
