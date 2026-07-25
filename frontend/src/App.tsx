@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+﻿import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -25,7 +25,6 @@ interface SinglesEntrantForm {
   kind: "singles";
   tag: string;
   seed: string;
-  placement: string;
   characters: CharacterForm[];
 }
 
@@ -33,7 +32,6 @@ interface DoublesTeamForm {
   kind: "doubles";
   team_name: string;
   seed: string;
-  placement: string;
   team_color: string;
   entrant_1: EntrantForm;
   entrant_2: EntrantForm;
@@ -57,7 +55,12 @@ const MELEE_FIGHTER_NAMES = [
 const DEFAULT_FIGHTERS: FighterOption[] = MELEE_FIGHTER_NAMES.map((name) => ({ name, options: [] }));
 type EventFormat = "singles" | "doubles";
 type PodiumSize = 3 | 4 | 8;
+type PodiumFont = "tyrowo" | "impact";
 
+const PODIUM_FONTS: ReadonlyArray<{ value: PodiumFont; label: string }> = [
+  { value: "tyrowo", label: "Tyrowo Inked" },
+  // { value: "impact", label: "Impact" }, // this one is not tested yet
+];
 function createCharacterForm(
   fighter = "",
   color = "",
@@ -104,7 +107,6 @@ function createSinglesEntrant(
     kind: "singles",
     tag: existing?.tag ?? "",
     seed: existing?.seed ?? String(placement),
-    placement: existing?.placement ?? String(placement),
     characters: existing?.characters?.length
       ? existing.characters.map((character) => ({ ...character }))
       : [createCharacterForm()],
@@ -127,7 +129,6 @@ function createDoublesTeam(
     kind: "doubles",
     team_name: existing?.kind === "doubles" ? existing.team_name : "",
     seed: existing?.kind === "doubles" ? existing.seed : String(placement),
-    placement: existing?.kind === "doubles" ? existing.placement : String(placement),
     team_color: existing?.kind === "doubles" ? existing.team_color : "",
     entrant_1:
       existing?.kind === "doubles"
@@ -158,7 +159,6 @@ function createEntrants(
           kind: "singles",
           tag: existingEntry.entrant_1.tag,
           seed: existingEntry.seed,
-          placement: existingEntry.placement,
           characters: existingEntry.entrant_1.characters,
         });
       }
@@ -224,11 +224,16 @@ function unique(values: string[]): string[] {
 }
 
 function ordinalPlace(index: number): string {
-  const num = index + 1;
+  const num = placementForIndex(index, 8);
   if (num === 1) return "1st Place";
   if (num === 2) return "2nd Place";
   if (num === 3) return "3rd Place";
   return `${num}th Place`;
+}
+
+function placementForIndex(index: number, podiumSize: PodiumSize): number {
+  if (podiumSize === 8 && index >= 4) return index < 6 ? 5 : 7;
+  return index + 1;
 }
 
 function App() {
@@ -247,6 +252,8 @@ function App() {
   });
   const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
   const [podiumSize, setPodiumSize] = useState<PodiumSize>(8);
+  const [podiumFont, setPodiumFont] = useState<PodiumFont>("tyrowo");
+  const [includeSeeds, setIncludeSeeds] = useState(true);
   const [entrants, setEntrants] = useState<EntrantFormState[]>(() =>
     createEntrants(8, "singles"),
   );
@@ -351,6 +358,7 @@ function App() {
   const payload = useMemo(
     () => ({
       mode: `${eventFormat}_top_${podiumSize}`,
+      font: podiumFont,
       tournament: {
         title: tournament.title.trim(),
         date: tournament.date,
@@ -360,13 +368,13 @@ function App() {
         link: tournament.link.trim() || null,
         event_format: eventFormat,
       },
-      entrants: entrants.map((entrant) => {
+      entrants: entrants.map((entrant, index) => {
         if (entrant.kind === "singles") {
           const character = entrant.characters[0] ?? createCharacterForm();
           return {
             tag: entrant.tag.trim(),
-            seed: entrant.seed ? Number(entrant.seed) : null,
-            placement: Number(entrant.placement),
+            seed: includeSeeds && entrant.seed ? Number(entrant.seed) : null,
+            placement: placementForIndex(index, podiumSize),
             characters: [
               {
                 melee_fighter_name: character.fighter,
@@ -384,8 +392,8 @@ function App() {
 
         return {
           team_name: entrant.team_name.trim(),
-          seed: entrant.seed ? Number(entrant.seed) : null,
-          placement: Number(entrant.placement),
+          seed: includeSeeds && entrant.seed ? Number(entrant.seed) : null,
+          placement: placementForIndex(index, podiumSize),
           team_color: entrant.team_color.trim() || null,
           entrant_1: {
             tag: entrant.entrant_1.tag.trim(),
@@ -410,7 +418,7 @@ function App() {
         };
       }),
     }),
-    [entrants, eventFormat, podiumSize, tournament],
+    [entrants, eventFormat, includeSeeds, podiumFont, podiumSize, tournament],
   );
 
   function selectFormat(format: EventFormat) {
@@ -431,7 +439,7 @@ function App() {
 
   function updateSinglesEntrant(
     index: number,
-    field: "tag" | "seed" | "placement",
+    field: "tag" | "seed",
     value: string,
   ) {
     setEntrants((current) =>
@@ -444,7 +452,7 @@ function App() {
 
   function updateDoublesTeam(
     index: number,
-    field: "team_name" | "seed" | "placement" | "team_color",
+    field: "team_name" | "seed" | "team_color",
     value: string,
   ) {
     setEntrants((current) =>
@@ -623,9 +631,6 @@ function App() {
             seed:
               stringValue(imported.seed) ||
               (existing.kind === "singles" ? existing.seed : String(index + 1)),
-            placement:
-              stringValue(imported.placement, imported.rank) ||
-              (existing.kind === "singles" ? existing.placement : String(index + 1)),
             characters: [importedCharacter],
           });
         }
@@ -651,9 +656,6 @@ function App() {
           seed:
             stringValue(imported.seed) ||
             (existing.kind === "doubles" ? existing.seed : String(index + 1)),
-          placement:
-            stringValue(imported.placement, imported.rank) ||
-            (existing.kind === "doubles" ? existing.placement : String(index + 1)),
           team_color:
             stringValue(imported.team_color, imported.color) ||
             (existing.kind === "doubles" ? existing.team_color : ""),
@@ -787,7 +789,7 @@ function App() {
             />
           </label>
           <button type="submit" disabled={isImporting}>
-            {isImporting ? "Importing�" : "Import"}
+            {isImporting ? "Importingï¿½" : "Import"}
           </button>
         </form>
         {importState && <p className="form-message">{importState}</p>}
@@ -797,8 +799,8 @@ function App() {
         <section className="panel">
           <div className="section-heading">
             <div>
-              <h2>Podium format</h2>
-              <p>Choose the event type and how many placements to render.</p>
+              <h2>Podium Format Settings</h2>
+              <p>Choose the event type, layout, typeface, and displayed details.</p>
             </div>
           </div>
           <div className="format-controls">
@@ -820,6 +822,16 @@ function App() {
                 </label>
               ))}
             </fieldset>
+            <label>
+              Font
+              <select value={podiumFont} onChange={(event) => setPodiumFont(event.target.value as PodiumFont)}>
+                {PODIUM_FONTS.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
+              </select>
+            </label>
+            <label className="choice">
+              <input type="checkbox" checked={includeSeeds} onChange={(event) => setIncludeSeeds(event.target.checked)} />
+              Include seeds
+            </label>
           </div>
         </section>
 
@@ -939,31 +951,12 @@ function App() {
                         required
                       />
                     </label>
-                    <div className="row-fields">
+                    {includeSeeds && (
                       <label>
                         Seed
-                        <input
-                          type="number"
-                          min="1"
-                          value={entrant.seed}
-                          onChange={(event) =>
-                            updateSinglesEntrant(index, "seed", event.target.value)
-                          }
-                        />
+                        <input type="number" min="1" value={entrant.seed} onChange={(event) => updateSinglesEntrant(index, "seed", event.target.value)} />
                       </label>
-                      <label>
-                        Placement
-                        <input
-                          type="number"
-                          min="1"
-                          value={entrant.placement}
-                          onChange={(event) =>
-                            updateSinglesEntrant(index, "placement", event.target.value)
-                          }
-                          required
-                        />
-                      </label>
-                    </div>
+                    )}
                     <CharacterFields characters={entrant.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "singles", characterIndex, field, value)} onAdd={() => addCharacter(index, "singles")} onRemove={(characterIndex) => removeCharacter(index, "singles", characterIndex)} />
                     <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                   </fieldset>
@@ -1006,31 +999,12 @@ function App() {
                       required
                     />
                   </label>
-                  <div className="row-fields">
+                  {includeSeeds && (
                     <label>
                       Seed
-                      <input
-                        type="number"
-                        min="1"
-                        value={entrant.seed}
-                        onChange={(event) =>
-                          updateDoublesTeam(index, "seed", event.target.value)
-                        }
-                      />
+                      <input type="number" min="1" value={entrant.seed} onChange={(event) => updateDoublesTeam(index, "seed", event.target.value)} />
                     </label>
-                    <label>
-                      Placement
-                      <input
-                        type="number"
-                        min="1"
-                        value={entrant.placement}
-                        onChange={(event) =>
-                          updateDoublesTeam(index, "placement", event.target.value)
-                        }
-                        required
-                      />
-                    </label>
-                  </div>
+                  )}
                   <label>
                     Team color
                     <select
@@ -1097,7 +1071,7 @@ function App() {
 
           <div className="form-actions">
             <button className="button-primary" type="submit" disabled={isRendering}>
-              {isRendering ? "Rendering�" : "Render podium"}
+              {isRendering ? "Renderingï¿½" : "Render podium"}
             </button>
             {renderError && (
               <p className="error" role="alert">
@@ -1128,7 +1102,7 @@ function App() {
           {previewUrl ? (
             <img src={previewUrl} alt="Rendered tournament podium" />
           ) : (
-            <p>Complete the form and select �Render podium.�</p>
+            <p>Complete the form and select ï¿½Render podium.ï¿½</p>
           )}
         </div>
       </section>
