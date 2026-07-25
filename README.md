@@ -6,6 +6,7 @@ Shouts out to AeonSSB for the original character render images from the MeleeCS 
 
 
 TODO LIST:
+* test that the import is working and pulling characters for doubles
 * put in the stock icons into the character folders from the melee csproject, so that way I can make dropdowns for the (eventual) ui where people can select from their prevs
 * after importing from start.gg, cross reference with your map of frequently used entrants to auto-select colors (because I think they don't have colors, and/or TOs don't really keep track)
 * * need to have a way of keeping track of the colors used so that the most frequent color is the one that shows up. (not sure if startgg keeps track of color use, but that's why it would be helpful)
