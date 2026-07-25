@@ -194,6 +194,14 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
+function ordinalPlace(index: number): string {
+  const num = index + 1;
+  if (num === 1) return "1st Place";
+  if (num === 2) return "2nd Place";
+  if (num === 3) return "3rd Place";
+  return `${num}th Place`;
+}
+
 function App() {
   const [health, setHealth] = useState<"checking" | "online" | "offline">(
     "checking",
@@ -903,7 +911,7 @@ function App() {
 
                 return (
                   <fieldset className="entrant-card" key={index}>
-                    <legend>Placement {index + 1}</legend>
+                    <legend>{ordinalPlace(index)}</legend>
                     <label>
                       Player tag
                       <input
@@ -1030,7 +1038,7 @@ function App() {
 
               return (
                 <fieldset className="entrant-card" key={index}>
-                  <legend>Placement {index + 1}</legend>
+                  <legend>{ordinalPlace(index)}</legend>
                   <label>
                     Team name
                     <input
