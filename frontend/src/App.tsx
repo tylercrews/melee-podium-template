@@ -50,6 +50,11 @@ interface TournamentForm {
   link: string;
 }
 
+const MELEE_FIGHTER_NAMES = [
+  "Bowser", "Captain Falcon", "Donkey Kong", "Dr. Mario", "Falco", "Fox", "Ganondorf", "Ice Climbers", "Jigglypuff", "Kirby", "Link", "Luigi", "Mario", "Marth", "Mewtwo", "Mr. Game and Watch", "Ness", "Peach", "Pichu", "Pikachu", "Roy", "Samus", "Sheik", "Yoshi", "Young Link", "Zelda",
+] as const;
+
+const DEFAULT_FIGHTERS: FighterOption[] = MELEE_FIGHTER_NAMES.map((name) => ({ name, options: [] }));
 type EventFormat = "singles" | "doubles";
 type PodiumSize = 3 | 4 | 8;
 
@@ -62,22 +67,24 @@ function createCharacterForm(
 }
 
 function CharacterFields({ characters, fighters, onUpdate, onAdd, onRemove }: { characters: CharacterForm[]; fighters: FighterOption[]; onUpdate: (characterIndex: number, field: "fighter" | "color" | "pose", value: string) => void; onAdd: () => void; onRemove: (characterIndex: number) => void }) {
+  const selectedFighters = new Set(characters.map((character) => character.fighter).filter(Boolean));
   return <div className="character-fields">
     {characters.map((character, characterIndex) => {
       const fighter = fighters.find((item) => item.name === character.fighter);
       const colors = unique((fighter?.options ?? []).map((option) => option.color));
       const poses = unique((fighter?.options ?? []).filter((option) => option.color === character.color).map((option) => option.pose));
+      const availableFighters = fighters.filter((option) => option.name === character.fighter || !selectedFighters.has(option.name));
       return <fieldset className="character-fields__item" key={characterIndex}>
         <legend>Fighter {characterIndex + 1}</legend>
         {characters.length > 1 && <button type="button" className="button-danger" onClick={() => onRemove(characterIndex)}>Remove fighter</button>}
-        <label>Fighter<select value={character.fighter} onChange={(event) => onUpdate(characterIndex, "fighter", event.target.value)} required><option value="">Choose a fighter</option>{character.fighter && !fighters.some((option) => option.name === character.fighter) && <option value={character.fighter}>{character.fighter}</option>}{fighters.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}</select></label>
+        <label>Fighter<select value={character.fighter} onChange={(event) => onUpdate(characterIndex, "fighter", event.target.value)} required><option value="">Choose a fighter</option>{character.fighter && !fighters.some((option) => option.name === character.fighter) && <option value={character.fighter}>{character.fighter}</option>}{availableFighters.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}</select></label>
         <div className="row-fields">
           <label>Color<select value={character.color} onChange={(event) => onUpdate(characterIndex, "color", event.target.value)} required>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
           <label>Pose<select value={character.pose} onChange={(event) => onUpdate(characterIndex, "pose", event.target.value)} required>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
         </div>
       </fieldset>;
     })}
-    <button type="button" onClick={onAdd}>Add fighter</button>
+    <button type="button" onClick={onAdd} disabled={characters.length >= MELEE_FIGHTER_NAMES.length}>Add fighter</button>
   </div>;
 }
 function createEntrantForm(existing?: EntrantForm): EntrantForm {
@@ -228,7 +235,7 @@ function App() {
   const [health, setHealth] = useState<"checking" | "online" | "offline">(
     "checking",
   );
-  const [fighters, setFighters] = useState<FighterOption[]>([]);
+  const [fighters, setFighters] = useState<FighterOption[]>(DEFAULT_FIGHTERS);
   const [optionsError, setOptionsError] = useState("");
   const [tournament, setTournament] = useState<TournamentForm>({
     title: "",
@@ -269,9 +276,10 @@ function App() {
     getOptions()
       .then((result) => {
         if (!active) return;
-        setFighters(result.fighters);
+        const roster = DEFAULT_FIGHTERS.map((fighter) => result.fighters.find((item) => item.name === fighter.name) ?? fighter);
+        setFighters(roster);
         setOptionsError("");
-        const first = result.fighters[0];
+        const first = roster[0];
         const firstOption = first?.options[0];
         if (first) {
           setEntrants((current) =>
@@ -464,6 +472,7 @@ function App() {
       const updateCharacters = (characters: CharacterForm[]) => characters.map((character, currentIndex) => {
         if (currentIndex !== characterIndex) return character;
         if (field === "fighter") {
+          if (characters.some((character, currentIndex) => currentIndex !== characterIndex && character.fighter === value)) return character;
           const option = fighterByName(value)?.options[0];
           return { fighter: value, color: option?.color ?? "", pose: option?.pose ?? "" };
         }
@@ -483,9 +492,9 @@ function App() {
   function addCharacter(index: number, side: "singles" | "entrant_1" | "entrant_2") {
     setEntrants((current) => current.map((entrant, entrantIndex) => {
       if (entrantIndex !== index) return entrant;
-      if (entrant.kind === "singles") return { ...entrant, characters: [...entrant.characters, createCharacterForm()] };
+      if (entrant.kind === "singles") return entrant.characters.length >= MELEE_FIGHTER_NAMES.length ? entrant : { ...entrant, characters: [...entrant.characters, createCharacterForm()] };
       const member = side === "entrant_1" ? entrant.entrant_1 : entrant.entrant_2;
-      const nextMember = { ...member, characters: [...member.characters, createCharacterForm()] };
+      const nextMember = member.characters.length >= MELEE_FIGHTER_NAMES.length ? member : { ...member, characters: [...member.characters, createCharacterForm()] };
       return side === "entrant_1" ? { ...entrant, entrant_1: nextMember } : { ...entrant, entrant_2: nextMember };
     }));
   }
