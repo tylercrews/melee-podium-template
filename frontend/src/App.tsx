@@ -8,6 +8,7 @@ import {
   renderPodium,
 } from "./api";
 import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
+import EntrantCharacterEditor, { createCharacterForm } from "./EntrantCharacterEditor";
 import Footer from "./Footer";
 import FavoritesManagement from "./FavoritesManagement";
 import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, loadFavorites, newFavoriteId, saveFavorites } from "./favorites";
@@ -63,35 +64,6 @@ const PODIUM_FONTS: ReadonlyArray<{ value: PodiumFont; label: string }> = [
   { value: "tyrowo", label: "Tyrowo Inked" },
   // { value: "impact", label: "Impact" }, // this one is not tested yet
 ];
-function createCharacterForm(
-  fighter = "",
-  color = "",
-  pose = "",
-): CharacterForm {
-  return { fighter, color, pose };
-}
-
-function CharacterFields({ characters, fighters, onUpdate, onAdd, onRemove }: { characters: CharacterForm[]; fighters: FighterOption[]; onUpdate: (characterIndex: number, field: "fighter" | "color" | "pose", value: string) => void; onAdd: () => void; onRemove: (characterIndex: number) => void }) {
-  const selectedFighters = new Set(characters.map((character) => character.fighter).filter(Boolean));
-  return <div className="character-fields">
-    {characters.map((character, characterIndex) => {
-      const fighter = fighters.find((item) => item.name === character.fighter);
-      const colors = unique((fighter?.options ?? []).map((option) => option.color));
-      const poses = unique((fighter?.options ?? []).filter((option) => option.color === character.color).map((option) => option.pose));
-      const availableFighters = fighters.filter((option) => option.name === character.fighter || !selectedFighters.has(option.name));
-      return <fieldset className="character-fields__item" key={characterIndex}>
-        <legend>Fighter {characterIndex + 1}</legend>
-        {characters.length > 1 && <button type="button" className="button-danger" onClick={() => onRemove(characterIndex)}>Remove fighter</button>}
-        <label>Fighter<select value={character.fighter} onChange={(event) => onUpdate(characterIndex, "fighter", event.target.value)} required><option value="">Choose a fighter</option>{character.fighter && !fighters.some((option) => option.name === character.fighter) && <option value={character.fighter}>{character.fighter}</option>}{availableFighters.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}</select></label>
-        <div className="row-fields">
-          <label>Color<select value={character.color} onChange={(event) => onUpdate(characterIndex, "color", event.target.value)} required>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
-          <label>Pose<select value={character.pose} onChange={(event) => onUpdate(characterIndex, "pose", event.target.value)} required>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
-        </div>
-      </fieldset>;
-    })}
-    <button type="button" onClick={onAdd} disabled={characters.length >= MELEE_FIGHTER_NAMES.length}>Add fighter</button>
-  </div>;
-}
 function createEntrantForm(existing?: EntrantForm): EntrantForm {
   return {
     tag: existing?.tag ?? "",
@@ -389,8 +361,8 @@ function App() {
             characters: [
               {
                 melee_fighter_name: character.fighter,
-                color: character.color,
-                pose: character.pose,
+                color: character.color || null,
+                pose: character.pose || null,
               },
             ],
           };
@@ -411,8 +383,8 @@ function App() {
             characters: [
               {
                 melee_fighter_name: entrantOneCharacter.fighter,
-                color: entrantOneCharacter.color,
-                pose: entrantOneCharacter.pose,
+                color: entrantOneCharacter.color || null,
+                pose: entrantOneCharacter.pose || null,
               },
             ],
           },
@@ -421,8 +393,8 @@ function App() {
             characters: [
               {
                 melee_fighter_name: entrantTwoCharacter.fighter,
-                color: entrantTwoCharacter.color,
-                pose: entrantTwoCharacter.pose,
+                color: entrantTwoCharacter.color || null,
+                pose: entrantTwoCharacter.pose || null,
               },
             ],
           },
@@ -485,6 +457,13 @@ function App() {
     );
   }
 
+  function setEntrantCharacters(index: number, side: "singles" | "entrant_1" | "entrant_2", characters: CharacterForm[]) {
+    setEntrants((current) => current.map((entrant, entrantIndex) => {
+      if (entrantIndex !== index) return entrant;
+      if (entrant.kind === "singles") return { ...entrant, characters };
+      return side === "entrant_1" ? { ...entrant, entrant_1: { ...entrant.entrant_1, characters } } : { ...entrant, entrant_2: { ...entrant.entrant_2, characters } };
+    }));
+  }
   function updateCharacter(index: number, side: "singles" | "entrant_1" | "entrant_2", characterIndex: number, field: "fighter" | "color" | "pose", value: string) {
     setEntrants((current) => current.map((entrant, entrantIndex) => {
       if (entrantIndex !== index) return entrant;
@@ -767,7 +746,7 @@ function App() {
     .replace(/^-|-$/g, "");
 
   if (window.location.pathname.replace(/\/+$/, "").endsWith("favorites_management")) {
-    return <FavoritesManagement favorites={favorites} renderCount={renderCount} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
+    return <FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
   }
 
   return (
@@ -969,7 +948,7 @@ function App() {
                         <input type="number" min="1" value={entrant.seed} onChange={(event) => updateSinglesEntrant(index, "seed", event.target.value)} />
                       </label>
                     )}
-                    <CharacterFields characters={entrant.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "singles", characterIndex, field, value)} onAdd={() => addCharacter(index, "singles")} onRemove={(characterIndex) => removeCharacter(index, "singles", characterIndex)} />
+                    <EntrantCharacterEditor characters={entrant.characters} fighters={fighters} onChange={(characters) => setEntrantCharacters(index, "singles", characters)} />
                     <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                   </fieldset>
                 );
@@ -1061,13 +1040,13 @@ function App() {
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 1</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} />
-                      <CharacterFields characters={entrant.entrant_1.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "entrant_1", characterIndex, field, value)} onAdd={() => addCharacter(index, "entrant_1")} onRemove={(characterIndex) => removeCharacter(index, "entrant_1", characterIndex)} />
+                      <EntrantCharacterEditor characters={entrant.entrant_1.characters} fighters={fighters} onChange={(characters) => setEntrantCharacters(index, "entrant_1", characters)} />
                     </fieldset>
 
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 2</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} />
-                      <CharacterFields characters={entrant.entrant_2.characters} fighters={fighters} onUpdate={(characterIndex, field, value) => updateCharacter(index, "entrant_2", characterIndex, field, value)} onAdd={() => addCharacter(index, "entrant_2")} onRemove={(characterIndex) => removeCharacter(index, "entrant_2", characterIndex)} />
+                      <EntrantCharacterEditor characters={entrant.entrant_2.characters} fighters={fighters} onChange={(characters) => setEntrantCharacters(index, "entrant_2", characters)} />
                     </fieldset>
                   </div>
                   <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name === entrant.team_name)} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>

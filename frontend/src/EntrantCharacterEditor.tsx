@@ -1,0 +1,47 @@
+import { FighterOption } from "./api";
+import { FavoriteCharacter } from "./favorites";
+
+export function createCharacterForm(fighter = "", color = "", pose = ""): FavoriteCharacter {
+  return { fighter, color, pose };
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+export default function EntrantCharacterEditor({ characters, fighters, onChange }: { characters: FavoriteCharacter[]; fighters: FighterOption[]; onChange: (characters: FavoriteCharacter[]) => void }) {
+  const selectedFighters = new Set(characters.map((character) => character.fighter).filter(Boolean));
+  const updateCharacter = (characterIndex: number, field: "fighter" | "color" | "pose", value: string) => {
+    onChange(characters.map((character, currentIndex) => {
+      if (currentIndex !== characterIndex) return character;
+      if (field === "fighter") {
+        const option = fighters.find((fighter) => fighter.name === value)?.options[0];
+        return { fighter: value, color: option?.color ?? "", pose: option?.pose ?? "" };
+      }
+      if (field === "color") {
+        const option = fighters.find((fighter) => fighter.name === character.fighter)?.options.find((item) => item.color === value);
+        return { ...character, color: value, pose: option?.pose ?? "" };
+      }
+      return { ...character, pose: value };
+    }));
+  };
+
+  return <div className="character-fields">
+    {characters.map((character, characterIndex) => {
+      const fighter = fighters.find((item) => item.name === character.fighter);
+      const colors = unique((fighter?.options ?? []).map((option) => option.color));
+      const poses = unique((fighter?.options ?? []).filter((option) => !character.color || option.color === character.color).map((option) => option.pose));
+      const availableFighters = fighters.filter((option) => option.name === character.fighter || !selectedFighters.has(option.name));
+      return <fieldset className="character-fields__item" key={characterIndex}>
+        <legend>Fighter {characterIndex + 1}</legend>
+        {characters.length > 1 && <button type="button" className="button-danger" onClick={() => onChange(characters.filter((_, index) => index !== characterIndex))}>Remove fighter</button>}
+        <label>Fighter<select value={character.fighter} onChange={(event) => updateCharacter(characterIndex, "fighter", event.target.value)} required><option value="">Choose a fighter</option>{character.fighter && !fighters.some((option) => option.name === character.fighter) && <option value={character.fighter}>{character.fighter}</option>}{availableFighters.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}</select></label>
+        <div className="row-fields">
+          <label>Color<select value={character.color} onChange={(event) => updateCharacter(characterIndex, "color", event.target.value)}><option value="">Random</option>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
+          <label>Pose<select value={character.pose} onChange={(event) => updateCharacter(characterIndex, "pose", event.target.value)}><option value="">Random</option>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
+        </div>
+      </fieldset>;
+    })}
+    <button type="button" onClick={() => onChange([...characters, createCharacterForm()])} disabled={characters.length >= fighters.length}>Add fighter</button>
+  </div>;
+}
