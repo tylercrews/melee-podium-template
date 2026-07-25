@@ -20,6 +20,9 @@ interface TournamentForm {
   title: string;
   date: string;
   entrantsCount: string;
+  subtitle: string;
+  event: string;
+  link: string;
 }
 
 type EventFormat = "singles" | "doubles";
@@ -87,8 +90,11 @@ function App() {
     title: "",
     date: new Date().toISOString().slice(0, 10),
     entrantsCount: "16",
+    subtitle: "",
+    event: "",
+    link: "",
   });
-const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
+  const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
   const [podiumSize, setPodiumSize] = useState<PodiumSize>(8);
   const [entrants, setEntrants] = useState<EntrantForm[]>(() => createEntrants(8));
   const [bracketUrl, setBracketUrl] = useState("");
@@ -162,6 +168,10 @@ const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
         title: tournament.title.trim(),
         date: tournament.date,
         entrants_count: Number(tournament.entrantsCount),
+        subtitle: tournament.subtitle.trim() || null,
+        event: tournament.event.trim() || null,
+        link: tournament.link.trim() || null,
+        event_format: eventFormat,
       },
       entrants: entrants.map((entrant) => ({
         tag: entrant.tag.trim(),
@@ -273,6 +283,9 @@ const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
           importedTournament.entrant_count,
           result.entrants_count,
         ) || current.entrantsCount,
+      subtitle: stringValue(importedTournament.subtitle, result.subtitle) || current.subtitle,
+      event: stringValue(importedTournament.event, result.event) || current.event,
+      link: stringValue(importedTournament.link, result.link) || current.link,
     }));
 
     const importedEntrants = Array.isArray(result.entrants)
@@ -389,6 +402,35 @@ const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
 
       <form onSubmit={handleRender}>
         <section className="panel">
+          <div className="section-heading">
+            <div>
+              <h2>Podium format</h2>
+              <p>Choose the event type and how many placements to render.</p>
+            </div>
+          </div>
+          <div className="format-controls">
+            <fieldset className="choice-group">
+              <legend>Format</legend>
+              {(["singles", "doubles"] as const).map((format) => (
+                <label className="choice" key={format}>
+                  <input type="radio" name="event-format" checked={eventFormat === format} onChange={() => selectFormat(format)} />
+                  {format[0].toUpperCase() + format.slice(1)}
+                </label>
+              ))}
+            </fieldset>
+            <fieldset className="choice-group">
+              <legend>Podium size</legend>
+              {([3, 4, 8] as const).filter((size) => eventFormat === "singles" || size !== 8).map((size) => (
+                <label className="choice" key={size}>
+                  <input type="radio" name="podium-size" checked={podiumSize === size} onChange={() => selectPodiumSize(size)} />
+                  Top {size}
+                </label>
+              ))}
+            </fieldset>
+          </div>
+        </section>
+
+        <section className="panel">
           <h2>Tournament</h2>
           <div className="field-grid">
             <label className="field-grid__wide">
@@ -434,35 +476,31 @@ const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
                 required
               />
             </label>
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="section-heading">
-            <div>
-              <h2>Podium format</h2>
-              <p>Choose the event type and how many placements to render.</p>
-            </div>
-          </div>
-          <div className="format-controls">
-            <fieldset className="choice-group">
-              <legend>Event type</legend>
-              {(["singles", "doubles"] as const).map((format) => (
-                <label className="choice" key={format}>
-                  <input type="radio" name="event-format" checked={eventFormat === format} onChange={() => selectFormat(format)} />
-                  {format[0].toUpperCase() + format.slice(1)}
-                </label>
-              ))}
-            </fieldset>
-            <fieldset className="choice-group">
-              <legend>Podium size</legend>
-              {([3, 4, 8] as const).filter((size) => eventFormat === "singles" || size !== 8).map((size) => (
-                <label className="choice" key={size}>
-                  <input type="radio" name="podium-size" checked={podiumSize === size} onChange={() => selectPodiumSize(size)} />
-                  Top {size}
-                </label>
-              ))}
-            </fieldset>
+            <label className="field-grid__wide">
+              Subtitle (optional)
+              <input
+                value={tournament.subtitle}
+                onChange={(event) => setTournament((current) => ({ ...current, subtitle: event.target.value }))}
+                placeholder="Weekly #42"
+              />
+            </label>
+            <label>
+              Event (optional)
+              <input
+                value={tournament.event}
+                onChange={(event) => setTournament((current) => ({ ...current, event: event.target.value }))}
+                placeholder="Melee Singles"
+              />
+            </label>
+            <label>
+              Tournament link (optional)
+              <input
+                type="url"
+                value={tournament.link}
+                onChange={(event) => setTournament((current) => ({ ...current, link: event.target.value }))}
+                placeholder="https://start.gg/..."
+              />
+            </label>
           </div>
         </section>
 
