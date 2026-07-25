@@ -605,6 +605,12 @@ function App() {
     const importedEntrants = Array.isArray(result.entrants)
       ? result.entrants.slice(0, nextSize)
       : [];
+    const hasImportedSeeds = importedEntrants.some((entrant) => {
+      if (!isRecord(entrant)) return false;
+      const seed = Number(entrant.seed);
+      return Number.isInteger(seed) && seed > 0;
+    });
+    setIncludeSeeds(hasImportedSeeds);
     setEntrants((current) =>
       createEntrants(nextSize, nextFormat, current).map((existing, index) => {
         const imported = importedEntrants[index];
@@ -628,9 +634,7 @@ function App() {
             tag:
               (stringValue(imported.tag, imported.name, imported.player_tag) ||
                 (existing.kind === "singles" ? existing.tag : "")),
-            seed:
-              stringValue(imported.seed) ||
-              (existing.kind === "singles" ? existing.seed : String(index + 1)),
+            seed: stringValue(imported.seed),
             characters: [importedCharacter],
           });
         }
@@ -653,9 +657,7 @@ function App() {
           team_name:
             stringValue(imported.team_name, imported.tag, imported.name) ||
             (existing.kind === "doubles" ? existing.team_name : ""),
-          seed:
-            stringValue(imported.seed) ||
-            (existing.kind === "doubles" ? existing.seed : String(index + 1)),
+          seed: stringValue(imported.seed),
           team_color:
             stringValue(imported.team_color, imported.color) ||
             (existing.kind === "doubles" ? existing.team_color : ""),
