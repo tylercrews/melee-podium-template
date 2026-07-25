@@ -423,7 +423,11 @@ input::placeholder {
 .favorite-choice > span:first-child { overflow-wrap: anywhere; }
 .favorite-choice .stock-icons { flex-wrap: wrap; max-width: 100%; }
 .favorite-choice img { width: 1.8rem; height: 1.8rem; object-fit: contain; }
-.favorite-choice--team { grid-template-columns: 1fr; gap: 0.2rem; }
+.favorite-choice--team { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 0.35rem; }
+.favorite-choice--team > strong { overflow-wrap: anywhere; }
+.favorite-team-member { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; min-width: 0; }
+.favorite-team-member > span:first-child { overflow-wrap: anywhere; }
+.favorite-team-member .stock-icons { flex-wrap: wrap; max-width: 100%; }
 .stock-icons { display: inline-flex; align-items: center; min-width: 1.35rem; }
 .stock-icons img { width: 1.45rem; height: 1.45rem; object-fit: contain; margin-left: -0.22rem; image-rendering: auto; }
 .stock-icons img:first-child { margin-left: 0; }
