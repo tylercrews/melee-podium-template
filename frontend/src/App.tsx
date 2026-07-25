@@ -782,6 +782,8 @@ function App() {
     return <FavoritesManagement favorites={favorites} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
   }
 
+  if (window.location.pathname.replace(/\/+$/, "").endsWith("favorites_management")) return <FavoritesManagement favorites={favorites} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
+
   return (
     <main className="page-shell">
       <header className="site-header">
@@ -793,6 +795,7 @@ function App() {
             downloadable podium graphic.
           </p>
         </div>
+        <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <div className={`health health--${health}`} role="status">
           <span aria-hidden="true" />
@@ -1164,6 +1167,7 @@ function App() {
                   <div className="row-fields">
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 1</legend>
+                      <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} />
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} label="Use a favorite singles entrant" />
                       <label>
                         Fighter
@@ -1234,6 +1238,7 @@ function App() {
 
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 2</legend>
+                      <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} />
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} label="Use a favorite singles entrant" />
                       <label>
                         Fighter
