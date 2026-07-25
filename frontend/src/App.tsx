@@ -1,4 +1,4 @@
-﻿import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -754,8 +754,6 @@ function App() {
     return <FavoritesManagement favorites={favorites} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
   }
 
-  if (window.location.pathname.replace(/\/+$/, "").endsWith("favorites_management")) return <FavoritesManagement favorites={favorites} onChange={changeFavorites} onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />;
-
   return (
     <main className="page-shell">
       <header className="site-header">
@@ -767,7 +765,6 @@ function App() {
             downloadable podium graphic.
           </p>
         </div>
-        <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>
         <div className={`health health--${health}`} role="status">
           <span aria-hidden="true" />
