@@ -13,22 +13,31 @@ export function CharacterStockIcons({ characters }: { characters: { fighter: str
   </span>;
 }
 
-export function SinglesFavoritePicker({ favorites, onChoose, label = "Use a favorite entrant" }: { favorites: FavoriteSinglesEntrant[]; onChoose: (favorite: FavoriteSinglesEntrant) => void; label?: string }) {
-  if (!favorites.length) return null;
-  return <details className="favorite-picker"><summary>{label}</summary><div className="favorite-menu">
-    {favorites.map((favorite) => <button type="button" className="favorite-choice" key={favorite.id} onClick={() => onChoose(favorite)}>
-      <strong>{favorite.tag || "Untitled entrant"}</strong><CharacterStockIcons characters={favorite.characters} /><span>{characterSummary(favorite.characters)}</span>
-    </button>)}
-  </div></details>;
+export function SinglesFavoritePicker({ favorites, onChoose, label = "Use favorited entrant" }: { favorites: FavoriteSinglesEntrant[]; onChoose: (favorite: FavoriteSinglesEntrant) => void; label?: string }) {
+  return <label>
+    {label}
+    <select value="" onChange={(event) => {
+      const favorite = favorites.find((item) => item.id === event.target.value);
+      if (favorite) onChoose(favorite);
+    }}>
+      <option value="">{favorites.length ? "Choose a favorite" : "No favorited entrants saved"}</option>
+      {favorites.map((favorite) => <option key={favorite.id} value={favorite.id}>
+        {favorite.tag || "Untitled entrant"} — {characterSummary(favorite.characters)}
+      </option>)}
+    </select>
+  </label>;
 }
-
 export function DoublesFavoritePicker({ favorites, onChoose }: { favorites: FavoriteDoublesTeam[]; onChoose: (favorite: FavoriteDoublesTeam) => void }) {
-  if (!favorites.length) return null;
-  return <details className="favorite-picker"><summary>Use a favorite doubles team</summary><div className="favorite-menu">
-    {favorites.map((team) => <button type="button" className="favorite-choice favorite-choice--team" key={team.id} onClick={() => onChoose(team)}>
-      <strong>{team.team_name || "Untitled team"}</strong>
-      <span>{team.entrant_1.tag || "Entrant 1"} <CharacterStockIcons characters={team.entrant_1.characters} /></span>
-      <span>{team.entrant_2.tag || "Entrant 2"} <CharacterStockIcons characters={team.entrant_2.characters} /></span>
-    </button>)}
-  </div></details>;
+  return <label>
+    Use favorited doubles team
+    <select value="" onChange={(event) => {
+      const favorite = favorites.find((item) => item.id === event.target.value);
+      if (favorite) onChoose(favorite);
+    }}>
+      <option value="">{favorites.length ? "Choose a favorite" : "No favorited doubles teams saved"}</option>
+      {favorites.map((team) => <option key={team.id} value={team.id}>
+        {team.team_name || "Untitled team"} — {team.entrant_1.tag || "Entrant 1"} &amp; {team.entrant_2.tag || "Entrant 2"}
+      </option>)}
+    </select>
+  </label>;
 }

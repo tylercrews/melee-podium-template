@@ -958,7 +958,6 @@ function App() {
                   <fieldset className="entrant-card" key={index}>
                     <legend>{ordinalPlace(index)}</legend>
                     <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteSingles(index, favorite)} />
-                    <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                     <label>
                       Player tag
                       <input
@@ -1058,6 +1057,7 @@ function App() {
                         </select>
                       </label>
                     </div>
+                    <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => favorite.tag === entrant.tag)} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
                   </fieldset>
                 );
               }
@@ -1087,7 +1087,6 @@ function App() {
                 <fieldset className="entrant-card" key={index}>
                   <legend>{ordinalPlace(index)}</legend>
                   <DoublesFavoritePicker favorites={favorites.doubles} onChoose={(favorite) => applyFavoriteTeam(index, favorite)} />
-                  <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name === entrant.team_name)} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>
                   <label>
                     Team name
                     <input
@@ -1168,7 +1167,6 @@ function App() {
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 1</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} />
-                      <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_1", favorite)} label="Use a favorite singles entrant" />
                       <label>
                         Fighter
                         <select
@@ -1239,7 +1237,6 @@ function App() {
                     <fieldset className="entrant-card" style={{ padding: "0.75rem" }}>
                       <legend>Entrant 2</legend>
                       <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} />
-                      <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyFavoriteMember(index, "entrant_2", favorite)} label="Use a favorite singles entrant" />
                       <label>
                         Fighter
                         <select
@@ -1307,6 +1304,7 @@ function App() {
                       </div>
                     </fieldset>
                   </div>
+                  <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name === entrant.team_name)} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>
                 </fieldset>
               );
             })}
