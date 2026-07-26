@@ -7,7 +7,7 @@ Shouts out to AeonSSB for the original character render images from the MeleeCS 
 
 TODO LIST:
 * clean up the to do list
-* need to show a little preview of the pose
+* try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
 * test that the import is working and pulling characters for doubles
 * put in the stock icons into the character folders from the melee csproject, so that way I can make dropdowns for the (eventual) ui where people can select from their prevs
 * after importing from start.gg, cross reference with your map of frequently used entrants to auto-select colors (because I think they don't have colors, and/or TOs don't really keep track)
