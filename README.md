@@ -9,6 +9,7 @@ TODO LIST:
 * clean up the to do list
 * character selection from start.gg brackets isn't working
 * raise the character names up a bit in singles so they're away from the bottom.
+* add a color outline around the white text for the character podium color
 * when someone has a sponsor (split by |) make it appear above their name instead of going to the left
 * try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
 * test that the import is working and pulling characters for doubles
