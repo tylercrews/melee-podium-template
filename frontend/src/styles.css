@@ -419,6 +419,7 @@ input::placeholder {
 .favorite-picker { border: 1px solid #3d3f4a; border-radius: 0.5rem; background: #101116; }
 .favorite-picker summary { padding: 0.7rem; cursor: pointer; color: #d7d0f6; font-weight: 700; }
 .favorite-menu { display: grid; gap: 0.4rem; max-height: 16rem; overflow: auto; padding: 0 0.5rem 0.5rem; }
+.favorite-filter { box-sizing: border-box; width: 100%; min-width: 0; }
 .favorite-choice { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 0.4rem; min-width: 0; min-height: 0; padding: 0.55rem 0.7rem; text-align: left; font-size: 0.82rem; }
 .favorite-choice > span:first-child { overflow-wrap: anywhere; }
 .favorite-choice .stock-icons { flex-wrap: wrap; max-width: 100%; }
