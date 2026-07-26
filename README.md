@@ -11,6 +11,7 @@ TODO LIST:
 * raise the character names up a bit in singles so they're away from the bottom.
 * add a color outline around the white text for the character podium color
 * when someone has a sponsor (split by |) make it appear above their name instead of going to the left
+* start.gg brackets that are like partway through like this silver bracket only retrieve the main bracket instead. https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
 * singles char sizing probably needs to be just a shade smaller, captain falcon doesn't fit on the platform.
 * add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
