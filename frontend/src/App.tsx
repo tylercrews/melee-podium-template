@@ -1,4 +1,4 @@
-﻿import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -174,6 +174,10 @@ function stringValue(...values: unknown[]): string {
     (value) => typeof value === "string" || typeof value === "number",
   );
   return match === undefined ? "" : String(match);
+}
+
+function normalizedEntrantTag(tag: string): string {
+  return tag.trim().toLowerCase();
 }
 
 function splitTournamentName(name: string): { title: string; subtitle: string } {
@@ -619,16 +623,29 @@ function App() {
         );
 
         if (nextFormat === "singles") {
+          const importedTag = stringValue(
+            imported.tag,
+            imported.name,
+            imported.player_tag,
+          );
+          const matchingFavorite = favorites.singles.find(
+            (favorite) =>
+              normalizedEntrantTag(favorite.tag) ===
+              normalizedEntrantTag(importedTag),
+          );
+          const hasImportedCharacter = Boolean(importedCharacter.fighter);
           return createSinglesEntrant(index + 1, {
             kind: "singles",
-            tag:
-              (stringValue(imported.tag, imported.name, imported.player_tag) ||
-                (existing.kind === "singles" ? existing.tag : "")),
+            tag: importedTag || (existing.kind === "singles" ? existing.tag : ""),
             seed: stringValue(imported.seed),
-            characters: [importedCharacter],
+            characters:
+              matchingFavorite && !hasImportedCharacter
+                ? matchingFavorite.characters.map((favoriteCharacter) => ({
+                    ...favoriteCharacter,
+                  }))
+                : [importedCharacter],
           });
         }
-
         const entrantOne = isRecord(imported.entrant_1)
           ? imported.entrant_1
           : isRecord(imported.player_1)
