@@ -459,3 +459,6 @@ input::placeholder {
 .character-preview { min-height: 12rem; margin: 0; align-content: center; }
 .character-preview img { width: min(100%, 10rem); max-height: 12rem; }
 @media (max-width: 600px) { .character-fields__content--with-preview { grid-template-columns: 1fr; } .character-preview { min-height: 0; } }
+.payload-preview__actions { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.75rem; }
+.payload-preview__actions button { padding: 0.45rem 0.7rem; font-size: 0.82rem; }
+.payload-preview__actions span { color: #b8e6c7; font-size: 0.82rem; }

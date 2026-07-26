@@ -242,6 +242,7 @@ function App() {
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
   const [favorites, setFavorites] = useState<FavoritesData>(() => loadFavorites());
 
   useEffect(() => {
@@ -756,6 +757,14 @@ function App() {
     }
   }
 
+  async function copyPayload() {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      setCopyStatus("Copied JSON.");
+    } catch {
+      setCopyStatus("Could not copy JSON.");
+    }
+  }
   const downloadName = `${tournament.title || "melee"}-podium`
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -1038,6 +1047,10 @@ function App() {
 
           <details className="payload-preview">
             <summary>Preview API request</summary>
+            <div className="payload-preview__actions">
+              <button type="button" onClick={copyPayload}>Copy JSON</button>
+              {copyStatus && <span role="status">{copyStatus}</span>}
+            </div>
             <pre>{JSON.stringify(payload, null, 2)}</pre>
           </details>
 
