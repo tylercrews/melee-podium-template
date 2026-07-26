@@ -9,7 +9,7 @@ import sqlite3
 from typing import Any, Mapping
 import re
 
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
 from DrawPodium import CHARACTER_FOLDER, PodiumMode, draw_podium
@@ -227,8 +227,11 @@ def render() -> Any:
     output = BytesIO()
     image.save(output, format="PNG")
     _increment_render_count()
-    output.seek(0)
-    return send_file(output, mimetype="image/png", download_name="melee-podium.png")
+    return Response(
+        output.getvalue(),
+        mimetype="image/png",
+        headers={"Content-Disposition": "inline; filename=melee-podium.png"},
+    )
 
 
 def _import_response(imported: BracketImport) -> dict[str, Any]:
