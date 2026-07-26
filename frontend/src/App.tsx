@@ -287,7 +287,7 @@ function App() {
                     {
                       fighter: first.name,
                       color: firstOption?.color ?? "",
-                      pose: firstOption?.pose ?? "",
+                      pose: "",
                     },
                   ],
                 };
@@ -303,7 +303,7 @@ function App() {
                     {
                       fighter: firstMember.fighter || first.name,
                       color: firstMember.color || (firstOption?.color ?? ""),
-                      pose: firstMember.pose || (firstOption?.pose ?? ""),
+                      pose: firstMember.pose,
                     },
                   ],
                 },
@@ -313,7 +313,7 @@ function App() {
                     {
                       fighter: secondMember.fighter || first.name,
                       color: secondMember.color || (firstOption?.color ?? ""),
-                      pose: secondMember.pose || (firstOption?.pose ?? ""),
+                      pose: secondMember.pose,
                     },
                   ],
                 },
@@ -476,11 +476,10 @@ function App() {
         if (field === "fighter") {
           if (characters.some((character, currentIndex) => currentIndex !== characterIndex && character.fighter === value)) return character;
           const option = fighterByName(value)?.options[0];
-          return { fighter: value, color: option?.color ?? "", pose: option?.pose ?? "" };
+          return { fighter: value, color: option?.color ?? "", pose: "" };
         }
         if (field === "color") {
-          const option = fighterByName(character.fighter)?.options.find((item) => item.color === value);
-          return { ...character, color: value, pose: option?.pose ?? "" };
+          return { ...character, color: value, pose: "" };
         }
         return { ...character, pose: value };
       });

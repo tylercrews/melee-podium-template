@@ -23,11 +23,10 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
       if (currentIndex !== characterIndex) return character;
       if (field === "fighter") {
         const option = fighters.find((fighter) => fighter.name === value)?.options[0];
-        return { fighter: value, color: option?.color ?? "", pose: option?.pose ?? "" };
+        return { fighter: value, color: option?.color ?? "", pose: "" };
       }
       if (field === "color") {
-        const option = fighters.find((fighter) => fighter.name === character.fighter)?.options.find((item) => item.color === value);
-        return { ...character, color: value, pose: option?.pose ?? "" };
+        return { ...character, color: value, pose: "" };
       }
       return { ...character, pose: value };
     }));
