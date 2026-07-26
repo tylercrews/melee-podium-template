@@ -18,9 +18,11 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, 
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-# Load local deployment secrets without overriding real process environment
-# variables supplied by a host. The .env file is gitignored and must never be
-# served from a public web root.
+# cPanel deployment secrets live outside the web root. Keep this before the
+# local fallback so production values win without overriding host variables.
+load_dotenv("/home/tyrowork/melee-podium-secrets", override=False)
+# The local development fallback is gitignored and must never be served from a
+# public web root.
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 STATS_DATABASE_PATH = Path(
