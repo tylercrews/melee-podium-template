@@ -8,6 +8,7 @@ Shouts out to AeonSSB for the original character render images from the MeleeCS 
 TODO LIST:
 * clean up the to do list
 * character selection from start.gg brackets isn't working
+* when someone has a sponsor (split by |) make it appear above their name instead of going to the left
 * try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
 * test that the import is working and pulling characters for doubles
 * put in the stock icons into the character folders from the melee csproject, so that way I can make dropdowns for the (eventual) ui where people can select from their prevs
