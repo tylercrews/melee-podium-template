@@ -13,7 +13,7 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from dotenv import load_dotenv
 
 from DrawPodium import CHARACTER_FOLDER, PodiumMode, draw_podium
-from bracket_import import BracketProvider, fetch_startgg, identify_bracket_link
+from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_startgg, identify_bracket_link
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 
 
@@ -231,20 +231,43 @@ def render() -> Any:
     return send_file(output, mimetype="image/png", download_name="melee-podium.png")
 
 
+def _import_response(imported: BracketImport) -> dict[str, Any]:
+    tournament = imported.to_tournament()
+    return {
+        "provider": imported.link.provider.value,
+        "tournament": {
+            "title": tournament.title,
+            "date": str(tournament.date),
+            "entrants_count": tournament.entrants_count,
+            "subtitle": tournament.subtitle,
+            "event": tournament.event,
+            "link": tournament.link,
+            "event_format": tournament.event_format.value,
+        },
+        "entrants": [
+            {
+                "tag": player.tag,
+                "seed": player.seed,
+                "placement": player.placement,
+            }
+            for player in imported.players
+        ],
+    }
+
+
 @app.post("/api/import")
 def import_bracket() -> Any:
     payload = request.get_json(silent=True)
     if not isinstance(payload, Mapping):
         return jsonify(error="Request body must be a JSON object"), 400
     link = identify_bracket_link(_required_text(payload, "url"))
-    return jsonify(
-        error=(
-            f"{link.provider} import needs provider API credentials. "
-            "The renderer is ready; enter results manually until credentials are configured."
-        ),
-        provider=link.provider,
-    ), 501
-
+    if link.provider is BracketProvider.CHALLONGE:
+        imported = fetch_challonge(link)
+    elif link.provider is BracketProvider.START_GG:
+        imported = fetch_startgg(link)
+    else:
+        return jsonify(error=f"{link.provider} import is not configured yet", provider=link.provider.value), 501
+    return jsonify(_import_response(imported))
 
 @app.errorhandler(ValueError)
 @app.errorhandler(TypeError)

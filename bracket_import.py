@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Mapping
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 import json
 import os
@@ -283,6 +283,33 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_na
     entrant_size = event.get("entrantSizeMin")
     event_format = _event_format(entrant_size)
     return BracketImport(link, tournament["name"], event.get("name"), _unix_time(event.get("startAt")), tournament.get("city") or tournament.get("countryCode"), event.get("numEntrants"), tuple(sorted(players, key=lambda player: player.placement or 999999)), event_format, {"game": event.get("videogame"), "entrant_size_min": entrant_size})
+
+
+def fetch_challonge(link: BracketLink) -> BracketImport:
+    """Fetch and parse a public Challonge tournament with its v1 API key."""
+    api_key = os.environ.get("CHALLONGE_API_KEY")
+    if not api_key:
+        raise ValueError("CHALLONGE_API_KEY is not configured on the server")
+    endpoint = "https://api.challonge.com/v1/tournaments/{0}.json?{1}".format(
+        quote(link.tournament_slug, safe=""),
+        urlencode({"api_key": api_key, "include_participants": "1"}),
+    )
+    request = Request(endpoint, headers={"Accept": "application/json"})
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except HTTPError as error:
+        if error.code == 401:
+            raise ValueError("Challonge rejected CHALLONGE_API_KEY") from error
+        if error.code == 404:
+            raise ValueError("Challonge tournament was not found or is not accessible with this API key") from error
+        raise ValueError(f"Challonge API request failed ({error.code})") from error
+    except URLError as error:
+        raise ValueError("Could not reach the Challonge API") from error
+    try:
+        return parse_challonge(payload, link)
+    except (KeyError, TypeError) as error:
+        raise ValueError("Challonge returned an incomplete tournament response") from error
 
 
 def parse_challonge(payload: Mapping[str, Any], link: BracketLink) -> BracketImport:
