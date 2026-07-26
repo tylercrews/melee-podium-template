@@ -183,16 +183,26 @@ def _fighter_options() -> list[dict[str, Any]]:
     for folder in sorted(CHARACTER_FOLDER.iterdir(), key=lambda item: item.name.casefold()):
         if not folder.is_dir():
             continue
-        options = set()
+        options = {}
         for portrait in folder.glob("*.png"):
             match = _PORTRAIT_FILENAME.match(portrait.name)
             if match:
-                options.add((int(match.group("color_code")), match.group("color").lower(), match.group("pose").lower()))
+                key = (
+                    int(match.group("color_code")),
+                    match.group("color").lower(),
+                    match.group("pose").lower(),
+                )
+                options[key] = portrait.name
         fighters.append({
             "name": folder.name,
             "options": [
-                {"color": color, "pose": pose, "color_order": color_order}
-                for color_order, color, pose in sorted(options)
+                {
+                    "color": color,
+                    "pose": pose,
+                    "color_order": color_order,
+                    "portrait": portrait_name,
+                }
+                for (color_order, color, pose), portrait_name in sorted(options.items())
             ],
         })
     return fighters

@@ -449,3 +449,7 @@ input::placeholder {
   opacity: 0.7;
   text-align: center;
 }
+
+.character-preview { display: grid; justify-items: center; gap: 0.3rem; margin: 0.75rem 0 0; padding: 0.65rem; border: 1px solid #3a3c47; border-radius: 0.55rem; background: #101116; }
+.character-preview img { width: min(100%, 11rem); max-height: 13rem; object-fit: contain; }
+.character-preview figcaption { color: #adafbc; font-size: 0.78rem; }
