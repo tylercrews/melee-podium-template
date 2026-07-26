@@ -14,12 +14,13 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Mapping
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlencode, urlparse
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 import json
 import os
 import re
 
+import requests
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 
 
@@ -206,7 +207,7 @@ def identify_bracket_link(url: str) -> BracketLink:
     if host.endswith("challonge.com") and parts:
         # Challonge's API represents a hosted bracket as
         # ``subdomain-tournament_slug``.
-        subdomain = host.removesuffix(".challonge.com")
+        subdomain = "" if host == "challonge.com" else host.removesuffix(".challonge.com")
         tournament_slug = f"{subdomain}-{parts[0]}" if subdomain else parts[0]
         return BracketLink(BracketProvider.CHALLONGE, clean_url, tournament_slug)
     if host == "tonamel.com" and len(parts) >= 2 and parts[0] == "competition":
@@ -294,32 +295,28 @@ def fetch_challonge(link: BracketLink) -> BracketImport:
     api_key = os.environ.get("CHALLONGE_API_KEY")
     if not api_key:
         raise ValueError("CHALLONGE_API_KEY is not configured on the server")
-    endpoint = "https://api.challonge.com/v1/tournaments/{0}.json?{1}".format(
-        quote(link.tournament_slug, safe=""),
-        urlencode({"api_key": api_key, "include_participants": "1"}),
-    )
-    request = Request(endpoint, headers={"Accept": "application/json"})
+    endpoint = f"https://api.challonge.com/v1/tournaments/{link.tournament_slug}.json"
     try:
-        with urlopen(request, timeout=20) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except HTTPError as error:
-        if error.code == 401:
-            raise ValueError("Challonge rejected CHALLONGE_API_KEY") from error
-        if error.code == 403:
-            raise ValueError(
-                "Challonge denied access to this bracket (403). Confirm that the bracket is public "
-                "and that a hosted Challonge URL includes its full subdomain."
-            ) from error
-        if error.code == 404:
-            raise ValueError("Challonge tournament was not found or is not accessible with this API key") from error
-        raise ValueError(f"Challonge API request failed ({error.code})") from error
-    except URLError as error:
+        response = requests.get(
+            endpoint,
+            params={"api_key": api_key, "include_participants": "1"},
+            headers={"Accept": "application/json", "User-Agent": "MeleePodiumTemplate/1.0"},
+            timeout=20,
+        )
+    except requests.RequestException as error:
         raise ValueError("Could not reach the Challonge API") from error
+    if response.status_code == 401:
+        raise ValueError("Challonge rejected CHALLONGE_API_KEY")
+    if response.status_code == 403:
+        raise ValueError("Challonge denied access to this bracket (403). Confirm that the bracket is public.")
+    if response.status_code == 404:
+        raise ValueError("Challonge tournament was not found or is not accessible with this API key")
+    if not response.ok:
+        raise ValueError(f"Challonge API request failed ({response.status_code})")
     try:
-        return parse_challonge(payload, link)
-    except (KeyError, TypeError) as error:
+        return parse_challonge(response.json(), link)
+    except (KeyError, TypeError, requests.JSONDecodeError) as error:
         raise ValueError("Challonge returned an incomplete tournament response") from error
-
 
 def parse_challonge(payload: Mapping[str, Any], link: BracketLink) -> BracketImport:
     tournament = payload.get("tournament", payload)
