@@ -10,6 +10,7 @@ from typing import Any, Mapping
 import re
 
 from flask import Flask, jsonify, request, send_file, send_from_directory
+from dotenv import load_dotenv
 
 from DrawPodium import CHARACTER_FOLDER, PodiumMode, draw_podium
 from bracket_import import identify_bracket_link
@@ -17,6 +18,10 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, 
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+# Load local deployment secrets without overriding real process environment
+# variables supplied by a host. The .env file is gitignored and must never be
+# served from a public web root.
+load_dotenv(PROJECT_ROOT / ".env", override=False)
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 STATS_DATABASE_PATH = Path(
     os.environ.get("PODIUM_STATS_DB", PROJECT_ROOT / "podium_stats.sqlite3")

@@ -14,6 +14,9 @@ from models import Character, TournamentFormat
 class BracketImportTests(unittest.TestCase):
     def test_identifies_every_supported_link(self):
         self.assertEqual(identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles").provider, BracketProvider.START_GG)
+        startgg_bracket = identify_bracket_link("https://www.start.gg/tournament/just-another-melee-monthly-4/events/melee-singles/brackets/2340529/3382687/overview")
+        self.assertEqual(startgg_bracket.tournament_slug, "just-another-melee-monthly-4")
+        self.assertEqual(startgg_bracket.event_slug, "melee-singles")
         self.assertEqual(identify_bracket_link("https://foo.challonge.com/my-bracket").tournament_slug, "my-bracket")
         self.assertEqual(identify_bracket_link("https://tonamel.com/competition/abc").provider, BracketProvider.TONAMEL)
         self.assertEqual(identify_bracket_link("https://parry.gg/tournament/event").event_slug, "event")

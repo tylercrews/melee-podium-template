@@ -192,11 +192,13 @@ def identify_bracket_link(url: str) -> BracketLink:
     clean_url = url.split("?", 1)[0].rstrip("/")
     if host == "start.gg":
         try:
-            event_index = parts.index("event")
+            # Start.gg uses both its older ``/event/<slug>`` route and its
+            # current bracket route, ``/events/<slug>/brackets/...``.
+            event_index = next(index for index, part in enumerate(parts) if part in {"event", "events"})
             tournament_index = parts.index("tournament")
             return BracketLink(BracketProvider.START_GG, clean_url, parts[tournament_index + 1], parts[event_index + 1])
-        except (ValueError, IndexError) as error:
-            raise ValueError("A start.gg event URL must contain /tournament/<slug>/event/<slug>") from error
+        except (StopIteration, ValueError, IndexError) as error:
+            raise ValueError("A start.gg event URL must contain /tournament/<slug>/event(s)/<slug>") from error
     if host.endswith("challonge.com") and parts:
         return BracketLink(BracketProvider.CHALLONGE, clean_url, parts[0])
     if host == "tonamel.com" and len(parts) >= 2 and parts[0] == "competition":
