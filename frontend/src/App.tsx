@@ -358,25 +358,17 @@ function App() {
       },
       entrants: entrants.map((entrant, index) => {
         if (entrant.kind === "singles") {
-          const character = entrant.characters[0] ?? createCharacterForm();
           return {
             tag: entrant.tag.trim(),
             seed: includeSeeds && entrant.seed ? Number(entrant.seed) : null,
             placement: placementForIndex(index, podiumSize),
-            characters: [
-              {
-                melee_fighter_name: character.fighter,
-                color: character.color || null,
-                pose: character.pose || null,
-              },
-            ],
+            characters: entrant.characters.map((character) => ({
+              melee_fighter_name: character.fighter,
+              color: character.color || null,
+              pose: character.pose || null,
+            })),
           };
         }
-
-        const entrantOneCharacter =
-          entrant.entrant_1.characters[0] ?? createCharacterForm();
-        const entrantTwoCharacter =
-          entrant.entrant_2.characters[0] ?? createCharacterForm();
 
         return {
           team_name: entrant.team_name.trim(),
@@ -385,23 +377,19 @@ function App() {
           team_color: entrant.team_color.trim() || null,
           entrant_1: {
             tag: entrant.entrant_1.tag.trim(),
-            characters: [
-              {
-                melee_fighter_name: entrantOneCharacter.fighter,
-                color: entrantOneCharacter.color || null,
-                pose: entrantOneCharacter.pose || null,
-              },
-            ],
+            characters: entrant.entrant_1.characters.map((character) => ({
+              melee_fighter_name: character.fighter,
+              color: character.color || null,
+              pose: character.pose || null,
+            })),
           },
           entrant_2: {
             tag: entrant.entrant_2.tag.trim(),
-            characters: [
-              {
-                melee_fighter_name: entrantTwoCharacter.fighter,
-                color: entrantTwoCharacter.color || null,
-                pose: entrantTwoCharacter.pose || null,
-              },
-            ],
+            characters: entrant.entrant_2.characters.map((character) => ({
+              melee_fighter_name: character.fighter,
+              color: character.color || null,
+              pose: character.pose || null,
+            })),
           },
         };
       }),
