@@ -13,7 +13,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Mapping
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
+import json
+import os
 import re
 
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
@@ -208,7 +212,7 @@ def identify_bracket_link(url: str) -> BracketLink:
     raise ValueError("Unsupported bracket URL. Expected start.gg, challonge.com, tonamel.com, or parry.gg")
 
 
-def startgg_query(event_slug: str) -> dict[str, Any]:
+def startgg_query(tournament_slug: str, event_slug: str) -> dict[str, Any]:
     """Return the GraphQL request needed for a Start.gg Melee event import."""
     return {"query": """
 query MeleePodiumImport($slug: String!) {
@@ -220,8 +224,37 @@ query MeleePodiumImport($slug: String!) {
       nodes { placement entrant { id name initialSeedNum participants { gamerTag user { authorizations(types: TWITTER) { externalUsername } } } } }
     }
   }
-}""", "variables": {"slug": event_slug}}
+}""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
 
+
+def fetch_startgg(link: BracketLink) -> BracketImport:
+    """Fetch and parse a Start.gg event using the server-side token."""
+    token = os.environ.get("START_GG_TOKEN")
+    if not token:
+        raise ValueError("START_GG_TOKEN is not configured on the server")
+    if not link.event_slug:
+        raise ValueError("The Start.gg URL does not identify an event")
+    request = Request(
+        "https://api.start.gg/gql/alpha",
+        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except HTTPError as error:
+        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+    except URLError as error:
+        raise ValueError("Could not reach the Start.gg API") from error
+    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+    if errors:
+        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+        raise ValueError(f"Start.gg API error: {message}")
+    try:
+        return parse_startgg(payload, link)
+    except (KeyError, TypeError) as error:
+        raise ValueError("Start.gg returned an incomplete event response") from error
 
 def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_names: Mapping[int | str, str] | None = None, character_usage: Mapping[str, list[Mapping[str, Any]]] | None = None) -> BracketImport:
     event = payload["data"]["event"]

@@ -13,7 +13,7 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from dotenv import load_dotenv
 
 from DrawPodium import CHARACTER_FOLDER, PodiumMode, draw_podium
-from bracket_import import identify_bracket_link
+from bracket_import import BracketProvider, fetch_startgg, identify_bracket_link
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 
 
