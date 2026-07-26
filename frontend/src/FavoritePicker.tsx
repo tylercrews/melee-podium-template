@@ -40,7 +40,6 @@ export function SinglesFavoritePicker({ favorites, onChoose, label = "Use favori
           event.currentTarget.closest("details")?.removeAttribute("open");
         }}>
           <span>{favorite.tag || "Untitled entrant"}</span>
-          <span aria-hidden="true">—</span>
           {character?.fighter ? <CharacterStockIcons characters={favorite.characters} /> : <span>Unknown fighter</span>}
         </button>;
       }) : <p className="form-message">No favorited entrants saved.</p>}
