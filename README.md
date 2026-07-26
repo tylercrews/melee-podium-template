@@ -11,12 +11,10 @@ TODO LIST:
 * raise the character names up a bit in singles so they're away from the bottom.
 * add a color outline around the white text for the character podium color
 * when someone has a sponsor (split by |) make it appear above their name instead of going to the left
-* need to get poses for characters named to be something that makes more sense
+* need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
+* singles char sizing probably needs to be just a shade smaller, captain falcon doesn't fit on the platform.
+* add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 * try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
-* test that the import is working and pulling characters for doubles
-* put in the stock icons into the character folders from the melee csproject, so that way I can make dropdowns for the (eventual) ui where people can select from their prevs
-* after importing from start.gg, cross reference with your map of frequently used entrants to auto-select colors (because I think they don't have colors, and/or TOs don't really keep track)
-* * need to have a way of keeping track of the colors used so that the most frequent color is the one that shows up. (not sure if startgg keeps track of color use, but that's why it would be helpful)
 
 Fit in tournament location?
 more font support - like IMPACT bold, and maybe another option that's far less memey
