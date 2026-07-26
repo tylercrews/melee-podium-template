@@ -25,3 +25,6 @@ Thumbs.db
 # Editor / IDE
 .vscode/
 .idea/
+
+# Deployment file
+melee-podium-template-deploy.zip
