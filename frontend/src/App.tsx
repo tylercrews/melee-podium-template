@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+﻿import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -755,8 +755,8 @@ function App() {
         <div>
           <h1>Melee Podium Maker</h1>
           <p className="lede">
-            Enter a top three manually or import a public bracket, then render a
-            downloadable podium graphic.
+            Enter your bracket information and then render a
+            downloadable podium graphic. Expedite the process by importing a bracket link from start.gg or challonge. You can save and reuse entrants for both singles and doubles to save time picking characters and colors.
           </p>
         </div>
         <a className="button-link" href={`${import.meta.env.BASE_URL}favorites_management`}>Manage favorites</a>

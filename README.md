@@ -71,11 +71,11 @@ player profiles - have auto selections for frequently used people, maybe by some
 
 # testing locally
 (backend)
-$ flask --app app run --port 5000
+flask --app app run --port 5000
 
 (frontend)
 cd .\frontend
-$ npm run dev
+npm run dev
 
 ## Render counter deployment
 
