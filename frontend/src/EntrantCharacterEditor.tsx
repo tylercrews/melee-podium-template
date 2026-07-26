@@ -50,12 +50,16 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
       return <fieldset className="character-fields__item" key={characterIndex}>
         <legend>Fighter {characterIndex + 1}</legend>
         {characters.length > 1 && <button type="button" className="button-danger" onClick={() => onChange(characters.filter((_, index) => index !== characterIndex))}>Remove fighter</button>}
-        <label>Fighter<input list={`${fighterListId}-${characterIndex}`} value={character.fighter} onChange={(event) => updateCharacter(characterIndex, "fighter", event.target.value)} onBlur={() => { if (character.fighter && !fighters.some((option) => option.name === character.fighter)) updateCharacter(characterIndex, "fighter", ""); }} pattern={fighterPattern} placeholder="Search fighters" title="Choose an exact fighter name from the list." required /><datalist id={`${fighterListId}-${characterIndex}`}>{availableFighters.map((option) => <option key={option.name} value={option.name} />)}</datalist></label>
-        <div className="row-fields">
-          <label>Color<select value={character.color} onChange={(event) => updateCharacter(characterIndex, "color", event.target.value)}><option value="">Random</option>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
-          <label>Pose<select value={character.pose} onChange={(event) => updateCharacter(characterIndex, "pose", event.target.value)}><option value="">Random</option>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
+        <div className={previewUrl ? "character-fields__content character-fields__content--with-preview" : "character-fields__content"}>
+          <div className="character-fields__controls">
+            <label>Fighter<input list={`${fighterListId}-${characterIndex}`} value={character.fighter} onChange={(event) => updateCharacter(characterIndex, "fighter", event.target.value)} onBlur={() => { if (character.fighter && !fighters.some((option) => option.name === character.fighter)) updateCharacter(characterIndex, "fighter", ""); }} pattern={fighterPattern} placeholder="Search fighters" title="Choose an exact fighter name from the list." required /><datalist id={`${fighterListId}-${characterIndex}`}>{availableFighters.map((option) => <option key={option.name} value={option.name} />)}</datalist></label>
+            <div className="row-fields">
+              <label>Color<select value={character.color} onChange={(event) => updateCharacter(characterIndex, "color", event.target.value)}><option value="">Random</option>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
+              <label>Pose<select value={character.pose} onChange={(event) => updateCharacter(characterIndex, "pose", event.target.value)}><option value="">Random</option>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
+            </div>
+          </div>
+          {previewUrl && <figure className="character-preview"><img src={previewUrl} alt={`${character.color} ${character.pose} ${character.fighter} portrait`} /><figcaption>Selected portrait preview</figcaption></figure>}
         </div>
-        {previewUrl && <figure className="character-preview"><img src={previewUrl} alt={`${character.color} ${character.pose} ${character.fighter} portrait`} /><figcaption>Selected portrait preview</figcaption></figure>}
       </fieldset>;
     })}
     <button type="button" onClick={() => onChange([...characters, createCharacterForm()])} disabled={characters.length >= fighters.length}>Add fighter</button>
