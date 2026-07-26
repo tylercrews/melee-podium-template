@@ -7,6 +7,7 @@ Shouts out to AeonSSB for the original character render images from the MeleeCS 
 
 TODO LIST:
 * add url somewhere on the template so people know where they can make one
+* shoutouts page in ui
 * character selection from start.gg brackets isn't working
 * raise the character names up a bit in singles so they're away from the bottom.
 * add a color outline around the white text for the character podium color
