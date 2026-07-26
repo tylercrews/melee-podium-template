@@ -204,7 +204,11 @@ def identify_bracket_link(url: str) -> BracketLink:
         except (StopIteration, ValueError, IndexError) as error:
             raise ValueError("A start.gg event URL must contain /tournament/<slug>/event(s)/<slug>") from error
     if host.endswith("challonge.com") and parts:
-        return BracketLink(BracketProvider.CHALLONGE, clean_url, parts[0])
+        # Challonge's API represents a hosted bracket as
+        # ``subdomain-tournament_slug``.
+        subdomain = host.removesuffix(".challonge.com")
+        tournament_slug = f"{subdomain}-{parts[0]}" if subdomain else parts[0]
+        return BracketLink(BracketProvider.CHALLONGE, clean_url, tournament_slug)
     if host == "tonamel.com" and len(parts) >= 2 and parts[0] == "competition":
         return BracketLink(BracketProvider.TONAMEL, clean_url, parts[1])
     if host == "parry.gg" and len(parts) >= 2:
@@ -301,6 +305,11 @@ def fetch_challonge(link: BracketLink) -> BracketImport:
     except HTTPError as error:
         if error.code == 401:
             raise ValueError("Challonge rejected CHALLONGE_API_KEY") from error
+        if error.code == 403:
+            raise ValueError(
+                "Challonge denied access to this bracket (403). Confirm that the bracket is public "
+                "and that a hosted Challonge URL includes its full subdomain."
+            ) from error
         if error.code == 404:
             raise ValueError("Challonge tournament was not found or is not accessible with this API key") from error
         raise ValueError(f"Challonge API request failed ({error.code})") from error
