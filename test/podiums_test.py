@@ -124,9 +124,9 @@ def main() -> None:
     outputs.append(("Doubles Top 4", path))
 
     singles_top_3 = [
-        singles_entrant(1, "Bowser", pose="b", tag="Acme | Bowser"),
+        singles_entrant(1, "Bowser", pose="a", tag="Acme | Bowser"),
         singles_entrant(2, "Pichu"),
-        singles_entrant(3, "Bowser", pose="a"),
+        singles_entrant(3, "Bowser", pose="b"),
     ]
     path = OUTPUT_FOLDER / "singles_top_3.png"
     draw_singles_top_3(*singles_top_3, tournament=TOURNAMENT, output_path=path)
