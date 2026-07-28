@@ -461,9 +461,9 @@ def _draw_text_fields(
     # ``la`` mirrors the bracket URL's right-aligned anchor on the left edge.
     draw_text(
         draw,
-        (10, canvas.height - 34),
-        "Make a podium @ https://tyro.work/melee-podium-template",
-        anchor="la",
+        (width - 10, canvas.height - 30),
+        "tyro.work/melee-podium-template",
+        anchor="ra",
         max_width=width - 36,
         preferred_size=18,
         fill=(210, 210, 210),
@@ -473,7 +473,7 @@ def _draw_text_fields(
         # ``ra`` locks its right edge to the image margin even for long URLs.
         draw_text(
             draw,
-            (width - 10, canvas.height - 34),
+            (width - 10, 2),
             _display_link(tournament.link),
             anchor="ra",
             max_width=width - 36,
