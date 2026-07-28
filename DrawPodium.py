@@ -355,7 +355,7 @@ def _draw_character_tag(
         return
 
     player_tag = player_tag.strip()
-    sponsor_tag = f"{sponsor.rstrip()}|"
+    sponsor_tag = f"{sponsor.rstrip()} |"
     _draw_text(
         draw,
         position,

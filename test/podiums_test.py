@@ -149,7 +149,7 @@ def main() -> None:
         ("Donkey Kong", "a"),
         ("Captain Falcon", "a"),
         ("Fox", "a"),
-        ("Falco", "a"),
+        ("Captain Falcon", "a"),
         ("Kirby", "a"),
         ("Pichu", "a"),
     ]
