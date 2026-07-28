@@ -22,7 +22,7 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament
 OUTPUT_FOLDER = Path(__file__).with_name("podiums_test_outputs")
 OVERVIEW_PATH = Path(__file__).with_name("podiums_test_output.png")
 TOURNAMENT = Tournament(
-    title="Podium Rendering Test",
+    title="Very Very Long Podium Rendering Test",
     date="July 12, 2026",
     entrants_count=64,
     link="https://www.example.test/brackets/podium-rendering-test",
@@ -105,8 +105,8 @@ def main() -> None:
     outputs: list[tuple[str, Path]] = []
 
     doubles_top_3 = [
-        doubles_team(1, "Bowser", "Fox", pose_1="b", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Fox"),
-        doubles_team(2, "Bowser", "Falco", pose_1="a", team_color="blue"),
+        doubles_team(1, "Bowser", "Fox", pose_1="a", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Fox"),
+        doubles_team(2, "Bowser", "Falco", pose_1="b", team_color="blue"),
         doubles_team(3, "Kirby", "Pichu", team_color="green"),
     ]
     path = OUTPUT_FOLDER / "doubles_top_3.png"
@@ -114,8 +114,8 @@ def main() -> None:
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
-        doubles_team(1, "Bowser", "Captain Falcon", pose_1="b", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Captain Falcon"),
-        doubles_team(2, "Bowser", "Peach", pose_1="a", team_color="blue"),
+        doubles_team(1, "Bowser", "Captain Falcon", pose_1="a", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Captain Falcon"),
+        doubles_team(2, "Bowser", "Peach", pose_1="b", team_color="blue"),
         doubles_team(3, "Marth", "Jigglypuff", team_color="green"),
         doubles_team(4, "Pichu", "Pikachu", team_color="red"),
     ]

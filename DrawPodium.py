@@ -314,9 +314,9 @@ def _draw_text(
             position,
             text,
             font=loaded_font,
-            fill=glow_fill,
+            fill="white",
             stroke_width=4,
-            stroke_fill=glow_fill,
+            stroke_fill="white",
             anchor=anchor,
             align="center",
         )
@@ -324,11 +324,11 @@ def _draw_text(
         position,
         text,
         font=loaded_font,
-        fill=fill,
+        fill=glow_fill or fill,
         # The project has only a regular font; a same-color stroke gives it a
         # single-pass bold weight without desynchronizing wrapped text lines.
-        stroke_width=1,
-        stroke_fill=fill,
+        stroke_width=0 if glow_fill is not None else 1,
+        stroke_fill=glow_fill or fill,
         anchor=anchor,
         align="center",
     )
