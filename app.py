@@ -12,7 +12,7 @@ import re
 from flask import Flask, Response, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
-from DrawPodium import CHARACTER_FOLDER, PodiumMode, draw_podium
+from DrawPodium import CHARACTER_FOLDER, PodiumFont, PodiumMode, draw_podium
 from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_startgg, identify_bracket_link
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 
@@ -137,15 +137,23 @@ def _tournament(data: Any) -> Tournament:
     )
 
 
-def _render_request(payload: Mapping[str, Any]) -> tuple[PodiumMode, list[SinglesEntrant] | list[DoublesTeam], Tournament]:
+def _render_request(payload: Mapping[str, Any]) -> tuple[PodiumMode, list[SinglesEntrant] | list[DoublesTeam], Tournament, PodiumFont]:
     try:
         mode = PodiumMode(_required_text(payload, "mode"))
     except ValueError as error:
         choices = ", ".join(item.value for item in PodiumMode)
         raise ValueError(f"mode must be one of: {choices}") from error
-    font = payload.get("font", "tyrowo")
-    if font not in (None, "tyrowo"):
-        raise ValueError("Only the 'tyrowo' font is currently supported")
+    raw_font = payload.get("font", PodiumFont.TYROWO.value)
+    if raw_font is None:
+        font = PodiumFont.TYROWO
+    elif not isinstance(raw_font, str):
+        raise ValueError("font must be a string or null")
+    else:
+        try:
+            font = PodiumFont(raw_font)
+        except ValueError as error:
+            choices = ", ".join(item.value for item in PodiumFont)
+            raise ValueError(f"font must be one of: {choices}") from error
     tournament = _tournament(payload.get("tournament"))
     raw_entrants = payload.get("entrants")
     if not isinstance(raw_entrants, list):
@@ -163,7 +171,7 @@ def _render_request(payload: Mapping[str, Any]) -> tuple[PodiumMode, list[Single
                 entrant_1=_entrant(source.get("entrant_1")),
                 entrant_2=_entrant(source.get("entrant_2")),
             ))
-        return mode, entrants, tournament
+        return mode, entrants, tournament, font
 
     entrants = []
     for item in raw_entrants:
@@ -175,7 +183,7 @@ def _render_request(payload: Mapping[str, Any]) -> tuple[PodiumMode, list[Single
             seed=_optional_positive_int(source, "seed"),
             placement=_optional_positive_int(source, "placement") or 0,
         ))
-    return mode, entrants, tournament
+    return mode, entrants, tournament, font
 
 
 def _fighter_options() -> list[dict[str, Any]]:
@@ -232,8 +240,8 @@ def render() -> Any:
     payload = request.get_json(silent=True)
     if not isinstance(payload, Mapping):
         return jsonify(error="Request body must be a JSON object"), 400
-    mode, entrants, tournament = _render_request(payload)
-    image = draw_podium(mode, entrants, tournament=tournament)
+    mode, entrants, tournament, font = _render_request(payload)
+    image = draw_podium(mode, entrants, tournament=tournament, font=font)
     output = BytesIO()
     image.save(output, format="PNG")
     _increment_render_count()

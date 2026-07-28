@@ -9,6 +9,7 @@ Tournament text is accepted and validated now; its eventual drawing belongs in
 from collections.abc import Sequence
 from dataclasses import replace
 from enum import Enum
+from functools import partial
 from pathlib import Path
 from random import choice
 import re
@@ -23,7 +24,21 @@ from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 CHARACTER_FOLDER = PROJECT_ROOT / "char_assets" / "renders"
-FONT_PATH = PROJECT_ROOT / "fonts" / "Tyrowo-Inked-Regular.ttf"
+
+
+class PodiumFont(str, Enum):
+    """Typeface choices accepted by the renderer and render API."""
+
+    TYROWO = "tyrowo"
+    IMPACT = "impact"
+    UBUNTU = "ubuntu"
+
+
+FONT_CONFIG = {
+    PodiumFont.TYROWO: ("Tyrowo-Inked-Regular.ttf", 0),
+    PodiumFont.IMPACT: ("Impact.ttf", -4),
+    PodiumFont.UBUNTU: ("Ubuntu-Regular.ttf", 4),
+}
 
 # Positive values move every portrait's bottom anchor farther down onto the
 # podium. Keep this centralized so the vertical position is easy to tune.
@@ -232,17 +247,34 @@ def _character_with_team_color(character: Character, team_color: str | None) -> 
     return character if team_color is None else replace(character, color=team_color)
 
 
-def _font_to_fit(text: str, max_width: int, preferred_size: int) -> ImageFont.FreeTypeFont:
-    for size in range(preferred_size, 11, -1):
-        font = ImageFont.truetype(FONT_PATH, size)
-        if max(font.getlength(line) for line in text.splitlines()) <= max_width:
-            return font
-    return ImageFont.truetype(FONT_PATH, 11)
+def _font_settings(font: PodiumFont) -> tuple[Path, int]:
+    filename, size_adjustment = FONT_CONFIG[font]
+    return PROJECT_ROOT / "fonts" / filename, size_adjustment
 
 
-def _wrap_text(text: str, max_width: int, preferred_size: int) -> str:
+def _adjusted_font_size(preferred_size: int, font: PodiumFont) -> int:
+    """Apply the selected typeface's visual-size correction."""
+    _, size_adjustment = _font_settings(font)
+    return max(11, preferred_size + size_adjustment)
+
+
+def _font_to_fit(
+    text: str, max_width: int, preferred_size: int, font: PodiumFont
+) -> ImageFont.FreeTypeFont:
+    font_path, _ = _font_settings(font)
+    for size in range(_adjusted_font_size(preferred_size, font), 10, -1):
+        loaded_font = ImageFont.truetype(font_path, size)
+        if max(loaded_font.getlength(line) for line in text.splitlines()) <= max_width:
+            return loaded_font
+    return ImageFont.truetype(font_path, 11)
+
+
+def _wrap_text(
+    text: str, max_width: int, preferred_size: int, font: PodiumFont
+) -> str:
     """Wrap whole words to a podium's available label width."""
-    font = ImageFont.truetype(FONT_PATH, preferred_size)
+    font_path, _ = _font_settings(font)
+    loaded_font = ImageFont.truetype(font_path, _adjusted_font_size(preferred_size, font))
     words = text.split()
     if not words:
         return text
@@ -251,7 +283,7 @@ def _wrap_text(text: str, max_width: int, preferred_size: int) -> str:
     line = words[0]
     for word in words[1:]:
         candidate = f"{line} {word}"
-        if font.getlength(candidate) <= max_width:
+        if loaded_font.getlength(candidate) <= max_width:
             line = candidate
         else:
             lines.append(line)
@@ -268,16 +300,17 @@ def _draw_text(
     anchor: str,
     max_width: int,
     preferred_size: int,
+    font: PodiumFont,
     wrap: bool = False,
     fill: tuple[int, int, int] | str = "white",
 ) -> None:
     if wrap:
-        text = _wrap_text(text, max_width, preferred_size)
-    font = _font_to_fit(text, max_width, preferred_size)
+        text = _wrap_text(text, max_width, preferred_size, font)
+    loaded_font = _font_to_fit(text, max_width, preferred_size, font)
     draw.multiline_text(
         position,
         text,
-        font=font,
+        font=loaded_font,
         fill=fill,
         # The project has only a regular font; a same-color stroke gives it a
         # single-pass bold weight without desynchronizing wrapped text lines.
@@ -327,12 +360,14 @@ def _draw_text_fields(
     character_tags: Sequence[tuple[tuple[int, int], str]],
     *,
     tournament: Tournament,
+    font: PodiumFont,
 ) -> None:
     draw = ImageDraw.Draw(canvas)
+    draw_text = partial(_draw_text, font=font)
     width = canvas.width
-    _draw_text(draw, (45, 38), tournament.title, anchor="la", max_width=width // 2, preferred_size=62)
+    draw_text(draw, (45, 38), tournament.title, anchor="la", max_width=width // 2, preferred_size=62)
     if tournament.subtitle is not None:
-        _draw_text(
+        draw_text(
             draw,
             (45, 111),
             tournament.subtitle,
@@ -343,7 +378,7 @@ def _draw_text_fields(
     is_doubles = isinstance(entrants[0], DoublesTeam)
     event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
     count_label = "Teams" if is_doubles else "Entrants"
-    _draw_text(
+    draw_text(
         draw,
         (width - 45, 38),
         event_label,
@@ -351,7 +386,7 @@ def _draw_text_fields(
         max_width=width // 3,
         preferred_size=42,
     )
-    _draw_text(
+    draw_text(
         draw,
         (width - 45, 92),
         str(tournament.date),
@@ -359,7 +394,7 @@ def _draw_text_fields(
         max_width=width // 3,
         preferred_size=36,
     )
-    _draw_text(
+    draw_text(
         draw,
         (width - 45, 140),
         f"{tournament.entrants_count} {count_label}",
@@ -369,7 +404,7 @@ def _draw_text_fields(
     )
     # Keep a consistent attribution link on every generated podium.
     # ``la`` mirrors the bracket URL's right-aligned anchor on the left edge.
-    _draw_text(
+    draw_text(
         draw,
         (10, canvas.height - 34),
         "Make a podium @ https://tyro.work/melee-podium-template",
@@ -381,7 +416,7 @@ def _draw_text_fields(
     if tournament.link is not None:
         # Keep the source bracket present but visually subordinate to results.
         # ``ra`` locks its right edge to the image margin even for long URLs.
-        _draw_text(
+        draw_text(
             draw,
             (width - 10, canvas.height - 34),
             _display_link(tournament.link),
@@ -394,13 +429,13 @@ def _draw_text_fields(
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.
     for position, tag in character_tags:
-        _draw_text(draw, position, tag, anchor="ms", max_width=210, preferred_size=28)
+        draw_text(draw, position, tag, anchor="ms", max_width=210, preferred_size=28)
 
     placement_count = len(entrants)
     for podium_slot, entrant in enumerate(entrants, start=1):
         anchors = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]
         if isinstance(entrant, DoublesTeam):
-            _draw_text(
+            draw_text(
                 draw,
                 (
                     anchors["label"][0],
@@ -413,7 +448,7 @@ def _draw_text_fields(
                 wrap=True,
             )
         else:
-            _draw_text(
+            draw_text(
                 draw,
                 anchors["label"],
                 entrant.characters[0].melee_fighter_name,
@@ -423,7 +458,7 @@ def _draw_text_fields(
                 wrap=True,
             )
         if entrant.seed is not None:
-            _draw_text(
+            draw_text(
                 draw,
                 anchors["seed"],
                 f"{entrant.seed}s",
@@ -439,6 +474,7 @@ def draw_podium(
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
     *,
     tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -449,6 +485,12 @@ def draw_podium(
         except ValueError as error:
             choices = ", ".join(item.value for item in PodiumMode)
             raise ValueError(f"Unknown podium mode. Expected one of: {choices}") from error
+    if not isinstance(font, PodiumFont):
+        try:
+            font = PodiumFont(font)
+        except ValueError as error:
+            choices = ", ".join(item.value for item in PodiumFont)
+            raise ValueError(f"Unknown font. Expected one of: {choices}") from error
     if tournament.entrants_count < mode.placement_count:
         raise ValueError(
             f"Entrants count must be at least {mode.placement_count} for this layout"
@@ -516,6 +558,7 @@ def draw_podium(
         entrants,
         character_tags,
         tournament=tournament,
+        font=font,
     )
 
     if output_path is not None:
@@ -531,6 +574,7 @@ def draw_doubles_top_3(
     third_place_team: DoublesTeam,
     *,
     tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -538,6 +582,7 @@ def draw_doubles_top_3(
         PodiumMode.DOUBLES_TOP_3,
         [first_place_team, second_place_team, third_place_team],
         tournament=tournament,
+        font=font,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -550,6 +595,7 @@ def draw_doubles_top_4(
     fourth_place_team: DoublesTeam,
     *,
     tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -557,6 +603,7 @@ def draw_doubles_top_4(
         PodiumMode.DOUBLES_TOP_4,
         [first_place_team, second_place_team, third_place_team, fourth_place_team],
         tournament=tournament,
+        font=font,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -568,6 +615,7 @@ def draw_singles_top_3(
     third_place_entrant: SinglesEntrant,
     *,
     tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -575,6 +623,7 @@ def draw_singles_top_3(
         PodiumMode.SINGLES_TOP_3,
         [first_place_entrant, second_place_entrant, third_place_entrant],
         tournament=tournament,
+        font=font,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -587,6 +636,7 @@ def draw_singles_top_4(
     fourth_place_entrant: SinglesEntrant,
     *,
     tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -599,6 +649,7 @@ def draw_singles_top_4(
             fourth_place_entrant,
         ],
         tournament=tournament,
+        font=font,
         character_scale=character_scale,
         output_path=output_path,
     )
@@ -615,6 +666,7 @@ def draw_singles_top_8(
     eighth_place_entrant: SinglesEntrant,
     *,
     tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
@@ -631,6 +683,7 @@ def draw_singles_top_8(
             eighth_place_entrant,
         ],
         tournament=tournament,
+        font=font,
         character_scale=character_scale,
         output_path=output_path,
     )

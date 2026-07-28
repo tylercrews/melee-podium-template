@@ -58,11 +58,12 @@ const MELEE_FIGHTER_NAMES = [
 const DEFAULT_FIGHTERS: FighterOption[] = MELEE_FIGHTER_NAMES.map((name) => ({ name, options: [] }));
 type EventFormat = "singles" | "doubles";
 type PodiumSize = 3 | 4 | 8;
-type PodiumFont = "tyrowo" | "impact";
+type PodiumFont = "tyrowo" | "impact" | "ubuntu";
 
 const PODIUM_FONTS: ReadonlyArray<{ value: PodiumFont; label: string }> = [
   { value: "tyrowo", label: "Tyrowo Inked" },
-  // { value: "impact", label: "Impact" }, // this one is not tested yet
+  { value: "impact", label: "Impact" },
+  { value: "ubuntu", label: "Ubuntu" },
 ];
 function createEntrantForm(existing?: EntrantForm): EntrantForm {
   return {
