@@ -45,6 +45,7 @@ FONT_CONFIG = {
 PORTRAIT_ANCHOR_Y_OFFSET = 2
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
 SINGLES_CHARACTER_NAME_Y_OFFSET = -30
+SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET = -22
 
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
@@ -335,7 +336,7 @@ def _tag_anchor(x: int, y: int, image: Image.Image) -> tuple[int, int]:
     """Return a point just above the visible (non-transparent) portrait pixels."""
     alpha_bounds = image.getchannel("A").getbbox()
     top = 0 if alpha_bounds is None else alpha_bounds[1]
-    return x + image.width // 2, y + top - 10
+    return x + image.width // 2, y + top - 15
 
 
 def _draw_character_tag(
@@ -505,11 +506,16 @@ def _draw_text_fields(
                 glow_fill=glow_fill,
             )
         else:
+            label_y_offset = (
+                SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET
+                if placement_count == 8
+                else SINGLES_CHARACTER_NAME_Y_OFFSET
+            )
             draw_text(
                 draw,
                 (
                     anchors["label"][0],
-                    anchors["label"][1] + SINGLES_CHARACTER_NAME_Y_OFFSET,
+                    anchors["label"][1] + label_y_offset,
                 ),
                 entrant.characters[0].melee_fighter_name,
                 anchor="ma",
