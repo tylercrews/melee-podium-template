@@ -35,12 +35,13 @@ def singles_entrant(
     *,
     color: str = "default",
     pose: str = "a",
+    tag: str | None = None,
 ) -> SinglesEntrant:
     return SinglesEntrant(
         seed=placement,
         placement=placement,
         characters=[Character(fighter, color, pose)],
-        tag=fighter,
+        tag=tag or fighter,
     )
 
 
@@ -52,15 +53,17 @@ def doubles_team(
     pose_1: str = "a",
     pose_2: str = "b",
     team_color: str | None = None,
+    tag_1: str | None = None,
+    tag_2: str | None = None,
 ) -> DoublesTeam:
     return DoublesTeam(
         seed=placement,
         placement=placement,
         entrant_1=Entrant(
-            characters=[Character(fighter_1, "default", pose_1)], tag=fighter_1
+            characters=[Character(fighter_1, "default", pose_1)], tag=tag_1 or fighter_1
         ),
         entrant_2=Entrant(
-            characters=[Character(fighter_2, "default", pose_2)], tag=fighter_2
+            characters=[Character(fighter_2, "default", pose_2)], tag=tag_2 or fighter_2
         ),
         team_name=f"{fighter_1} / {fighter_2}",
         team_color=team_color,
@@ -102,7 +105,7 @@ def main() -> None:
     outputs: list[tuple[str, Path]] = []
 
     doubles_top_3 = [
-        doubles_team(1, "Bowser", "Fox", pose_1="b", team_color="red"),
+        doubles_team(1, "Bowser", "Fox", pose_1="b", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Fox"),
         doubles_team(2, "Bowser", "Falco", pose_1="a", team_color="blue"),
         doubles_team(3, "Kirby", "Pichu", team_color="green"),
     ]
@@ -111,7 +114,7 @@ def main() -> None:
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
-        doubles_team(1, "Bowser", "Captain Falcon", pose_1="b", team_color="red"),
+        doubles_team(1, "Bowser", "Captain Falcon", pose_1="b", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Captain Falcon"),
         doubles_team(2, "Bowser", "Peach", pose_1="a", team_color="blue"),
         doubles_team(3, "Marth", "Jigglypuff", team_color="green"),
         doubles_team(4, "Pichu", "Pikachu", team_color="red"),
@@ -121,7 +124,7 @@ def main() -> None:
     outputs.append(("Doubles Top 4", path))
 
     singles_top_3 = [
-        singles_entrant(1, "Bowser", pose="b"),
+        singles_entrant(1, "Bowser", pose="b", tag="Acme | Bowser"),
         singles_entrant(2, "Pichu"),
         singles_entrant(3, "Bowser", pose="a"),
     ]
@@ -130,7 +133,7 @@ def main() -> None:
     outputs.append(("Singles Top 3", path))
 
     singles_top_4 = [
-        singles_entrant(1, "Bowser", pose="a"),
+        singles_entrant(1, "Bowser", pose="a", tag="Acme | Bowser"),
         singles_entrant(2, "Bowser", pose="b"),
         singles_entrant(3, "Marth"),
         singles_entrant(4, "Pichu"),
@@ -141,18 +144,18 @@ def main() -> None:
 
     top_8_placements = [1, 2, 3, 4, 5, 5, 7, 7]
     top_8_characters = [
-        ("Bowser", "b"),
         ("Bowser", "a"),
+        ("Bowser", "b"),
         ("Donkey Kong", "a"),
-        ("Sheik", "a"),
+        ("Captain Falcon", "a"),
         ("Fox", "a"),
         ("Falco", "a"),
         ("Kirby", "a"),
         ("Pichu", "a"),
     ]
     singles_top_8 = [
-        singles_entrant(placement, fighter, pose=pose)
-        for placement, (fighter, pose) in zip(top_8_placements, top_8_characters)
+        singles_entrant(placement, fighter, pose=pose, tag="Acme | Bowser" if index == 0 else None)
+        for index, (placement, (fighter, pose)) in enumerate(zip(top_8_placements, top_8_characters))
     ]
     path = OUTPUT_FOLDER / "singles_top_8.png"
     draw_singles_top_8(*singles_top_8, tournament=TOURNAMENT, output_path=path)
