@@ -1,8 +1,13 @@
 # melee-podium-template
-Inspired by Top8er and using assets from Melee-CSProject, this program creates top 8 podium images for doubles tournaments specifically, which are not well supported in top8er.
-Shouts out to top8er for being open source so that I could use their bracket import code.
-Shouts out to Cell on SmashBoards in a thread from 2015 for supplying the stock images.
-Shouts out to AeonSSB for the original character render images from the MeleeCS project repo
+
+## Thanks To
+
+- [Malarki_](https://x.com/Malarki_), who I commissioned to expand the pool of character poses and did an amazing job.
+- [Top8er](https://www.top8er.com/), an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being [open source](https://github.com/ShonTitor/Top8er) (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.
+- AeonSSB, Cjag01, radzo73, and caha1an, who created the [Melee-CSProject](https://github.com/AeonSSB/Melee-CSProject) that I got the original poses from.
+- [CeLL on this old Smashboards thread](https://smashboards.com/threads/character-stock-icon-dump.390494/) for posting a dump of all the character stock icons.
+- Also shoutout to [SmashBoards](https://smashboards.com/) in general - what�what an amazing site still.
+- North Carolina Melee!! Love y'all.
 
 
 TODO LIST:

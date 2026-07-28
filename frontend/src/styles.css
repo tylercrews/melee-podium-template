@@ -462,3 +462,19 @@ input::placeholder {
 .payload-preview__actions { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.75rem; }
 .payload-preview__actions button { padding: 0.45rem 0.7rem; font-size: 0.82rem; }
 .payload-preview__actions span { color: #b8e6c7; font-size: 0.82rem; }
+.site-footer a,
+.site-footer__shoutouts-button,
+.shoutouts-dialog a { color: inherit; text-decoration: underline; }
+.site-footer__shoutouts-button { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
+.site-footer__shoutouts-button:hover,
+.site-footer__shoutouts-button:focus-visible { color: #d4c9ff; }
+.shoutouts-dialog { width: min(42rem, calc(100% - 2rem)); max-height: min(38rem, calc(100% - 2rem)); padding: 0; border: 1px solid #575a6d; border-radius: 0.75rem; background: #181920; color: #e9e9ef; box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 65%); }
+.shoutouts-dialog::backdrop { background: rgb(0 0 0 / 70%); }
+.shoutouts-dialog__content { padding: 1.25rem 1.5rem; overflow-y: auto; }
+.shoutouts-dialog__heading { display: flex; align-items: center; gap: 1rem; }
+.shoutouts-dialog__heading h2 { margin: 0; font-size: 1.25rem; }
+.shoutouts-dialog__heading button { margin-left: auto; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 0.35rem; background: transparent; color: inherit; font-size: 1.7rem; line-height: 1; cursor: pointer; }
+.shoutouts-dialog__heading button:hover,
+.shoutouts-dialog__heading button:focus-visible { background: #30323d; }
+.shoutouts-dialog ul { display: grid; gap: 0.8rem; margin: 1.25rem 0 0; padding-left: 1.3rem; line-height: 1.5; }
+.shoutouts-dialog a { color: #c2b7ff; }
