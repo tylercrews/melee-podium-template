@@ -12,6 +12,7 @@
 
 TODO LIST:
 * add url somewhere on the template so people know where they can make one
+* archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man)
 * shoutouts page in ui
 * character selection from start.gg brackets isn't working
 * raise the character names up a bit in singles so they're away from the bottom.
@@ -19,7 +20,6 @@ TODO LIST:
 * when someone has a sponsor (split by |) make it appear above their name instead of going to the left
 * start.gg brackets that are like partway through like this silver bracket only retrieve the main bracket instead. https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
-* singles char sizing probably needs to be just a shade smaller, captain falcon doesn't fit on the platform.
 * add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 * try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
 
