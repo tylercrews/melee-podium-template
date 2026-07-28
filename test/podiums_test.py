@@ -21,6 +21,8 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament
 
 OUTPUT_FOLDER = Path(__file__).with_name("podiums_test_outputs")
 OVERVIEW_PATH = Path(__file__).with_name("podiums_test_output.png")
+# Change this to "tyrowo", "impact", or "ubuntu" to compare typefaces.
+PODIUM_FONT = "tyrowo"
 TOURNAMENT = Tournament(
     title="Very Very Long Podium Rendering Test",
     date="July 12, 2026",
@@ -110,7 +112,7 @@ def main() -> None:
         doubles_team(3, "Kirby", "Pichu", team_color="green"),
     ]
     path = OUTPUT_FOLDER / "doubles_top_3.png"
-    draw_doubles_top_3(*doubles_top_3, tournament=TOURNAMENT, output_path=path)
+    draw_doubles_top_3(*doubles_top_3, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
@@ -120,7 +122,7 @@ def main() -> None:
         doubles_team(4, "Pichu", "Pikachu", team_color="red"),
     ]
     path = OUTPUT_FOLDER / "doubles_top_4.png"
-    draw_doubles_top_4(*doubles_top_4, tournament=TOURNAMENT, output_path=path)
+    draw_doubles_top_4(*doubles_top_4, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Doubles Top 4", path))
 
     singles_top_3 = [
@@ -129,7 +131,7 @@ def main() -> None:
         singles_entrant(3, "Bowser", pose="b"),
     ]
     path = OUTPUT_FOLDER / "singles_top_3.png"
-    draw_singles_top_3(*singles_top_3, tournament=TOURNAMENT, output_path=path)
+    draw_singles_top_3(*singles_top_3, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Singles Top 3", path))
 
     singles_top_4 = [
@@ -139,7 +141,7 @@ def main() -> None:
         singles_entrant(4, "Pichu"),
     ]
     path = OUTPUT_FOLDER / "singles_top_4.png"
-    draw_singles_top_4(*singles_top_4, tournament=TOURNAMENT, output_path=path)
+    draw_singles_top_4(*singles_top_4, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Singles Top 4", path))
 
     top_8_placements = [1, 2, 3, 4, 5, 5, 7, 7]
@@ -158,7 +160,7 @@ def main() -> None:
         for index, (placement, (fighter, pose)) in enumerate(zip(top_8_placements, top_8_characters))
     ]
     path = OUTPUT_FOLDER / "singles_top_8.png"
-    draw_singles_top_8(*singles_top_8, tournament=TOURNAMENT, output_path=path)
+    draw_singles_top_8(*singles_top_8, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Singles Top 8", path))
 
     create_overview(outputs)
