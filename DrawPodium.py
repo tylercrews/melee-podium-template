@@ -496,7 +496,10 @@ def _draw_text_fields(
         else:
             draw_text(
                 draw,
-                anchors["label"],
+                (
+                    anchors["label"][0],
+                    anchors["label"][1] + SINGLES_CHARACTER_NAME_Y_OFFSET,
+                ),
                 entrant.characters[0].melee_fighter_name,
                 anchor="ma",
                 max_width=180 if placement_count == 8 else 290,
