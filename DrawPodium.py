@@ -334,6 +334,52 @@ def _tag_anchor(x: int, y: int, image: Image.Image) -> tuple[int, int]:
     return x + image.width // 2, y + top - 10
 
 
+def _draw_character_tag(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[int, int],
+    tag: str,
+    font: PodiumFont,
+) -> None:
+    """Draw a sponsored tag with the player name at the normal baseline."""
+    sponsor, separator, player_tag = tag.partition("|")
+    if not separator or not player_tag.strip():
+        _draw_text(
+            draw,
+            position,
+            tag,
+            anchor="ms",
+            max_width=210,
+            preferred_size=28,
+            font=font,
+        )
+        return
+
+    player_tag = player_tag.strip()
+    sponsor_tag = f"{sponsor.rstrip()}|"
+    _draw_text(
+        draw,
+        position,
+        player_tag,
+        anchor="ms",
+        max_width=210,
+        preferred_size=28,
+        font=font,
+    )
+
+    player_font = _font_to_fit(player_tag, 210, 28, font)
+    player_bounds = player_font.getbbox(player_tag)
+    player_height = player_bounds[3] - player_bounds[1]
+    sponsor_position = (position[0], position[1] - player_height - 6)
+    _draw_text(
+        draw,
+        sponsor_position,
+        sponsor_tag,
+        anchor="ms",
+        max_width=210,
+        preferred_size=28,
+        font=font,
+    )
+
 def _validate_placements(
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
     expected_count: int,
@@ -429,7 +475,7 @@ def _draw_text_fields(
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.
     for position, tag in character_tags:
-        draw_text(draw, position, tag, anchor="ms", max_width=210, preferred_size=28)
+        _draw_character_tag(draw, position, tag, font)
 
     placement_count = len(entrants)
     for podium_slot, entrant in enumerate(entrants, start=1):
