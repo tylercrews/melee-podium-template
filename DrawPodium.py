@@ -367,6 +367,17 @@ def _draw_text_fields(
         max_width=width // 3,
         preferred_size=32,
     )
+    # Keep a consistent attribution link on every generated podium.
+    # ``la`` mirrors the bracket URL's right-aligned anchor on the left edge.
+    _draw_text(
+        draw,
+        (10, canvas.height - 34),
+        "Make a podium @ https://tyro.work/melee-podium-template",
+        anchor="la",
+        max_width=width - 36,
+        preferred_size=18,
+        fill=(210, 210, 210),
+    )
     if tournament.link is not None:
         # Keep the source bracket present but visually subordinate to results.
         # ``ra`` locks its right edge to the image margin even for long URLs.
