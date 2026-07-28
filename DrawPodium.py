@@ -44,6 +44,7 @@ FONT_CONFIG = {
 # podium. Keep this centralized so the vertical position is easy to tune.
 PORTRAIT_ANCHOR_Y_OFFSET = 2
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
+SINGLES_CHARACTER_NAME_Y_OFFSET = -30
 
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
@@ -303,10 +304,22 @@ def _draw_text(
     font: PodiumFont,
     wrap: bool = False,
     fill: tuple[int, int, int] | str = "white",
+    glow_fill: tuple[int, int, int] | None = None,
 ) -> None:
     if wrap:
         text = _wrap_text(text, max_width, preferred_size, font)
     loaded_font = _font_to_fit(text, max_width, preferred_size, font)
+    if glow_fill is not None:
+        draw.multiline_text(
+            position,
+            text,
+            font=loaded_font,
+            fill=glow_fill,
+            stroke_width=4,
+            stroke_fill=glow_fill,
+            anchor=anchor,
+            align="center",
+        )
     draw.multiline_text(
         position,
         text,
@@ -339,8 +352,9 @@ def _draw_character_tag(
     position: tuple[int, int],
     tag: str,
     font: PodiumFont,
+    glow_fill: tuple[int, int, int],
 ) -> None:
-    """Draw a sponsored tag with the player name at the normal baseline."""
+    """Draw a sponsored tag with its placement color as a halo."""
     sponsor, separator, player_tag = tag.partition("|")
     if not separator or not player_tag.strip():
         _draw_text(
@@ -351,6 +365,7 @@ def _draw_character_tag(
             max_width=210,
             preferred_size=28,
             font=font,
+            glow_fill=glow_fill,
         )
         return
 
@@ -364,6 +379,7 @@ def _draw_character_tag(
         max_width=210,
         preferred_size=28,
         font=font,
+        glow_fill=glow_fill,
     )
 
     player_font = _font_to_fit(player_tag, 210, 28, font)
@@ -378,7 +394,9 @@ def _draw_character_tag(
         max_width=210,
         preferred_size=28,
         font=font,
+        glow_fill=glow_fill,
     )
+
 
 def _validate_placements(
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
@@ -403,7 +421,7 @@ def _validate_placements(
 def _draw_text_fields(
     canvas: Image.Image,
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
-    character_tags: Sequence[tuple[tuple[int, int], str]],
+    character_tags: Sequence[tuple[tuple[int, int], str, tuple[int, int, int]]],
     *,
     tournament: Tournament,
     font: PodiumFont,
@@ -474,12 +492,13 @@ def _draw_text_fields(
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.
-    for position, tag in character_tags:
-        _draw_character_tag(draw, position, tag, font)
+    for position, tag, glow_fill in character_tags:
+        _draw_character_tag(draw, position, tag, font, glow_fill)
 
     placement_count = len(entrants)
     for podium_slot, entrant in enumerate(entrants, start=1):
         anchors = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]
+        glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
         if isinstance(entrant, DoublesTeam):
             draw_text(
                 draw,
@@ -492,6 +511,7 @@ def _draw_text_fields(
                 max_width=300,
                 preferred_size=42, # doubles team font size
                 wrap=True,
+                glow_fill=glow_fill,
             )
         else:
             draw_text(
@@ -505,6 +525,7 @@ def _draw_text_fields(
                 max_width=180 if placement_count == 8 else 290,
                 preferred_size=28 if placement_count == 8 else 34,
                 wrap=True,
+                glow_fill=glow_fill,
             )
         if entrant.seed is not None:
             draw_text(
@@ -562,12 +583,13 @@ def draw_podium(
         )
 
     background = Image.open(_background_path(mode)).convert("RGBA")
-    character_tags: list[tuple[tuple[int, int], str]] = []
+    character_tags: list[tuple[tuple[int, int], str, tuple[int, int, int]]] = []
     if mode.is_doubles:
         anchors = DOUBLES_ANCHORS[mode.placement_count]
         # Draw lower placements first so higher placements remain in front.
         for podium_slot, team in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(team, DoublesTeam)
+            glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
             first_anchor, second_anchor = anchors[podium_slot]
             team_color = choice(["red", "green", "blue"]) if team.team_color == "random" else team.team_color
             first_characters = [
@@ -586,21 +608,22 @@ def draw_podium(
             )
             character_tags.extend(
                 [
-                    (_tag_anchor(first_x, first_y, first_image), team.entrant_1.tag),
-                    (_tag_anchor(second_x, second_y, second_image), team.entrant_2.tag),
+                    (_tag_anchor(first_x, first_y, first_image), team.entrant_1.tag, glow_fill),
+                    (_tag_anchor(second_x, second_y, second_image), team.entrant_2.tag, glow_fill),
                 ]
             )
     else:
         anchors = SINGLES_ANCHORS[mode.placement_count]
         for podium_slot, entrant in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(entrant, SinglesEntrant)
+            glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
             x, y, image = _place_characters(
                 background,
                 entrant.characters,
                 anchors[podium_slot],
                 mode_scale,
             )
-            character_tags.append((_tag_anchor(x, y, image), entrant.tag))
+            character_tags.append((_tag_anchor(x, y, image), entrant.tag, glow_fill))
 
     _draw_text_fields(
         background,
