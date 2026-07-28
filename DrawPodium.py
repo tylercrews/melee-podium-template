@@ -463,11 +463,11 @@ def _draw_text_fields(
     draw_text(
         draw,
         (width - 10, canvas.height - 30),
-        "tyro.work/melee-podium-template",
+        "make your own podium at tyro.work/melee-podium-template",
         anchor="ra",
         max_width=width - 36,
         preferred_size=18,
-        fill=(210, 210, 210),
+        fill=(25, 25, 25),
     )
     if tournament.link is not None:
         # Keep the source bracket present but visually subordinate to results.
