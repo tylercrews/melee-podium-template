@@ -19,7 +19,7 @@ class PodiumBoxColors:
 FIRST_PLACE_BOX: Final = PodiumBoxColors((217, 3, 0), (60, 1, 0), (20, 0, 0))
 SECOND_PLACE_BOX: Final = PodiumBoxColors((91, 89, 248), (17, 11, 37), (7, 5, 20))
 THIRD_PLACE_BOX: Final = PodiumBoxColors((255, 216, 5), (49, 35, 12), (26, 20, 5))
-FOURTH_PLACE_BOX: Final = PodiumBoxColors((127, 237, 12), (3, 17, 1), (5, 18, 0))
+FOURTH_PLACE_BOX: Final = PodiumBoxColors((0, 255, 128), (3, 17, 1), (5, 18, 0))
 FIFTH_PLACE_ORANGE_BOX: Final = PodiumBoxColors((251, 139, 0), (92, 32, 0), (37, 12, 0))
 FIFTH_PLACE_TEAL_BOX: Final = PodiumBoxColors((0, 205, 195), (1, 53, 52), (0, 27, 25))
 SEVENTH_PLACE_MAGENTA_BOX: Final = PodiumBoxColors((255, 0, 255), (78, 4, 72), (35, 2, 35))
