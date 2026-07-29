@@ -1,0 +1,244 @@
+There are some changes I want to make to the frontend UI in regards to Tournament details and Entrant selection.
+There should be localstorage set for all of the properties on the podium maker screen, so that the selections are maintained between sessions.
+However, a property for preferred font selection should be kept in local storage separate from all of the rest of the podium maker selections.
+at the top above the Import Bracket section I want a button at the top that says "Start Fresh - Clear Prior Selections"
+This should remove local storage for all of the podium selections except for the preferred font, and should not alter or remove any favorited entrants.
+
+
+
+
+Show more
+
+6:41 PM
+
+
+
+
+
+
+Worked for 5m 57s
+
+
+
+Implemented in [App.tsx (line 72)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\App.tsx:72).
+All podium-maker selections now persist between sessions.
+Preferred font is stored separately.
+Added “Start Fresh - Clear Prior Selections” above bracket import.
+Reset clears podium selections while preserving the preferred font and all favorites.
+Verified with npm.cmd run build.
+
+
+6:47 PM
+
+
+
+
+
+
+
+are you able to make changes to the file directly without patching in through git?
+
+
+
+
+
+
+6:47 PM
+
+
+
+
+
+
+Yes. I can edit files directly in this workspace. The normal patch helper hit a Windows sandbox issue, so I used a direct PowerShell file edit instead—not Git—to make the changes.
+
+
+6:47 PM
+
+
+
+
+
+
+
+when a higher entrant count is selected and then reduced to a lower entrant count (top 8 -> top 4/3, top 4-> 3)
+the data is cleared out for the lower placed entrants if the entrant count is raised again.
+Can you persist that data through the localstorage properties and the states, so that users can swap the podium size at will and not have to re enter data?
+But make sure that if there are "hidden" selections when the Start Fresh button is pressed, those should be removed as well. For example, if the top 8 entrants are filled out, and then the size is set to 4 so that 5-8 are hidden, and then the clear button is hit, make sure that those 5-8 aren't persisted in the background
+
+
+
+
+
+
+6:51 PM
+
+
+
+
+
+
+Worked for 59s
+
+
+
+Implemented the entrant retention behavior in [App.tsx (line 235)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\App.tsx:235).
+Singles keeps all 8 entrants in state and local storage.
+Changing Top 8 → 4/3 only hides lower placements; changing back restores them.
+Render payload includes only the visible Top N entrants.
+Bracket imports preserve hidden roster entries.
+“Start Fresh” resets the complete stored roster, including hidden placements.
+Verified with a successful production build.
+
+
+6:52 PM
+
+
+
+
+
+
+
+great. Now when we import a bracket from url, I want to make sure we always import the top 8, or top 4 if it's confirmed to be a doubles bracket. That way if the user decides they want to display more than the suggested amount of entrants then they have the entrants imported already. As it is right now it's impossible to get the import to give higher than the recommended amount of entrants
+
+
+
+
+
+
+6:58 PM
+
+
+
+
+
+
+Worked for 1m 51s
+
+
+
+Done.
+URL imports now always request the top 8.
+The UI retains all 8 imported singles entrants even if the suggested layout is Top 3 or Top 4.
+Once Start.gg confirms doubles, character import is limited to the supported top 4 teams.
+Confirmed doubles imports retain 4 teams; singles retain 8.
+Verified with the frontend production build and 7 bracket-import tests.
+
+
+7:00 PM
+
+
+
+
+
+
+
+now that we have bracket phase link parsing in start.gg we have a unique issue - Top 8s for larger tournaments are registering as 8 person tournaments, and thus suggesting that you only do a top 3 for them. They're also not getting the correct entrant count. Maybe it'll be a magic number fix where it only checks if it's exactly 8, but ideally when a bracket link is imported I need to find a way for it to check the rest of the tournament and see if you inputted the "end" of the bracket so that it can grab the full details and make the right suggestion.
+
+
+
+
+
+
+7:02 PM
+
+
+
+
+
+
+Worked for 55s
+
+
+
+Fixed the Start.gg phase-link behavior in [bracket_import.py (line 332)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\bracket_import.py:332).
+Phase links now:
+Use the selected phase for the final standings.
+Keep the event-wide entrant count from Start.gg.
+Correctly suggest a larger podium for a Top 8 phase from a large tournament.
+Verified with all 7 bracket-import tests passing.
+
+
+7:03 PM
+
+
+
+
+
+
+
+do we calculate the seeds based on what we're observing from the bracket? Or for a large tournament with pools will we get seed data from the overall tournament?
+
+
+
+
+
+
+7:03 PM
+
+
+
+
+
+
+We don’t calculate seeds ourselves. We pass through Start.gg’s initialSeedNum for each entrant.
+For a phase-group link, seeds come from the entrants in that selected phase’s standings response. Whether that represents the overall event seed or a pool/phase-specific seed depends on what Start.gg provides for that phase; our code does not currently fetch or reconcile a separate event-wide seeding list.
+So: placements are phase-specific, and seeds are provider-supplied—not inferred.
+
+
+7:03 PM
+
+
+
+
+
+
+
+ok now test with this link:
+https://www.start.gg/tournament/supernova-2025/event/melee-1v1-singles/brackets/1940609/2849882
+you can add that to the bracket_import test, tell me the results we get for seeding and top 8 entrants
+
+
+
+
+
+
+7:05 PM
+
+
+
+
+
+
+Worked for 1m 51s
+
+
+
+and entrant count
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Live import succeeded and the test is now in [bracket_import_test.py (line 56)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\test\\bracket_import_test.py:56).
+Entrant count: 2,422
+Place	Entrant	Seed
+1	Zain	1
+2	FizzyBrax | Cody Schwab	2
+3	Hungrybox	3
+4	Ginger	21
+5	Aklo	6
+5	moky	4
+7	Khryke	27
+7	Axe	5
+
+The opt-in live test passed along with the rest of the suite: 8 tests total.
