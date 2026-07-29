@@ -316,10 +316,10 @@ def _draw_text(
         text,
         font=loaded_font,
         fill=glow_fill or fill,
-        # The project has only a regular font; a same-color stroke gives the
-        # other faces a single-pass bold weight without desynchronizing wrapped
-        # text lines. Impact stays un-stroked so it renders at its natural weight.
-        stroke_width=0 if font is PodiumFont.IMPACT else 1,
+        # Pillow has no numeric font-weight control for this font file. A
+        # same-color stroke gives Tyrowo its intended bold (700-like) weight
+        # without desynchronizing wrapped text lines.
+        stroke_width=1.33 if font is PodiumFont.TYROWO else 0,
         stroke_fill=glow_fill or fill,
         anchor=anchor,
         align="center",
