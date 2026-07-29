@@ -37,7 +37,7 @@ class PodiumFont(str, Enum):
 FONT_CONFIG = {
     PodiumFont.TYROWO: ("Tyrowo-Inked-Regular.ttf", 0),
     PodiumFont.IMPACT: ("Impact.ttf", 8),
-    PodiumFont.UBUNTU: ("Ubuntu-Regular.ttf", 4),
+    PodiumFont.UBUNTU: ("Ubuntu-Regular.ttf", 1),
 }
 
 # Positive values move every portrait's bottom anchor farther down onto the
