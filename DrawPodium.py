@@ -437,7 +437,7 @@ def _draw_text_fields(
     count_label = "Teams" if is_doubles else "Entrants"
     draw_text(
         draw,
-        (width - 45, 38),
+        (width - 15, 26),
         event_label,
         anchor="ra",
         max_width=width // 3,
@@ -445,7 +445,7 @@ def _draw_text_fields(
     )
     draw_text(
         draw,
-        (width - 45, 92),
+        (width - 15, 80),
         str(tournament.date),
         anchor="ra",
         max_width=width // 3,
@@ -453,7 +453,7 @@ def _draw_text_fields(
     )
     draw_text(
         draw,
-        (width - 45, 140),
+        (width - 15, 128),
         f"{tournament.entrants_count} {count_label}",
         anchor="ra",
         max_width=width // 3,
@@ -479,7 +479,7 @@ def _draw_text_fields(
             _display_link(tournament.link),
             anchor="ra",
             max_width=width - 36,
-            preferred_size=18,
+            preferred_size=14,
             fill=(210, 210, 210),
         )
 
