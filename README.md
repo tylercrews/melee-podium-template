@@ -71,6 +71,42 @@ flask --app app run --port 5000
 cd .\frontend
 npm run dev
 
-## Render counter deployment
+## Deploying to cPanel
 
-Each successfully generated PNG increments a persistent SQLite counter, available at /api/stats and shown in the page header. By default the database is podium_stats.sqlite3 beside app.py. For deployment, mount durable storage and set PODIUM_STATS_DB to a path on that volume; otherwise providers with ephemeral filesystems will reset the total on redeploy.
+The application serves the built frontend from `frontend/dist`. Build that
+frontend before creating each deployment ZIP.
+
+### Build the release locally
+
+From the project root in PowerShell:
+
+```powershell
+cd .\frontend
+npm run build
+cd ..
+.\.venv\Scripts\python.exe .\build_deployment_zip.py
+```
+
+This creates `melee-podium-template-deploy.zip`. It contains the backend,
+character assets, fonts, and the newly built `frontend/dist` files. It does not
+contain `podium_stats.sqlite3`.
+
+### Install or update the release in cPanel
+
+1. Open the Python application's **application root** in cPanel File Manager.
+2. Keep these existing items:
+   - `public/` ? created by cPanel for the application.
+   - `tmp/` ? used by Passenger/cPanel to restart the application.
+   - `podium_stats.sqlite3` ? contains the persistent PNG render/download
+     counter.
+3. Delete the other old project files and folders in the application root.
+   This removes files that may have been renamed or deleted locally, which a
+   normal ZIP extraction would otherwise leave behind.
+4. Upload `melee-podium-template-deploy.zip` to that application root and
+   extract it there.
+5. Restart the Python application from cPanel. If the interface does not offer
+   a restart button, create or update `tmp/restart.txt` to tell Passenger to
+   reload the application.
+
+After deployment, visit `/api/stats` to verify the counter is still present.
+Each successfully generated PNG increments this SQLite-backed value.
