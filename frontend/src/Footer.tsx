@@ -40,7 +40,9 @@ function Footer({ renderCount }: FooterProps) {
             <div className="shoutouts-dialog__heading">
               <h2 id="shoutouts-title">Thank yous and shoutouts</h2>
               <button type="button" aria-label="Close thank yous and shoutouts" onClick={() => setIsShoutoutsOpen(false)}>
-                �
+                <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                  <path d="M6 6 18 18M18 6 6 18" />
+                </svg>
               </button>
             </div>
             <ul>

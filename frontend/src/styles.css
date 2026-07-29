@@ -474,6 +474,7 @@ input::placeholder {
 .shoutouts-dialog__heading { display: flex; align-items: center; gap: 1rem; }
 .shoutouts-dialog__heading h2 { margin: 0; font-size: 1.25rem; }
 .shoutouts-dialog__heading button { margin-left: auto; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 0.35rem; background: transparent; color: inherit; font-size: 1.7rem; line-height: 1; cursor: pointer; }
+.shoutouts-dialog__heading button svg { width: 1.35rem; height: 1.35rem; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; fill: none; vertical-align: middle; }
 .shoutouts-dialog__heading button:hover,
 .shoutouts-dialog__heading button:focus-visible { background: #30323d; }
 .shoutouts-dialog ul { display: grid; gap: 0.8rem; margin: 1.25rem 0 0; padding-left: 1.3rem; line-height: 1.5; }
