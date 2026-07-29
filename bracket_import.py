@@ -332,8 +332,9 @@ def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
         event = payload["data"]["event"]
         if link.phase_group_id:
             phase_group = _startgg_request(startgg_phase_group_query(link.phase_group_id), token)["data"]["phaseGroup"]
+            # Keep the event-wide entrant count from the first query. A phase
+            # group only reports entrants in that phase (for example, a top 8).
             event["standings"] = phase_group["standings"]
-            event["numEntrants"] = phase_group.get("seeds", {}).get("pageInfo", {}).get("total", event.get("numEntrants"))
         standings = event["standings"]["nodes"]
         # The event confirms whether this is doubles before we choose how many
         # placers need character data. Singles always retains the top eight;
