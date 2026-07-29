@@ -435,9 +435,10 @@ def _draw_text_fields(
     is_doubles = isinstance(entrants[0], DoublesTeam)
     event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
     count_label = "Teams" if is_doubles else "Entrants"
+    metadata_top = 10 if tournament.link is None else 26
     draw_text(
         draw,
-        (width - 15, 26),
+        (width - 15, metadata_top),
         event_label,
         anchor="ra",
         max_width=width // 3,
@@ -445,7 +446,7 @@ def _draw_text_fields(
     )
     draw_text(
         draw,
-        (width - 15, 80),
+        (width - 15, metadata_top + 54),
         str(tournament.date),
         anchor="ra",
         max_width=width // 3,
@@ -453,7 +454,7 @@ def _draw_text_fields(
     )
     draw_text(
         draw,
-        (width - 15, 128),
+        (width - 15, metadata_top + 102),
         f"{tournament.entrants_count} {count_label}",
         anchor="ra",
         max_width=width // 3,
