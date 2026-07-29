@@ -112,8 +112,14 @@ def main() -> None:
         doubles_team(2, "Bowser", "Falco", pose_1="b", team_color="blue"),
         doubles_team(3, "Kirby", "Pichu", team_color="green"),
     ]
+    doubles_top_3[2].entrant_1.characters.append(Character("Samus"))
     path = OUTPUT_FOLDER / "doubles_top_3.png"
+    doubles_top_3[1].entrant_1.characters.extend([Character("Ganondorf"), Character("Donkey Kong")])
+    doubles_top_3[1].entrant_2.characters.extend([Character("Fox"), Character("Captain Falcon")])
     draw_doubles_top_3(*doubles_top_3, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
+    doubles_top_3[1].entrant_1.characters.extend([Character("Ganondorf"), Character("Donkey Kong")])
+    doubles_top_3[1].entrant_2.characters.extend([Character("Fox"), Character("Captain Falcon")])
+
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
@@ -122,7 +128,11 @@ def main() -> None:
         doubles_team(3, "Marth", "Jigglypuff", team_color="green"),
         doubles_team(4, "Pichu", "Pikachu", team_color="red"),
     ]
+    doubles_top_4[2].entrant_1.characters.append(Character("Roy"))
     path = OUTPUT_FOLDER / "doubles_top_4.png"
+    doubles_top_4[1].entrant_1.characters.extend([Character("Ganondorf"), Character("Donkey Kong")])
+    doubles_top_4[1].entrant_2.characters.extend([Character("Zelda"), Character("Sheik")])
+
     draw_doubles_top_4(*doubles_top_4, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Doubles Top 4", path))
 
@@ -131,8 +141,11 @@ def main() -> None:
         singles_entrant(2, "Pichu"),
         singles_entrant(3, "Bowser", pose="b"),
     ]
+    singles_top_3[2].characters.append(Character("Marth"))
     path = OUTPUT_FOLDER / "singles_top_3.png"
+    singles_top_3[1].characters.extend([Character("Pikachu"), Character("Fox")])
     draw_singles_top_3(*singles_top_3, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
+    singles_top_3[1].characters.extend([Character("Pikachu"), Character("Fox")])
     outputs.append(("Singles Top 3", path))
 
     singles_top_4 = [
@@ -141,8 +154,11 @@ def main() -> None:
         singles_entrant(3, "Marth"),
         singles_entrant(4, "Pichu"),
     ]
+    singles_top_4[2].characters.append(Character("Roy"))
     path = OUTPUT_FOLDER / "singles_top_4.png"
+    singles_top_4[1].characters.extend([Character("Donkey Kong"), Character("Ganondorf")])
     draw_singles_top_4(*singles_top_4, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
+    singles_top_4[1].characters.extend([Character("Donkey Kong"), Character("Ganondorf")])
     outputs.append(("Singles Top 4", path))
 
     top_8_placements = [1, 2, 3, 4, 5, 5, 7, 7]
@@ -160,6 +176,8 @@ def main() -> None:
         singles_entrant(placement, fighter, pose=pose, tag="Acme | Bowser" if index == 0 else None)
         for index, (placement, (fighter, pose)) in enumerate(zip(top_8_placements, top_8_characters))
     ]
+    singles_top_8[1].characters.extend([Character("Falco"), Character("Pichu")])
+    singles_top_8[2].characters.append(Character("Marth"))
     path = OUTPUT_FOLDER / "singles_top_8.png"
     draw_singles_top_8(*singles_top_8, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Singles Top 8", path))

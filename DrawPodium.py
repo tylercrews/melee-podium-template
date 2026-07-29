@@ -43,6 +43,11 @@ FONT_CONFIG = {
 # Positive values move every portrait's bottom anchor farther down onto the
 # podium. Keep this centralized so the vertical position is easy to tune.
 PORTRAIT_ANCHOR_Y_OFFSET = 2
+# When an entrant has several characters, draw their largest portraits at the
+# primary anchor, then offset the next two left and right. Subsequent, smaller
+# portraits repeat this pattern and layer over the initial silhouette.
+MULTI_CHARACTER_X_OFFSETS = (0, -70, 70)
+TWO_CHARACTER_X_OFFSETS = (-70, 70)
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
 SINGLES_CHARACTER_NAME_Y_OFFSET = -30
 SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET = -22
@@ -236,9 +241,21 @@ def _place_characters(
     draw_order = sorted(
         loaded_characters,
         key=lambda image: image.height,
+    offsets = TWO_CHARACTER_X_OFFSETS if len(draw_order) == 2 else MULTI_CHARACTER_X_OFFSETS
+
         reverse=True,
     )
-    placements = [_place_image(canvas, image, anchor) for image in draw_order]
+    placements = [
+        _place_image(
+            canvas,
+            image,
+            (
+                anchor[0] + offsets[index % len(offsets)],
+                anchor[1],
+            ),
+        )
+        for index, image in enumerate(draw_order)
+    ]
     # The first placement is the tallest portrait, which provides the
     # outermost silhouette and therefore the best location for the entrant tag.
     return placements[0]
