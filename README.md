@@ -12,6 +12,7 @@
 
 
 TODO LIST:
+* Close X button on the Thank Yous and Shoutouts dialog is coming up with a funky diamond ? symbol 
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man), bowser pose b (so damn wide and short)
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
 * when two doubles teammates play the same character and end up with the same pose and both have medium-long tags then you have a high chance of tag text overlap - find a way to offset in this case
