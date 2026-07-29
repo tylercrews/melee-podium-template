@@ -12,12 +12,9 @@
 
 TODO LIST:
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man)
-* character selection from start.gg brackets isn't working -- is a top8er issue as well
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
 * try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
 * add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
-
-* start.gg brackets that are like partway through like this silver bracket only retrieve the main bracket instead. https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886 -- is a top8er issue as well
 
 Fit in tournament location?
 
