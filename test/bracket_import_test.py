@@ -17,6 +17,7 @@ class BracketImportTests(unittest.TestCase):
         startgg_bracket = identify_bracket_link("https://www.start.gg/tournament/just-another-melee-monthly-4/events/melee-singles/brackets/2340529/3382687/overview")
         self.assertEqual(startgg_bracket.tournament_slug, "just-another-melee-monthly-4")
         self.assertEqual(startgg_bracket.event_slug, "melee-singles")
+        self.assertEqual(startgg_bracket.phase_group_id, "3382687")
         self.assertEqual(identify_bracket_link("https://foo.challonge.com/my-bracket").tournament_slug, "foo-my-bracket")
         self.assertEqual(identify_bracket_link("https://tonamel.com/competition/abc").provider, BracketProvider.TONAMEL)
         self.assertEqual(identify_bracket_link("https://parry.gg/tournament/event").event_slug, "event")

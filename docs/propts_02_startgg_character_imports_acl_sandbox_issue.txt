@@ -1480,3 +1480,95 @@ Verified against your bracket’s Top 8:
 7th Tyro — Peach
 7th Shenal — Fox, Marth, Falco, Mewtwo, Captain Falcon, Kirby
 Backend tests pass (7 tests), the frontend TypeScript build passes, and the live /api/import response for this bracket returned the character lists above.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+( so another issue that was going on with the start.gg import is that if you gave a phase of the bracket, instead it would pull the overall winner.
+https://www.start.gg/tournament/quarter-house/events/melee-singles/brackets/2325389/3362885
+for example you would get Charli XCX | Jam from this bracket 
+even if you used this url
+https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886
+where you should be getting Yort as the winner)
+
+there's another issue with the start.gg api that we have implemented as well - some
+start.gg brackets like this silver bracket only retrieve the main bracket instead. https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886
+Is there any way to fix this
+
+
+
+
+
+
+9:31 PM
+
+
+
+
+
+
+Worked for 37s
+
+
+
+Yes—this is fixable.
+The importer currently discards the two IDs after /brackets/ and queries the whole event, so it gets event-wide/main-bracket standings. In your link:
+2325390 is the phase
+3362886 is the phase group: the specific bracket to import
+Querying phaseGroup(id: 3362886) returns the correct bracket’s standings:
+Yort  
+akina(ssbm)  
+Tempest  
+TC | Malarki_  
+Chef  
+Starthedeity  
+GUAC  
+Butter
+The fix is to retain that final phase-group ID during URL parsing, then use phaseGroup(id) { standings(...) sets(...) } for both placements and character data instead of event-wide standings/sets. Start.gg documents phase-group-specific set retrieval, and the phase-group schema supports standings. Phase-group sets, phase-group schema.
+I have not applied this second change yet.
+
+
+9:31 PM
+
+
+
+
+
+
+
+apply the change
+
+
+
+
+
+
+9:32 PM
+
+
+
+
+
+
+Worked for 3m
+
+
+
+Applied the bracket-specific start.gg import fix.
+For URLs containing /brackets/<phase-id>/<phase-group-id>, the importer now:
+keeps the phase-group ID;
+retrieves that bracket’s standings and entrant count;
+retrieves only that bracket’s sets for winning-character data;
+falls back to event-wide behavior for ordinary event links.
+The Quarter House link now correctly imports:
+Yort — Luigi  
+akina(ssbm) — Peach  
+Tempest — Fox  
+TC | Malarki_ — Fox  
+Chef — Pichu  
+Starthedeity — Sheik  
+GUAC — Ganondorf  
+Butter — no reported winning character data
+Verified with the live bracket, backend tests (7 passing), and a successful frontend build.

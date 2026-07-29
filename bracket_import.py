@@ -77,6 +77,7 @@ class BracketLink:
     url: str
     tournament_slug: str
     event_slug: str | None = None
+    phase_group_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,7 +202,9 @@ def identify_bracket_link(url: str) -> BracketLink:
             # current bracket route, ``/events/<slug>/brackets/...``.
             event_index = next(index for index, part in enumerate(parts) if part in {"event", "events"})
             tournament_index = parts.index("tournament")
-            return BracketLink(BracketProvider.START_GG, clean_url, parts[tournament_index + 1], parts[event_index + 1])
+            bracket_index = parts.index("brackets") if "brackets" in parts else None
+            phase_group_id = parts[bracket_index + 2] if bracket_index is not None and len(parts) > bracket_index + 2 else None
+            return BracketLink(BracketProvider.START_GG, clean_url, parts[tournament_index + 1], parts[event_index + 1], phase_group_id)
         except (StopIteration, ValueError, IndexError) as error:
             raise ValueError("A start.gg event URL must contain /tournament/<slug>/event(s)/<slug>") from error
     if host.endswith("challonge.com") and parts:
@@ -231,6 +234,31 @@ query MeleePodiumImport($slug: String!) {
   }
 }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
 
+
+def startgg_phase_group_query(phase_group_id: int | str) -> dict[str, Any]:
+    """Return standings and entrant count for one Start.gg bracket."""
+    return {"query": """
+query MeleePodiumPhaseGroup($id: ID!) {
+  phaseGroup(id: $id) {
+    standings(query: {page: 1, perPage: 64}) {
+      nodes { placement entrant { id name initialSeedNum participants { gamerTag user { authorizations(types: TWITTER) { externalUsername } } } } }
+    }
+    seeds(query: {page: 1, perPage: 1}) { pageInfo { total } }
+  }
+}""", "variables": {"id": phase_group_id}}
+
+
+def startgg_phase_group_sets_query(phase_group_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
+    """Return one page of games played in one Start.gg bracket."""
+    return {"query": """
+query MeleePodiumPhaseGroupCharacters($id: ID!, $page: Int!, $perPage: Int!) {
+  phaseGroup(id: $id) {
+    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
+      pageInfo { total }
+      nodes { games { winnerId selections { entrant { id } character { name } } } }
+    }
+  }
+}""", "variables": {"id": phase_group_id, "page": page, "perPage": per_page}}
 
 def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
     """Return one page of the games played in a Start.gg event."""
@@ -263,14 +291,15 @@ def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str
     return payload
 
 
-def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
+def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str, *, phase_group_id: str | None = None) -> dict[str, list[Mapping[str, Any]]]:
     """Collect reported characters from games won by the requested entrants."""
     usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
     page, per_page, total, seen_sets = 1, 50, None, 0
     while total is None or seen_sets < total:
-        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
+        query = startgg_phase_group_sets_query(phase_group_id, page, per_page) if phase_group_id else startgg_sets_query(event_id, page, per_page)
+        payload = _startgg_request(query, token)
         try:
-            sets = payload["data"]["event"]["sets"]
+            sets = payload["data"]["phaseGroup" if phase_group_id else "event"]["sets"]
             nodes = sets.get("nodes") or []
             total = sets.get("pageInfo", {}).get("total", 0)
         except (KeyError, TypeError) as error:
@@ -301,9 +330,14 @@ def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
     try:
         payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
         event = payload["data"]["event"]
+        if link.phase_group_id:
+            phase_group = _startgg_request(startgg_phase_group_query(link.phase_group_id), token)["data"]["phaseGroup"]
+            event["standings"] = phase_group["standings"]
+            event["numEntrants"] = phase_group.get("seeds", {}).get("pageInfo", {}).get("total", event.get("numEntrants"))
         standings = event["standings"]["nodes"]
         top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
-        return parse_startgg(payload, link, character_usage=_winning_character_usage(event["id"], top_ids, token))
+        usage = _winning_character_usage(event["id"], top_ids, token, phase_group_id=link.phase_group_id)
+        return parse_startgg(payload, link, character_usage=usage)
     except (KeyError, TypeError) as error:
         raise ValueError("Start.gg returned an incomplete event response") from error
 
