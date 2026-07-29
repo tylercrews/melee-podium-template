@@ -12,6 +12,7 @@
 
 
 TODO LIST:
+* need to make sure the favorites-matching logic for character+color selection is working correctly. There are a few ways I need to consider to improve the logic. For example, when you have a bracket with no character, make sure that it will match a favorited suggestion (I think I've got that one), but how can I determine which is the Primary suggestion for an entrant's tag? Like if they've got one favorite where they're just one char (fox) and one with two chars (fox falco) will it suggest the fox falco or the fox? Which one is even preferable? Maybe there should be a way to make one a "Primary" favorite for a tag, and only match with the others if it's a perfect fit for characters.
 * Close X button on the Thank Yous and Shoutouts dialog is coming up with a funky diamond ? symbol 
 * thank you for wherever I got the Ubuntu and Impact fonts from?
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man), bowser pose b (so damn wide and short)
