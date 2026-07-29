@@ -17,7 +17,7 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          Version 1.1.0 published 07/25/2026 by Tyler "Tyro" Crews. Successfully generated {count} podium
+          Version 1.1.1 published 07/25/2026 by Tyler "Tyro" Crews. Successfully generated {count} podium
           images for the Melee community <span aria-label="love">{"\u{1F495}"}</span>
         </div>
         <div>
@@ -40,7 +40,7 @@ function Footer({ renderCount }: FooterProps) {
             <div className="shoutouts-dialog__heading">
               <h2 id="shoutouts-title">Thank yous and shoutouts</h2>
               <button type="button" aria-label="Close thank yous and shoutouts" onClick={() => setIsShoutoutsOpen(false)}>
-                ×
+                ï¿½
               </button>
             </div>
             <ul>
@@ -48,7 +48,7 @@ function Footer({ renderCount }: FooterProps) {
               <li><a href="https://www.top8er.com/" target="_blank" rel="noreferrer">Top8er</a>, an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being <a href="https://github.com/ShonTitor/Top8er" target="_blank" rel="noreferrer">open source</a> (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.</li>
               <li>AeonSSB, Cjag01, radzo73, and caha1an, who created the <a href="https://github.com/AeonSSB/Melee-CSProject" target="_blank" rel="noreferrer">Melee-CSProject</a> that I got the original poses from.</li>
               <li><a href="https://smashboards.com/threads/character-stock-icon-dump.390494/" target="_blank" rel="noreferrer">CeLL on this old Smashboards thread</a> for posting a dump of all the character stock icons.</li>
-              <li>Also shoutout to <a href="https://smashboards.com/" target="_blank" rel="noreferrer">SmashBoards</a> in general - what—what an amazing site still.</li>
+              <li>Also shoutout to <a href="https://smashboards.com/" target="_blank" rel="noreferrer">SmashBoards</a> in general - whatï¿½what an amazing site still.</li>
               <li>North Carolina Melee!! Love y'all.</li>
             </ul>
           </div>
