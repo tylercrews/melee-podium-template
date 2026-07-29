@@ -47,6 +47,7 @@ PORTRAIT_ANCHOR_Y_OFFSET = 2
 # primary anchor, then offset the next two left and right. Subsequent, smaller
 # portraits repeat this pattern and layer over the initial silhouette.
 MULTI_CHARACTER_X_OFFSETS = (0, -70, 70)
+SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS = (0, -40, 40)
 TWO_CHARACTER_X_OFFSETS = (-70, 70)
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
 SINGLES_CHARACTER_NAME_Y_OFFSET = -30
@@ -229,7 +230,9 @@ def _place_characters(
     characters: Sequence[Character],
     anchor: tuple[int, int],
     mode_scale: float,
+    multi_character_x_offsets: tuple[int, int, int] = MULTI_CHARACTER_X_OFFSETS,
 ) -> tuple[int, int, Image.Image]:
+    # The offset set is supplied by the caller for Top 8 singles.
     """Layer an entrant's portraits from tallest to shortest at one anchor.
 
     Python's stable sort preserves the supplied character order when two
@@ -244,7 +247,7 @@ def _place_characters(
 
         reverse=True,
     )
-    offsets = TWO_CHARACTER_X_OFFSETS if len(draw_order) == 2 else MULTI_CHARACTER_X_OFFSETS
+    offsets = multi_character_x_offsets[1:] if len(draw_order) == 2 else multi_character_x_offsets
 
     placements = [
         _place_image(
@@ -641,7 +644,9 @@ def draw_podium(
                 entrant.characters,
                 anchors[podium_slot],
                 mode_scale,
+                multi_character_x_offsets=(SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS if mode.placement_count == 8 else MULTI_CHARACTER_X_OFFSETS),
             )
+            # Top 8 uses the tighter offsets passed above.
             character_tags.append((_tag_anchor(x, y, image, center_x=anchors[podium_slot][0]), entrant.tag, glow_fill))
 
     _draw_text_fields(
