@@ -11,32 +11,17 @@
 
 
 TODO LIST:
-* add url somewhere on the template so people know where they can make one
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man)
-* shoutouts page in ui
-* character selection from start.gg brackets isn't working
-* raise the character names up a bit in singles so they're away from the bottom.
-* add a color outline around the white text for the character podium color
-* when someone has a sponsor (split by |) make it appear above their name instead of going to the left
-* start.gg brackets that are like partway through like this silver bracket only retrieve the main bracket instead. https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886
+* character selection from start.gg brackets isn't working -- is a top8er issue as well
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
-* add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 * try to make it so that when someone has multiple characters they don't overlay right on top of each other and have a little wiggle room to the sides so they can all be seen a little better
+* add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
+
+* start.gg brackets that are like partway through like this silver bracket only retrieve the main bracket instead. https://www.start.gg/tournament/quarter-house/event/melee-singles/brackets/2325390/3362886 -- is a top8er issue as well
 
 Fit in tournament location?
-more font support - like IMPACT bold, and maybe another option that's far less memey
-
-Redo the background image so the podium is 3d instead of just a square box, the characters should be standing on something lol
 
 support for twitter and bluesky handles - need to come up with some place to put them.
-
-blend the #seed color into the podium by making it the outline color, instead of sticking out with more white
-
-
-frontend to fill stuff out
-* preview mode to make adjustments
-* counter for how often the generator has been used, keep a cute counter on the page lol.
-start.gg and challonge support from top8er to plug in brackets easily
 
 ## Bracket-import groundwork
 
