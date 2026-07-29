@@ -215,7 +215,7 @@ function loadPodiumSelections(): PodiumSelections {
       eventFormat: format,
       podiumSize: normalizedSize,
       includeSeeds: typeof saved.includeSeeds === "boolean" ? saved.includeSeeds : defaults.includeSeeds,
-      entrants: createEntrants(normalizedSize, format, savedEntrants as EntrantFormState[]),
+      entrants: createEntrants(entrantStorageCount(format), format, savedEntrants as EntrantFormState[]),
       bracketUrl: stringValue(saved.bracketUrl),
     };
   } catch {
@@ -232,6 +232,9 @@ function loadPreferredFont(): PodiumFont {
   }
 }
 
+function entrantStorageCount(format: EventFormat): number {
+  return format === "singles" ? 8 : 4;
+}
 function recommendedPodiumSize(format: EventFormat, entrantsCount?: number): PodiumSize {
   if (entrantsCount !== undefined && entrantsCount <= 9) return 3;
   if (format === "singles" && entrantsCount !== undefined && entrantsCount <= 14) return 4;
@@ -461,7 +464,7 @@ function App() {
         link: tournament.link.trim() || null,
         event_format: eventFormat,
       },
-      entrants: entrants.map((entrant, index) => {
+      entrants: entrants.slice(0, podiumSize).map((entrant, index) => {
         if (entrant.kind === "singles") {
           return {
             tag: entrant.tag.trim(),
@@ -524,12 +527,12 @@ function App() {
     const size = recommendedPodiumSize(format);
     setEventFormat(format);
     setPodiumSize(size);
-    setEntrants((current) => createEntrants(size, format, current));
+    setEntrants((current) => createEntrants(entrantStorageCount(format), format, current));
   }
 
   function selectPodiumSize(size: PodiumSize) {
     setPodiumSize(size);
-    setEntrants((current) => createEntrants(size, eventFormat, current));
+    setEntrants((current) => createEntrants(entrantStorageCount(eventFormat), eventFormat, current));
   }
 
   function fighterByName(name: string): FighterOption | undefined {
@@ -717,7 +720,7 @@ function App() {
     });
     setIncludeSeeds(hasImportedSeeds);
     setEntrants((current) =>
-      createEntrants(nextSize, nextFormat, current).map((existing, index) => {
+      createEntrants(entrantStorageCount(nextFormat), nextFormat, current).map((existing, index) => {
         const imported = importedEntrants[index];
         if (!isRecord(imported)) return existing;
 
@@ -1050,7 +1053,7 @@ function App() {
           </div>
 
           <div className="entrant-grid">
-            {entrants.map((entrant, index) => {
+            {entrants.slice(0, podiumSize).map((entrant, index) => {
               if (entrant.kind === "singles") {
                 const character = entrant.characters[0] ?? createCharacterForm();
                 const fighter = fighterByName(character.fighter);
