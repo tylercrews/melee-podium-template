@@ -1439,6 +1439,8 @@ Ran git diff --check; git status --short; git diff -- bracket_import.py app.py f
 
 
 
+>> Coming back later, this actually didn't work at all. I had to talk to main chatgpt and it looked up how I needed to change my config.toml 
+
 
 >> Here I finally got sick of this annoying error that I kept getting from codex every time it tried to run a command.
 >> The error was always something like a ACL Permissions with the sandbox, and googling it and chatgpting it they were trying to convince me to restart the extension and vscode and uninstall/reinstall over and over.
