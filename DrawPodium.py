@@ -36,7 +36,7 @@ class PodiumFont(str, Enum):
 
 FONT_CONFIG = {
     PodiumFont.TYROWO: ("Tyrowo-Inked-Regular.ttf", 0),
-    PodiumFont.IMPACT: ("Impact.ttf", -4),
+    PodiumFont.IMPACT: ("Impact.ttf", 8),
     PodiumFont.UBUNTU: ("Ubuntu-Regular.ttf", 4),
 }
 
@@ -316,9 +316,10 @@ def _draw_text(
         text,
         font=loaded_font,
         fill=glow_fill or fill,
-        # The project has only a regular font; a same-color stroke gives it a
-        # single-pass bold weight without desynchronizing wrapped text lines.
-        stroke_width=1,
+        # The project has only a regular font; a same-color stroke gives the
+        # other faces a single-pass bold weight without desynchronizing wrapped
+        # text lines. Impact stays un-stroked so it renders at its natural weight.
+        stroke_width=0 if font is PodiumFont.IMPACT else 1,
         stroke_fill=glow_fill or fill,
         anchor=anchor,
         align="center",
@@ -421,7 +422,7 @@ def _draw_text_fields(
     draw = ImageDraw.Draw(canvas)
     draw_text = partial(_draw_text, font=font)
     width = canvas.width
-    draw_text(draw, (45, 38), tournament.title, anchor="la", max_width=width // 2, preferred_size=62)
+    draw_text(draw, (15, 25), tournament.title, anchor="la", max_width=(width * 2)/3, preferred_size=92)
     if tournament.subtitle is not None:
         draw_text(
             draw,

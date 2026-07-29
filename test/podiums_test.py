@@ -22,7 +22,7 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament
 OUTPUT_FOLDER = Path(__file__).with_name("podiums_test_outputs")
 OVERVIEW_PATH = Path(__file__).with_name("podiums_test_output.png")
 # Change this to "tyrowo", "impact", or "ubuntu" to compare typefaces.
-PODIUM_FONT = "tyrowo"
+PODIUM_FONT = "impact"
 TOURNAMENT = Tournament(
     title="Very Very Long Podium Rendering Test",
     date="July 12, 2026",
