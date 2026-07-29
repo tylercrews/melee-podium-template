@@ -502,7 +502,7 @@ def _draw_text_fields(
                 ),
                 entrant.team_name,
                 anchor="ma",
-                max_width=300,
+                max_width=440 if placement_count == 3 else 370,
                 preferred_size=42, # doubles team font size
                 wrap=True,
                 glow_fill=glow_fill,
