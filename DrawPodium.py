@@ -422,11 +422,11 @@ def _draw_text_fields(
     draw = ImageDraw.Draw(canvas)
     draw_text = partial(_draw_text, font=font)
     width = canvas.width
-    draw_text(draw, (15, 25), tournament.title, anchor="la", max_width=(width * 2)/3, preferred_size=92)
+    draw_text(draw, (15, 5), tournament.title, anchor="la", max_width=(width * 2)/3, preferred_size=92)
     if tournament.subtitle is not None:
         draw_text(
             draw,
-            (45, 111),
+            (45, 85),
             tournament.subtitle,
             anchor="la",
             max_width=width // 2,

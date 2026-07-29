@@ -25,6 +25,7 @@ OVERVIEW_PATH = Path(__file__).with_name("podiums_test_output.png")
 PODIUM_FONT = "impact"
 TOURNAMENT = Tournament(
     title="Very Very Long Podium Rendering Test",
+    subtitle="Subtitle Rendering Test",
     date="July 12, 2026",
     entrants_count=64,
     link="https://www.example.test/brackets/podium-rendering-test",
