@@ -335,7 +335,11 @@ def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
             event["standings"] = phase_group["standings"]
             event["numEntrants"] = phase_group.get("seeds", {}).get("pageInfo", {}).get("total", event.get("numEntrants"))
         standings = event["standings"]["nodes"]
-        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
+        # The event confirms whether this is doubles before we choose how many
+        # placers need character data. Singles always retains the top eight;
+        # doubles is limited to the supported top-four layout.
+        character_import_count = 4 if _event_format(event.get("entrantSizeMin")) is TournamentFormat.DOUBLES else 8
+        top_ids = {str(item["entrant"]["id"]) for item in standings[:character_import_count]}
         usage = _winning_character_usage(event["id"], top_ids, token, phase_group_id=link.phase_group_id)
         return parse_startgg(payload, link, character_usage=usage)
     except (KeyError, TypeError) as error:

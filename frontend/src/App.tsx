@@ -711,7 +711,7 @@ function App() {
     }));
 
     const importedEntrants = Array.isArray(result.entrants)
-      ? result.entrants.slice(0, nextSize)
+      ? result.entrants.slice(0, entrantStorageCount(nextFormat))
       : [];
     const hasImportedSeeds = importedEntrants.some((entrant) => {
       if (!isRecord(entrant)) return false;
@@ -827,7 +827,7 @@ function App() {
     setImportState("");
 
     try {
-      const result = await importBracket(bracketUrl.trim(), podiumSize);
+      const result = await importBracket(bracketUrl.trim(), 8);
       applyImport(result);
       setImportState("Bracket imported. Review the fields before rendering.");
     } catch (error) {
