@@ -1,13 +1,14 @@
 """Focused fixtures for provider-neutral bracket import parsing."""
 
 from pathlib import Path
+import os
 import sys
 import unittest
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from DrawPodium import _display_link
-from bracket_import import BracketProvider, identify_bracket_link, parse_challonge, parse_startgg
+from bracket_import import BracketProvider, fetch_startgg, identify_bracket_link, parse_challonge, parse_startgg
 from models import Character, TournamentFormat
 
 
@@ -53,6 +54,30 @@ class BracketImportTests(unittest.TestCase):
         self.assertEqual(_display_link("www.example.com/bracket"), "example.com/bracket")
         self.assertEqual(_display_link(" https://www.example.com/ bracket \n"), "example.com/bracket")
 
+    @unittest.skipUnless(
+        os.environ.get("RUN_LIVE_STARTGG_TESTS") == "1" and os.environ.get("START_GG_TOKEN"),
+        "Set RUN_LIVE_STARTGG_TESTS=1 and START_GG_TOKEN to run live Start.gg tests.",
+    )
+    def test_live_supernova_2025_top_eight_phase_import(self):
+        link = identify_bracket_link(
+            "https://www.start.gg/tournament/supernova-2025/event/melee-1v1-singles/brackets/1940609/2849882",
+        )
+        result = fetch_startgg(link)
+
+        self.assertEqual(result.entrants_count, 2422)
+        self.assertEqual(
+            [(player.placement, player.tag, player.seed) for player in result.players[:8]],
+            [
+                (1, "Zain", 1),
+                (2, "FizzyBrax | Cody Schwab", 2),
+                (3, "Hungrybox", 3),
+                (4, "Ginger", 21),
+                (5, "Aklo", 6),
+                (5, "moky", 4),
+                (7, "Khryke", 27),
+                (7, "Axe", 5),
+            ],
+        )
     def test_startgg_doubles_preserves_the_team_name_and_members(self):
         link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-doubles")
         data = {"data": {"event": {"name": "Melee Doubles", "numEntrants": 8, "entrantSizeMin": 2, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "The Team", "initialSeedNum": 2, "participants": [{"gamerTag": "Player One"}, {"gamerTag": "Player Two"}]}}]}}}}
