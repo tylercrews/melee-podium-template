@@ -319,7 +319,9 @@ def _draw_text(
         # Pillow has no numeric font-weight control for this font file. A
         # same-color stroke gives Tyrowo its intended bold (700-like) weight
         # without desynchronizing wrapped text lines.
-        stroke_width=1.33 if font is PodiumFont.TYROWO else 0.69 if font is PodiumFont.UBUNTU else 0,
+        stroke_width=(1.33 if font is PodiumFont.TYROWO 
+                        else 0.69 if font is PodiumFont.UBUNTU 
+                        else 0),
         stroke_fill=glow_fill or fill,
         anchor=anchor,
         align="center",
