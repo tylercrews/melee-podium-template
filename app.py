@@ -270,6 +270,10 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                 "tag": player.tag,
                 "seed": player.seed,
                 "placement": player.placement,
+                "characters": [
+                    {"fighter": character.name, "color": character.costume, "pose": None}
+                    for character in player.characters
+                ],
             }
             for player in imported.players
         ],
@@ -282,10 +286,13 @@ def import_bracket() -> Any:
     if not isinstance(payload, Mapping):
         return jsonify(error="Request body must be a JSON object"), 400
     link = identify_bracket_link(_required_text(payload, "url"))
+    top_entrants = payload.get("top_entrants", 8)
+    if top_entrants not in {3, 4, 8}:
+        return jsonify(error="top_entrants must be 3, 4, or 8"), 400
     if link.provider is BracketProvider.CHALLONGE:
         imported = fetch_challonge(link)
     elif link.provider is BracketProvider.START_GG:
-        imported = fetch_startgg(link)
+        imported = fetch_startgg(link, top_entrants=top_entrants)
     else:
         return jsonify(error=f"{link.provider} import is not configured yet", provider=link.provider.value), 501
     return jsonify(_import_response(imported))

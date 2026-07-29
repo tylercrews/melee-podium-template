@@ -222,7 +222,7 @@ def startgg_query(tournament_slug: str, event_slug: str) -> dict[str, Any]:
     return {"query": """
 query MeleePodiumImport($slug: String!) {
   event(slug: $slug) {
-    name numEntrants startAt entrantSizeMin
+    id name numEntrants startAt entrantSizeMin
     videogame { id name }
     tournament { name city countryCode slug }
     standings(query: {page: 1, perPage: 64, sortBy: "standing"}) {
@@ -232,19 +232,21 @@ query MeleePodiumImport($slug: String!) {
 }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
 
 
-def fetch_startgg(link: BracketLink) -> BracketImport:
-    """Fetch and parse a Start.gg event using the server-side token."""
-    token = os.environ.get("START_GG_TOKEN")
-    if not token:
-        raise ValueError("START_GG_TOKEN is not configured on the server")
-    if not link.event_slug:
-        raise ValueError("The Start.gg URL does not identify an event")
-    request = Request(
-        "https://api.start.gg/gql/alpha",
-        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
-        method="POST",
-    )
+def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
+    """Return one page of the games played in a Start.gg event."""
+    return {"query": """
+query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
+  event(id: $eventId) {
+    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
+      pageInfo { total }
+      nodes { games { winnerId selections { entrant { id } character { name } } } }
+    }
+  }
+}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
+
+
+def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
+    request = Request("https://api.start.gg/gql/alpha", data=json.dumps(request_body).encode("utf-8"), headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}, method="POST")
     try:
         with urlopen(request, timeout=20) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -256,8 +258,52 @@ def fetch_startgg(link: BracketLink) -> BracketImport:
     if errors:
         message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
         raise ValueError(f"Start.gg API error: {message}")
+    if not isinstance(payload, Mapping):
+        raise ValueError("Start.gg returned an invalid response")
+    return payload
+
+
+def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
+    """Collect reported characters from games won by the requested entrants."""
+    usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
+    page, per_page, total, seen_sets = 1, 50, None, 0
+    while total is None or seen_sets < total:
+        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
+        try:
+            sets = payload["data"]["event"]["sets"]
+            nodes = sets.get("nodes") or []
+            total = sets.get("pageInfo", {}).get("total", 0)
+        except (KeyError, TypeError) as error:
+            raise ValueError("Start.gg returned an incomplete sets response") from error
+        if not nodes:
+            break
+        seen_sets += len(nodes)
+        for set_data in nodes:
+            for game in set_data.get("games") or []:
+                winner_id = str(game.get("winnerId"))
+                if winner_id not in top_entrant_ids:
+                    continue
+                for selection in game.get("selections") or []:
+                    entrant = selection.get("entrant") or {}
+                    if str(entrant.get("id")) == winner_id:
+                        usage[winner_id].append(selection)
+        page += 1
+    return usage
+
+
+def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+    """Fetch an event plus its winning character selections for top placers."""
+    token = os.environ.get("START_GG_TOKEN")
+    if not token:
+        raise ValueError("START_GG_TOKEN is not configured on the server")
+    if not link.event_slug:
+        raise ValueError("The Start.gg URL does not identify an event")
     try:
-        return parse_startgg(payload, link)
+        payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
+        event = payload["data"]["event"]
+        standings = event["standings"]["nodes"]
+        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
+        return parse_startgg(payload, link, character_usage=_winning_character_usage(event["id"], top_ids, token))
     except (KeyError, TypeError) as error:
         raise ValueError("Start.gg returned an incomplete event response") from error
 
@@ -283,7 +329,7 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_na
             )
             for item in participants
         )
-        characters = tuple(_startgg_characters(usage.get(entrant["name"], []), character_names))
+        characters = tuple(_startgg_characters(usage.get(str(entrant.get("id")), usage.get(entrant["name"], [])), character_names))
         players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members))
     entrant_size = event.get("entrantSizeMin")
     event_format = _event_format(entrant_size)
@@ -354,8 +400,10 @@ def parse_parrygg(payload: Mapping[str, Any], link: BracketLink) -> BracketImpor
 def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int | str, str] | None) -> list[ImportedCharacter]:
     result = []
     for selection in selections:
+        character = selection.get("character") or {}
         raw = selection.get("selectionValue")
-        name = (names or {}).get(raw)
+        name = character.get("name") if isinstance(character, Mapping) else None
+        name = name or (names or {}).get(raw)
         if name and name not in {item.name for item in result}:
             result.append(ImportedCharacter(name))
     return result

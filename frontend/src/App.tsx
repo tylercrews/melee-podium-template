@@ -1,4 +1,4 @@
-﻿import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -196,6 +196,11 @@ function firstCharacter(value: unknown): Record<string, unknown> {
     return value.characters[0];
   }
   return {};
+}
+
+function importedCharacters(value: unknown): Record<string, unknown>[] {
+  if (!isRecord(value) || !Array.isArray(value.characters)) return [];
+  return value.characters.filter(isRecord);
 }
 
 function unique(values: string[]): string[] {
@@ -599,17 +604,9 @@ function App() {
         const imported = importedEntrants[index];
         if (!isRecord(imported)) return existing;
 
+        const importedCharacterForms = importedCharacters(imported).map((character) => createCharacterForm(stringValue(character.fighter, character.melee_fighter_name), stringValue(character.color), stringValue(character.pose)));
         const character = firstCharacter(imported);
-        const importedCharacter = createCharacterForm(
-          stringValue(
-            imported.fighter,
-            imported.melee_fighter_name,
-            character.fighter,
-            character.melee_fighter_name,
-          ),
-          stringValue(imported.color, character.color),
-          stringValue(imported.pose, character.pose),
-        );
+        const importedCharacter = importedCharacterForms[0] ?? createCharacterForm(stringValue(imported.fighter, imported.melee_fighter_name, character.fighter, character.melee_fighter_name), stringValue(imported.color, character.color), stringValue(imported.pose, character.pose));
 
         if (nextFormat === "singles") {
           const importedTag = stringValue(
@@ -632,7 +629,7 @@ function App() {
                 ? matchingFavorite.characters.map((favoriteCharacter) => ({
                     ...favoriteCharacter,
                   }))
-                : [importedCharacter],
+                : importedCharacterForms.length ? importedCharacterForms : [importedCharacter],
           });
         }
         const entrantOne = isRecord(imported.entrant_1)
@@ -710,7 +707,7 @@ function App() {
     setImportState("");
 
     try {
-      const result = await importBracket(bracketUrl.trim());
+      const result = await importBracket(bracketUrl.trim(), podiumSize);
       applyImport(result);
       setImportState("Bracket imported. Review the fields before rendering.");
     } catch (error) {

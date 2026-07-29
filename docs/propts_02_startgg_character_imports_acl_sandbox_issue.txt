@@ -1,0 +1,1482 @@
+when i import a bracket from start.gg even if characters are marked in the sets for people, I'm not receiving any kind of character data (and nothing is being filled in in the UI. Am I receiving any kind of character data from start.gg brackets?
+
+
+
+
+
+
+9:03 PM
+
+
+
+
+
+
+Worked for 30s
+
+
+
+No—not in the current live start.gg import flow.
+The importer’s GraphQL request only asks for event, standings, entrants, and seeds; it does not request any set/game character-selection fields. Although there is some unfinished parsing support for character selections, it is never supplied with data. The API response also sends only tag, seed, and placement to the frontend, so the UI has no character fields to populate.
+The relevant gaps are in [bracket_import.py (line 220)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\bracket_import.py:220) and [app.py (line 255)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\app.py:255).
+So your observation is correct: marked characters on start.gg sets are currently not being received or displayed by this app.
+
+
+9:03 PM
+
+
+
+
+
+
+
+what information is available for me to request? Can I get the sets with character info played by the top x placing entrants?
+
+
+
+
+
+
+9:05 PM
+
+
+
+
+
+
+Worked for 20s
+
+
+
+Yes. Start.gg’s API can return every set in an event, each game within those sets, and each reported character selection. You can then:
+Request the top X standings/entrant IDs.
+Request the event’s sets (paginated).
+Keep only sets involving those entrant IDs.
+Aggregate each player’s reported characters from games.selections.
+A suitable query shape is:
+query PodiumCharacters($slug: String!, $top: Int!, $page: Int!, $perPage: Int!) {
+  event(slug: $slug) {
+    standings(query: { page: 1, perPage: $top, sortBy: "standing" }) {
+      nodes {
+        placement
+        entrant { id name }
+      }
+    }
+
+    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
+      pageInfo { total totalPages page }
+      nodes {
+        id
+        state
+        slots { entrant { id name } }
+        games {
+          id
+          orderNum
+          winnerId
+          selections {
+            entrant { id }
+            participant { id }
+            character { id name }
+          }
+        }
+      }
+    }
+  }
+}
+The important relationship is games[].selections[].entrant.id: it lets us attribute each selected character to the correct entrant. In doubles, participant.id is also useful to distinguish the two people on one team.
+Caveats:
+Character data is only available for games where it was actually reported on start.gg; unreported games remain blank.
+Request all pages of sets, then filter locally to the top placers. That is the reliable way to capture every set they played.
+This gives character names and per-game usage, not costume/color choices.
+For a podium UI, we should choose a policy: show all unique characters used, the most-used character, or the character used in the player’s latest/placement-deciding set.
+The official docs specifically show set → games → selections → character { id name } for reported game data, and event → sets for fetching/paginating event sets. Set game data and sets in an event.
+
+
+9:06 PM
+
+
+
+
+
+
+
+does start gg let you see character color or just characters
+
+
+
+
+
+
+9:06 PM
+
+
+
+
+
+
+Just characters, as far as the documented API is concerned.
+Game selections expose the character (for example, Fox or Marth), plus the entrant/participant it belongs to. They do not expose Melee costume/color (red Fox, white Marth, etc.). The app should treat color as random or let you choose it manually. Start.gg’s set-game query example
+
+
+9:06 PM
+
+
+
+
+
+
+
+ok great.
+So when importing from start.gg what I want you to do is get all of the sets for the tournament. See who placed top x (3, 4, or 8 depending on user selection) and create a map for each of them where the key is their tag and the value is a set of strings that will be their characters used (and won games with).
+Iterate through all the sets of the tournament, and if there is a set with one of the top x entrants, add the character used if the entrant won that game.
+Then in the UI when bringing in the tags of the entrants, also add each of the characters they won games with (with color random pose random)
+finally, test with
+https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview
+and tell me what characters we end up with for the top 8 entrants of that bracket
+
+
+
+
+Show more
+
+9:11 PM
+
+
+
+
+
+
+You stopped after 8m 30s
+
+
+
+
+I’ll implement this as a character-usage import: fetch and paginate the event’s sets, keep only game-winning selections for the imported podium placers, and return all unique fighters to the existing UI with random color/pose. I’ll then run the provided bracket through it and report the top-eight results.
+
+
+
+
+Ran commandsRan rg --files -g "AGENTS.md" -g "package.json" -g "*.py" -g "*.tsx" -g "*.ts" | Sort-Object; Get-Content test\bracket_import_test.py; Get-Content frontend\src\api.ts; Get-Content frontend\package.json
+
+
+
+
+Ran rg -n -C 3 "podiumSize|setPodiumSize|Podium size|Top 3|Top 4|Top 8|recommendedPodiumSize|eventFormat" frontend\src\App.tsx; Get-Content frontend\src\App.tsx | Select-Object -First 180; Get-Content .env.example
+
+
+
+
+Ran rg -n -C 3 "function firstCharacter|function handleImport|importBracket\(" frontend\src\App.tsx; Get-Content app.py | Select-Object -First 60; Get-Content app.py | Select-Object -Skip 250 -First 50
+
+
+
+
+Ran Get-Content frontend\src\App.tsx | Select-Object -Skip 180 -First 30; Get-Content bracket_import.py | Select-Object -Skip 220 -First 150
+
+
+
+
+
+
+
+
+
+The sandbox blocked the normal patch helper while reading the workspace, so I’m retrying the same scoped edit with elevated workspace access; no files have changed from that failed attempt.
+
+
+
+
+Ran commandsRan @'
+*** Begin Patch
+*** Update File: bracket_import.py
+@@
+ query MeleePodiumImport($slug: String!) {
+   event(slug: $slug) {
+-    name numEntrants startAt entrantSizeMin
++    id name numEntrants startAt entrantSizeMin
+@@
+ }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
+ 
+ 
+-def fetch_startgg(link: BracketLink) -> BracketImport:
++def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
++    """Return one page of the games played in a Start.gg event."""
++    return {"query": """
++query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
++  event(id: $eventId) {
++    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
++      pageInfo { total }
++      nodes {
++        games {
++          winnerId
++          selections {
++            entrant { id }
++            character { name }
++          }
++        }
++      }
++    }
++  }
++}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
++
++
++def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
++    request = Request(
++        "https://api.start.gg/gql/alpha",
++        data=json.dumps(request_body).encode("utf-8"),
++        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
++        method="POST",
++    )
++    try:
++        with urlopen(request, timeout=20) as response:
++            payload = json.loads(response.read().decode("utf-8"))
++    except HTTPError as error:
++        raise ValueError(f"Start.gg API request failed ({error.code})") from error
++    except URLError as error:
++        raise ValueError("Could not reach the Start.gg API") from error
++    errors = payload.get("errors") if isinstance(payload, Mapping) else None
++    if errors:
++        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
++        raise ValueError(f"Start.gg API error: {message}")
++    if not isinstance(payload, Mapping):
++        raise ValueError("Start.gg returned an invalid response")
++    return payload
++
++
++def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
++    """Collect each selected character from games won by a requested entrant."""
++    usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
++    page = 1
++    per_page = 50
++    total = None
++    seen_sets = 0
++    while total is None or seen_sets < total:
++        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
++        try:
++            sets = payload["data"]["event"]["sets"]
++            nodes = sets.get("nodes") or []
++            total = sets.get("pageInfo", {}).get("total", 0)
++        except (KeyError, TypeError) as error:
++            raise ValueError("Start.gg returned an incomplete sets response") from error
++        if not nodes:
++            break
++        seen_sets += len(nodes)
++        for set_data in nodes:
++            for game in set_data.get("games") or []:
++                winner_id = str(game.get("winnerId"))
++                if winner_id not in top_entrant_ids:
++                    continue
++                for selection in game.get("selections") or []:
++                    selection_entrant = selection.get("entrant") or {}
++                    if str(selection_entrant.get("id")) == winner_id:
++                        usage[winner_id].append(selection)
++        page += 1
++    return usage
++
++
++def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+@@
+-    request = Request(
+-        "https://api.start.gg/gql/alpha",
+-        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
+-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
+-        method="POST",
+-    )
+-    try:
+-        with urlopen(request, timeout=20) as response:
+-            payload = json.loads(response.read().decode("utf-8"))
+-    except HTTPError as error:
+-        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+-    except URLError as error:
+-        raise ValueError("Could not reach the Start.gg API") from error
+-    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+-    if errors:
+-        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+-        raise ValueError(f"Start.gg API error: {message}")
+     try:
+-        return parse_startgg(payload, link)
++        payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
++        event = payload["data"]["event"]
++        standings = event["standings"]["nodes"]
++        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
++        usage = _winning_character_usage(event["id"], top_ids, token)
++        return parse_startgg(payload, link, character_usage=usage)
+     except (KeyError, TypeError) as error:
+         raise ValueError("Start.gg returned an incomplete event response") from error
+@@
+-        characters = tuple(_startgg_characters(usage.get(entrant["name"], []), character_names))
++        characters = tuple(_startgg_characters(usage.get(str(entrant.get("id")), usage.get(entrant["name"], [])), character_names))
+@@
+ def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int | str, str] | None) -> list[ImportedCharacter]:
+     result = []
+     for selection in selections:
+-        raw = selection.get("selectionValue")
+-        name = (names or {}).get(raw)
++        character = selection.get("character") or {}
++        raw = selection.get("selectionValue")
++        name = character.get("name") if isinstance(character, Mapping) else None
++        name = name or (names or {}).get(raw)
+*** Update File: app.py
+@@
+         "entrants": [
+             {
+                 "tag": player.tag,
+                 "seed": player.seed,
+                 "placement": player.placement,
++                "characters": [
++                    {"fighter": character.name, "color": character.costume, "pose": None}
++                    for character in player.characters
++                ],
+             }
+@@
+     if not isinstance(payload, Mapping):
+         return jsonify(error="Request body must be a JSON object"), 400
+     link = identify_bracket_link(_required_text(payload, "url"))
++    top_entrants = payload.get("top_entrants", 8)
++    if top_entrants not in {3, 4, 8}:
++        return jsonify(error="top_entrants must be 3, 4, or 8"), 400
+@@
+     elif link.provider is BracketProvider.START_GG:
+-        imported = fetch_startgg(link)
++        imported = fetch_startgg(link, top_entrants=top_entrants)
+*** Update File: frontend/src/api.ts
+@@
+-export async function importBracket(url: string): Promise<unknown> {
++export async function importBracket(url: string, topEntrants: 3 | 4 | 8): Promise<unknown> {
+@@
+-    body: JSON.stringify({ url }),
++    body: JSON.stringify({ url, top_entrants: topEntrants }),
+*** Update File: frontend/src/App.tsx
+@@
+ function firstCharacter(value: unknown): Record<string, unknown> {
+@@
+ }
++
++function importedCharacters(value: unknown): Record<string, unknown>[] {
++  if (!isRecord(value) || !Array.isArray(value.characters)) return [];
++  return value.characters.filter(isRecord);
++}
+@@
+-        const character = firstCharacter(imported);
+-        const importedCharacter = createCharacterForm(
+-          stringValue(
+-            imported.fighter,
+-            imported.melee_fighter_name,
+-            character.fighter,
+-            character.melee_fighter_name,
+-          ),
+-          stringValue(imported.color, character.color),
+-          stringValue(imported.pose, character.pose),
+-        );
++        const importedCharacterForms = importedCharacters(imported).map((character) =>
++          createCharacterForm(
++            stringValue(character.fighter, character.melee_fighter_name),
++            stringValue(character.color),
++            stringValue(character.pose),
++          ),
++        );
++        const character = firstCharacter(imported);
++        const importedCharacter = importedCharacterForms[0] ?? createCharacterForm(
++          stringValue(imported.fighter, imported.melee_fighter_name, character.fighter, character.melee_fighter_name),
++          stringValue(imported.color, character.color),
++          stringValue(imported.pose, character.pose),
++        );
+@@
+-                : [importedCharacter],
++                : importedCharacterForms.length ? importedCharacterForms : [importedCharacter],
+@@
+-      const result = await importBracket(bracketUrl.trim());
++      const result = await importBracket(bracketUrl.trim(), podiumSize);
+*** End Patch
+'@ | apply_patch
+
+
+
+
+Ran $patchText = @'
+*** Begin Patch
+*** Update File: bracket_import.py
+@@
+ query MeleePodiumImport($slug: String!) {
+   event(slug: $slug) {
+-    name numEntrants startAt entrantSizeMin
++    id name numEntrants startAt entrantSizeMin
+@@
+ }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
+ 
+ 
+-def fetch_startgg(link: BracketLink) -> BracketImport:
++def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
++    """Return one page of the games played in a Start.gg event."""
++    return {"query": """
++query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
++  event(id: $eventId) {
++    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
++      pageInfo { total }
++      nodes {
++        games {
++          winnerId
++          selections {
++            entrant { id }
++            character { name }
++          }
++        }
++      }
++    }
++  }
++}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
++
++
++def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
++    request = Request(
++        "https://api.start.gg/gql/alpha",
++        data=json.dumps(request_body).encode("utf-8"),
++        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
++        method="POST",
++    )
++    try:
++        with urlopen(request, timeout=20) as response:
++            payload = json.loads(response.read().decode("utf-8"))
++    except HTTPError as error:
++        raise ValueError(f"Start.gg API request failed ({error.code})") from error
++    except URLError as error:
++        raise ValueError("Could not reach the Start.gg API") from error
++    errors = payload.get("errors") if isinstance(payload, Mapping) else None
++    if errors:
++        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
++        raise ValueError(f"Start.gg API error: {message}")
++    if not isinstance(payload, Mapping):
++        raise ValueError("Start.gg returned an invalid response")
++    return payload
++
++
++def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
++    """Collect each selected character from games won by a requested entrant."""
++    usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
++    page = 1
++    per_page = 50
++    total = None
++    seen_sets = 0
++    while total is None or seen_sets < total:
++        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
++        try:
++            sets = payload["data"]["event"]["sets"]
++            nodes = sets.get("nodes") or []
++            total = sets.get("pageInfo", {}).get("total", 0)
++        except (KeyError, TypeError) as error:
++            raise ValueError("Start.gg returned an incomplete sets response") from error
++        if not nodes:
++            break
++        seen_sets += len(nodes)
++        for set_data in nodes:
++            for game in set_data.get("games") or []:
++                winner_id = str(game.get("winnerId"))
++                if winner_id not in top_entrant_ids:
++                    continue
++                for selection in game.get("selections") or []:
++                    selection_entrant = selection.get("entrant") or {}
++                    if str(selection_entrant.get("id")) == winner_id:
++                        usage[winner_id].append(selection)
++        page += 1
++    return usage
++
++
++def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+@@
+-    request = Request(
+-        "https://api.start.gg/gql/alpha",
+-        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
+-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
+-        method="POST",
+-    )
+-    try:
+-        with urlopen(request, timeout=20) as response:
+-            payload = json.loads(response.read().decode("utf-8"))
+-    except HTTPError as error:
+-        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+-    except URLError as error:
+-        raise ValueError("Could not reach the Start.gg API") from error
+-    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+-    if errors:
+-        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+-        raise ValueError(f"Start.gg API error: {message}")
+     try:
+-        return parse_startgg(payload, link)
++        payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
++        event = payload["data"]["event"]
++        standings = event["standings"]["nodes"]
++        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
++        usage = _winning_character_usage(event["id"], top_ids, token)
++        return parse_startgg(payload, link, character_usage=usage)
+     except (KeyError, TypeError) as error:
+         raise ValueError("Start.gg returned an incomplete event response") from error
+@@
+-        characters = tuple(_startgg_characters(usage.get(entrant["name"], []), character_names))
++        characters = tuple(_startgg_characters(usage.get(str(entrant.get("id")), usage.get(entrant["name"], [])), character_names))
+@@
+ def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int | str, str] | None) -> list[ImportedCharacter]:
+     result = []
+     for selection in selections:
+-        raw = selection.get("selectionValue")
+-        name = (names or {}).get(raw)
++        character = selection.get("character") or {}
++        raw = selection.get("selectionValue")
++        name = character.get("name") if isinstance(character, Mapping) else None
++        name = name or (names or {}).get(raw)
+*** Update File: app.py
+@@
+         "entrants": [
+             {
+                 "tag": player.tag,
+                 "seed": player.seed,
+                 "placement": player.placement,
++                "characters": [
++                    {"fighter": character.name, "color": character.costume, "pose": None}
++                    for character in player.characters
++                ],
+             }
+@@
+     if not isinstance(payload, Mapping):
+         return jsonify(error="Request body must be a JSON object"), 400
+     link = identify_bracket_link(_required_text(payload, "url"))
++    top_entrants = payload.get("top_entrants", 8)
++    if top_entrants not in {3, 4, 8}:
++        return jsonify(error="top_entrants must be 3, 4, or 8"), 400
+@@
+     elif link.provider is BracketProvider.START_GG:
+-        imported = fetch_startgg(link)
++        imported = fetch_startgg(link, top_entrants=top_entrants)
+*** Update File: frontend/src/api.ts
+@@
+-export async function importBracket(url: string): Promise<unknown> {
++export async function importBracket(url: string, topEntrants: 3 | 4 | 8): Promise<unknown> {
+@@
+-    body: JSON.stringify({ url }),
++    body: JSON.stringify({ url, top_entrants: topEntrants }),
+*** Update File: frontend/src/App.tsx
+@@
+ function firstCharacter(value: unknown): Record<string, unknown> {
+@@
+ }
++
++function importedCharacters(value: unknown): Record<string, unknown>[] {
++  if (!isRecord(value) || !Array.isArray(value.characters)) return [];
++  return value.characters.filter(isRecord);
++}
+@@
+-        const character = firstCharacter(imported);
+-        const importedCharacter = createCharacterForm(
+-          stringValue(
+-            imported.fighter,
+-            imported.melee_fighter_name,
+-            character.fighter,
+-            character.melee_fighter_name,
+-          ),
+-          stringValue(imported.color, character.color),
+-          stringValue(imported.pose, character.pose),
+-        );
++        const importedCharacterForms = importedCharacters(imported).map((character) =>
++          createCharacterForm(
++            stringValue(character.fighter, character.melee_fighter_name),
++            stringValue(character.color),
++            stringValue(character.pose),
++          ),
++        );
++        const character = firstCharacter(imported);
++        const importedCharacter = importedCharacterForms[0] ?? createCharacterForm(
++          stringValue(imported.fighter, imported.melee_fighter_name, character.fighter, character.melee_fighter_name),
++          stringValue(imported.color, character.color),
++          stringValue(imported.pose, character.pose),
++        );
+@@
+-                : [importedCharacter],
++                : importedCharacterForms.length ? importedCharacterForms : [importedCharacter],
+@@
+-      const result = await importBracket(bracketUrl.trim());
++      const result = await importBracket(bracketUrl.trim(), podiumSize);
+*** End Patch
+'@
+apply_patch $patchText
+
+
+
+
+Ran $patchText = @'
+*** Begin Patch
+*** Update File: bracket_import.py
+@@
+ query MeleePodiumImport($slug: String!) {
+   event(slug: $slug) {
+-    name numEntrants startAt entrantSizeMin
++    id name numEntrants startAt entrantSizeMin
+@@
+ }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
+ 
+ 
+-def fetch_startgg(link: BracketLink) -> BracketImport:
++def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
++    """Return one page of the games played in a Start.gg event."""
++    return {"query": """
++query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
++  event(id: $eventId) {
++    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
++      pageInfo { total }
++      nodes {
++        games {
++          winnerId
++          selections {
++            entrant { id }
++            character { name }
++          }
++        }
++      }
++    }
++  }
++}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
++
++
++def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
++    request = Request(
++        "https://api.start.gg/gql/alpha",
++        data=json.dumps(request_body).encode("utf-8"),
++        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
++        method="POST",
++    )
++    try:
++        with urlopen(request, timeout=20) as response:
++            payload = json.loads(response.read().decode("utf-8"))
++    except HTTPError as error:
++        raise ValueError(f"Start.gg API request failed ({error.code})") from error
++    except URLError as error:
++        raise ValueError("Could not reach the Start.gg API") from error
++    errors = payload.get("errors") if isinstance(payload, Mapping) else None
++    if errors:
++        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
++        raise ValueError(f"Start.gg API error: {message}")
++    if not isinstance(payload, Mapping):
++        raise ValueError("Start.gg returned an invalid response")
++    return payload
+*** End Patch
+'@
+apply_patch $patchText
+
+
+
+
+Ran $patchText = "*** Begin Patch`n*** Update File: bracket_import.py`n@@`n-    name numEntrants startAt entrantSizeMin`n+    id name numEntrants startAt entrantSizeMin`n*** End Patch"; apply_patch -- $patchText
+
+
+
+
+Ran Get-Command apply_patch | Format-List *
+
+
+
+
+
+
+
+
+
+The Windows wrapper for the patch utility cannot pass multiline patch text, even with elevated access. I’m using Git’s non-destructive patch application as the equivalent fallback, then I’ll validate the diff and tests.
+
+
+
+
+Ran commandsRan $patchFile = Join-Path $env:TEMP 'startgg-character-import.patch'
+@'
+diff --git a/bracket_import.py b/bracket_import.py
+--- a/bracket_import.py
++++ b/bracket_import.py
+@@ -220,7 +220,7 @@ def startgg_query(tournament_slug: str, event_slug: str) -> dict[str, Any]:
+ query MeleePodiumImport($slug: String!) {
+   event(slug: $slug) {
+-    name numEntrants startAt entrantSizeMin
++    id name numEntrants startAt entrantSizeMin
+     videogame { id name }
+     tournament { name city countryCode slug }
+     standings(query: {page: 1, perPage: 64, sortBy: "standing"}) {
+@@ -232,35 +232,82 @@ query MeleePodiumImport($slug: String!) {
+ }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
+ 
+ 
+-def fetch_startgg(link: BracketLink) -> BracketImport:
++def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
++    """Return one page of the games played in a Start.gg event."""
++    return {"query": """
++query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
++  event(id: $eventId) {
++    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
++      pageInfo { total }
++      nodes {
++        games {
++          winnerId
++          selections {
++            entrant { id }
++            character { name }
++          }
++        }
++      }
++    }
++  }
++}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
++
++
++def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
++    request = Request(
++        "https://api.start.gg/gql/alpha",
++        data=json.dumps(request_body).encode("utf-8"),
++        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
++        method="POST",
++    )
++    try:
++        with urlopen(request, timeout=20) as response:
++            payload = json.loads(response.read().decode("utf-8"))
++    except HTTPError as error:
++        raise ValueError(f"Start.gg API request failed ({error.code})") from error
++    except URLError as error:
++        raise ValueError("Could not reach the Start.gg API") from error
++    errors = payload.get("errors") if isinstance(payload, Mapping) else None
++    if errors:
++        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
++        raise ValueError(f"Start.gg API error: {message}")
++    if not isinstance(payload, Mapping):
++        raise ValueError("Start.gg returned an invalid response")
++    return payload
++
++
++def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
++    """Collect each selected character from games won by a requested entrant."""
++    usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
++    page = 1
++    per_page = 50
++    total = None
++    seen_sets = 0
++    while total is None or seen_sets < total:
++        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
++        try:
++            sets = payload["data"]["event"]["sets"]
++            nodes = sets.get("nodes") or []
++            total = sets.get("pageInfo", {}).get("total", 0)
++        except (KeyError, TypeError) as error:
++            raise ValueError("Start.gg returned an incomplete sets response") from error
++        if not nodes:
++            break
++        seen_sets += len(nodes)
++        for set_data in nodes:
++            for game in set_data.get("games") or []:
++                winner_id = str(game.get("winnerId"))
++                if winner_id not in top_entrant_ids:
++                    continue
++                for selection in game.get("selections") or []:
++                    selection_entrant = selection.get("entrant") or {}
++                    if str(selection_entrant.get("id")) == winner_id:
++                        usage[winner_id].append(selection)
++        page += 1
++    return usage
++
++
++def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+     """Fetch and parse a Start.gg event using the server-side token."""
+     token = os.environ.get("START_GG_TOKEN")
+     if not token:
+@@ -268,28 +315,13 @@ def fetch_startgg(link: BracketLink) -> BracketImport:
+         raise ValueError("START_GG_TOKEN is not configured on the server")
+     if not link.event_slug:
+         raise ValueError("The Start.gg URL does not identify an event")
+-    request = Request(
+-        "https://api.start.gg/gql/alpha",
+-        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
+-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
+-        method="POST",
+-    )
+     try:
+-        with urlopen(request, timeout=20) as response:
+-            payload = json.loads(response.read().decode("utf-8"))
+-    except HTTPError as error:
+-        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+-    except URLError as error:
+-        raise ValueError("Could not reach the Start.gg API") from error
+-    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+-    if errors:
+-        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+-        raise ValueError(f"Start.gg API error: {message}")
+-    try:
+-        return parse_startgg(payload, link)
++        payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
++        event = payload["data"]["event"]
++        standings = event["standings"]["nodes"]
++        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
++        usage = _winning_character_usage(event["id"], top_ids, token)
++        return parse_startgg(payload, link, character_usage=usage)
+     except (KeyError, TypeError) as error:
+         raise ValueError("Start.gg returned an incomplete event response") from error
+@@ -319,7 +351,7 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_n
+             )
+             for item in participants
+         )
+-        characters = tuple(_startgg_characters(usage.get(entrant["name"], []), character_names))
++        characters = tuple(_startgg_characters(usage.get(str(entrant.get("id")), usage.get(entrant["name"], [])), character_names))
+         players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members))
+@@ -355,8 +387,10 @@ def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int
+     result = []
+     for selection in selections:
++        character = selection.get("character") or {}
+         raw = selection.get("selectionValue")
+-        name = (names or {}).get(raw)
++        name = character.get("name") if isinstance(character, Mapping) else None
++        name = name or (names or {}).get(raw)
+         if name and name not in {item.name for item in result}:
+             result.append(ImportedCharacter(name))
+diff --git a/app.py b/app.py
+--- a/app.py
++++ b/app.py
+@@ -273,6 +273,10 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
+                 "tag": player.tag,
+                 "seed": player.seed,
+                 "placement": player.placement,
++                "characters": [
++                    {"fighter": character.name, "color": character.costume, "pose": None}
++                    for character in player.characters
++                ],
+             }
+             for player in imported.players
+         ],
+@@ -284,11 +288,14 @@ def import_bracket() -> Any:
+     if not isinstance(payload, Mapping):
+         return jsonify(error="Request body must be a JSON object"), 400
+     link = identify_bracket_link(_required_text(payload, "url"))
++    top_entrants = payload.get("top_entrants", 8)
++    if top_entrants not in {3, 4, 8}:
++        return jsonify(error="top_entrants must be 3, 4, or 8"), 400
+     if link.provider is BracketProvider.CHALLONGE:
+         imported = fetch_challonge(link)
+     elif link.provider is BracketProvider.START_GG:
+-        imported = fetch_startgg(link)
++        imported = fetch_startgg(link, top_entrants=top_entrants)
+     else:
+         return jsonify(error=f"{link.provider} import is not configured yet", provider=link.provider.value), 501
+diff --git a/frontend/src/api.ts b/frontend/src/api.ts
+--- a/frontend/src/api.ts
++++ b/frontend/src/api.ts
+@@ -104,11 +104,11 @@ export async function getOptions(): Promise<OptionsResponse> {
+   };
+ }
+ 
+-export async function importBracket(url: string): Promise<unknown> {
++export async function importBracket(url: string, topEntrants: 3 | 4 | 8): Promise<unknown> {
+   const response = await request("import", {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+-    body: JSON.stringify({ url }),
++    body: JSON.stringify({ url, top_entrants: topEntrants }),
+   });
+   return response.json() as Promise<unknown>;
+ }
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -198,6 +198,11 @@ function firstCharacter(value: unknown): Record<string, unknown> {
+   return {};
+ }
+ 
++function importedCharacters(value: unknown): Record<string, unknown>[] {
++  if (!isRecord(value) || !Array.isArray(value.characters)) return [];
++  return value.characters.filter(isRecord);
++}
++
+ function unique(values: string[]): string[] {
+   return [...new Set(values)];
+ }
+@@ -603,17 +608,18 @@ function applyImport(result: unknown) {
+-        const character = firstCharacter(imported);
+-        const importedCharacter = createCharacterForm(
+-          stringValue(
+-            imported.fighter,
+-            imported.melee_fighter_name,
+-            character.fighter,
+-            character.melee_fighter_name,
+-          ),
+-          stringValue(imported.color, character.color),
+-          stringValue(imported.pose, character.pose),
++        const importedCharacterForms = importedCharacters(imported).map((character) =>
++          createCharacterForm(
++            stringValue(character.fighter, character.melee_fighter_name),
++            stringValue(character.color),
++            stringValue(character.pose),
++          ),
+         );
++        const character = firstCharacter(imported);
++        const importedCharacter = importedCharacterForms[0] ?? createCharacterForm(
++          stringValue(imported.fighter, imported.melee_fighter_name, character.fighter, character.melee_fighter_name),
++          stringValue(imported.color, character.color),
++          stringValue(imported.pose, character.pose),
++        );
+@@ -632,7 +638,7 @@ function applyImport(result: unknown) {
+-                : [importedCharacter],
++                : importedCharacterForms.length ? importedCharacterForms : [importedCharacter],
+@@ -710,7 +716,7 @@ async function handleImport(event: FormEvent) {
+-      const result = await importBracket(bracketUrl.trim());
++      const result = await importBracket(bracketUrl.trim(), podiumSize);
+*** End Patch
+'@ | Set-Content -LiteralPath $patchFile -Encoding utf8
+git apply --whitespace=nowarn $patchFile
+$exitCode = $LASTEXITCODE
+Remove-Item -LiteralPath $patchFile
+exit $exitCode
+Shell
+$$patchFile = Join-Path $env:TEMP 'startgg-character-import.patch'
+@'
+diff --git a/bracket_import.py b/bracket_import.py
+--- a/bracket_import.py
++++ b/bracket_import.py
+@@ -220,7 +220,7 @@ def startgg_query(tournament_slug: str, event_slug: str) -> dict[str, Any]:
+ query MeleePodiumImport($slug: String!) {
+   event(slug: $slug) {
+-    name numEntrants startAt entrantSizeMin
++    id name numEntrants startAt entrantSizeMin
+     videogame { id name }
+     tournament { name city countryCode slug }
+     standings(query: {page: 1, perPage: 64, sortBy: "standing"}) {
+@@ -232,35 +232,82 @@ query MeleePodiumImport($slug: String!) {
+ }""", "variables": {"slug": f"tournament/{tournament_slug}/event/{event_slug}"}}
+ 
+ 
+-def fetch_startgg(link: BracketLink) -> BracketImport:
++def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
++    """Return one page of the games played in a Start.gg event."""
++    return {"query": """
++query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
++  event(id: $eventId) {
++    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
++      pageInfo { total }
++      nodes {
++        games {
++          winnerId
++          selections {
++            entrant { id }
++            character { name }
++          }
++        }
++      }
++    }
++  }
++}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
++
++
++def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
++    request = Request(
++        "https://api.start.gg/gql/alpha",
++        data=json.dumps(request_body).encode("utf-8"),
++        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
++        method="POST",
++    )
++    try:
++        with urlopen(request, timeout=20) as response:
++            payload = json.loads(response.read().decode("utf-8"))
++    except HTTPError as error:
++        raise ValueError(f"Start.gg API request failed ({error.code})") from error
++    except URLError as error:
++        raise ValueError("Could not reach the Start.gg API") from error
++    errors = payload.get("errors") if isinstance(payload, Mapping) else None
++    if errors:
++        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
++        raise ValueError(f"Start.gg API error: {message}")
++    if not isinstance(payload, Mapping):
++        raise ValueError("Start.gg returned an invalid response")
++    return payload
++
++
++def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
++    """Collect each selected character from games won by a requested entrant."""
++    usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
++    page = 1
++    per_page = 50
++    total = None
++    seen_sets = 0
++    while total is None or seen_sets < total:
++        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
++        try:
++            sets = payload["data"]["event"]["sets"]
++            nodes = sets.get("nodes") or []
++            total = sets.get("pageInfo", {}).get("total", 0)
++        except (KeyError, TypeError) as error:
++            raise ValueError("Start.gg returned an incomplete sets response") from error
++        if not nodes:
++            break
++        seen_sets += len(nodes)
++        for set_data in nodes:
++            for game in set_data.get("games") or []:
++                winner_id = str(game.get("winnerId"))
++                if winner_id not in top_entrant_ids:
++                    continue
++                for selection in game.get("selections") or []:
++                    selection_entrant = selection.get("entrant") or {}
++                    if str(selection_entrant.get("id")) == winner_id:
++                        usage[winner_id].append(selection)
++        page += 1
++    return usage
++
++
++def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+     """Fetch and parse a Start.gg event using the server-side token."""
+     token = os.environ.get("START_GG_TOKEN")
+     if not token:
+@@ -268,28 +315,13 @@ def fetch_startgg(link: BracketLink) -> BracketImport:
+         raise ValueError("START_GG_TOKEN is not configured on the server")
+     if not link.event_slug:
+         raise ValueError("The Start.gg URL does not identify an event")
+-    request = Request(
+-        "https://api.start.gg/gql/alpha",
+-        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
+-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
+-        method="POST",
+-    )
+     try:
+-        with urlopen(request, timeout=20) as response:
+-            payload = json.loads(response.read().decode("utf-8"))
+-    except HTTPError as error:
+-        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+-    except URLError as error:
+-        raise ValueError("Could not reach the Start.gg API") from error
+-    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+-    if errors:
+-        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+-        raise ValueError(f"Start.gg API error: {message}")
+-    try:
+-        return parse_startgg(payload, link)
++        payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
++        event = payload["data"]["event"]
++        standings = event["standings"]["nodes"]
++        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
++        usage = _winning_character_usage(event["id"], top_ids, token)
++        return parse_startgg(payload, link, character_usage=usage)
+     except (KeyError, TypeError) as error:
+         raise ValueError("Start.gg returned an incomplete event response") from error
+@@ -319,7 +351,7 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_n
+             )
+             for item in participants
+         )
+-        characters = tuple(_startgg_characters(usage.get(entrant["name"], []), character_names))
++        characters = tuple(_startgg_characters(usage.get(str(entrant.get("id")), usage.get(entrant["name"], [])), character_names))
+         players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members))
+@@ -355,8 +387,10 @@ def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int
+     result = []
+     for selection in selections:
++        character = selection.get("character") or {}
+         raw = selection.get("selectionValue")
+-        name = (names or {}).get(raw)
++        name = character.get("name") if isinstance(character, Mapping) else None
++        name = name or (names or {}).get(raw)
+         if name and name not in {item.name for item in result}:
+             result.append(ImportedCharacter(name))
+diff --git a/app.py b/app.py
+--- a/app.py
++++ b/app.py
+@@ -273,6 +273,10 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
+                 "tag": player.tag,
+                 "seed": player.seed,
+                 "placement": player.placement,
++                "characters": [
++                    {"fighter": character.name, "color": character.costume, "pose": None}
++                    for character in player.characters
++                ],
+             }
+             for player in imported.players
+         ],
+@@ -284,11 +288,14 @@ def import_bracket() -> Any:
+     if not isinstance(payload, Mapping):
+         return jsonify(error="Request body must be a JSON object"), 400
+     link = identify_bracket_link(_required_text(payload, "url"))
++    top_entrants = payload.get("top_entrants", 8)
++    if top_entrants not in {3, 4, 8}:
++        return jsonify(error="top_entrants must be 3, 4, or 8"), 400
+     if link.provider is BracketProvider.CHALLONGE:
+         imported = fetch_challonge(link)
+     elif link.provider is BracketProvider.START_GG:
+-        imported = fetch_startgg(link)
++        imported = fetch_startgg(link, top_entrants=top_entrants)
+     else:
+         return jsonify(error=f"{link.provider} import is not configured yet", provider=link.provider.value), 501
+diff --git a/frontend/src/api.ts b/frontend/src/api.ts
+--- a/frontend/src/api.ts
++++ b/frontend/src/api.ts
+@@ -104,11 +104,11 @@ export async function getOptions(): Promise<OptionsResponse> {
+   };
+ }
+ 
+-export async function importBracket(url: string): Promise<unknown> {
++export async function importBracket(url: string, topEntrants: 3 | 4 | 8): Promise<unknown> {
+   const response = await request("import", {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+-    body: JSON.stringify({ url }),
++    body: JSON.stringify({ url, top_entrants: topEntrants }),
+   });
+   return response.json() as Promise<unknown>;
+ }
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -198,6 +198,11 @@ function firstCharacter(value: unknown): Record<string, unknown> {
+   return {};
+ }
+ 
++function importedCharacters(value: unknown): Record<string, unknown>[] {
++  if (!isRecord(value) || !Array.isArray(value.characters)) return [];
++  return value.characters.filter(isRecord);
++}
++
+ function unique(values: string[]): string[] {
+   return [...new Set(values)];
+ }
+@@ -603,17 +608,18 @@ function applyImport(result: unknown) {
+-        const character = firstCharacter(imported);
+-        const importedCharacter = createCharacterForm(
+-          stringValue(
+-            imported.fighter,
+-            imported.melee_fighter_name,
+-            character.fighter,
+-            character.melee_fighter_name,
+-          ),
+-          stringValue(imported.color, character.color),
+-          stringValue(imported.pose, character.pose),
++        const importedCharacterForms = importedCharacters(imported).map((character) =>
++          createCharacterForm(
++            stringValue(character.fighter, character.melee_fighter_name),
++            stringValue(character.color),
++            stringValue(character.pose),
++          ),
+         );
++        const character = firstCharacter(imported);
++        const importedCharacter = importedCharacterForms[0] ?? createCharacterForm(
++          stringValue(imported.fighter, imported.melee_fighter_name, character.fighter, character.melee_fighter_name),
++          stringValue(imported.color, character.color),
++          stringValue(imported.pose, character.pose),
++        );
+@@ -632,7 +638,7 @@ function applyImport(result: unknown) {
+-                : [importedCharacter],
++                : importedCharacterForms.length ? importedCharacterForms : [importedCharacter],
+@@ -710,7 +716,7 @@ async function handleImport(event: FormEvent) {
+-      const result = await importBracket(bracketUrl.trim());
++      const result = await importBracket(bracketUrl.trim(), podiumSize);
+*** End Patch
+'@ | Set-Content -LiteralPath $patchFile -Encoding utf8
+git apply --whitespace=nowarn $patchFile
+$exitCode = $LASTEXITCODE
+Remove-Item -LiteralPath $patchFile
+exit $exitCode
+
+
+error: corrupt patch at line 12
+error: corrupt patch at line 12
+
+
+
+
+
+
+Exit code 128
+
+
+
+
+
+
+Ran $path='bracket_import.py'; $text=[IO.File]::ReadAllText($path); $text=$text.Replace('    name numEntrants startAt entrantSizeMin','    id name numEntrants startAt entrantSizeMin'); $old=@'
+def fetch_startgg(link: BracketLink) -> BracketImport:
+    """Fetch and parse a Start.gg event using the server-side token."""
+    token = os.environ.get("START_GG_TOKEN")
+    if not token:
+        raise ValueError("START_GG_TOKEN is not configured on the server")
+    if not link.event_slug:
+        raise ValueError("The Start.gg URL does not identify an event")
+    request = Request(
+        "https://api.start.gg/gql/alpha",
+        data=json.dumps(startgg_query(link.tournament_slug, link.event_slug)).encode("utf-8"),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except HTTPError as error:
+        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+    except URLError as error:
+        raise ValueError("Could not reach the Start.gg API") from error
+    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+    if errors:
+        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+        raise ValueError(f"Start.gg API error: {message}")
+    try:
+        return parse_startgg(payload, link)
+    except (KeyError, TypeError) as error:
+        raise ValueError("Start.gg returned an incomplete event response") from error
+'@; $new=@'
+def startgg_sets_query(event_id: int | str, page: int, per_page: int = 50) -> dict[str, Any]:
+    """Return one page of the games played in a Start.gg event."""
+    return {"query": """
+query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
+  event(id: $eventId) {
+    sets(page: $page, perPage: $perPage, sortType: STANDARD) {
+      pageInfo { total }
+      nodes { games { winnerId selections { entrant { id } character { name } } } }
+    }
+  }
+}""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
+
+
+def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str, Any]:
+    request = Request("https://api.start.gg/gql/alpha", data=json.dumps(request_body).encode("utf-8"), headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}, method="POST")
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except HTTPError as error:
+        raise ValueError(f"Start.gg API request failed ({error.code})") from error
+    except URLError as error:
+        raise ValueError("Could not reach the Start.gg API") from error
+    errors = payload.get("errors") if isinstance(payload, Mapping) else None
+    if errors:
+        message = errors[0].get("message") if isinstance(errors, list) and errors and isinstance(errors[0], Mapping) else "unknown error"
+        raise ValueError(f"Start.gg API error: {message}")
+    if not isinstance(payload, Mapping):
+        raise ValueError("Start.gg returned an invalid response")
+    return payload
+
+
+def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str) -> dict[str, list[Mapping[str, Any]]]:
+    """Collect reported characters from games won by the requested entrants."""
+    usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
+    page, per_page, total, seen_sets = 1, 50, None, 0
+    while total is None or seen_sets < total:
+        payload = _startgg_request(startgg_sets_query(event_id, page, per_page), token)
+        try:
+            sets = payload["data"]["event"]["sets"]
+            nodes = sets.get("nodes") or []
+            total = sets.get("pageInfo", {}).get("total", 0)
+        except (KeyError, TypeError) as error:
+            raise ValueError("Start.gg returned an incomplete sets response") from error
+        if not nodes:
+            break
+        seen_sets += len(nodes)
+        for set_data in nodes:
+            for game in set_data.get("games") or []:
+                winner_id = str(game.get("winnerId"))
+                if winner_id not in top_entrant_ids:
+                    continue
+                for selection in game.get("selections") or []:
+                    entrant = selection.get("entrant") or {}
+                    if str(entrant.get("id")) == winner_id:
+                        usage[winner_id].append(selection)
+        page += 1
+    return usage
+
+
+def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+    """Fetch an event plus its winning character selections for top placers."""
+    token = os.environ.get("START_GG_TOKEN")
+    if not token:
+        raise ValueError("START_GG_TOKEN is not configured on the server")
+    if not link.event_slug:
+        raise ValueError("The Start.gg URL does not identify an event")
+    try:
+        payload = _startgg_request(startgg_query(link.tournament_slug, link.event_slug), token)
+        event = payload["data"]["event"]
+        standings = event["standings"]["nodes"]
+        top_ids = {str(item["entrant"]["id"]) for item in standings[:top_entrants]}
+        return parse_startgg(payload, link, character_usage=_winning_character_usage(event["id"], top_ids, token))
+    except (KeyError, TypeError) as error:
+        raise ValueError("Start.gg returned an incomplete event response") from error
+'@; if(!$text.Contains($old)){throw 'Expected fetch_startgg block was not found'}; $text=$text.Replace($old,$new); $text=$text.Replace('usage.get(entrant["name"], [])','usage.get(str(entrant.get("id")), usage.get(entrant["name"], []))'); $text=$text.Replace('        raw = selection.get("selectionValue")`r`n        name = (names or {}).get(raw)','        character = selection.get("character") or {}`r`n        raw = selection.get("selectionValue")`r`n        name = character.get("name") if isinstance(character, Mapping) else None`r`n        name = name or (names or {}).get(raw)'); [IO.File]::WriteAllText($path,$text)
+
+
+
+
+Ran rg -n -C 2 "startgg_sets_query|winning_character|usage.get|character = selection|def fetch_startgg" bracket_import.py; Get-Content app.py | Select-Object -Skip 255 -First 45; Get-Content frontend\src\api.ts | Select-Object -Skip 100 -First 22; Get-Content frontend\src\App.tsx | Select-Object -Skip 188 -First 18; Get-Content frontend\src\App.tsx | Select-Object -Skip 595 -First 53
+
+
+
+
+Ran Get-Content bracket_import.py | Select-Object -Skip 365 -First 34; Get-Content frontend\src\api.ts | Select-Object -Skip 135 -First 18
+
+
+
+
+Ran $path='bracket_import.py'; $text=[IO.File]::ReadAllText($path); $old='        raw = selection.get("selectionValue")' + [Environment]::NewLine + '        name = (names or {}).get(raw)'; $new='        character = selection.get("character") or {}' + [Environment]::NewLine + '        raw = selection.get("selectionValue")' + [Environment]::NewLine + '        name = character.get("name") if isinstance(character, Mapping) else None' + [Environment]::NewLine + '        name = name or (names or {}).get(raw)'; if(!$text.Contains($old)){throw 'Expected character parser lines were not found'}; [IO.File]::WriteAllText($path,$text.Replace($old,$new)); $path='app.py'; $text=[IO.File]::ReadAllText($path); $old='                "placement": player.placement,' + [Environment]::NewLine + '            }'; $new='                "placement": player.placement,' + [Environment]::NewLine + '                "characters": [{"fighter": character.name, "color": character.costume, "pose": None} for character in player.characters],' + [Environment]::NewLine + '            }'; $text=$text.Replace($old,$new); $old='    link = identify_bracket_link(_required_text(payload, "url"))' + [Environment]::NewLine + '    if link.provider is BracketProvider.CHALLONGE:'; $new='    link = identify_bracket_link(_required_text(payload, "url"))' + [Environment]::NewLine + '    top_entrants = payload.get("top_entrants", 8)' + [Environment]::NewLine + '    if top_entrants not in {3, 4, 8}:' + [Environment]::NewLine + '        return jsonify(error="top_entrants must be 3, 4, or 8"), 400' + [Environment]::NewLine + '    if link.provider is BracketProvider.CHALLONGE:'; $text=$text.Replace($old,$new).Replace('imported = fetch_startgg(link)','imported = fetch_startgg(link, top_entrants=top_entrants)'); [IO.File]::WriteAllText($path,$text); $path='frontend/src/api.ts'; $text=[IO.File]::ReadAllText($path).Replace('importBracket(url: string)', 'importBracket(url: string, topEntrants: 3 | 4 | 8)').Replace('JSON.stringify({ url })','JSON.stringify({ url, top_entrants: topEntrants })'); [IO.File]::WriteAllText($path,$text); $path='frontend/src/App.tsx'; $text=[IO.File]::ReadAllText($path); $needle='function unique(values: string[]): string[] {'; $addition='function importedCharacters(value: unknown): Record<string, unknown>[] {' + [Environment]::NewLine + '  if (!isRecord(value) || !Array.isArray(value.characters)) return [];' + [Environment]::NewLine + '  return value.characters.filter(isRecord);' + [Environment]::NewLine + '}' + [Environment]::NewLine + [Environment]::NewLine; $text=$text.Replace($needle,$addition+$needle); $old='        const character = firstCharacter(imported);' + [Environment]::NewLine + '        const importedCharacter = createCharacterForm(' + [Environment]::NewLine + '          stringValue(' + [Environment]::NewLine + '            imported.fighter,' + [Environment]::NewLine + '            imported.melee_fighter_name,' + [Environment]::NewLine + '            character.fighter,' + [Environment]::NewLine + '            character.melee_fighter_name,' + [Environment]::NewLine + '          ),' + [Environment]::NewLine + '          stringValue(imported.color, character.color),' + [Environment]::NewLine + '          stringValue(imported.pose, character.pose),' + [Environment]::NewLine + '        );'; $new='        const importedCharacterForms = importedCharacters(imported).map((character) => createCharacterForm(stringValue(character.fighter, character.melee_fighter_name), stringValue(character.color), stringValue(character.pose)));' + [Environment]::NewLine + '        const character = firstCharacter(imported);' + [Environment]::NewLine + '        const importedCharacter = importedCharacterForms[0] ?? createCharacterForm(stringValue(imported.fighter, imported.melee_fighter_name, character.fighter, character.melee_fighter_name), stringValue(imported.color, character.color), stringValue(imported.pose, character.pose));'; if(!$text.Contains($old)){throw 'Expected UI character import block was not found'}; $text=$text.Replace($old,$new).Replace(': [importedCharacter],', ': importedCharacterForms.length ? importedCharacterForms : [importedCharacter],').Replace('importBracket(bracketUrl.trim())','importBracket(bracketUrl.trim(), podiumSize)'); [IO.File]::WriteAllText($path,$text)
+
+
+
+
+
+
+
+
+
+The importer and UI are now wired together. I’m validating the winner-only aggregation with the existing test suite, a focused fixture, and a frontend type-check before querying the requested event.
+
+
+
+
+Ran commandsRan $path='test/bracket_import_test.py'; $text=[IO.File]::ReadAllText($path); $marker='    def test_challonge_orders_final_ranks(self):'; $test=@'
+    def test_startgg_uses_direct_character_names_and_deduplicates_them(self):
+        link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
+        data = {"data": {"event": {"name": "Melee Singles", "numEntrants": 10, "startAt": 0, "videogame": {"id": 1, "name": "Melee"}, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "Player", "initialSeedNum": 2, "participants": []}}]}}}}
+        result = parse_startgg(data, link, character_usage={"9": [{"character": {"name": "Fox"}}, {"character": {"name": "Fox"}}, {"character": {"name": "Falco"}}]})
+        self.assertEqual([character.name for character in result.players[0].characters], ["Fox", "Falco"])
+
+'@; if(!$text.Contains($marker)){throw 'Test insertion point was not found'}; [IO.File]::WriteAllText($path,$text.Replace($marker,$test+$marker))
+python -m unittest test.bracket_import_test
+npm run build
+
+
+
+
+Ran python test\bracket_import_test.py; npm.cmd run build
+
+
+
+
+Ran npm.cmd run build
+
+
+
+
+
+
+
+
+
+Validation passes locally. I’m now calling the provided public start.gg event through the configured server-side token; this will confirm both the exact schema fields and the top-eight character map.
+
+
+
+
+Ran commandsRan python -c "from bracket_import import fetch_startgg, identify_bracket_link; link=identify_bracket_link('https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview'); result=fetch_startgg(link, top_entrants=8); [print(f'{player.placement}. {player.tag}: {", ".join(character.name for character in player.characters) or "(no reported winning character)"}') for player in result.players[:8]]"
+
+
+
+
+Ran python -c 'from bracket_import import fetch_startgg, identify_bracket_link; link=identify_bracket_link("https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview"); result=fetch_startgg(link, top_entrants=8); [print(player.placement, player.tag, [character.name for character in player.characters]) for player in result.players[:8]]'
+
+
+
+
+Ran $scriptPath='C:\tmp\check_startgg_import.py'; @'
+from bracket_import import fetch_startgg, identify_bracket_link
+link = identify_bracket_link("https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview")
+result = fetch_startgg(link, top_entrants=8)
+for player in result.players[:8]:
+    print(player.placement, player.tag, [character.name for character in player.characters])
+'@ | Set-Content -LiteralPath $scriptPath -Encoding utf8
+python $scriptPath
+$exitCode=$LASTEXITCODE
+Remove-Item -LiteralPath $scriptPath
+exit $exitCode
+
+
+
+
+Ran $scriptPath='C:\tmp\check_startgg_import.py'; @'
+import sys
+sys.path.insert(0, r"C:\Users\tycre\Desktop\02.Coding\melee-podium-template")
+from bracket_import import fetch_startgg, identify_bracket_link
+link = identify_bracket_link("https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview")
+result = fetch_startgg(link, top_entrants=8)
+for player in result.players[:8]:
+    print(player.placement, player.tag, [character.name for character in player.characters])
+'@ | Set-Content -LiteralPath $scriptPath -Encoding utf8
+python $scriptPath
+$exitCode=$LASTEXITCODE
+Remove-Item -LiteralPath $scriptPath
+exit $exitCode
+
+
+
+
+
+
+
+
+
+The code path is working, but the standalone verification process did not load the app’s local .env file, so it has no start.gg token. I’m retrying with the same local configuration the Flask app uses.
+
+
+
+
+Ran commandsRan $scriptPath='C:\tmp\check_startgg_import.py'; @'
+import sys
+from pathlib import Path
+from dotenv import load_dotenv
+root = Path(r"C:\Users\tycre\Desktop\02.Coding\melee-podium-template")
+load_dotenv(root / ".env")
+sys.path.insert(0, str(root))
+from bracket_import import fetch_startgg, identify_bracket_link
+link = identify_bracket_link("https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview")
+result = fetch_startgg(link, top_entrants=8)
+for player in result.players[:8]:
+    print(player.placement, player.tag, [character.name for character in player.characters])
+'@ | Set-Content -LiteralPath $scriptPath -Encoding utf8
+python $scriptPath
+$exitCode=$LASTEXITCODE
+Remove-Item -LiteralPath $scriptPath
+exit $exitCode
+
+
+
+
+Ran git diff --check; git status --short; git diff -- bracket_import.py app.py frontend/src/api.ts frontend/src/App.tsx test/bracket_import_test.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>> Here I finally got sick of this annoying error that I kept getting from codex every time it tried to run a command.
+>> The error was always something like a ACL Permissions with the sandbox, and googling it and chatgpting it they were trying to convince me to restart the extension and vscode and uninstall/reinstall over and over.
+>> This time I found the advice to "Fix Windows ACL Permissions:Right-click your project directory, navigate to Properties > Security, and grand the sandbox user read/write/full access."
+>> So Right click the repo folder -> properties -> security -> advanced -> then for the main CodexSandboxUsers I clicked Edit and enabled full control instead of modify, read and execute, read, write, list folder contents.
+>> There was also a child CodexSandboxUsers that was inheriting from the main one a couple rows down, and it only had read write privileges. Not sure if it was required, but I disabled inheritance so I could remove that one completely.
+>> I didn't know if this would work, but I had faith and prompted as if it did: 
+try again I think i fixed the acl sandbox permissions
+
+
+
+
+
+
+9:20 PM
+
+
+
+
+
+
+Worked for 2m 7s
+
+
+
+Implemented and verified.
+Start.gg imports now fetch every page of event sets and games.
+For the selected Top 3/4/8, each entrant receives the unique characters they used in games they won.
+Characters arrive in the UI with random color and pose.
+The import request sends the currently selected podium size to the API.
+Updated: [bracket_import.py](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\bracket_import.py), [app.py](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\app.py), [App.tsx](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\App.tsx), and [api.ts](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\api.ts).
+Verified against your bracket’s Top 8:
+1st BU$TA — Captain Falcon
+2nd Magnificent Tide — Sheik, Marth
+3rd OP | HBK — Fox
+4th DukDota — Falco, Captain Falcon
+5th Felipé — Captain Falcon
+5th qwain — Sheik, Marth, Captain Falcon
+7th Tyro — Peach
+7th Shenal — Fox, Marth, Falco, Mewtwo, Captain Falcon, Kirby
+Backend tests pass (7 tests), the frontend TypeScript build passes, and the live /api/import response for this bracket returned the character lists above.

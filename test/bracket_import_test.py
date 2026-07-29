@@ -29,6 +29,11 @@ class BracketImportTests(unittest.TestCase):
         self.assertIsNone(result.players[0].characters[0].costume)
         self.assertEqual(result.players[0].x_handle, "@player")
 
+    def test_startgg_uses_direct_character_names_and_deduplicates_them(self):
+        link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
+        data = {"data": {"event": {"name": "Melee Singles", "numEntrants": 10, "startAt": 0, "videogame": {"id": 1, "name": "Melee"}, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "Player", "initialSeedNum": 2, "participants": []}}]}}}}
+        result = parse_startgg(data, link, character_usage={"9": [{"character": {"name": "Fox"}}, {"character": {"name": "Fox"}}, {"character": {"name": "Falco"}}]})
+        self.assertEqual([character.name for character in result.players[0].characters], ["Fox", "Falco"])
     def test_challonge_orders_final_ranks(self):
         link = identify_bracket_link("https://challonge.com/melee")
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Second", "seed": 3, "final_rank": 2}}, {"participant": {"id": 2, "display_name": "First", "seed": 1, "final_rank": 1}}]}}, link)
