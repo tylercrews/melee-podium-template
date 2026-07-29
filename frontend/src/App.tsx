@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -51,6 +51,15 @@ interface TournamentForm {
   link: string;
 }
 
+interface PodiumSelections {
+  tournament: TournamentForm;
+  eventFormat: EventFormat;
+  podiumSize: PodiumSize;
+  includeSeeds: boolean;
+  entrants: EntrantFormState[];
+  bracketUrl: string;
+}
+
 const MELEE_FIGHTER_NAMES = [
   "Bowser", "Captain Falcon", "Donkey Kong", "Dr. Mario", "Falco", "Fox", "Ganondorf", "Ice Climbers", "Jigglypuff", "Kirby", "Link", "Luigi", "Mario", "Marth", "Mewtwo", "Mr. Game and Watch", "Ness", "Peach", "Pichu", "Pikachu", "Roy", "Samus", "Sheik", "Yoshi", "Young Link", "Zelda",
 ] as const;
@@ -59,6 +68,9 @@ const DEFAULT_FIGHTERS: FighterOption[] = MELEE_FIGHTER_NAMES.map((name) => ({ n
 type EventFormat = "singles" | "doubles";
 type PodiumSize = 3 | 4 | 8;
 type PodiumFont = "tyrowo" | "impact" | "ubuntu";
+
+const PODIUM_SELECTIONS_KEY = "melee-podium.selections.v1";
+const PREFERRED_FONT_KEY = "melee-podium.preferred-font.v1";
 
 const PODIUM_FONTS: ReadonlyArray<{ value: PodiumFont; label: string }> = [
   { value: "tyrowo", label: "Tyrowo Inked" },
@@ -152,6 +164,74 @@ function createEntrants(
   });
 }
 
+function defaultTournament(): TournamentForm {
+  return {
+    title: "",
+    date: new Date().toISOString().slice(0, 10),
+    entrantsCount: "16",
+    subtitle: "",
+    event: "",
+    link: "",
+  };
+}
+
+function defaultPodiumSelections(): PodiumSelections {
+  return {
+    tournament: defaultTournament(),
+    eventFormat: "singles",
+    podiumSize: 8,
+    includeSeeds: true,
+    entrants: createEntrants(8, "singles"),
+    bracketUrl: "",
+  };
+}
+
+function isPodiumFont(value: unknown): value is PodiumFont {
+  return value === "tyrowo" || value === "impact" || value === "ubuntu";
+}
+
+function loadPodiumSelections(): PodiumSelections {
+  const defaults = defaultPodiumSelections();
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PODIUM_SELECTIONS_KEY) ?? "null");
+    if (!isRecord(saved)) return defaults;
+    const format: EventFormat = saved.eventFormat === "doubles" ? "doubles" : "singles";
+    const size = saved.podiumSize === 3 || saved.podiumSize === 4 || saved.podiumSize === 8
+      ? saved.podiumSize as PodiumSize
+      : defaults.podiumSize;
+    const sourceTournament = isRecord(saved.tournament) ? saved.tournament : {};
+    const tournament: TournamentForm = {
+      title: stringValue(sourceTournament.title),
+      date: stringValue(sourceTournament.date) || defaults.tournament.date,
+      entrantsCount: stringValue(sourceTournament.entrantsCount) || defaults.tournament.entrantsCount,
+      subtitle: stringValue(sourceTournament.subtitle),
+      event: stringValue(sourceTournament.event),
+      link: stringValue(sourceTournament.link),
+    };
+    const savedEntrants = Array.isArray(saved.entrants) ? saved.entrants : [];
+    const normalizedSize = format === "doubles" && size === 8 ? 4 : size;
+    return {
+      tournament,
+      eventFormat: format,
+      podiumSize: normalizedSize,
+      includeSeeds: typeof saved.includeSeeds === "boolean" ? saved.includeSeeds : defaults.includeSeeds,
+      entrants: createEntrants(normalizedSize, format, savedEntrants as EntrantFormState[]),
+      bracketUrl: stringValue(saved.bracketUrl),
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+function loadPreferredFont(): PodiumFont {
+  try {
+    const saved = window.localStorage.getItem(PREFERRED_FONT_KEY);
+    return isPodiumFont(saved) ? saved : "tyrowo";
+  } catch {
+    return "tyrowo";
+  }
+}
+
 function recommendedPodiumSize(format: EventFormat, entrantsCount?: number): PodiumSize {
   if (entrantsCount !== undefined && entrantsCount <= 9) return 3;
   if (format === "singles" && entrantsCount !== undefined && entrantsCount <= 14) return 4;
@@ -227,22 +307,14 @@ function App() {
   const [renderCount, setRenderCount] = useState<number | null>(null);
   const [fighters, setFighters] = useState<FighterOption[]>(DEFAULT_FIGHTERS);
   const [optionsError, setOptionsError] = useState("");
-  const [tournament, setTournament] = useState<TournamentForm>({
-    title: "",
-    date: new Date().toISOString().slice(0, 10),
-    entrantsCount: "16",
-    subtitle: "",
-    event: "",
-    link: "",
-  });
-  const [eventFormat, setEventFormat] = useState<EventFormat>("singles");
-  const [podiumSize, setPodiumSize] = useState<PodiumSize>(8);
-  const [podiumFont, setPodiumFont] = useState<PodiumFont>("tyrowo");
-  const [includeSeeds, setIncludeSeeds] = useState(true);
-  const [entrants, setEntrants] = useState<EntrantFormState[]>(() =>
-    createEntrants(8, "singles"),
-  );
-  const [bracketUrl, setBracketUrl] = useState("");
+  const [initialSelections] = useState(loadPodiumSelections);
+  const [tournament, setTournament] = useState<TournamentForm>(initialSelections.tournament);
+  const [eventFormat, setEventFormat] = useState<EventFormat>(initialSelections.eventFormat);
+  const [podiumSize, setPodiumSize] = useState<PodiumSize>(initialSelections.podiumSize);
+  const [podiumFont, setPodiumFont] = useState<PodiumFont>(loadPreferredFont);
+  const [includeSeeds, setIncludeSeeds] = useState(initialSelections.includeSeeds);
+  const [entrants, setEntrants] = useState<EntrantFormState[]>(initialSelections.entrants);
+  const [bracketUrl, setBracketUrl] = useState(initialSelections.bracketUrl);
   const [importState, setImportState] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
@@ -250,6 +322,7 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
   const [favorites, setFavorites] = useState<FavoritesData>(() => loadFavorites());
+  const skipNextSelectionSave = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -349,6 +422,32 @@ function App() {
     [previewUrl],
   );
 
+  useEffect(() => {
+    if (skipNextSelectionSave.current) {
+      skipNextSelectionSave.current = false;
+      return;
+    }
+    try {
+      window.localStorage.setItem(PODIUM_SELECTIONS_KEY, JSON.stringify({
+        tournament,
+        eventFormat,
+        podiumSize,
+        includeSeeds,
+        entrants,
+        bracketUrl,
+      } satisfies PodiumSelections));
+    } catch {
+      // Keep the maker usable if browser storage is unavailable.
+    }
+  }, [bracketUrl, entrants, eventFormat, includeSeeds, podiumSize, tournament]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PREFERRED_FONT_KEY, podiumFont);
+    } catch {
+      // Keep the maker usable if browser storage is unavailable.
+    }
+  }, [podiumFont]);
   const payload = useMemo(
     () => ({
       mode: `${eventFormat}_top_${podiumSize}`,
@@ -403,6 +502,24 @@ function App() {
     [entrants, eventFormat, includeSeeds, podiumFont, podiumSize, tournament],
   );
 
+  function startFresh() {
+    const defaults = defaultPodiumSelections();
+    skipNextSelectionSave.current = true;
+    try {
+      window.localStorage.removeItem(PODIUM_SELECTIONS_KEY);
+    } catch {
+      // State is still reset for the current session when storage is unavailable.
+    }
+    setTournament(defaults.tournament);
+    setEventFormat(defaults.eventFormat);
+    setPodiumSize(defaults.podiumSize);
+    setIncludeSeeds(defaults.includeSeeds);
+    setEntrants(defaults.entrants);
+    setBracketUrl(defaults.bracketUrl);
+    setImportState("");
+    setRenderError("");
+    setCopyStatus("");
+  }
   function selectFormat(format: EventFormat) {
     const size = recommendedPodiumSize(format);
     setEventFormat(format);
@@ -778,6 +895,12 @@ function App() {
           API {health}
         </div>
       </header>
+
+      <div className="start-fresh-actions">
+        <button className="button-danger" type="button" onClick={startFresh}>
+          Start Fresh - Clear Prior Selections
+        </button>
+      </div>
 
       <section className="panel">
         <h2>Import a bracket</h2>
