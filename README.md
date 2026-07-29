@@ -12,9 +12,7 @@
 
 
 TODO LIST:
-* On mobile there's no auto suggest dropdown for characters. It's just an open text field.
 * need to make sure the favorites-matching logic for character+color selection is working correctly. There are a few ways I need to consider to improve the logic. For example, when you have a bracket with no character, make sure that it will match a favorited suggestion (I think I've got that one), but how can I determine which is the Primary suggestion for an entrant's tag? Like if they've got one favorite where they're just one char (fox) and one with two chars (fox falco) will it suggest the fox falco or the fox? Which one is even preferable? Maybe there should be a way to make one a "Primary" favorite for a tag, and only match with the others if it's a perfect fit for characters.
-* I think the start.gg bracket links are going to get exceptionally long. need to make it so that they only take up space up to the width of the title after it is drawn, and can expand more than just one line (pushing the rest of the metadata down with it), and ideally when expanding down try to break at the /s instead of just in the middle of a string. but that's a little less important. if there's just a ton of characters it is what it is. Get the other bits working before starting to think about prettifying it
 * thank you for wherever I got the Ubuntu and Impact fonts from?
 * add a contact section if anyone encounters errors or something
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man), bowser pose b (so damn wide and short)
