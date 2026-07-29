@@ -46,7 +46,7 @@ PORTRAIT_ANCHOR_Y_OFFSET = 2
 # When an entrant has several characters, draw their largest portraits at the
 # primary anchor, then offset the next two left and right. Subsequent, smaller
 # portraits repeat this pattern and layer over the initial silhouette.
-MULTI_CHARACTER_X_OFFSETS_WIDE = (0, -80, 80)
+MULTI_CHARACTER_X_OFFSETS_WIDE = (0, -75, 75)
 MULTI_CHARACTER_X_OFFSETS_NARROW = (0, -35, 35)
 TWO_CHARACTER_X_OFFSETS = (-70, 70)
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
