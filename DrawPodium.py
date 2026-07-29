@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from enum import Enum
 from functools import partial
+from math import ceil
 from pathlib import Path
 from random import choice
 import re
@@ -315,6 +316,34 @@ def _wrap_text(
     return "\n".join(lines)
 
 
+def _wrap_url(
+    text: str, max_width: int, preferred_size: int, font: PodiumFont
+) -> str:
+    """Wrap a URL at path separators, falling back to character breaks."""
+    font_path, _ = _font_settings(font)
+    loaded_font = ImageFont.truetype(font_path, _adjusted_font_size(preferred_size, font))
+    lines: list[str] = []
+    line = ""
+
+    for segment in re.findall(r"[^/]+/?", text):
+        candidate = f"{line}{segment}"
+        if not line or loaded_font.getlength(candidate) <= max_width:
+            line = candidate
+            continue
+
+        lines.append(line)
+        line = ""
+        for character in segment:
+            if line and loaded_font.getlength(f"{line}{character}") > max_width:
+                lines.append(line)
+                line = character
+            else:
+                line += character
+
+    if line:
+        lines.append(line)
+    return "\n".join(lines)
+
 def _draw_text(
     draw: ImageDraw.ImageDraw,
     position: tuple[int, int],
@@ -327,6 +356,7 @@ def _draw_text(
     wrap: bool = False,
     fill: tuple[int, int, int] | str = "white",
     glow_fill: tuple[int, int, int] | None = None,
+    align: str = "center",
 ) -> None:
     if wrap:
         text = _wrap_text(text, max_width, preferred_size, font)
@@ -345,7 +375,7 @@ def _draw_text(
                         else 0),
         stroke_fill=glow_fill or fill,
         anchor=anchor,
-        align="center",
+        align=align,
 
     )
 
@@ -445,7 +475,10 @@ def _draw_text_fields(
     draw = ImageDraw.Draw(canvas)
     draw_text = partial(_draw_text, font=font)
     width = canvas.width
-    draw_text(draw, (15, 5), tournament.title, anchor="la", max_width=(width * 2)/3, preferred_size=92)
+    title_max_width = width * 2 // 3
+    title_font = _font_to_fit(tournament.title, title_max_width, 92, font)
+    title_width = max(1, ceil(title_font.getlength(tournament.title)))
+    draw_text(draw, (15, 5), tournament.title, anchor="la", max_width=title_max_width, preferred_size=92)
     if tournament.subtitle is not None:
         draw_text(
             draw,
@@ -458,7 +491,24 @@ def _draw_text_fields(
     is_doubles = isinstance(entrants[0], DoublesTeam)
     event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
     count_label = "Teams" if is_doubles else "Entrants"
-    metadata_top = 10 if tournament.link is None else 26
+    metadata_top = 10
+    if tournament.link is not None:
+        source_link = _wrap_url(
+            _display_link(tournament.link), title_width, 14, font
+        )
+        source_link_font = _font_to_fit(source_link, title_width, 14, font)
+        link_line_height = source_link_font.getbbox("Ag")[3] - source_link_font.getbbox("Ag")[1] + 4
+        metadata_top = max(10, 2 + link_line_height * len(source_link.splitlines()) + 12)
+        draw_text(
+            draw,
+            (width - 10, 2),
+            source_link,
+            anchor="ra",
+            max_width=title_width,
+            preferred_size=14,
+            fill=(210, 210, 210),
+            align="right",
+        )
     draw_text(
         draw,
         (width - 15, metadata_top),
@@ -494,18 +544,6 @@ def _draw_text_fields(
         preferred_size=18,
         fill=(25, 25, 25),
     )
-    if tournament.link is not None:
-        # Keep the source bracket present but visually subordinate to results.
-        # ``ra`` locks its right edge to the image margin even for long URLs.
-        draw_text(
-            draw,
-            (width - 10, 2),
-            _display_link(tournament.link),
-            anchor="ra",
-            max_width=width - 36,
-            preferred_size=14,
-            fill=(210, 210, 210),
-        )
 
     # Character tags are collected while the portraits are placed, then drawn
     # last so they remain readable over any overlapping portrait.

@@ -28,7 +28,7 @@ TOURNAMENT = Tournament(
     subtitle="Subtitle Rendering Test",
     date="July 12, 2026",
     entrants_count=64,
-    # link="https://www.example.test/brackets/podium-rendering-test",
+    link="https://www.start.gg/tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/events/melee-singles-secondaries-only/brackets/2343959/3386903/overview", # very long url test
 )
 
 
