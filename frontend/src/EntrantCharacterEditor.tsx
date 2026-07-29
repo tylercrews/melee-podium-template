@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import { FighterOption } from "./api";
 import { FavoriteCharacter } from "./favorites";
 
@@ -19,8 +19,8 @@ function unique(values: string[]): string[] {
 
 export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", tagPlaceholder, characters, fighters, onTagChange, onChange }: { tag: string; tagLabel?: string; tagPlaceholder?: string; characters: FavoriteCharacter[]; fighters: FighterOption[]; onTagChange: (tag: string) => void; onChange: (characters: FavoriteCharacter[]) => void }) {
   const selectedFighters = new Set(characters.map((character) => character.fighter).filter(Boolean));
-  const fighterListId = useId();
-  const fighterPattern = fighters.map((fighter) => fighter.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const [openFighterMenu, setOpenFighterMenu] = useState<number | null>(null);
+  const fighterMenuId = useId();
   const updateCharacter = (characterIndex: number, field: "fighter" | "color" | "pose", value: string) => {
     onChange(characters.map((character, currentIndex) => {
       if (currentIndex !== characterIndex) return character;
@@ -52,7 +52,7 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
         {characters.length > 1 && <button type="button" className="button-danger" onClick={() => onChange(characters.filter((_, index) => index !== characterIndex))}>Remove fighter</button>}
         <div className={previewUrl ? "character-fields__content character-fields__content--with-preview" : "character-fields__content"}>
           <div className="character-fields__controls">
-            <label>Fighter<input list={`${fighterListId}-${characterIndex}`} value={character.fighter} onChange={(event) => updateCharacter(characterIndex, "fighter", event.target.value)} onBlur={() => { if (character.fighter && !fighters.some((option) => option.name === character.fighter)) updateCharacter(characterIndex, "fighter", ""); }} pattern={fighterPattern} placeholder="Search fighters" title="Choose an exact fighter name from the list." required /><datalist id={`${fighterListId}-${characterIndex}`}>{availableFighters.map((option) => <option key={option.name} value={option.name} />)}</datalist></label>
+            <label>Fighter<div className="fighter-combobox"><input value={character.fighter} onChange={(event) => { updateCharacter(characterIndex, "fighter", event.target.value); setOpenFighterMenu(characterIndex); }} onFocus={() => setOpenFighterMenu(characterIndex)} onBlur={() => { setOpenFighterMenu(null); if (character.fighter && !fighters.some((option) => option.name === character.fighter)) updateCharacter(characterIndex, "fighter", ""); }} onKeyDown={(event) => { if (event.key === "Escape") setOpenFighterMenu(null); if (event.key === "ArrowDown") setOpenFighterMenu(characterIndex); }} role="combobox" aria-autocomplete="list" aria-controls={`${fighterMenuId}-${characterIndex}`} aria-expanded={openFighterMenu === characterIndex} placeholder="Search fighters" title="Choose an exact fighter name from the list." required />{openFighterMenu === characterIndex && <ul className="fighter-combobox__menu" id={`${fighterMenuId}-${characterIndex}`} role="listbox">{availableFighters.filter((option) => option.name.toLowerCase().includes(character.fighter.toLowerCase())).map((option) => <li key={option.name} role="option" aria-selected={option.name === character.fighter}><button type="button" onMouseDown={(event) => { event.preventDefault(); updateCharacter(characterIndex, "fighter", option.name); setOpenFighterMenu(null); }}>{option.name}</button></li>)}</ul>}</div></label>
             <div className="row-fields">
               <label>Color<select value={character.color} onChange={(event) => updateCharacter(characterIndex, "color", event.target.value)}><option value="">Random</option>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
               <label>Pose<select value={character.pose} onChange={(event) => updateCharacter(characterIndex, "pose", event.target.value)}><option value="">Random</option>{character.pose && !poses.includes(character.pose) && <option value={character.pose}>{character.pose}</option>}{poses.map((pose) => <option key={pose} value={pose}>{pose}</option>)}</select></label>
