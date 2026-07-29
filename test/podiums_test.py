@@ -123,7 +123,7 @@ def main() -> None:
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
-        doubles_team(1, "Bowser", "Captain Falcon", pose_1="a", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Captain Falcon"),
+        doubles_team(1, "Bowser", "Bowser", pose_1="a", pose_2="a", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Captain Falcon"),
         doubles_team(2, "Bowser", "Peach", pose_1="b", team_color="blue"),
         doubles_team(3, "Marth", "Jigglypuff", team_color="green"),
         doubles_team(4, "Pichu", "Pikachu", team_color="red"),
