@@ -241,10 +241,11 @@ def _place_characters(
     draw_order = sorted(
         loaded_characters,
         key=lambda image: image.height,
-    offsets = TWO_CHARACTER_X_OFFSETS if len(draw_order) == 2 else MULTI_CHARACTER_X_OFFSETS
 
         reverse=True,
     )
+    offsets = TWO_CHARACTER_X_OFFSETS if len(draw_order) == 2 else MULTI_CHARACTER_X_OFFSETS
+
     placements = [
         _place_image(
             canvas,
@@ -352,11 +353,11 @@ def _display_link(link: str) -> str:
     return re.sub(r"^(?:https?://)?(?:www\.)?", "", compact, flags=re.IGNORECASE)
 
 
-def _tag_anchor(x: int, y: int, image: Image.Image) -> tuple[int, int]:
+def _tag_anchor(x: int, y: int, image: Image.Image, *, center_x: int | None = None) -> tuple[int, int]:
     """Return a point just above the visible (non-transparent) portrait pixels."""
     alpha_bounds = image.getchannel("A").getbbox()
     top = 0 if alpha_bounds is None else alpha_bounds[1]
-    return x + image.width // 2, y + top - 15
+    return center_x if center_x is not None else x + image.width // 2, y + top - 15
 
 
 def _draw_character_tag(
@@ -626,8 +627,8 @@ def draw_podium(
             )
             character_tags.extend(
                 [
-                    (_tag_anchor(first_x, first_y, first_image), team.entrant_1.tag, glow_fill),
-                    (_tag_anchor(second_x, second_y, second_image), team.entrant_2.tag, glow_fill),
+                    (_tag_anchor(first_x, first_y, first_image, center_x=first_anchor[0]), team.entrant_1.tag, glow_fill),
+                    (_tag_anchor(second_x, second_y, second_image, center_x=second_anchor[0]), team.entrant_2.tag, glow_fill),
                 ]
             )
     else:
@@ -641,7 +642,7 @@ def draw_podium(
                 anchors[podium_slot],
                 mode_scale,
             )
-            character_tags.append((_tag_anchor(x, y, image), entrant.tag, glow_fill))
+            character_tags.append((_tag_anchor(x, y, image, center_x=anchors[podium_slot][0]), entrant.tag, glow_fill))
 
     _draw_text_fields(
         background,
