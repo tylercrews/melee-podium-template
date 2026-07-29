@@ -98,7 +98,7 @@ contain `podium_stats.sqlite3`.
    - `public/` (created by cPanel for the application).
    - `tmp/` (used by Passenger/cPanel to restart the application).
    - `podium_stats.sqlite3` (contains the persistent PNG render/download
-     counter.
+     counter. (If deployed correctly it is probably not in this same app folder)
 3. Delete the other old project files and folders in the application root.
    This removes files that may have been renamed or deleted locally, which a
    normal ZIP extraction would otherwise leave behind.
