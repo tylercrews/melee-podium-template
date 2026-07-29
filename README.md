@@ -95,9 +95,9 @@ contain `podium_stats.sqlite3`.
 
 1. Open the Python application's **application root** in cPanel File Manager.
 2. Keep these existing items:
-   - `public/` ? created by cPanel for the application.
-   - `tmp/` ? used by Passenger/cPanel to restart the application.
-   - `podium_stats.sqlite3` ? contains the persistent PNG render/download
+   - `public/` (created by cPanel for the application).
+   - `tmp/` (used by Passenger/cPanel to restart the application).
+   - `podium_stats.sqlite3` (contains the persistent PNG render/download
      counter.
 3. Delete the other old project files and folders in the application root.
    This removes files that may have been renamed or deleted locally, which a
