@@ -46,8 +46,8 @@ PORTRAIT_ANCHOR_Y_OFFSET = 2
 # When an entrant has several characters, draw their largest portraits at the
 # primary anchor, then offset the next two left and right. Subsequent, smaller
 # portraits repeat this pattern and layer over the initial silhouette.
-MULTI_CHARACTER_X_OFFSETS = (0, -80, 80)
-SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS = (0, -35, 35)
+MULTI_CHARACTER_X_OFFSETS_WIDE = (0, -80, 80)
+MULTI_CHARACTER_X_OFFSETS_NARROW = (0, -35, 35)
 TWO_CHARACTER_X_OFFSETS = (-70, 70)
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
 SINGLES_CHARACTER_NAME_Y_OFFSET = -30
@@ -230,7 +230,7 @@ def _place_characters(
     characters: Sequence[Character],
     anchor: tuple[int, int],
     mode_scale: float,
-    multi_character_x_offsets: tuple[int, int, int] = MULTI_CHARACTER_X_OFFSETS,
+    multi_character_x_offsets: tuple[int, int, int] = MULTI_CHARACTER_X_OFFSETS_WIDE,
 ) -> tuple[int, int, Image.Image]:
     # The offset set is supplied by the caller for Top 8 singles.
     """Layer an entrant's portraits from tallest to shortest at one anchor.
@@ -623,10 +623,10 @@ def draw_podium(
                 for character in team.entrant_2.characters
             ]
             first_x, first_y, first_image = _place_characters(
-                background, first_characters, first_anchor, mode_scale, SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS
+                background, first_characters, first_anchor, mode_scale, MULTI_CHARACTER_X_OFFSETS_NARROW
             )
             second_x, second_y, second_image = _place_characters(
-                background, second_characters, second_anchor, mode_scale, SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS
+                background, second_characters, second_anchor, mode_scale, MULTI_CHARACTER_X_OFFSETS_NARROW
             )
             character_tags.extend(
                 [
@@ -644,7 +644,7 @@ def draw_podium(
                 entrant.characters,
                 anchors[podium_slot],
                 mode_scale,
-                multi_character_x_offsets=(SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS if mode.placement_count == 8 else MULTI_CHARACTER_X_OFFSETS),
+                multi_character_x_offsets=(MULTI_CHARACTER_X_OFFSETS_NARROW if mode.placement_count == 8 else MULTI_CHARACTER_X_OFFSETS_WIDE),
             )
             # Top 8 uses the tighter offsets passed above.
             character_tags.append((_tag_anchor(x, y, image, center_x=anchors[podium_slot][0]), entrant.tag, glow_fill))

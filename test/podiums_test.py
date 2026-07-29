@@ -168,7 +168,7 @@ def main() -> None:
         ("Donkey Kong", "a"),
         ("Captain Falcon", "a"),
         ("Fox", "a"),
-        ("Captain Falcon", "a"),
+        ("Fox", "a"),
         ("Kirby", "a"),
         ("Pichu", "a"),
     ]
@@ -178,6 +178,7 @@ def main() -> None:
     ]
     singles_top_8[1].characters.extend([Character("Falco"), Character("Pichu")])
     singles_top_8[2].characters.append(Character("Marth"))
+    singles_top_8[5].characters.append(Character("Falco"))
     path = OUTPUT_FOLDER / "singles_top_8.png"
     draw_singles_top_8(*singles_top_8, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Singles Top 8", path))
