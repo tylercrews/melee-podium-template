@@ -46,8 +46,8 @@ PORTRAIT_ANCHOR_Y_OFFSET = 2
 # When an entrant has several characters, draw their largest portraits at the
 # primary anchor, then offset the next two left and right. Subsequent, smaller
 # portraits repeat this pattern and layer over the initial silhouette.
-MULTI_CHARACTER_X_OFFSETS = (0, -70, 70)
-SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS = (0, -40, 40)
+MULTI_CHARACTER_X_OFFSETS = (0, -80, 80)
+SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS = (0, -35, 35)
 TWO_CHARACTER_X_OFFSETS = (-70, 70)
 DOUBLES_TEAM_NAME_Y_OFFSET = -30
 SINGLES_CHARACTER_NAME_Y_OFFSET = -30
@@ -623,10 +623,10 @@ def draw_podium(
                 for character in team.entrant_2.characters
             ]
             first_x, first_y, first_image = _place_characters(
-                background, first_characters, first_anchor, mode_scale
+                background, first_characters, first_anchor, mode_scale, SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS
             )
             second_x, second_y, second_image = _place_characters(
-                background, second_characters, second_anchor, mode_scale
+                background, second_characters, second_anchor, mode_scale, SINGLES_TOP_8_MULTI_CHARACTER_X_OFFSETS
             )
             character_tags.extend(
                 [
