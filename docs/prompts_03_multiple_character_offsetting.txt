@@ -1,0 +1,235 @@
+when a person has multiple characters, all of them are overlaid directly overtop of each other and it's a little difficult to see.
+What would be the easiest way to draw multiple characters a little offset to the left and right of center?
+like if there's 2 draw them a little to the left and right, if there's 3 draw one left, right, and center, if there's 4 draw center, left, right, center, I don't know what to do beyond that, maybe just an order of center left right center left right.
+Do I need secondary anchors for every single anchor? seems like a complicated solution
+
+
+
+
+
+
+10:14 PM
+
+
+
+
+
+
+Worked for 31s
+
+
+
+No—you can derive secondary positions from each existing podium anchor.
+Use a small helper that evenly spaces a player’s character anchors around the normal center anchor:
+def _character_anchors(anchor: tuple[int, int], count: int, spacing: int = 70):
+    center_x, y = anchor
+    return [
+        (round(center_x + (index - (count - 1) / 2) * spacing), y)
+        for index in range(count)
+    ]
+That gives:
+1: center
+2: left, right
+3: left, center, right
+4: far left, left, right, far right
+5: far left, left, center, right, far right
+Then change _place_characters to generate these anchors and place each portrait at its corresponding position instead of passing every portrait the same anchor.
+This is cleaner than storing secondary anchors for every podium: your current SINGLES_ANCHORS remains the canonical center point, while spacing can be one global constant—or a small per-layout setting if Top 8 needs a tighter spread. I’d avoid repeating center, left, right once there are more than three, since it starts reintroducing the exact overlap you’re trying to remove.
+
+
+10:14 PM
+
+
+
+
+
+
+
+it's ok if there's overlap beyond the first, because we're drawing characters from largest to smallest - so by the time we draw the first three then hopefully the subsequent three will be much shorter.
+
+
+
+
+
+
+10:15 PM
+
+
+
+
+
+
+That makes sense—and it fits the renderer’s current tallest-to-shortest draw order perfectly.
+Use a repeating offset sequence rather than evenly expanding outward:
+MULTI_CHARACTER_X_OFFSETS = (0, -70, 70)  # center, left, right
+Then, inside _place_characters, apply it as each already-sorted portrait is drawn:
+placements = [
+    _place_image(
+        canvas,
+        image,
+        (anchor[0] + MULTI_CHARACTER_X_OFFSETS[index % 3], anchor[1]),
+    )
+    for index, image in enumerate(draw_order)
+]
+So the largest three establish the main silhouette at center/left/right; characters 4–6 reuse those positions and naturally layer over them, but should be smaller because of the existing height sort.
+Still no secondary anchor maps needed—just one reusable horizontal offset constant. You could later make 70 layout-specific if Top 8 needs a tighter 40–50px spread.
+
+
+10:15 PM
+
+
+
+
+
+
+
+ok implement that.
+Then in each of the podiums_test add some people that have multiple characters. (Not anybody in 1st place though.)
+Make sure each doubles podium has one team that both has 3 characters
+
+
+
+
+
+
+10:18 PM
+
+
+
+
+
+
+Worked for 7m 12s
+
+
+
+Implemented the repeating placement pattern: center → left → right, looping every three characters while retaining largest-to-smallest draw order.
+Updated [DrawPodium.py (line 45)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\DrawPodium.py:45) with a configurable MULTI_CHARACTER_X_OFFSETS = (0, -70, 70).
+Updated [podiums_test.py (line 109)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\test\\podiums_test.py:109) so every layout includes multi-character entrants outside first place; both doubles layouts give both members of second place three characters.
+Ran python test\podiums_test.py successfully and regenerated the five preview images plus the overview.
+
+
+10:25 PM
+
+
+
+
+
+
+
+for each test image in podiums_test can you have one person that has two characters (not first place, and not the doubles team you just edited, and for doubles make sure both people DO NOT have two, only one of the entrants)
+
+
+
+
+
+
+10:28 PM
+
+
+
+
+
+
+Worked for 34s
+
+
+
+Updated every podium preview with an additional non-first-place entrant using exactly two characters.
+For doubles, the two-character entrant is a single member of a different team from the existing three-character team. Regenerated all preview PNGs successfully.
+
+
+10:29 PM
+
+
+
+
+
+
+
+ok so when there are two is it going center then left?
+If there are exactly two I want it to be an edge case where you do left and right instead
+
+
+
+
+
+
+10:32 PM
+
+
+
+
+
+
+Worked for 1m 9s
+
+
+
+Done. Exactly two characters now use left/right anchors (-70, +70) instead of center/left.
+Three or more still use the repeating center → left → right pattern. Regenerated all podium test previews successfully.
+
+
+10:33 PM
+
+
+
+
+
+
+
+in any of these cases can you make the tag go over where the center of the anchor is
+
+
+
+
+
+
+10:35 PM
+
+
+
+
+
+
+Worked for 48s
+
+
+
+Done. Tags now stay horizontally centered over the original podium anchor in singles and doubles, even when the tallest portrait is offset left or right. Their vertical position still follows the tallest portrait.
+Regenerated the podium test previews successfully.
+
+
+10:36 PM
+
+
+
+
+
+
+
+you were right, the left and right shifts are a little too much for the top 8 podiums to handle. For top 8 singles specifically can you make the left and right offsets a little less large
+
+
+
+
+
+
+10:38 PM
+
+
+
+
+
+
+Worked for 2m 54s
+
+
+
+Done. Top 8 singles now uses tighter offsets:
+Three or more: center, -40px, +40px
+Exactly two: -40px, +40px
+All other podium layouts retain the existing ±70px spread. Regenerated the test previews successfully.
+
+
+10:41 PM
