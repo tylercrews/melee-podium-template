@@ -16,6 +16,7 @@ TODO LIST:
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
 * when two doubles teammates play the same character and end up with the same pose and both have medium-long tags then you have a high chance of tag text overlap - find a way to offset in this case
 * add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
+* fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Fit in tournament location?
 
