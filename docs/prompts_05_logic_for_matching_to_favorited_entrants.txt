@@ -1,0 +1,139 @@
+I need to make sure the favorites-matching logic for character+color selection is working correctly.
+There are a few ways I need to consider to improve the logic.
+For example, when you have a bracket with no character, I want to make sure that it will match a favorited suggestion (I think I've got that one), but how can I determine which is the Primary suggestion for an entrant's tag?
+Like if they've got one favorite where they're just one char (fox) and one with two chars (fox falco) will it suggest the fox falco or the fox?
+I'm assuming that it will just create the earliest created one. 
+But I think that (when there are multiple favorited entrants for the same tag) there should be a way to make one a "Primary" favorite for the tag.
+And so if we have no character data it should pull that primary favorite.
+If we DO have character data, compare the import's characters used to all of the user's favorited entries for that tag - if all of the characters match one then use that (the first match we find is fine).
+But if the import has a matching entrant tag with mismatching characters we should treat it as a regular import with the characters as-is from the import (random-random)
+
+
+
+
+Show less
+
+8:00 PM
+
+
+
+
+
+
+Worked for 5m 48s
+
+
+
+Implemented the favorites matching rules.
+Added a per-tag “Primary favorite” toggle in Favorites Management.
+No imported character data: uses that tag’s primary favorite; older favorites without a primary fall back to the earliest saved match.
+Imported character data: uses a favorite only when its complete fighter list matches exactly (order-insensitive), applying its saved colors/poses.
+A tag match with different characters keeps the imported characters unchanged, so it remains a normal/random import.
+Existing saved favorites remain compatible; they load with primary: false.
+Updated [favorites.ts](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\favorites.ts), [FavoritesManagement.tsx](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\FavoritesManagement.tsx), and [App.tsx](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\App.tsx).
+Validation: tsc --noEmit passes. Vite’s production bundling was blocked by the sandbox’s process-spawn restriction (esbuild EPERM).
+
+
+8:06 PM
+
+
+
+
+
+
+
+ok when matching tags to favorited entrants make sure that we make the tag comparison case-insensitive. For example if we get an entrant for
+tyro
+I want it to match the favorited
+Tyro
+and should appear spelled how it is favorited.
+How do you make a key lookup case insensitive?
+
+
+
+
+
+
+8:09 PM
+
+
+
+
+
+
+Worked for 34s
+
+
+
+Done. A matched favorite now supplies its saved tag spelling, so imported tyro becomes Tyro.
+Case-insensitive key lookup works by normalizing both values to the same canonical form before comparing:
+tag.trim().toLowerCase()
+So tyro, Tyro, and TYRO all compare as tyro. TypeScript check passes.
+
+
+8:10 PM
+
+
+
+
+
+
+
+ok but what I'm curious about is if we do a lookup to see if
+dict.contains('tYro') and we have the key tyRo, and our input is normalized to dict.contains('tyro') how does it still match tyRo?
+
+
+
+
+
+
+8:12 PM
+
+
+
+
+
+
+It wouldn’t match if the dictionary’s actual key is still tyRo—object/dictionary keys are case-sensitive.
+You have two options:
+// Normalize both sides while comparing
+favorites.find(
+  favorite => favorite.tag.trim().toLowerCase() === input.trim().toLowerCase()
+)
+That’s what the app currently does.
+Or, for a real lookup map, normalize when building the map and when querying:
+const byTag = new Map(
+  favorites.map(favorite => [favorite.tag.trim().toLowerCase(), favorite]),
+);
+
+const match = byTag.get(input.trim().toLowerCase());
+Here the stored key is tyro, even though favorite.tag retains tyRo (or Tyro) for display.
+
+
+8:12 PM
+
+
+
+
+
+
+
+gotcha so we have a custom find method
+
+
+
+
+
+
+8:12 PM
+
+
+
+
+
+
+Exactly. We’re not using a dictionary lookup; we use find() with a custom case-insensitive comparison:
+favorites.find(favorite =>
+  normalize(favorite.tag) === normalize(importedTag)
+)
+That finds the original favorite object, including its preferred display spelling (Tyro).
