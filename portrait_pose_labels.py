@@ -4,10 +4,10 @@
 # changing copy does not require migrating assets, saved favorites, or scales.
 POSE_LABELS = {
     "Bowser": {"a": "Standing Upright", "b": "Archived Crouched"},
-    "Captain Falcon": {"a": "Archived Standing Foot Back", "b": "POSE B", "c": "POSE C", "d": "POSE D", "e": "POSE E"},
-    "Donkey Kong": {"a": "POSE A", "b": "POSE B", "c": "POSE C"},
-    "Dr. Mario": {"a": "POSE A", "b": "POSE B", "c": "POSE C"},
-    "Falco": {"a": "POSE A", "b": "POSE B", "c": "POSE C", "d": "POSE D", "e": "POSE E"},
+    "Captain Falcon": {"a": "Archived Standing Foot Back", "b": "Salute", "c": "Victory B - Talk To The Hand", "d": "Victory Y - Shirt Rip", "e": "Victory X - High Kick"},
+    "Donkey Kong": {"a": "Fist Pump", "b": "Kung Fu", "c": "Victory B - Flex"},
+    "Dr. Mario": {"a": "Standing", "b": "Stethoscope", "c": "Pill Toss"},
+    "Falco": {"a": "Salute", "b": "Standing??", "c": "Victory B - Post-Kicks", "d": "Victory Y - Landing", "e": "Victory X - Arms Crossed"},
     "Fox": {"a": "POSE A", "b": "POSE B", "c": "POSE C", "d": "POSE D", "e": "POSE E", "f": "POSE F"},
     "Ganondorf": {"a": "POSE A", "b": "POSE B"},
     "Ice Climbers": {"a": "POSE A", "b": "POSE B"},
