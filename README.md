@@ -14,13 +14,13 @@
 TODO LIST:
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man), bowser pose b (so damn wide and short)
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
-* when two doubles teammates play the same character and end up with the same pose and both have medium-long tags then you have a high chance of tag text overlap - find a way to offset in this case
-* add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
+Maybes/Eventuallies:
 * add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
 * Fit in tournament location?
 * support for twitter and bluesky handles - need to come up with some place to put them.
+* add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 
 ## Bracket-import groundwork
 
