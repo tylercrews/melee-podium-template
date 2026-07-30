@@ -1,6 +1,7 @@
 export interface CharacterOption {
   color: string;
   pose: string;
+  pose_label?: string;
   color_order?: number;
   portrait?: string;
 }

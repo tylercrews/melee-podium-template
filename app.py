@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from DrawPodium import CHARACTER_FOLDER, PodiumFont, PodiumMode, draw_podium
 from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_startgg, identify_bracket_link
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
+from portrait_pose_labels import POSE_LABELS
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -207,6 +208,7 @@ def _fighter_options() -> list[dict[str, Any]]:
                 {
                     "color": color,
                     "pose": pose,
+                    "pose_label": POSE_LABELS.get(folder.name, {}).get(pose, pose.upper()),
                     "color_order": color_order,
                     "portrait": portrait_name,
                 }
