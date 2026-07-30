@@ -12,7 +12,7 @@
 
 
 TODO LIST:
-* archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man), bowser pose b (so damn wide and short)
+* archive some of the worse poses when replacements are avaiable - zelda+sheik
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 

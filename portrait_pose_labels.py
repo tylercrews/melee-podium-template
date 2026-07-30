@@ -3,8 +3,8 @@
 # Keep labels separate from the filename pose IDs (such as "a" and "b") so
 # changing copy does not require migrating assets, saved favorites, or scales.
 POSE_LABELS = {
-    "Bowser": {"a": "POSE A", "b": "POSE B"},
-    "Captain Falcon": {"a": "POSE A", "b": "POSE B"},
+    "Bowser": {"a": "Standing Upright", "b": "Archived Crouched"},
+    "Captain Falcon": {"a": "Archived Standing Foot Back", "b": "POSE B"},
     "Donkey Kong": {"a": "POSE A", "b": "POSE B"},
     "Dr. Mario": {"a": "POSE A", "b": "POSE B"},
     "Falco": {"a": "POSE A", "b": "POSE B"},
