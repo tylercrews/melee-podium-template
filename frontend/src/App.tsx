@@ -733,7 +733,7 @@ function App() {
           const matchingFavorite = favoriteForImport(favorites.singles, importedTag, importedCharacterForms);
           return createSinglesEntrant(index + 1, {
             kind: "singles",
-            tag: importedTag || (existing.kind === "singles" ? existing.tag : ""),
+            tag: matchingFavorite?.tag || importedTag || (existing.kind === "singles" ? existing.tag : ""),
             seed: stringValue(imported.seed),
             characters:
               matchingFavorite
@@ -1200,4 +1200,5 @@ function App() {
 }
 
 export default App;
+
 
