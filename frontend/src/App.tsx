@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+﻿import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   FighterOption,
   getHealth,
@@ -11,7 +11,7 @@ import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
 import EntrantCharacterEditor, { createCharacterForm } from "./EntrantCharacterEditor";
 import Footer from "./Footer";
 import FavoritesManagement from "./FavoritesManagement";
-import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, loadFavorites, newFavoriteId, saveFavorites } from "./favorites";
+import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, favoriteForImport, loadFavorites, newFavoriteId, saveFavorites } from "./favorites";
 
 interface CharacterForm {
   fighter: string;
@@ -258,10 +258,6 @@ function stringValue(...values: unknown[]): string {
     (value) => typeof value === "string" || typeof value === "number",
   );
   return match === undefined ? "" : String(match);
-}
-
-function normalizedEntrantTag(tag: string): string {
-  return tag.trim().toLowerCase();
 }
 
 function splitTournamentName(name: string): { title: string; subtitle: string } {
@@ -647,7 +643,7 @@ function App() {
   function toggleSinglesFavorite(entrant: SinglesEntrantForm, checked: boolean) {
     const current = favorites.singles.find((favorite) => favorite.tag === entrant.tag);
     if (!checked) return changeFavorites({ ...favorites, singles: favorites.singles.filter((favorite) => favorite.tag !== entrant.tag) });
-    const next = { id: current?.id ?? newFavoriteId(), tag: entrant.tag, characters: entrant.characters.map((character) => ({ ...character })) };
+    const next = { id: current?.id ?? newFavoriteId(), tag: entrant.tag, characters: entrant.characters.map((character) => ({ ...character })), primary: current?.primary ?? false };
     changeFavorites({ ...favorites, singles: current ? favorites.singles.map((favorite) => favorite.id === current.id ? next : favorite) : [...favorites.singles, next] });
   }
 
@@ -734,18 +730,13 @@ function App() {
             imported.name,
             imported.player_tag,
           );
-          const matchingFavorite = favorites.singles.find(
-            (favorite) =>
-              normalizedEntrantTag(favorite.tag) ===
-              normalizedEntrantTag(importedTag),
-          );
-          const hasImportedCharacter = Boolean(importedCharacter.fighter);
+          const matchingFavorite = favoriteForImport(favorites.singles, importedTag, importedCharacterForms);
           return createSinglesEntrant(index + 1, {
             kind: "singles",
             tag: importedTag || (existing.kind === "singles" ? existing.tag : ""),
             seed: stringValue(imported.seed),
             characters:
-              matchingFavorite && !hasImportedCharacter
+              matchingFavorite
                 ? matchingFavorite.characters.map((favoriteCharacter) => ({
                     ...favoriteCharacter,
                   }))
@@ -1209,3 +1200,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,4 +1,4 @@
-export interface FavoriteCharacter {
+﻿export interface FavoriteCharacter {
   fighter: string;
   color: string;
   pose: string;
@@ -8,14 +8,15 @@ export interface FavoriteSinglesEntrant {
   id: string;
   tag: string;
   characters: FavoriteCharacter[];
+  primary: boolean;
 }
 
 export interface FavoriteDoublesTeam {
   id: string;
   team_name: string;
   team_color: string;
-  entrant_1: Omit<FavoriteSinglesEntrant, "id">;
-  entrant_2: Omit<FavoriteSinglesEntrant, "id">;
+  entrant_1: Omit<FavoriteSinglesEntrant, "id" | "primary">;
+  entrant_2: Omit<FavoriteSinglesEntrant, "id" | "primary">;
 }
 
 export interface FavoritesData {
@@ -35,11 +36,15 @@ function isCharacter(value: unknown): value is FavoriteCharacter {
     typeof (value as FavoriteCharacter).pose === "string";
 }
 
-function asMember(value: unknown): Omit<FavoriteSinglesEntrant, "id"> | undefined {
+function asMember(value: unknown): Omit<FavoriteSinglesEntrant, "id" | "primary"> | undefined {
   if (!value || typeof value !== "object") return undefined;
   const member = value as Record<string, unknown>;
   if (typeof member.tag !== "string" || !Array.isArray(member.characters) || !member.characters.every(isCharacter)) return undefined;
   return { tag: member.tag, characters: member.characters };
+}
+
+function isPrimary(value: unknown): boolean {
+  return value === true;
 }
 
 export function normalizeFavorites(value: unknown): FavoritesData {
@@ -48,7 +53,7 @@ export function normalizeFavorites(value: unknown): FavoritesData {
   if (!Array.isArray(source.singles) || !Array.isArray(source.doubles)) throw new Error("Favorites must contain singles and doubles lists.");
   const singles = source.singles.flatMap((item) => {
     const member = asMember(item);
-    return member ? [{ ...member, id: typeof (item as Record<string, unknown>).id === "string" ? (item as Record<string, unknown>).id as string : newId() }] : [];
+    return member ? [{ ...member, id: typeof (item as Record<string, unknown>).id === "string" ? (item as Record<string, unknown>).id as string : newId(), primary: isPrimary((item as Record<string, unknown>).primary) }] : [];
   });
   const doubles = source.doubles.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
@@ -78,6 +83,33 @@ export function saveFavorites(favorites: FavoritesData): FavoritesData {
 
 export function newFavoriteId(): string { return newId(); }
 
+export function normalizedFavoriteTag(tag: string): string {
+  return tag.trim().toLowerCase();
+}
+
+function normalizedFighters(characters: { fighter: string }[]): string[] {
+  return characters.map((character) => character.fighter.trim().toLowerCase()).filter(Boolean).sort();
+}
+
+/** Select the applicable favorite for a bracket import. */
+export function favoriteForImport(
+  favorites: FavoriteSinglesEntrant[],
+  tag: string,
+  importedCharacters: { fighter: string }[],
+): FavoriteSinglesEntrant | undefined {
+  const tagMatches = favorites.filter((favorite) => normalizedFavoriteTag(favorite.tag) === normalizedFavoriteTag(tag));
+  const importedFighters = normalizedFighters(importedCharacters);
+  if (!importedFighters.length) return tagMatches.find((favorite) => favorite.primary) ?? tagMatches[0];
+
+  return tagMatches.find((favorite) => {
+    const favoriteFighters = normalizedFighters(favorite.characters);
+    return favoriteFighters.length === importedFighters.length && favoriteFighters.every((fighter, index) => fighter === importedFighters[index]);
+  });
+}
+
 export function characterSummary(characters: FavoriteCharacter[]): string {
   return characters.map((character) => character.fighter || "Unknown fighter").join(", ");
 }
+
+
+
