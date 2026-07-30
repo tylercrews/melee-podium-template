@@ -12,7 +12,6 @@
 
 
 TODO LIST:
-* thank you for wherever I got the Ubuntu and Impact fonts from?
 * add a contact section if anyone encounters errors or something
 * archive some of the worse poses - zelda+sheik, captain falcon pose a (his back foot will never be on the platform unless i make him a little baby man), bowser pose b (so damn wide and short)
 * need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
