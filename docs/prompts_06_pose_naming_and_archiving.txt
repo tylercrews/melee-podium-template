@@ -1,0 +1,201 @@
+I need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
+What would be the best way to implement this and have it populate on the frontend? Do I need to list out the names of the poses in the backend somewhere? Do I need to incorporate it into the filename somehow?
+
+
+
+
+
+
+8:32 PM
+
+
+
+
+
+
+Worked for 21s
+
+
+
+Keep the filename pose code (a, b) as an internal ID, and add a human-friendly pose_label returned by the backend.
+You already have the right data flow: /api/options scans each portrait filename and the frontend populates its Pose dropdown from that response. The clean change is:
+{
+  "color": "red",
+  "pose": "a",
+  "pose_label": "Classic full-body"
+}
+The frontend should:
+use pose as the <option value> sent back to the renderer;
+display pose_label to the user.
+Yes—define the labels in the backend, ideally in a small explicit mapping such as:
+POSE_LABELS = {
+    "Bowser": {
+        "a": "Classic full-body",
+        "b": "Action stance",
+    },
+    "Fox": {
+        "a": "Neutral stance",
+        "b": "Blaster pose",
+    },
+}
+Then have _fighter_options() attach the matching label while still returning the existing pose code. This is best because labels can be per-character and changed later without renaming images or breaking saved favorites.
+I would not put the display name into the filename. Filenames are currently parsed as 00a_default_..., and the renderer’s scale configuration also keys poses as 00a / 00b ([DrawPodium.py (line 149)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\DrawPodium.py:149), [portrait_scale_adjustment_to_character_relativity.py (line 12)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\portrait_scale_adjustment_to_character_relativity.py:12)). Renaming those IDs would require updating every asset and scale entry.
+So: filenames keep the stable technical code; backend owns labels; frontend displays labels. This also preserves existing saved data.
+
+
+8:32 PM
+
+
+
+
+
+
+
+ok great. Set up the pose labels for me for every character with POSE A, POSE B for now, and i'll replace with semantically meaningful names myself
+
+
+
+
+
+
+8:36 PM
+
+
+
+
+
+
+Worked for 8m 9s
+
+
+
+Implemented pose labels for all 26 fighters.
+The Pose dropdown now displays POSE A / POSE B.
+It still sends the stable internal values a / b, so existing assets, render logic, and saved favorites remain compatible.
+Change names later in [app.py (line 37)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\app.py:37), e.g. "a": "Neutral stance".
+Updated the API and frontend selector in [api.ts (line 1)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\api.ts:1) and [EntrantCharacterEditor.tsx (line 44)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\frontend\\src\\EntrantCharacterEditor.tsx:44).
+Verified all 26 fighters return both labels and the frontend production build passes.
+
+
+8:44 PM
+
+
+
+
+
+
+
+app.py is getting kinda massive, and this seems like an easy thing to make a module for. Can we export these into a different file so it doesn't grow the app length when I add more poses
+
+
+
+
+
+
+9:51 PM
+
+
+
+
+
+
+Worked for 54s
+
+
+
+Done. The pose-name registry now lives in [pose_labels.py (line 1)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\pose_labels.py:1), and [app.py (line 18)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\app.py:18) only imports it.
+Add or rename pose labels in that new file; no API or frontend changes are needed. Verified all 26 fighters still expose POSE A and POSE B.
+
+
+9:52 PM
+
+
+
+
+
+
+
+rename it to portrait_pose_labels
+
+
+
+
+
+
+9:52 PM
+
+
+
+
+
+
+Worked for 30s
+
+
+
+Renamed to [portrait_pose_labels.py (line 1)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\portrait_pose_labels.py:1) and updated app.py’s import. Verified the API module loads successfully.
+
+
+9:53 PM
+
+
+
+
+
+
+
+if I decide to archive some poses that don't quite fit right, what should I do with them? Do I just need to comment them out everywhere they were referenced or is there an easier way?
+
+
+
+
+
+
+9:55 PM
+
+
+
+
+
+
+Don’t comment them out. Archive the portrait files outside char_assets/renders, for example:
+char_assets/archive/Bowser/00b_default_Bowser_melee.png
+char_assets/archive/Bowser/01b_red_Bowser_melee.png
+...
+Move every color variant for that pose. Since the API only scans char_assets/renders, the archived pose immediately disappears from the frontend selection list—no code changes needed.
+You can leave its entries in [portrait_pose_labels.py (line 1)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\portrait_pose_labels.py:1) and the scale file; they are harmless and make restoring the pose as simple as moving the files back. Remove those entries only when you are certain it is permanently retired.
+One caveat: update any saved favorites that explicitly use that pose. Otherwise, an old favorite could request an asset that no longer exists and the renderer will reject it.
+
+
+9:55 PM
+
+
+
+
+
+
+
+so if I remove pose b for bowser, but add a pose c, it will still scan properly and associate with the pose c label?
+
+
+
+
+
+
+9:56 PM
+
+
+
+
+
+
+Yes. Add Bowser files using c in the existing filename position, for every color you want available:
+00c_default_Bowser_...
+01c_red_Bowser_...
+Then add its label in [portrait_pose_labels.py (line 1)](C:\\Users\\tycre\\Desktop\\02.Coding\\melee-podium-template\\portrait_pose_labels.py:1):
+"Bowser": {
+    "a": "POSE A",
+    "c": "POSE C",
+},
+The API will scan and return pose c with its label automatically.
+You’ll also need to add Bowser’s 00c scale in portrait_scale_adjustment_to_character_relativity.py, or rendering will fail because each selectable pose needs a scale value.
