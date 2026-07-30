@@ -22,6 +22,11 @@ Maybes/Eventuallies:
 * support for twitter and bluesky handles - need to come up with some place to put them.
 * add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 
+Different Layout Styles One Day:
+* flying v with first place centered
+* top 8er / waddle wednesday layout
+* long rectangles just showing the eyes of the characters
+
 ## Bracket-import groundwork
 
 `bracket_import.py` now recognizes public Start.gg, Challonge, Tonamel, and
