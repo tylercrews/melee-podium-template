@@ -14,6 +14,7 @@ FILES = (
     "constants.py",
     "DrawPodium.py",
     "models.py",
+    "portrait_pose_labels.py",
     "portrait_scale_adjustment_for_each_mode.py",
     "portrait_scale_adjustment_to_character_relativity.py",
     "fonts/Impact.ttf",
