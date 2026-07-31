@@ -12,8 +12,7 @@
 
 
 TODO LIST:
-* archive some of the worse poses when replacements are avaiable - zelda+sheik
-* need to get poses for characters named to be something that makes more sense (instead of a, b, etc)
+* feels like for top 3 singles the 2nd place (left podium) anchor is a little too skewed to the right
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
