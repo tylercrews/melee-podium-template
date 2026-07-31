@@ -25,7 +25,7 @@ POSE_LABELS = {
     "Pikachu": {"a": "On All Fours", "b": "Standing Up"},
     "Roy": {"a": "Clenched Fist", "b": "Squatting"},
     "Samus": {"a": "Metroid 2 Box Art", "b": "Lock On"},
-    "Sheik": {"a": "Zelda And Sheik Standing", "b": "Falling With Needles"},
+    "Sheik": {"a": "Archived Zelda And Sheik Standing", "b": "Archived Falling With Needles"},
     "Yoshi": {"a": "On One Foot", "b": "Over The Shoulder", "c": "Victory B - Victory Hand", "d": "Victory X - Backwards Flex"},
     "Young Link": {"a": "Walking", "b": "Blocking"},
     "Zelda": {"a": "Zelda And Sheik Standing", "b": "Idle/Portrait Stance"},
