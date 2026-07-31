@@ -1,6 +1,7 @@
-"""Create a bottom-aligned comparison sheet for every character's 00a/00b pose."""
+"""Create a bottom-aligned comparison sheet for every default-color pose."""
 
 from pathlib import Path
+import re
 import sys
 
 from PIL import Image, ImageDraw, ImageFont
@@ -22,23 +23,33 @@ SIDE_PADDING = 12
 TOP_PADDING = 40
 BOTTOM_PADDING = 12
 LABEL_HEIGHT = 44
+DEFAULT_POSE_FILENAME = re.compile(r"^00(?P<pose>[a-z]+)_.*\.png$", re.IGNORECASE)
 
 
 def find_default_poses() -> list[tuple[str, str, Path]]:
-    """Return each character's 00gita and 00b images in alphabetical order."""
+    """Return every default-color portrait, ordered by character and pose code."""
     poses: list[tuple[str, str, Path]] = []
 
     for character_dir in sorted(POSES_DIR.iterdir(), key=lambda path: path.name.lower()):
         if not character_dir.is_dir():
             continue
 
-        for pose_code in ("00a", "00b"):
-            matches = sorted(character_dir.glob(f"{pose_code}*.png"))
-            if len(matches) != 1:
+        default_poses: dict[str, Path] = {}
+        for path in sorted(character_dir.glob("00*.png")):
+            match = DEFAULT_POSE_FILENAME.match(path.name)
+            if match is None:
+                continue
+            pose_code = f"00{match.group('pose').lower()}"
+            if pose_code in default_poses:
                 raise RuntimeError(
-                    f"Expected one {pose_code} PNG in {character_dir}, found {len(matches)}"
+                    f"Expected one {pose_code} PNG in {character_dir}, found multiple"
                 )
-            poses.append((character_dir.name, pose_code, matches[0]))
+            default_poses[pose_code] = path
+
+        poses.extend(
+            (character_dir.name, pose_code, path)
+            for pose_code, path in sorted(default_poses.items())
+        )
 
     if not poses:
         raise RuntimeError(f"No character poses found in {POSES_DIR}")
@@ -98,7 +109,7 @@ def main() -> None:
     )
     canvas.convert("RGB").save(OUTPUT_PATH)
 
-    print(f"Compared {len(loaded)} images ({len(loaded) // 2} characters).")
+    print(f"Compared {len(loaded)} images ({len({character for character, _, _, _ in loaded})} characters).")
     print(f"Maximum adjusted height: {max_height}px")
     print(f"Output size: {canvas_width}x{canvas_height}px")
     print(f"Saved: {OUTPUT_PATH}")
