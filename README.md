@@ -27,6 +27,8 @@ Different Layout Styles One Day:
 * flying v with first place centered
 * top 8er / waddle wednesday layout
 * long rectangles just showing the eyes of the characters
+* long portraits like the character select screen
+* long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
 
 ## Bracket-import groundwork
 
