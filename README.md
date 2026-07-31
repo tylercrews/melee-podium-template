@@ -12,6 +12,7 @@
 
 
 TODO LIST:
+* probably just need to increase the font size for the entrant names, it's too subtle
 * feels like for top 3 singles the 2nd place (left podium) anchor is a little too skewed to the right
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
