@@ -14,6 +14,7 @@
 TODO LIST:
 * the subtitle in tyrowo font overlaps quite a bit with the title, need to space it a little further underneath (check shenfest graphic)
 * probably just need to increase the font size for the entrant names, it's too subtle
+* see if top8er has their images for melee in their open source repo
 * a lot of the melee cs project images are actually the character select portrait, so I should label those as such
 * feels like for top 3 singles the 2nd place (left podium) anchor is a little too skewed to the right
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
