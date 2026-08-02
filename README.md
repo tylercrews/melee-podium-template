@@ -25,6 +25,9 @@ Maybes/Eventuallies:
 * support for twitter and bluesky handles - need to come up with some place to put them.
 * add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
 
+* What if you had a tournament graphic input, and you could slot it in to the left of the title+subtitle, or to the left of the tourney info (but below where the title is, kind of in the middle) - inspired by like GOML, it would be nice if big big tournaments had the ability to use the graphics they've paid for. They'd need a scale slider to adjust the size, similar to the char portraits
+* similar to the tournament graphic, what if the user could upload a font, then you give them the ability to adjust the size and thickness the same way that I've adjusted my fonts.
+
 Different Layout Styles One Day:
 * flying v with first place centered
 * top 8er / waddle wednesday layout
