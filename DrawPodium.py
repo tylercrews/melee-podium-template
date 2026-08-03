@@ -567,6 +567,28 @@ def _validate_placements(
         )
 
 
+def _draw_tournament_subtitle(
+    canvas: Image.Image,
+    tournament: Tournament,
+    font: PodiumFont,
+    placement_count: int,
+) -> None:
+    """Draw the subtitle below portraits and player tags in the layer stack."""
+    if tournament.subtitle is None:
+        return
+
+    width = canvas.width
+    right_aligned = placement_count != 3
+    _draw_text(
+        ImageDraw.Draw(canvas),
+        (width * 2 // 3, 100) if right_aligned else (45, 100),
+        tournament.subtitle,
+        anchor="ra" if right_aligned else "la",
+        max_width=width // 2,
+        preferred_size=48,
+        font=font,
+    )
+
 def _draw_text_fields(
     canvas: Image.Image,
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
@@ -577,18 +599,18 @@ def _draw_text_fields(
     draw = ImageDraw.Draw(canvas)
     draw_text = partial(_draw_text, font=font)
     width = canvas.width
+    placement_count = len(entrants)
     title_max_width = width * 2 // 3
     link_max_width = width - title_max_width - 25
-    draw_text(draw, (15, 5), tournament.title, anchor="la", max_width=title_max_width, preferred_size=92)
-    if tournament.subtitle is not None:
-        draw_text(
-            draw,
-            (45, 100),
-            tournament.subtitle,
-            anchor="la",
-            max_width=width // 2,
-            preferred_size=48,
-        )
+    title_right_aligned = placement_count != 3
+    draw_text(
+        draw,
+        (title_max_width, 5) if title_right_aligned else (15, 5),
+        tournament.title,
+        anchor="ra" if title_right_aligned else "la",
+        max_width=title_max_width,
+        preferred_size=92,
+    )
     is_doubles = isinstance(entrants[0], DoublesTeam)
     event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
     count_label = "Teams" if is_doubles else "Entrants"
@@ -646,7 +668,6 @@ def _draw_text_fields(
         fill=(25, 25, 25),
     )
 
-    placement_count = len(entrants)
     for podium_slot, entrant in enumerate(entrants, start=1):
         anchors = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]
         glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
@@ -739,6 +760,14 @@ def draw_podium(
         )
 
     background = Image.open(_background_path(mode)).convert("RGBA")
+    # The subtitle sits below the interleaved portrait/tag pass. The title is
+    # drawn later so it remains above player tags.
+    _draw_tournament_subtitle(
+        background,
+        tournament,
+        font,
+        mode.placement_count,
+    )
     tag_draw = ImageDraw.Draw(background)
     if mode.is_doubles:
         anchors = DOUBLES_ANCHORS[mode.placement_count]
