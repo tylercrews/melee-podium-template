@@ -53,15 +53,22 @@ DOUBLES_TEAM_NAME_Y_OFFSET = -30
 SINGLES_CHARACTER_NAME_Y_OFFSET = -30
 SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET = -22
 TAG_COLLISION_GUTTER = 12
+TAG_PREFERRED_SIZE = 56
+# Give player tags a little more horizontal room than the podium face beneath
+# them. Short tags can use the full preferred size; longer tags shrink to fit.
+SINGLES_TAG_WIDTHS = {3: 460, 4: 430, 8: 230}
+DOUBLES_TAG_WIDTHS = {3: 240, 4: 225}
 
 
 @dataclass(frozen=True)
 class CharacterTag:
-    """A character tag waiting for the final text-layout pass."""
+    """A player tag waiting to be composited over its entrant's portraits."""
 
     position: tuple[int, int]
     text: str
     glow_fill: tuple[int, int, int]
+    max_width: int
+
 
 class PodiumMode(str, Enum):
     DOUBLES_TOP_3 = "doubles_top_3"
@@ -405,12 +412,14 @@ def _tag_anchor(x: int, y: int, image: Image.Image, *, center_x: int | None = No
 
 def _draw_character_tag(
     draw: ImageDraw.ImageDraw,
-    position: tuple[int, int],
-    tag: str,
+    character_tag: CharacterTag,
     font: PodiumFont,
-    glow_fill: tuple[int, int, int],
 ) -> None:
     """Draw a sponsored tag with its placement color as a halo."""
+    position = character_tag.position
+    tag = character_tag.text
+    glow_fill = character_tag.glow_fill
+    max_width = character_tag.max_width
     sponsor, separator, player_tag = tag.partition("|")
     if not separator or not player_tag.strip():
         _draw_text(
@@ -418,8 +427,8 @@ def _draw_character_tag(
             position,
             tag,
             anchor="ms",
-            max_width=210,
-            preferred_size=28,
+            max_width=max_width,
+            preferred_size=TAG_PREFERRED_SIZE,
             font=font,
             glow_fill=glow_fill,
         )
@@ -432,13 +441,13 @@ def _draw_character_tag(
         position,
         player_tag,
         anchor="ms",
-        max_width=210,
-        preferred_size=28,
+        max_width=max_width,
+        preferred_size=TAG_PREFERRED_SIZE,
         font=font,
         glow_fill=glow_fill,
     )
 
-    player_font = _font_to_fit(player_tag, 210, 28, font)
+    player_font = _font_to_fit(player_tag, max_width, TAG_PREFERRED_SIZE, font)
     player_bounds = player_font.getbbox(player_tag)
     player_height = player_bounds[3] - player_bounds[1]
     sponsor_position = (position[0], position[1] - player_height - 6)
@@ -447,8 +456,8 @@ def _draw_character_tag(
         sponsor_position,
         sponsor_tag,
         anchor="ms",
-        max_width=210,
-        preferred_size=28,
+        max_width=max_width,
+        preferred_size=TAG_PREFERRED_SIZE,
         font=font,
         glow_fill=glow_fill,
     )
@@ -456,29 +465,31 @@ def _draw_character_tag(
 
 def _character_tag_bounds(
     draw: ImageDraw.ImageDraw,
-    position: tuple[int, int],
-    tag: str,
+    character_tag: CharacterTag,
     font: PodiumFont,
 ) -> tuple[int, int, int, int]:
     """Measure the same one- or two-line geometry used to draw a tag."""
+    position = character_tag.position
+    tag = character_tag.text
+    max_width = character_tag.max_width
     sponsor, separator, player_tag = tag.partition("|")
     stroke_width = 2  # Include the visible halo in collision detection.
     if not separator or not player_tag.strip():
-        loaded_font = _font_to_fit(tag, 210, 28, font)
+        loaded_font = _font_to_fit(tag, max_width, TAG_PREFERRED_SIZE, font)
         return draw.multiline_textbbox(
             position, tag, font=loaded_font, anchor="ms", stroke_width=stroke_width
         )
 
     player_tag = player_tag.strip()
     sponsor_tag = f"{sponsor.rstrip()} |"
-    player_font = _font_to_fit(player_tag, 210, 28, font)
+    player_font = _font_to_fit(player_tag, max_width, TAG_PREFERRED_SIZE, font)
     player_bounds = draw.multiline_textbbox(
         position, player_tag, font=player_font, anchor="ms", stroke_width=stroke_width
     )
     player_font_bounds = player_font.getbbox(player_tag)
     player_height = player_font_bounds[3] - player_font_bounds[1]
     sponsor_position = (position[0], position[1] - player_height - 6)
-    sponsor_font = _font_to_fit(sponsor_tag, 210, 28, font)
+    sponsor_font = _font_to_fit(sponsor_tag, max_width, TAG_PREFERRED_SIZE, font)
     sponsor_bounds = draw.multiline_textbbox(
         sponsor_position,
         sponsor_tag,
@@ -507,8 +518,8 @@ def _resolve_doubles_tag_collisions(
             break
         first, second = resolved[index], resolved[index + 1]
         left, right = (first, second) if first.position[0] <= second.position[0] else (second, first)
-        left_bounds = _character_tag_bounds(draw, left.position, left.text, font)
-        right_bounds = _character_tag_bounds(draw, right.position, right.text, font)
+        left_bounds = _character_tag_bounds(draw, left, font)
+        right_bounds = _character_tag_bounds(draw, right, font)
         horizontal_overlap = min(left_bounds[2], right_bounds[2]) - max(left_bounds[0], right_bounds[0])
         vertical_overlap = min(left_bounds[3], right_bounds[3]) - max(left_bounds[1], right_bounds[1])
         if horizontal_overlap <= 0 or vertical_overlap <= 0:
@@ -559,7 +570,6 @@ def _validate_placements(
 def _draw_text_fields(
     canvas: Image.Image,
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
-    character_tags: Sequence[CharacterTag],
     *,
     tournament: Tournament,
     font: PodiumFont,
@@ -635,19 +645,6 @@ def _draw_text_fields(
         preferred_size=18,
         fill=(25, 25, 25),
     )
-
-    # Character tags are collected while the portraits are placed, then drawn
-    # last so they remain readable over any overlapping portrait.
-    if isinstance(entrants[0], DoublesTeam):
-        character_tags = _resolve_doubles_tag_collisions(draw, character_tags, font, canvas.width)
-    for character_tag in character_tags:
-        _draw_character_tag(
-            draw,
-            character_tag.position,
-            character_tag.text,
-            font,
-            character_tag.glow_fill,
-        )
 
     placement_count = len(entrants)
     for podium_slot, entrant in enumerate(entrants, start=1):
@@ -742,15 +739,21 @@ def draw_podium(
         )
 
     background = Image.open(_background_path(mode)).convert("RGBA")
-    character_tags: list[CharacterTag] = []
+    tag_draw = ImageDraw.Draw(background)
     if mode.is_doubles:
         anchors = DOUBLES_ANCHORS[mode.placement_count]
-        # Draw lower placements first so higher placements remain in front.
+        tag_max_width = DOUBLES_TAG_WIDTHS[mode.placement_count]
+        # Composite each lower-place team and its names before moving upward.
+        # The next higher team's portraits therefore cover any tag overhang.
         for podium_slot, team in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(team, DoublesTeam)
             glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
             first_anchor, second_anchor = anchors[podium_slot]
-            team_color = choice(["red", "green", "blue"]) if team.team_color == "random" else team.team_color
+            team_color = (
+                choice(["red", "green", "blue"])
+                if team.team_color == "random"
+                else team.team_color
+            )
             first_characters = [
                 _character_with_team_color(character, team_color)
                 for character in team.entrant_1.characters
@@ -760,19 +763,54 @@ def draw_podium(
                 for character in team.entrant_2.characters
             ]
             first_x, first_y, first_image = _place_characters(
-                background, first_characters, first_anchor, mode_scale, MULTI_CHARACTER_X_OFFSETS_NARROW
+                background,
+                first_characters,
+                first_anchor,
+                mode_scale,
+                MULTI_CHARACTER_X_OFFSETS_NARROW,
             )
             second_x, second_y, second_image = _place_characters(
-                background, second_characters, second_anchor, mode_scale, MULTI_CHARACTER_X_OFFSETS_NARROW
+                background,
+                second_characters,
+                second_anchor,
+                mode_scale,
+                MULTI_CHARACTER_X_OFFSETS_NARROW,
             )
-            character_tags.extend(
+            team_tags = _resolve_doubles_tag_collisions(
+                tag_draw,
                 [
-                    CharacterTag(_tag_anchor(first_x, first_y, first_image, center_x=first_anchor[0]), team.entrant_1.tag, glow_fill),
-                    CharacterTag(_tag_anchor(second_x, second_y, second_image, center_x=second_anchor[0]), team.entrant_2.tag, glow_fill),
-                ]
+                    CharacterTag(
+                        _tag_anchor(
+                            first_x,
+                            first_y,
+                            first_image,
+                            center_x=first_anchor[0],
+                        ),
+                        team.entrant_1.tag,
+                        glow_fill,
+                        tag_max_width,
+                    ),
+                    CharacterTag(
+                        _tag_anchor(
+                            second_x,
+                            second_y,
+                            second_image,
+                            center_x=second_anchor[0],
+                        ),
+                        team.entrant_2.tag,
+                        glow_fill,
+                        tag_max_width,
+                    ),
+                ],
+                font,
+                background.width,
             )
+            for character_tag in team_tags:
+                _draw_character_tag(tag_draw, character_tag, font)
     else:
         anchors = SINGLES_ANCHORS[mode.placement_count]
+        tag_max_width = SINGLES_TAG_WIDTHS[mode.placement_count]
+        # Render lowest to highest, interleaving each portrait group and tag.
         for podium_slot, entrant in reversed(list(enumerate(entrants, start=1))):
             assert isinstance(entrant, SinglesEntrant)
             glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
@@ -781,15 +819,28 @@ def draw_podium(
                 entrant.characters,
                 anchors[podium_slot],
                 mode_scale,
-                multi_character_x_offsets=(MULTI_CHARACTER_X_OFFSETS_NARROW if mode.placement_count == 8 else MULTI_CHARACTER_X_OFFSETS_WIDE),
+                multi_character_x_offsets=(
+                    MULTI_CHARACTER_X_OFFSETS_NARROW
+                    if mode.placement_count == 8
+                    else MULTI_CHARACTER_X_OFFSETS_WIDE
+                ),
             )
-            # Top 8 uses the tighter offsets passed above.
-            character_tags.append(CharacterTag(_tag_anchor(x, y, image, center_x=anchors[podium_slot][0]), entrant.tag, glow_fill))
+            character_tag = CharacterTag(
+                _tag_anchor(
+                    x,
+                    y,
+                    image,
+                    center_x=anchors[podium_slot][0],
+                ),
+                entrant.tag,
+                glow_fill,
+                tag_max_width,
+            )
+            _draw_character_tag(tag_draw, character_tag, font)
 
     _draw_text_fields(
         background,
         entrants,
-        character_tags,
         tournament=tournament,
         font=font,
     )

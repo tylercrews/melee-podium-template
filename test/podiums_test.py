@@ -109,29 +109,29 @@ def main() -> None:
 
     doubles_top_3 = [
         doubles_team(1, "Bowser", "Fox", pose_1="a", team_color="red", tag_1="Acme | Bowser", tag_2="Acme | Fox"),
-        doubles_team(2, "Bowser", "Falco", pose_1="b", team_color="blue"),
+        doubles_team(2, "Bowser", "Falco", pose_1="a", team_color="blue"),
         doubles_team(3, "Kirby", "Pichu", team_color="green"),
     ]
     doubles_top_3[2].entrant_1.characters.append(Character("Samus"))
     path = OUTPUT_FOLDER / "doubles_top_3.png"
     doubles_top_3[1].entrant_1.characters.extend([Character("Ganondorf"), Character("Donkey Kong")])
-    doubles_top_3[1].entrant_2.characters.extend([Character("Fox"), Character("Captain Falcon")])
+    doubles_top_3[1].entrant_2.characters.extend([Character("Fox"), Character("Jigglypuff")])
     draw_doubles_top_3(*doubles_top_3, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     doubles_top_3[1].entrant_1.characters.extend([Character("Ganondorf"), Character("Donkey Kong")])
-    doubles_top_3[1].entrant_2.characters.extend([Character("Fox"), Character("Captain Falcon")])
+    doubles_top_3[1].entrant_2.characters.extend([Character("Fox"), Character("Jigglypuff")])
 
     outputs.append(("Doubles Top 3", path))
 
     doubles_top_4 = [
         doubles_team(1, "Bowser", "Bowser", pose_1="a", pose_2="a", team_color="red", tag_1="Acme | Very Very Long Bowser Tag", tag_2="Acme | Captain Falcon"),
-        doubles_team(2, "Bowser", "Peach", pose_1="b", team_color="blue"),
+        doubles_team(2, "Bowser", "Peach", pose_1="a", team_color="blue"),
         doubles_team(3, "Marth", "Jigglypuff", team_color="green"),
         doubles_team(4, "Pichu", "Pikachu", team_color="red"),
     ]
     doubles_top_4[2].entrant_1.characters.append(Character("Roy"))
     path = OUTPUT_FOLDER / "doubles_top_4.png"
     doubles_top_4[1].entrant_1.characters.extend([Character("Ganondorf"), Character("Donkey Kong")])
-    doubles_top_4[1].entrant_2.characters.extend([Character("Zelda"), Character("Sheik")])
+    doubles_top_4[1].entrant_2.characters.extend([Character("Zelda"), Character("Peach")])
 
     draw_doubles_top_4(*doubles_top_4, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
     outputs.append(("Doubles Top 4", path))
@@ -139,7 +139,7 @@ def main() -> None:
     singles_top_3 = [
         singles_entrant(1, "Bowser", pose="a", tag="Acme | Bowser"),
         singles_entrant(2, "Pichu"),
-        singles_entrant(3, "Bowser", pose="b"),
+        singles_entrant(3, "Bowser", pose="a"),
     ]
     singles_top_3[2].characters.append(Character("Marth"))
     path = OUTPUT_FOLDER / "singles_top_3.png"
@@ -150,7 +150,7 @@ def main() -> None:
 
     singles_top_4 = [
         singles_entrant(1, "Bowser", pose="a", tag="Acme | Bowser"),
-        singles_entrant(2, "Bowser", pose="b"),
+        singles_entrant(2, "Bowser", pose="a"),
         singles_entrant(3, "Marth"),
         singles_entrant(4, "Pichu"),
     ]
@@ -164,9 +164,9 @@ def main() -> None:
     top_8_placements = [1, 2, 3, 4, 5, 5, 7, 7]
     top_8_characters = [
         ("Bowser", "a"),
-        ("Bowser", "b"),
+        ("Mewtwo", "d"),
         ("Donkey Kong", "a"),
-        ("Captain Falcon", "a"),
+        ("Captain Falcon", "d"),
         ("Fox", "a"),
         ("Fox", "a"),
         ("Kirby", "a"),
