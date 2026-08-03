@@ -602,7 +602,7 @@ def _draw_tournament_subtitle(
     right_aligned = placement_count != 3
     _draw_text(
         ImageDraw.Draw(canvas),
-        (width * 2 // 3, 100) if right_aligned else (45, 100),
+        (width * 2 // 3, 110) if right_aligned else (45, 110),
         tournament.subtitle,
         anchor="ra" if right_aligned else "la",
         max_width=width // 2,
