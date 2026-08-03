@@ -57,7 +57,7 @@ TAG_PREFERRED_SIZE = 56
 # Give player tags a little more horizontal room than the podium face beneath
 # them. Short tags can use the full preferred size; longer tags shrink to fit.
 SINGLES_TAG_WIDTHS = {3: 460, 4: 430, 8: 230}
-DOUBLES_TAG_WIDTHS = {3: 240, 4: 225}
+DOUBLES_TAG_WIDTHS = {3: 280, 4: 265}
 
 
 @dataclass(frozen=True)

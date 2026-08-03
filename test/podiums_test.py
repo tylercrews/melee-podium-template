@@ -44,7 +44,7 @@ def singles_entrant(
         seed=placement,
         placement=placement,
         characters=[Character(fighter, color, pose)],
-        tag=tag or f"{fighter} Player",
+        tag=tag or f"{fighter} Long Long Tag",
     )
 
 
@@ -64,11 +64,11 @@ def doubles_team(
         placement=placement,
         entrant_1=Entrant(
             characters=[Character(fighter_1, "default", pose_1)],
-            tag=tag_1 or f"{fighter_1} Player",
+            tag=tag_1 or f"{fighter_1} Long Long Tag",
         ),
         entrant_2=Entrant(
             characters=[Character(fighter_2, "default", pose_2)],
-            tag=tag_2 or f"{fighter_2} Player",
+            tag=tag_2 or f"{fighter_2} Long Long Tag",
         ),
         team_name=f"{fighter_1} / {fighter_2}",
         team_color=team_color,
