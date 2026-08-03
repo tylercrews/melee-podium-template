@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from enum import Enum
 from functools import partial
+from math import ceil
 from pathlib import Path
 from random import choice
 import re
@@ -511,36 +512,56 @@ def _resolve_doubles_tag_collisions(
     font: PodiumFont,
     canvas_width: int,
 ) -> list[CharacterTag]:
-    """Push overlapping teammate tags outward without crossing canvas edges."""
+    """Keep each teammate tag on its side while preserving outer tag room."""
     resolved = list(character_tags)
     for index in range(0, len(resolved), 2):
         if index + 1 >= len(resolved):
             break
         first, second = resolved[index], resolved[index + 1]
-        left, right = (first, second) if first.position[0] <= second.position[0] else (second, first)
+        first_is_left = first.position[0] <= second.position[0]
+        left, right = (first, second) if first_is_left else (second, first)
         left_bounds = _character_tag_bounds(draw, left, font)
         right_bounds = _character_tag_bounds(draw, right, font)
-        horizontal_overlap = min(left_bounds[2], right_bounds[2]) - max(left_bounds[0], right_bounds[0])
-        vertical_overlap = min(left_bounds[3], right_bounds[3]) - max(left_bounds[1], right_bounds[1])
-        if horizontal_overlap <= 0 or vertical_overlap <= 0:
-            continue
 
-        requested_separation = horizontal_overlap + TAG_COLLISION_GUTTER * 2
+        # Treat the midpoint between teammates as the inner edge of each tag's
+        # box. Only shift tags that cross it, so short names remain centered.
+        divider_x = (left.position[0] + right.position[0]) / 2
+        left_inner_limit = divider_x - TAG_COLLISION_GUTTER / 2
+        right_inner_limit = divider_x + TAG_COLLISION_GUTTER / 2
         left_room = max(0, left_bounds[0])
         right_room = max(0, canvas_width - right_bounds[2])
-        left_shift = min(requested_separation / 2, left_room)
-        right_shift = min(requested_separation / 2, right_room)
+        left_overflow = max(0, left_bounds[2] - left_inner_limit - left_room)
+        right_overflow = max(0, right_inner_limit - right_bounds[0] - right_room)
 
-        # If one tag is close to an edge, let its teammate use any spare room
-        # before accepting a smaller-than-ideal gap.
-        remaining = requested_separation - left_shift - right_shift
-        left_shift += min(remaining, left_room - left_shift)
-        remaining = requested_separation - left_shift - right_shift
-        right_shift += min(remaining, right_room - right_shift)
+        # At a canvas edge there may not be enough outer room to shift the
+        # whole tag. Narrow only that tag enough to preserve its inner limit.
+        if left_overflow:
+            left = replace(
+                left,
+                max_width=max(11, left.max_width - ceil(left_overflow)),
+            )
+            left_bounds = _character_tag_bounds(draw, left, font)
+        if right_overflow:
+            right = replace(
+                right,
+                max_width=max(11, right.max_width - ceil(right_overflow)),
+            )
+            right_bounds = _character_tag_bounds(draw, right, font)
 
-        moved_left = replace(left, position=(left.position[0] - round(left_shift), left.position[1]))
-        moved_right = replace(right, position=(right.position[0] + round(right_shift), right.position[1]))
-        if first is left:
+        left_room = max(0, left_bounds[0])
+        right_room = max(0, canvas_width - right_bounds[2])
+        left_shift = min(max(0, left_bounds[2] - left_inner_limit), left_room)
+        right_shift = min(max(0, right_inner_limit - right_bounds[0]), right_room)
+
+        moved_left = replace(
+            left,
+            position=(left.position[0] - round(left_shift), left.position[1]),
+        )
+        moved_right = replace(
+            right,
+            position=(right.position[0] + round(right_shift), right.position[1]),
+        )
+        if first_is_left:
             resolved[index], resolved[index + 1] = moved_left, moved_right
         else:
             resolved[index], resolved[index + 1] = moved_right, moved_left

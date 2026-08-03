@@ -10,7 +10,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from models import Character, Entrant
 
 
-HBK = Entrant(characters=[Character("Sheik", "red", "b")], tag="HBK")
+HBK = Entrant(characters=[Character("Sheik", "red", "c")], tag="HBK")
 BUSTA = Entrant(characters=[Character("Fox", "green", "a")], tag="BU$TA")
 QWAIN = Entrant(characters=[Character("Fox", "blue", "a")], tag="Qwain")
 CHOI = Entrant(characters=[Character("Fox", "blue", "b")], tag="Choi")
