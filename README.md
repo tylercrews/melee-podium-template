@@ -34,6 +34,8 @@ Different Layout Styles One Day:
 * long rectangles just showing the eyes of the characters
 * long portraits like the character select screen
 * long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
+* top8.gg has a really cool type of layout where they have title bar, podium-arranged top 3, then 5 on the bottom. But they do all squares. What if I had a half-and-half layout where the top 3 get their characters on short podiums, then the subsequent players get their characters in boxes underneath.
+* instead of straight up boxes what if you maximized space by having / vs style diagonal split portraits
 
 ## Bracket-import groundwork
 
