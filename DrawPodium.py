@@ -573,7 +573,7 @@ def _draw_text_fields(
     if tournament.subtitle is not None:
         draw_text(
             draw,
-            (45, 85),
+            (45, 100),
             tournament.subtitle,
             anchor="la",
             max_width=width // 2,
