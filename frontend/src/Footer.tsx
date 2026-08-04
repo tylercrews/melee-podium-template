@@ -17,7 +17,7 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          Version 1.4 published 07/30/2026 by Tyler "Tyro" Crews. Successfully generated {count} podium
+          Version 2.0 published 08/03/2026 by Tyler "Tyro" Crews. Successfully generated {count} podium
           images for the Melee community <span aria-label="love">{"\u{1F495}"}</span>
         </div>
         <div>
