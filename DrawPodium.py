@@ -661,14 +661,13 @@ def _draw_lower_entrant_summary(
     icon_gap = 5
     icons = [_load_stock_icon(character) for character in entrant.characters]
     draw = ImageDraw.Draw(canvas)
-    placement_text = f"{entrant.placement}th:"
-    seed_text = f"[#{entrant.seed}]" if entrant.seed is not None else ""
+    seed_text = f"[{entrant.seed}s]" if entrant.seed is not None else ""
+    placement_text = f"{entrant.placement}th {seed_text}:"
     first_line_font = _font_to_fit(
-        f"{placement_text} {seed_text}", max_width, 28, font
+        f"{placement_text}", max_width, 28, font
     )
     placement_width = round(draw.textlength(placement_text, font=first_line_font))
-    seed_width = round(draw.textlength(seed_text, font=first_line_font))
-    fixed_width = placement_width + seed_width + icon_gap * 2
+    fixed_width = placement_width + icon_gap
     available_icon_width = max_width - fixed_width
     icon_size = min(
         36,
@@ -680,10 +679,8 @@ def _draw_lower_entrant_summary(
     ]
     icons_width = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
     row_width = placement_width + icon_gap + icons_width
-    if seed_text:
-        row_width += icon_gap + seed_width
     x = round(anchor[0] - row_width / 2)
-    first_line_y = anchor[1] - 11
+    first_line_y = anchor[1] - 1
     draw.text(
         (x, first_line_y),
         placement_text,
@@ -701,17 +698,6 @@ def _draw_lower_entrant_summary(
         center_y=first_line_y,
         gap=icon_gap,
     )
-    if seed_text:
-        draw.text(
-            (x + placement_width + icon_gap + icons_width + icon_gap, first_line_y),
-            seed_text,
-            font=first_line_font,
-            fill=fill,
-            stroke_width=1 if font is PodiumFont.TYROWO else 0,
-            stroke_fill=fill,
-            anchor="lm",
-        )
-
     sponsor, separator, player_tag = entrant.tag.partition("|")
     identity_lines = (
         [sponsor.strip(), player_tag.strip()]
