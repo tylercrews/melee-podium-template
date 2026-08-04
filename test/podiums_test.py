@@ -180,7 +180,11 @@ def main() -> None:
             placement,
             fighter,
             pose=pose,
-            tag="Acme Gaming | Bowser Player" if index == 0 else None,
+            tag=(
+                "Acme Gaming | Bowser Player"
+                if index == 0
+                else "Acme Gaming | Fox Player" if index == 4 else None
+            ),
         )
         for index, (placement, (fighter, pose)) in enumerate(zip(top_8_placements, top_8_characters))
     ]

@@ -656,64 +656,79 @@ def _draw_lower_entrant_summary(
     fill: tuple[int, int, int],
     font: PodiumFont,
 ) -> None:
-    """Draw one 5th/7th-place tag, seed, and character stock-icon list."""
+    """Draw one lower-place result as a centered two- or three-line block."""
     max_width = 370
     icon_gap = 5
     icons = [_load_stock_icon(character) for character in entrant.characters]
-    first_line_icons = icons[:2]
-    second_line_icons = icons[2:]
-    seed = f" [#{entrant.seed}]" if entrant.seed is not None else ""
-    label = f"{entrant.placement}th: {entrant.tag}{seed}"
-    icon_width = sum(icon.width for icon in first_line_icons)
-    if first_line_icons:
-        icon_width += icon_gap * len(first_line_icons)
-    loaded_font = _font_to_fit(
-        label,
-        max(80, max_width - icon_width),
-        28,
-        font,
-    )
     draw = ImageDraw.Draw(canvas)
-    text_width = round(draw.textlength(label, font=loaded_font))
-    row_width = text_width + icon_width
+    placement_text = f"{entrant.placement}th:"
+    seed_text = f"[#{entrant.seed}]" if entrant.seed is not None else ""
+    first_line_font = _font_to_fit(
+        f"{placement_text} {seed_text}", max_width, 28, font
+    )
+    placement_width = round(draw.textlength(placement_text, font=first_line_font))
+    seed_width = round(draw.textlength(seed_text, font=first_line_font))
+    fixed_width = placement_width + seed_width + icon_gap * 2
+    available_icon_width = max_width - fixed_width
+    icon_size = min(
+        36,
+        max(8, (available_icon_width - icon_gap * (len(icons) - 1)) // len(icons)),
+    )
+    icons = [
+        icon.resize((icon_size, icon_size), Image.Resampling.NEAREST)
+        for icon in icons
+    ]
+    icons_width = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
+    row_width = placement_width + icon_gap + icons_width
+    if seed_text:
+        row_width += icon_gap + seed_width
     x = round(anchor[0] - row_width / 2)
-    first_line_y = anchor[1] - 29
+    first_line_y = anchor[1] - 11
     draw.text(
         (x, first_line_y),
-        label,
-        font=loaded_font,
+        placement_text,
+        font=first_line_font,
         fill=fill,
         stroke_width=1 if font is PodiumFont.TYROWO else 0,
         stroke_fill=fill,
         anchor="lm",
     )
-    if first_line_icons:
-        icon_center_x = x + text_width + icon_gap + (
-            sum(icon.width for icon in first_line_icons)
-            + icon_gap * (len(first_line_icons) - 1)
-        ) / 2
-        _draw_stock_icons(
-            canvas,
-            first_line_icons,
-            center_x=round(icon_center_x),
-            center_y=first_line_y,
-            gap=icon_gap,
-        )
-    if second_line_icons:
-        available_icon_width = max_width - icon_gap * (len(second_line_icons) - 1)
-        icon_size = min(36, max(12, available_icon_width // len(second_line_icons)))
-        resized_icons = [
-            icon.resize((icon_size, icon_size), Image.Resampling.NEAREST)
-            for icon in second_line_icons
-        ]
-        _draw_stock_icons(
-            canvas,
-            resized_icons,
-            center_x=anchor[0],
-            center_y=first_line_y + 40,
-            gap=icon_gap,
+    icons_center_x = x + placement_width + icon_gap + icons_width / 2
+    _draw_stock_icons(
+        canvas,
+        icons,
+        center_x=round(icons_center_x),
+        center_y=first_line_y,
+        gap=icon_gap,
+    )
+    if seed_text:
+        draw.text(
+            (x + placement_width + icon_gap + icons_width + icon_gap, first_line_y),
+            seed_text,
+            font=first_line_font,
+            fill=fill,
+            stroke_width=1 if font is PodiumFont.TYROWO else 0,
+            stroke_fill=fill,
+            anchor="lm",
         )
 
+    sponsor, separator, player_tag = entrant.tag.partition("|")
+    identity_lines = (
+        [sponsor.strip(), player_tag.strip()]
+        if separator and player_tag.strip()
+        else [entrant.tag]
+    )
+    for line_index, line in enumerate(identity_lines, start=1):
+        _draw_text(
+            draw,
+            (anchor[0], first_line_y + line_index * 31),
+            line,
+            anchor="mm",
+            max_width=max_width,
+            preferred_size=26,
+            font=font,
+            glow_fill=fill,
+        )
 
 def _validate_placements(
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
@@ -825,6 +840,7 @@ def _draw_text_fields(
         max_width=width // 3,
         preferred_size=32,
     )
+    # Keep a consistent attribution link on every generated podium.
     draw_text(
         draw,
         (width - 10, canvas.height - 30),
