@@ -55,6 +55,7 @@ interface PodiumSelections {
   tournament: TournamentForm;
   eventFormat: EventFormat;
   podiumSize: PodiumSize;
+  top8Layout: Top8Layout;
   includeSeeds: boolean;
   entrants: EntrantFormState[];
   bracketUrl: string;
@@ -67,6 +68,7 @@ const MELEE_FIGHTER_NAMES = [
 const DEFAULT_FIGHTERS: FighterOption[] = MELEE_FIGHTER_NAMES.map((name) => ({ name, options: [] }));
 type EventFormat = "singles" | "doubles";
 type PodiumSize = 3 | 4 | 8;
+type Top8Layout = "all_showing" | "four_podium";
 type PodiumFont = "tyrowo" | "impact" | "ubuntu";
 
 const PODIUM_SELECTIONS_KEY = "melee-podium.selections.v1";
@@ -180,6 +182,7 @@ function defaultPodiumSelections(): PodiumSelections {
     tournament: defaultTournament(),
     eventFormat: "singles",
     podiumSize: 8,
+    top8Layout: "all_showing",
     includeSeeds: true,
     entrants: createEntrants(8, "singles"),
     bracketUrl: "",
@@ -199,6 +202,7 @@ function loadPodiumSelections(): PodiumSelections {
     const size = saved.podiumSize === 3 || saved.podiumSize === 4 || saved.podiumSize === 8
       ? saved.podiumSize as PodiumSize
       : defaults.podiumSize;
+    const top8Layout: Top8Layout = saved.top8Layout === "four_podium" ? "four_podium" : "all_showing";
     const sourceTournament = isRecord(saved.tournament) ? saved.tournament : {};
     const tournament: TournamentForm = {
       title: stringValue(sourceTournament.title),
@@ -214,6 +218,7 @@ function loadPodiumSelections(): PodiumSelections {
       tournament,
       eventFormat: format,
       podiumSize: normalizedSize,
+      top8Layout,
       includeSeeds: typeof saved.includeSeeds === "boolean" ? saved.includeSeeds : defaults.includeSeeds,
       entrants: createEntrants(entrantStorageCount(format), format, savedEntrants as EntrantFormState[]),
       bracketUrl: stringValue(saved.bracketUrl),
@@ -310,6 +315,7 @@ function App() {
   const [tournament, setTournament] = useState<TournamentForm>(initialSelections.tournament);
   const [eventFormat, setEventFormat] = useState<EventFormat>(initialSelections.eventFormat);
   const [podiumSize, setPodiumSize] = useState<PodiumSize>(initialSelections.podiumSize);
+  const [top8Layout, setTop8Layout] = useState<Top8Layout>(initialSelections.top8Layout);
   const [podiumFont, setPodiumFont] = useState<PodiumFont>(loadPreferredFont);
   const [includeSeeds, setIncludeSeeds] = useState(initialSelections.includeSeeds);
   const [entrants, setEntrants] = useState<EntrantFormState[]>(initialSelections.entrants);
@@ -431,6 +437,7 @@ function App() {
         tournament,
         eventFormat,
         podiumSize,
+        top8Layout,
         includeSeeds,
         entrants,
         bracketUrl,
@@ -438,7 +445,7 @@ function App() {
     } catch {
       // Keep the maker usable if browser storage is unavailable.
     }
-  }, [bracketUrl, entrants, eventFormat, includeSeeds, podiumSize, tournament]);
+  }, [bracketUrl, entrants, eventFormat, includeSeeds, podiumSize, top8Layout, tournament]);
 
   useEffect(() => {
     try {
@@ -449,7 +456,9 @@ function App() {
   }, [podiumFont]);
   const payload = useMemo(
     () => ({
-      mode: `${eventFormat}_top_${podiumSize}`,
+      mode: eventFormat === "singles" && podiumSize === 8 && top8Layout === "four_podium"
+        ? "singles_top_8_four_podium"
+        : `${eventFormat}_top_${podiumSize}`,
       font: podiumFont,
       tournament: {
         title: tournament.title.trim(),
@@ -498,7 +507,7 @@ function App() {
         };
       }),
     }),
-    [entrants, eventFormat, includeSeeds, podiumFont, podiumSize, tournament],
+    [entrants, eventFormat, includeSeeds, podiumFont, podiumSize, top8Layout, tournament],
   );
 
   function startFresh() {
@@ -512,6 +521,7 @@ function App() {
     setTournament(defaults.tournament);
     setEventFormat(defaults.eventFormat);
     setPodiumSize(defaults.podiumSize);
+    setTop8Layout(defaults.top8Layout);
     setIncludeSeeds(defaults.includeSeeds);
     setEntrants(defaults.entrants);
     setBracketUrl(defaults.bracketUrl);
@@ -526,8 +536,9 @@ function App() {
     setEntrants((current) => createEntrants(entrantStorageCount(format), format, current));
   }
 
-  function selectPodiumSize(size: PodiumSize) {
+  function selectPodiumSize(size: PodiumSize, layout?: Top8Layout) {
     setPodiumSize(size);
+    if (layout) setTop8Layout(layout);
     setEntrants((current) => createEntrants(entrantStorageCount(eventFormat), eventFormat, current));
   }
 
@@ -936,10 +947,27 @@ function App() {
             </fieldset>
             <fieldset className="choice-group">
               <legend>Podium size</legend>
-              {([3, 4, 8] as const).filter((size) => eventFormat === "singles" || size !== 8).map((size) => (
-                <label className="choice" key={size}>
-                  <input type="radio" name="podium-size" checked={podiumSize === size} onChange={() => selectPodiumSize(size)} />
-                  Top {size}
+              {([
+                { size: 3 as const, label: "Top 3" },
+                { size: 4 as const, label: "Top 4" },
+                ...(eventFormat === "singles"
+                  ? [
+                      { size: 8 as const, layout: "all_showing" as const, label: "Top 8 (All Showing)" },
+                      { size: 8 as const, layout: "four_podium" as const, label: "Top 8 (4 Podium)" },
+                    ]
+                  : []),
+              ]).map((option) => (
+                <label className="choice" key={`${option.size}-${option.layout ?? "standard"}`}>
+                  <input
+                    type="radio"
+                    name="podium-size"
+                    checked={
+                      podiumSize === option.size
+                      && (option.size !== 8 || top8Layout === option.layout)
+                    }
+                    onChange={() => selectPodiumSize(option.size, option.layout)}
+                  />
+                  {option.label}
                 </label>
               ))}
             </fieldset>

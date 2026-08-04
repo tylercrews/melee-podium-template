@@ -1,7 +1,7 @@
 """Draw singles and doubles results onto the podium backgrounds.
 
 The public convenience functions cover doubles top 3/top 4 and singles top
-3/top 4/top 8. ``draw_podium`` is the shared lower-level entry point.
+3/top 4/top 8 layouts. ``draw_podium`` is the shared lower-level entry point.
 Tournament text is accepted and validated now; its eventual drawing belongs in
 ``_draw_text_fields`` so it can be added without changing the public API.
 """
@@ -25,6 +25,7 @@ from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 CHARACTER_FOLDER = PROJECT_ROOT / "char_assets" / "renders"
+STOCK_ICON_FOLDER = PROJECT_ROOT / "char_assets" / "stock_icons"
 
 
 class PodiumFont(str, Enum):
@@ -77,6 +78,7 @@ class PodiumMode(str, Enum):
     SINGLES_TOP_3 = "singles_top_3"
     SINGLES_TOP_4 = "singles_top_4"
     SINGLES_TOP_8 = "singles_top_8"
+    SINGLES_TOP_8_FOUR_PODIUM = "singles_top_8_four_podium"
 
     @property
     def is_doubles(self) -> bool:
@@ -84,7 +86,18 @@ class PodiumMode(str, Enum):
 
     @property
     def placement_count(self) -> int:
+        if self is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
+            return 8
         return int(self.value.rsplit("_", 1)[1])
+
+    @property
+    def layout_count(self) -> int:
+        """Number of podium boxes and portrait anchors in the background."""
+        return (
+            4
+            if self is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM
+            else self.placement_count
+        )
 
 
 # Each point is centered on the front (lower) edge of a podium's top surface.
@@ -160,7 +173,7 @@ _POSE_FILENAME = re.compile(
 
 
 def _background_path(mode: PodiumMode) -> Path:
-    return PROJECT_ROOT / f"top_{mode.placement_count}.png"
+    return PROJECT_ROOT / f"top_{mode.layout_count}.png"
 
 
 def _resolve_character_path(character: Character) -> Path:
@@ -170,7 +183,9 @@ def _resolve_character_path(character: Character) -> Path:
 
     matches: list[Path] = []
     available: set[str] = set()
-    requested_color = character.color.casefold() if character.color is not None else None
+    requested_color = (
+        character.color.casefold() if character.color is not None else None
+    )
     requested_pose = character.pose.casefold() if character.pose is not None else None
     random_color = requested_color is None
     random_pose = requested_pose is None
@@ -568,6 +583,138 @@ def _resolve_doubles_tag_collisions(
     return resolved
 
 
+_STOCK_ICON_FILENAME = re.compile(
+    r"^(?P<color_code>\d+)_(?P<color>[^_]+)_", re.IGNORECASE
+)
+
+
+def _stock_icon_slug(fighter_name: str) -> str:
+    return fighter_name.lower().replace(".", "").replace(" ", "_")
+
+
+def _resolve_stock_icon_path(character: Character) -> Path:
+    """Find the stock icon matching a character's selected costume."""
+    folder = STOCK_ICON_FOLDER / _stock_icon_slug(character.melee_fighter_name)
+    if not folder.is_dir():
+        raise FileNotFoundError(f"Stock icon folder does not exist: {folder}")
+
+    requested_color = (
+        character.color.casefold() if character.color is not None else None
+    )
+    matches: list[Path] = []
+    available: set[str] = set()
+    for path in sorted(folder.glob("*.png")):
+        match = _STOCK_ICON_FILENAME.match(path.name)
+        if match is None:
+            continue
+        color_code = match.group("color_code").casefold()
+        color_name = match.group("color").casefold()
+        available.add(color_name)
+        if requested_color is None or requested_color in {
+            color_code,
+            color_name,
+            f"{color_code}_{color_name}",
+        }:
+            matches.append(path)
+
+    if not matches:
+        choices = ", ".join(sorted(available)) or "none"
+        raise ValueError(
+            f"No {character.melee_fighter_name} stock icon exists for color "
+            f"{character.color!r}. Available colors: {choices}"
+        )
+    return choice(matches) if requested_color is None else matches[0]
+
+
+def _load_stock_icon(character: Character, size: int = 36) -> Image.Image:
+    with Image.open(_resolve_stock_icon_path(character)) as source:
+        return source.convert("RGBA").resize((size, size), Image.Resampling.NEAREST)
+
+
+def _draw_stock_icons(
+    canvas: Image.Image,
+    icons: Sequence[Image.Image],
+    *,
+    center_x: int,
+    center_y: int,
+    gap: int = 5,
+) -> None:
+    if not icons:
+        return
+    width = sum(icon.width for icon in icons) + gap * (len(icons) - 1)
+    x = round(center_x - width / 2)
+    for icon in icons:
+        canvas.alpha_composite(icon, (x, round(center_y - icon.height / 2)))
+        x += icon.width + gap
+
+
+def _draw_lower_entrant_summary(
+    canvas: Image.Image,
+    entrant: SinglesEntrant,
+    *,
+    anchor: tuple[int, int],
+    fill: tuple[int, int, int],
+    font: PodiumFont,
+) -> None:
+    """Draw one 5th/7th-place tag, seed, and character stock-icon list."""
+    max_width = 370
+    icon_gap = 5
+    icons = [_load_stock_icon(character) for character in entrant.characters]
+    first_line_icons = icons[:2]
+    second_line_icons = icons[2:]
+    seed = f" [#{entrant.seed}]" if entrant.seed is not None else ""
+    label = f"{entrant.placement}th: {entrant.tag}{seed}"
+    icon_width = sum(icon.width for icon in first_line_icons)
+    if first_line_icons:
+        icon_width += icon_gap * len(first_line_icons)
+    loaded_font = _font_to_fit(
+        label,
+        max(80, max_width - icon_width),
+        28,
+        font,
+    )
+    draw = ImageDraw.Draw(canvas)
+    text_width = round(draw.textlength(label, font=loaded_font))
+    row_width = text_width + icon_width
+    x = round(anchor[0] - row_width / 2)
+    first_line_y = anchor[1] - 29
+    draw.text(
+        (x, first_line_y),
+        label,
+        font=loaded_font,
+        fill=fill,
+        stroke_width=1 if font is PodiumFont.TYROWO else 0,
+        stroke_fill=fill,
+        anchor="lm",
+    )
+    if first_line_icons:
+        icon_center_x = x + text_width + icon_gap + (
+            sum(icon.width for icon in first_line_icons)
+            + icon_gap * (len(first_line_icons) - 1)
+        ) / 2
+        _draw_stock_icons(
+            canvas,
+            first_line_icons,
+            center_x=round(icon_center_x),
+            center_y=first_line_y,
+            gap=icon_gap,
+        )
+    if second_line_icons:
+        available_icon_width = max_width - icon_gap * (len(second_line_icons) - 1)
+        icon_size = min(36, max(12, available_icon_width // len(second_line_icons)))
+        resized_icons = [
+            icon.resize((icon_size, icon_size), Image.Resampling.NEAREST)
+            for icon in second_line_icons
+        ]
+        _draw_stock_icons(
+            canvas,
+            resized_icons,
+            center_x=anchor[0],
+            center_y=first_line_y + 40,
+            gap=icon_gap,
+        )
+
+
 def _validate_placements(
     entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
     expected_count: int,
@@ -616,11 +763,12 @@ def _draw_text_fields(
     *,
     tournament: Tournament,
     font: PodiumFont,
+    mode: PodiumMode,
 ) -> None:
     draw = ImageDraw.Draw(canvas)
     draw_text = partial(_draw_text, font=font)
     width = canvas.width
-    placement_count = len(entrants)
+    placement_count = mode.layout_count
     title_max_width = width * 2 // 3
     link_max_width = width - title_max_width - 25
     title_right_aligned = placement_count != 3
@@ -677,8 +825,6 @@ def _draw_text_fields(
         max_width=width // 3,
         preferred_size=32,
     )
-    # Keep a consistent attribution link on every generated podium.
-    # ``la`` mirrors the bracket URL's right-aligned anchor on the left edge.
     draw_text(
         draw,
         (width - 10, canvas.height - 30),
@@ -689,7 +835,7 @@ def _draw_text_fields(
         fill=(25, 25, 25),
     )
 
-    for podium_slot, entrant in enumerate(entrants, start=1):
+    for podium_slot, entrant in enumerate(entrants[:placement_count], start=1):
         anchors = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]
         glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
         if isinstance(entrant, DoublesTeam):
@@ -702,11 +848,11 @@ def _draw_text_fields(
                 entrant.team_name,
                 anchor="ma",
                 max_width=440 if placement_count == 3 else 370,
-                preferred_size=42, # doubles team font size
+                preferred_size=42,
                 wrap=True,
                 glow_fill=glow_fill,
             )
-        else:
+        elif mode is not PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
             label_y_offset = (
                 SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET
                 if placement_count == 8
@@ -736,6 +882,17 @@ def _draw_text_fields(
                 fill=PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line,
             )
 
+    if mode is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
+        for summary_slot, entrant in enumerate(entrants[4:], start=1):
+            assert isinstance(entrant, SinglesEntrant)
+            _draw_lower_entrant_summary(
+                canvas,
+                entrant,
+                anchor=PODIUM_TEXT_ANCHORS[4][summary_slot]["label"],
+                fill=PODIUM_BOX_COLORS_BY_SLOT[summary_slot + 3].exterior_line,
+                font=font,
+            )
+
 
 def draw_podium(
     mode: PodiumMode,
@@ -746,7 +903,7 @@ def draw_podium(
     character_scale: float | None = None,
     output_path: str | Path | None = None,
 ) -> Image.Image:
-    """Draw entrants for one of the five supported podium modes."""
+    """Draw entrants for one of the six supported podium modes."""
     if not isinstance(mode, PodiumMode):
         try:
             mode = PodiumMode(mode)
@@ -787,7 +944,7 @@ def draw_podium(
         background,
         tournament,
         font,
-        mode.placement_count,
+        mode.layout_count,
     )
     tag_draw = ImageDraw.Draw(background)
     if mode.is_doubles:
@@ -858,10 +1015,12 @@ def draw_podium(
             for character_tag in team_tags:
                 _draw_character_tag(tag_draw, character_tag, font)
     else:
-        anchors = SINGLES_ANCHORS[mode.placement_count]
-        tag_max_width = SINGLES_TAG_WIDTHS[mode.placement_count]
+        anchors = SINGLES_ANCHORS[mode.layout_count]
+        tag_max_width = SINGLES_TAG_WIDTHS[mode.layout_count]
         # Render lowest to highest, interleaving each portrait group and tag.
-        for podium_slot, entrant in reversed(list(enumerate(entrants, start=1))):
+        for podium_slot, entrant in reversed(
+            list(enumerate(entrants[:mode.layout_count], start=1))
+        ):
             assert isinstance(entrant, SinglesEntrant)
             glow_fill = PODIUM_BOX_COLORS_BY_SLOT[podium_slot - 1].exterior_line
             x, y, image = _place_characters(
@@ -871,7 +1030,7 @@ def draw_podium(
                 mode_scale,
                 multi_character_x_offsets=(
                     MULTI_CHARACTER_X_OFFSETS_NARROW
-                    if mode.placement_count == 8
+                    if mode.layout_count == 8
                     else MULTI_CHARACTER_X_OFFSETS_WIDE
                 ),
             )
@@ -893,6 +1052,7 @@ def draw_podium(
         entrants,
         tournament=tournament,
         font=font,
+        mode=mode,
     )
 
     if output_path is not None:
@@ -1006,6 +1166,40 @@ def draw_singles_top_8(
 ) -> Image.Image:
     return draw_podium(
         PodiumMode.SINGLES_TOP_8,
+        [
+            first_place_entrant,
+            second_place_entrant,
+            third_place_entrant,
+            fourth_place_entrant,
+            fifth_place_entrant,
+            sixth_place_entrant,
+            seventh_place_entrant,
+            eighth_place_entrant,
+        ],
+        tournament=tournament,
+        font=font,
+        character_scale=character_scale,
+        output_path=output_path,
+    )
+
+
+def draw_singles_top_8_four_podium(
+    first_place_entrant: SinglesEntrant,
+    second_place_entrant: SinglesEntrant,
+    third_place_entrant: SinglesEntrant,
+    fourth_place_entrant: SinglesEntrant,
+    fifth_place_entrant: SinglesEntrant,
+    sixth_place_entrant: SinglesEntrant,
+    seventh_place_entrant: SinglesEntrant,
+    eighth_place_entrant: SinglesEntrant,
+    *,
+    tournament: Tournament,
+    font: PodiumFont | str = PodiumFont.TYROWO,
+    character_scale: float | None = None,
+    output_path: str | Path | None = None,
+) -> Image.Image:
+    return draw_podium(
+        PodiumMode.SINGLES_TOP_8_FOUR_PODIUM,
         [
             first_place_entrant,
             second_place_entrant,

@@ -1,4 +1,4 @@
-"""Generate preview images for all five supported podium layouts."""
+"""Generate preview images for all six supported podium layouts."""
 
 from pathlib import Path
 import sys
@@ -15,6 +15,7 @@ from DrawPodium import (
     draw_singles_top_3,
     draw_singles_top_4,
     draw_singles_top_8,
+    draw_singles_top_8_four_podium,
 )
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament
 
@@ -185,10 +186,19 @@ def main() -> None:
     ]
     singles_top_8[1].characters.extend([Character("Falco"), Character("Pichu")])
     singles_top_8[2].characters.append(Character("Marth"))
-    singles_top_8[5].characters.append(Character("Falco"))
+    singles_top_8[5].characters.extend([Character("Falco"), Character("Pichu")])
     path = OUTPUT_FOLDER / "singles_top_8.png"
     draw_singles_top_8(*singles_top_8, tournament=TOURNAMENT, font=PODIUM_FONT, output_path=path)
-    outputs.append(("Singles Top 8", path))
+    outputs.append(("Singles Top 8 (All Showing)", path))
+
+    path = OUTPUT_FOLDER / "singles_top_8_four_podium.png"
+    draw_singles_top_8_four_podium(
+        *singles_top_8,
+        tournament=TOURNAMENT,
+        font=PODIUM_FONT,
+        output_path=path,
+    )
+    outputs.append(("Singles Top 8 (4 Podium)", path))
 
     create_overview(outputs)
     print(f"Generated {len(outputs)} podium previews in {OUTPUT_FOLDER}")
