@@ -688,7 +688,6 @@ def _draw_lower_entrant_summary(
     """Draw one lower-place result as a centered two- or three-line block."""
     max_width = LOWER_SUMMARY_MAX_WIDTH
     icon_gap = 5
-    inline_gap = 6
     icons = [_load_stock_icon(character) for character in entrant.characters]
     draw = ImageDraw.Draw(canvas)
     seed_text = f"[{entrant.seed}s]" if entrant.seed is not None else ""
@@ -707,8 +706,8 @@ def _draw_lower_entrant_summary(
     )
     placement_width = round(draw.textlength(placement_text, font=placement_font))
     seed_width = round(draw.textlength(seed_text, font=seed_font))
-    seed_gap = inline_gap if seed_text else 0
-    fixed_width = placement_width + icon_gap + seed_gap + seed_width
+    icon_side_gap = round(draw.textlength("   ", font=placement_font))
+    fixed_width = placement_width + icon_side_gap * 2 + seed_width
     available_icon_width = max_width - fixed_width
     icon_size = min(
         36,
@@ -731,7 +730,7 @@ def _draw_lower_entrant_summary(
         stroke_fill=fill,
         anchor="lm",
     )
-    icons_center_x = x + placement_width + icon_gap + icons_width / 2
+    icons_center_x = x + placement_width + icon_side_gap + icons_width / 2
     _draw_stock_icons(
         canvas,
         icons,
@@ -740,7 +739,7 @@ def _draw_lower_entrant_summary(
         gap=icon_gap,
     )
     if seed_text:
-        seed_x = x + placement_width + icon_gap + icons_width + seed_gap
+        seed_x = x + placement_width + icon_side_gap + icons_width + icon_side_gap
         seed_bottom = first_line_y + icon_size // 2
         draw.text(
             (seed_x, seed_bottom),
