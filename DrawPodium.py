@@ -56,6 +56,7 @@ SINGLES_CHARACTER_NAME_Y_OFFSET = -30
 SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET = -22
 TAG_COLLISION_GUTTER = 12
 TAG_PREFERRED_SIZE = 56
+HEADER_METADATA_GUTTER = 15
 # Give player tags a little more horizontal room than the podium face beneath
 # them. Short tags can use the full preferred size; longer tags shrink to fit.
 SINGLES_TAG_WIDTHS = {3: 460, 4: 430, 8: 230}
@@ -413,6 +414,29 @@ def _draw_text(
     )
 
 
+def _text_bounds(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[int, int],
+    text: str,
+    *,
+    anchor: str,
+    max_width: int,
+    preferred_size: int,
+    font: PodiumFont,
+    align: str = "center",
+) -> tuple[int, int, int, int]:
+    """Return the same bounds that ``_draw_text`` will occupy."""
+    loaded_font = _font_to_fit(text, max_width, preferred_size, font)
+    bounds = draw.multiline_textbbox(
+        position,
+        text,
+        font=loaded_font,
+        anchor=anchor,
+        align=align,
+    )
+    return tuple(round(value) for value in bounds)
+
+
 def _display_link(link: str) -> str:
     """Make a footer URL compact without changing the stored source link."""
     compact = re.sub(r"\s+", "", link)
@@ -741,21 +765,145 @@ def _draw_tournament_subtitle(
     tournament: Tournament,
     font: PodiumFont,
     placement_count: int,
+    centered: bool,
 ) -> None:
     """Draw the subtitle below portraits and player tags in the layer stack."""
     if tournament.subtitle is None:
         return
 
     width = canvas.width
-    right_aligned = placement_count != 3
+    right_aligned = placement_count != 3 and not centered
     _draw_text(
         ImageDraw.Draw(canvas),
-        (width * 2 // 3, 110) if right_aligned else (45, 110),
+        (width * 2 // 3, 110)
+        if right_aligned
+        else ((width // 2, 110) if placement_count != 3 else (45, 110)),
         tournament.subtitle,
-        anchor="ra" if right_aligned else "la",
+        anchor="ra"
+        if right_aligned
+        else ("ma" if placement_count != 3 else "la"),
         max_width=width // 2,
         preferred_size=48,
         font=font,
+    )
+
+
+def _metadata_layout(
+    tournament: Tournament,
+    *,
+    font: PodiumFont,
+    width: int,
+    is_doubles: bool,
+) -> list[dict[str, object]]:
+    """Build the metadata fields once for collision checks and drawing."""
+    title_max_width = width * 2 // 3
+    link_max_width = width - title_max_width - 25
+    fields: list[dict[str, object]] = []
+    metadata_top = 10
+    if tournament.link is not None:
+        source_link = _wrap_url(
+            _display_link(tournament.link), link_max_width, 14, font
+        )
+        source_link_font = _font_to_fit(source_link, link_max_width, 14, font)
+        link_bounds = source_link_font.getbbox("Ag")
+        link_line_height = link_bounds[3] - link_bounds[1] + 4
+        metadata_top = max(
+            10,
+            2 + link_line_height * len(source_link.splitlines()) + 12,
+        )
+        fields.append(
+            {
+                "position": (width - 10, 2),
+                "text": source_link,
+                "anchor": "ra",
+                "max_width": link_max_width,
+                "preferred_size": 14,
+                "fill": (210, 210, 210),
+                "align": "right",
+            }
+        )
+
+    event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
+    count_label = "Teams" if is_doubles else "Entrants"
+    for y, text, preferred_size in (
+        (metadata_top, event_label, 42),
+        (metadata_top + 54, str(tournament.date), 36),
+        (metadata_top + 102, f"{tournament.entrants_count} {count_label}", 32),
+    ):
+        fields.append(
+            {
+                "position": (width - 15, y),
+                "text": text,
+                "anchor": "ra",
+                "max_width": width // 3,
+                "preferred_size": preferred_size,
+            }
+        )
+    return fields
+
+
+def _boxes_overlap(
+    first: tuple[int, int, int, int],
+    second: tuple[int, int, int, int],
+    gutter: int = 0,
+) -> bool:
+    return not (
+        first[2] + gutter <= second[0]
+        or second[2] + gutter <= first[0]
+        or first[3] + gutter <= second[1]
+        or second[3] + gutter <= first[1]
+    )
+
+
+def _centered_header_fields(
+    canvas: Image.Image,
+    tournament: Tournament,
+    *,
+    font: PodiumFont,
+    is_doubles: bool,
+) -> tuple[bool, bool]:
+    """Say whether the title and subtitle can be centered beside metadata."""
+    draw = ImageDraw.Draw(canvas)
+    width = canvas.width
+    metadata_bounds = [
+        _text_bounds(
+            draw,
+            field["position"],
+            field["text"],
+            anchor=field["anchor"],
+            max_width=field["max_width"],
+            preferred_size=field["preferred_size"],
+            font=font,
+            align=field.get("align", "center"),
+        )
+        for field in _metadata_layout(
+            tournament,
+            font=font,
+            width=width,
+            is_doubles=is_doubles,
+        )
+    ]
+
+    def fits(text: str | None, y: int, max_width: int, preferred_size: int) -> bool:
+        if text is None:
+            return False
+        centered_bounds = _text_bounds(
+            draw,
+            (width // 2, y),
+            text,
+            anchor="ma",
+            max_width=max_width,
+            preferred_size=preferred_size,
+            font=font,
+        )
+        return not any(
+            _boxes_overlap(centered_bounds, bounds, HEADER_METADATA_GUTTER)
+            for bounds in metadata_bounds
+        )
+
+    return (
+        fits(tournament.title, 5, width * 2 // 3, 92),
+        fits(tournament.subtitle, 110, width // 2, 48),
     )
 
 def _draw_text_fields(
@@ -765,66 +913,34 @@ def _draw_text_fields(
     tournament: Tournament,
     font: PodiumFont,
     mode: PodiumMode,
+    center_title: bool,
 ) -> None:
     draw = ImageDraw.Draw(canvas)
     draw_text = partial(_draw_text, font=font)
     width = canvas.width
     placement_count = mode.layout_count
     title_max_width = width * 2 // 3
-    link_max_width = width - title_max_width - 25
-    title_right_aligned = placement_count != 3
+    is_doubles = isinstance(entrants[0], DoublesTeam)
+    for field in _metadata_layout(
+        tournament,
+        font=font,
+        width=width,
+        is_doubles=is_doubles,
+    ):
+        draw_text(draw, **field)
+
+    title_right_aligned = placement_count != 3 and not center_title
     draw_text(
         draw,
-        (title_max_width, 5) if title_right_aligned else (15, 5),
+        (title_max_width, 5)
+        if title_right_aligned
+        else ((width // 2, 5) if placement_count != 3 else (15, 5)),
         tournament.title,
-        anchor="ra" if title_right_aligned else "la",
+        anchor="ra"
+        if title_right_aligned
+        else ("ma" if placement_count != 3 else "la"),
         max_width=title_max_width,
         preferred_size=92,
-    )
-    is_doubles = isinstance(entrants[0], DoublesTeam)
-    event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
-    count_label = "Teams" if is_doubles else "Entrants"
-    metadata_top = 10
-    if tournament.link is not None:
-        source_link = _wrap_url(
-            _display_link(tournament.link), link_max_width, 14, font
-        )
-        source_link_font = _font_to_fit(source_link, link_max_width, 14, font)
-        link_line_height = source_link_font.getbbox("Ag")[3] - source_link_font.getbbox("Ag")[1] + 4
-        metadata_top = max(10, 2 + link_line_height * len(source_link.splitlines()) + 12)
-        draw_text(
-            draw,
-            (width - 10, 2),
-            source_link,
-            anchor="ra",
-            max_width=link_max_width,
-            preferred_size=14,
-            fill=(210, 210, 210),
-            align="right",
-        )
-    draw_text(
-        draw,
-        (width - 15, metadata_top),
-        event_label,
-        anchor="ra",
-        max_width=width // 3,
-        preferred_size=42,
-    )
-    draw_text(
-        draw,
-        (width - 15, metadata_top + 54),
-        str(tournament.date),
-        anchor="ra",
-        max_width=width // 3,
-        preferred_size=36,
-    )
-    draw_text(
-        draw,
-        (width - 15, metadata_top + 102),
-        f"{tournament.entrants_count} {count_label}",
-        anchor="ra",
-        max_width=width // 3,
-        preferred_size=32,
     )
     # Keep a consistent attribution link on every generated podium.
     draw_text(
@@ -940,6 +1056,17 @@ def draw_podium(
         )
 
     background = Image.open(_background_path(mode)).convert("RGBA")
+    is_doubles = isinstance(entrants[0], DoublesTeam)
+    center_title, center_subtitle = (
+        _centered_header_fields(
+            background,
+            tournament,
+            font=font,
+            is_doubles=is_doubles,
+        )
+        if mode.layout_count != 3
+        else (False, False)
+    )
     # The subtitle sits below the interleaved portrait/tag pass. The title is
     # drawn later so it remains above player tags.
     _draw_tournament_subtitle(
@@ -947,6 +1074,7 @@ def draw_podium(
         tournament,
         font,
         mode.layout_count,
+        center_subtitle,
     )
     tag_draw = ImageDraw.Draw(background)
     if mode.is_doubles:
@@ -1055,6 +1183,7 @@ def draw_podium(
         tournament=tournament,
         font=font,
         mode=mode,
+        center_title=center_title,
     )
 
     if output_path is not None:
