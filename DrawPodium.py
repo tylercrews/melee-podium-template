@@ -707,9 +707,8 @@ def _draw_lower_entrant_summary(
     )
     placement_width = round(draw.textlength(placement_text, font=placement_font))
     seed_width = round(draw.textlength(seed_text, font=seed_font))
-    colon_width = round(draw.textlength(":", font=placement_font))
     seed_gap = inline_gap if seed_text else 0
-    fixed_width = placement_width + seed_gap + seed_width + colon_width + icon_gap
+    fixed_width = placement_width + icon_gap + seed_gap + seed_width
     available_icon_width = max_width - fixed_width
     icon_size = min(
         36,
@@ -732,27 +731,7 @@ def _draw_lower_entrant_summary(
         stroke_fill=fill,
         anchor="lm",
     )
-    next_x = x + placement_width
-    if seed_text:
-        next_x += seed_gap
-        draw.text(
-            (next_x, first_line_y),
-            seed_text,
-            font=seed_font,
-            fill=fill,
-            anchor="lm",
-        )
-        next_x += seed_width
-    draw.text(
-        (next_x, first_line_y),
-        ":",
-        font=placement_font,
-        fill=fill,
-        stroke_width=1 if font is PodiumFont.TYROWO else 0,
-        stroke_fill=fill,
-        anchor="lm",
-    )
-    icons_center_x = next_x + colon_width + icon_gap + icons_width / 2
+    icons_center_x = x + placement_width + icon_gap + icons_width / 2
     _draw_stock_icons(
         canvas,
         icons,
@@ -760,6 +739,16 @@ def _draw_lower_entrant_summary(
         center_y=first_line_y,
         gap=icon_gap,
     )
+    if seed_text:
+        seed_x = x + placement_width + icon_gap + icons_width + seed_gap
+        seed_bottom = first_line_y + icon_size // 2
+        draw.text(
+            (seed_x, seed_bottom),
+            seed_text,
+            font=seed_font,
+            fill=fill,
+            anchor="lb",
+        )
     sponsor, separator, player_tag = entrant.tag.partition("|")
     identity_lines = (
         [sponsor.strip(), player_tag.strip()]
