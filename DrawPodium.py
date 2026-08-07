@@ -57,6 +57,11 @@ SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET = -22
 TAG_COLLISION_GUTTER = 12
 TAG_PREFERRED_SIZE = 56
 HEADER_METADATA_GUTTER = 15
+LOWER_SUMMARY_MAX_WIDTH = 370
+LOWER_SUMMARY_PLACEMENT_SIZE = 30
+LOWER_SUMMARY_SEED_SIZE = 15
+LOWER_SUMMARY_TAG_SIZE = 35
+LOWER_SUMMARY_TAG_LINE_SPACING = 39
 # Give player tags a little more horizontal room than the podium face beneath
 # them. Short tags can use the full preferred size; longer tags shrink to fit.
 SINGLES_TAG_WIDTHS = {3: 460, 4: 430, 8: 230}
@@ -681,17 +686,30 @@ def _draw_lower_entrant_summary(
     font: PodiumFont,
 ) -> None:
     """Draw one lower-place result as a centered two- or three-line block."""
-    max_width = 370
+    max_width = LOWER_SUMMARY_MAX_WIDTH
     icon_gap = 5
+    inline_gap = 6
     icons = [_load_stock_icon(character) for character in entrant.characters]
     draw = ImageDraw.Draw(canvas)
     seed_text = f"[{entrant.seed}s]" if entrant.seed is not None else ""
-    placement_text = f"{entrant.placement}th {seed_text}:"
-    first_line_font = _font_to_fit(
-        f"{placement_text}", max_width, 28, font
+    placement_text = f"{entrant.placement}th"
+    placement_font = _font_to_fit(
+        placement_text,
+        max_width,
+        LOWER_SUMMARY_PLACEMENT_SIZE,
+        font,
     )
-    placement_width = round(draw.textlength(placement_text, font=first_line_font))
-    fixed_width = placement_width + icon_gap
+    seed_font = _font_to_fit(
+        seed_text or "[]",
+        max_width,
+        LOWER_SUMMARY_SEED_SIZE,
+        font,
+    )
+    placement_width = round(draw.textlength(placement_text, font=placement_font))
+    seed_width = round(draw.textlength(seed_text, font=seed_font))
+    colon_width = round(draw.textlength(":", font=placement_font))
+    seed_gap = inline_gap if seed_text else 0
+    fixed_width = placement_width + seed_gap + seed_width + colon_width + icon_gap
     available_icon_width = max_width - fixed_width
     icon_size = min(
         36,
@@ -702,19 +720,39 @@ def _draw_lower_entrant_summary(
         for icon in icons
     ]
     icons_width = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
-    row_width = placement_width + icon_gap + icons_width
+    row_width = fixed_width + icons_width
     x = round(anchor[0] - row_width / 2)
-    first_line_y = anchor[1] - 1
+    first_line_y = anchor[1] - 11
     draw.text(
         (x, first_line_y),
         placement_text,
-        font=first_line_font,
+        font=placement_font,
         fill=fill,
         stroke_width=1 if font is PodiumFont.TYROWO else 0,
         stroke_fill=fill,
         anchor="lm",
     )
-    icons_center_x = x + placement_width + icon_gap + icons_width / 2
+    next_x = x + placement_width
+    if seed_text:
+        next_x += seed_gap
+        draw.text(
+            (next_x, first_line_y),
+            seed_text,
+            font=seed_font,
+            fill=fill,
+            anchor="lm",
+        )
+        next_x += seed_width
+    draw.text(
+        (next_x, first_line_y),
+        ":",
+        font=placement_font,
+        fill=fill,
+        stroke_width=1 if font is PodiumFont.TYROWO else 0,
+        stroke_fill=fill,
+        anchor="lm",
+    )
+    icons_center_x = next_x + colon_width + icon_gap + icons_width / 2
     _draw_stock_icons(
         canvas,
         icons,
@@ -731,11 +769,14 @@ def _draw_lower_entrant_summary(
     for line_index, line in enumerate(identity_lines, start=1):
         _draw_text(
             draw,
-            (anchor[0], first_line_y + line_index * 31),
+            (
+                anchor[0],
+                first_line_y + line_index * LOWER_SUMMARY_TAG_LINE_SPACING,
+            ),
             line,
             anchor="mm",
             max_width=max_width,
-            preferred_size=26,
+            preferred_size=LOWER_SUMMARY_TAG_SIZE,
             font=font,
             glow_fill=fill,
         )
