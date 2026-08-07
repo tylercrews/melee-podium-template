@@ -12,10 +12,7 @@
 
 
 TODO LIST:
-* top 8 4 podium mode tweaks: make the 5ths and 7ths bigger, but the seed smaller. Make the tags bigger
-* for top 4 and top 8 if the title of the tournament and subtitle are short enough to not run into the url+metadata, then it should be centered instead of align right written at the 2/3 point
 * add a checkbox to explicitly ignore the url link when rendering - the link is already optional, but they might not think to delete it
-* a lot of the melee cs project images are actually the character select portrait, so I should label those as such
 * feels like for top 3 singles the 2nd place (left podium) anchor is a little too skewed to the right
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
