@@ -13,6 +13,7 @@
 
 TODO LIST:
 * add a favicon
+* make it so that the counter only increments when the render is Downloaded, not when it is generated - also see if the preview is lower res and tell the user that it's lower res (change download to Download High Resolution)
 * attempt to identify when the "make your own" link text is going to get overwritten by text, and see if it would not be overwritten on the other corner, and if so flip it to the other side
 * add a checkbox to explicitly ignore the url link when rendering - the link is already optional, but they might not think to delete it
 * feels like for top 3 singles the 2nd place (left podium) anchor is a little too skewed to the right
