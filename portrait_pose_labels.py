@@ -10,7 +10,7 @@ POSE_LABELS = {
     "Falco": {"a": "Salute", "b": "Char Select Portrait - Lean", "c": "Victory B - Post-Kicks", "d": "Victory Y - Landing", "e": "Victory X - Arms Crossed"},
     "Fox": {"a": "Point", "b": "Char Select Portrait - Blasting", "c": "Victory B - Hand On Hip", "d": "Victory Y - Gun Down", "e": "Gun Up", "f": "Victory Smash Ult - Back Turned"},
     "Ganondorf": {"a": "Standing", "b": "Char Select Portrait - Crouch"},
-    "Ice Climbers": {"a": "Nana Above", "b": "Char Select Portrait - Standing", "c": "Victory Y - Popo Left", "d": "Victory Y - Nana Left", "e": "Liberty Lift - Popo Lifting", "f": "Liberty Lift - Nana Lifting"},
+    "Ice Climbers": {"a": "Nana Above", "b": "Char Select Portrait - Standing", "c": "Victory Y - High Five", "d": "Victory Y - High Five (Swap)", "e": "Cheerleading Liberty Lift", "f": "Cheerleading Liberty Lift (Swap)"},
     "Jigglypuff": {"a": "Surprised", "b": "Char Select Portrait - Waving", "c": "Victory B - Tilted", "d": "Victory X - Rest", "e": "Taunt"},
     "Kirby": {"a": "Tippie Toes", "b": "Char Select Portrait - Waving"},
     "Link": {"a": "Standing", "b": "Char Select Portrait - Blocking"},
