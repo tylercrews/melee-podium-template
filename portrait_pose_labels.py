@@ -16,7 +16,7 @@ POSE_LABELS = {
     "Link": {"a": "Standing", "b": "Char Select Portrait - Blocking"},
     "Luigi": {"a": "Bashful", "b": "Char Select Portrait - Hat Tip", "c": "Victory B - Plank", "d": "Victory Y - Finger Guns", "e": "Brawl Up Taunt - Point Right"},
     "Mario": {"a": "Victory Hand", "b": "Char Select Portrait - Jumping"},
-    "Marth": {"a": "Wide Stance", "b": "Char Select Portrait - Narrow Stance", "c": "Victory B - Sword Down", "d": "Victory Y - Looking Back", "e": "Victory X - Sword Flourish"},
+    "Marth": {"a": "Wide Stance", "b": "Char Select Portrait - Narrow Stance", "c": "Victory B - Sword Point", "d": "Victory Y - Looking Back", "e": "Victory X - Jojo Pose"},
     "Mewtwo": {"a": "Glaring", "b": "Char Select Portrait - Crystal Sprite", "c": "Victory B - Shadow Blast", "d": "Victory X - Levitate"},
     "Mr. Game and Watch": {"a": "Walking", "b": "Char Select Portrait - Aghast", "c": "Flag"},
     "Ness": {"a": "Airplane Run", "b": "Char Select Portrait - Thumbs Up", "c": "Victory X - Home Run"},
