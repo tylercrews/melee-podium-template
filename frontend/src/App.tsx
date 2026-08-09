@@ -5,6 +5,7 @@ import {
   getStats,
   getOptions,
   importBracket,
+  recordDownload,
   renderPodium,
 } from "./api";
 import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
@@ -853,9 +854,6 @@ function App() {
         if (current) URL.revokeObjectURL(current);
         return nextUrl;
       });
-      void getStats()
-        .then((result) => setRenderCount(result.render_count))
-        .catch(() => {});
     } catch (error) {
       setRenderError(
         error instanceof Error ? error.message : "Could not render the podium.",
@@ -873,6 +871,13 @@ function App() {
       setCopyStatus("Could not copy JSON.");
     }
   }
+
+  function handleDownload() {
+    void recordDownload()
+      .then((result) => setRenderCount(result.render_count))
+      .catch(() => {});
+  }
+
   const downloadName = `${tournament.title || "melee"}-podium`
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -1209,8 +1214,9 @@ function App() {
               className="button-link"
               href={previewUrl}
               download={`${downloadName || "melee-podium"}.png`}
+              onClick={handleDownload}
             >
-              Download PNG
+              Download High Resolution Image
             </a>
           )}
         </div>

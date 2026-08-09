@@ -37,7 +37,7 @@ app = Flask(__name__, static_folder=None)
 
 
 def _render_count() -> int:
-    """Return the persistent count of successfully generated PNGs."""
+    """Return the persistent count of downloaded podium PNGs."""
     STATS_DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(STATS_DATABASE_PATH) as connection:
         connection.execute(
@@ -55,7 +55,7 @@ def _render_count() -> int:
 
 
 def _increment_render_count() -> int:
-    """Atomically record one completed render and return the new total."""
+    """Atomically record one podium download and return the new total."""
     _render_count()
     with sqlite3.connect(STATS_DATABASE_PATH) as connection:
         connection.execute(
@@ -228,6 +228,11 @@ def stats() -> Any:
     return jsonify(render_count=_render_count())
 
 
+@app.post("/api/download")
+def record_download() -> Any:
+    return jsonify(render_count=_increment_render_count())
+
+
 @app.get("/api/options")
 def options() -> Any:
     return jsonify(
@@ -246,7 +251,6 @@ def render() -> Any:
     image = draw_podium(mode, entrants, tournament=tournament, font=font)
     output = BytesIO()
     image.save(output, format="PNG")
-    _increment_render_count()
     return Response(
         output.getvalue(),
         mimetype="image/png",

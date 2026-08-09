@@ -99,6 +99,11 @@ export async function getStats(): Promise<StatsResponse> {
   return (await response.json()) as StatsResponse;
 }
 
+export async function recordDownload(): Promise<StatsResponse> {
+  const response = await request("download", { method: "POST" });
+  return (await response.json()) as StatsResponse;
+}
+
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
