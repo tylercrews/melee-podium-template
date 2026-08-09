@@ -20,7 +20,7 @@ POSE_LABELS = {
     "Mewtwo": {"a": "Glaring", "b": "Char Select Portrait - Crystal Sprite", "c": "Victory B - Shadow Blast", "d": "Victory X - Levitate"},
     "Mr. Game and Watch": {"a": "Walking", "b": "Char Select Portrait - Aghast", "c": "Flag"},
     "Ness": {"a": "Airplane Run", "b": "Char Select Portrait - Thumbs Up", "c": "Victory X - Home Run"},
-    "Peach": {"a": "Heart Hands", "b": "Char Select Portrait - Standing", "c": "Victory B - Wave", "d": "Victory Y - Hands Clasped"},
+    "Peach": {"a": "Heart Hands", "b": "Char Select Portrait - Standing", "c": "Victory B - Wave", "d": "Victory Y - Oh, Did I Win?"},
     "Pichu": {"a": "Wave", "b": "Char Select Portrait - Jump", "c": "Superman"},
     "Pikachu": {"a": "On All Fours", "b": "Char Select Portrait - Standing Up"},
     "Roy": {"a": "Clenched Fist", "b": "Char Select Portrait - Squatting"},
