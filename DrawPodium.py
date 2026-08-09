@@ -62,6 +62,10 @@ LOWER_SUMMARY_PLACEMENT_SIZE = 30
 LOWER_SUMMARY_SEED_SIZE = 15
 LOWER_SUMMARY_TAG_SIZE = 35
 LOWER_SUMMARY_TAG_LINE_SPACING = 39
+ATTRIBUTION_TEXT = "make your own podium at tyro.work/melee-podium-template"
+ATTRIBUTION_SIDE_MARGIN = 10
+ATTRIBUTION_BOTTOM_MARGIN = 30
+ATTRIBUTION_PREFERRED_SIZE = 18
 # Give player tags a little more horizontal room than the podium face beneath
 # them. Short tags can use the full preferred size; longer tags shrink to fit.
 SINGLES_TAG_WIDTHS = {3: 460, 4: 430, 8: 230}
@@ -884,6 +888,137 @@ def _boxes_overlap(
     )
 
 
+def _box_intersection_area(
+    first: tuple[int, int, int, int],
+    second: tuple[int, int, int, int],
+) -> int:
+    """Return the area shared by two text bounding boxes."""
+    width = max(0, min(first[2], second[2]) - max(first[0], second[0]))
+    height = max(0, min(first[3], second[3]) - max(first[1], second[1]))
+    return width * height
+
+
+def _footer_text_bounds(
+    draw: ImageDraw.ImageDraw,
+    entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
+    *,
+    font: PodiumFont,
+    mode: PodiumMode,
+) -> list[tuple[int, int, int, int]]:
+    """Measure podium labels that can descend into the attribution area."""
+    placement_count = mode.layout_count
+    bounds: list[tuple[int, int, int, int]] = []
+
+    for podium_slot, entrant in enumerate(entrants[:placement_count], start=1):
+        label_anchor = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]["label"]
+        if isinstance(entrant, DoublesTeam):
+            max_width = 440 if placement_count == 3 else 370
+            wrapped_name = _wrap_text(entrant.team_name, max_width, 42, font)
+            bounds.append(
+                _text_bounds(
+                    draw,
+                    (label_anchor[0], label_anchor[1] + DOUBLES_TEAM_NAME_Y_OFFSET),
+                    wrapped_name,
+                    anchor="ma",
+                    max_width=max_width,
+                    preferred_size=42,
+                    font=font,
+                )
+            )
+        elif mode is not PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
+            y_offset = (
+                SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET
+                if placement_count == 8
+                else SINGLES_CHARACTER_NAME_Y_OFFSET
+            )
+            max_width = 180 if placement_count == 8 else 290
+            preferred_size = 28 if placement_count == 8 else 34
+            wrapped_name = _wrap_text(
+                entrant.characters[0].melee_fighter_name,
+                max_width,
+                preferred_size,
+                font,
+            )
+            bounds.append(
+                _text_bounds(
+                    draw,
+                    (label_anchor[0], label_anchor[1] + y_offset),
+                    wrapped_name,
+                    anchor="ma",
+                    max_width=max_width,
+                    preferred_size=preferred_size,
+                    font=font,
+                )
+            )
+
+    if mode is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
+        for summary_slot, entrant in enumerate(entrants[4:], start=1):
+            assert isinstance(entrant, SinglesEntrant)
+            anchor = PODIUM_TEXT_ANCHORS[4][summary_slot]["label"]
+            sponsor, separator, player_tag = entrant.tag.partition("|")
+            identity_lines = (
+                [sponsor.strip(), player_tag.strip()]
+                if separator and player_tag.strip()
+                else [entrant.tag]
+            )
+            first_line_y = anchor[1] - 11
+            for line_index, line in enumerate(identity_lines, start=1):
+                bounds.append(
+                    _text_bounds(
+                        draw,
+                        (
+                            anchor[0],
+                            first_line_y
+                            + line_index * LOWER_SUMMARY_TAG_LINE_SPACING,
+                        ),
+                        line,
+                        anchor="mm",
+                        max_width=LOWER_SUMMARY_MAX_WIDTH,
+                        preferred_size=LOWER_SUMMARY_TAG_SIZE,
+                        font=font,
+                    )
+                )
+    return bounds
+
+
+def _attribution_layout(
+    canvas: Image.Image,
+    entrants: Sequence[SinglesEntrant] | Sequence[DoublesTeam],
+    *,
+    font: PodiumFont,
+    mode: PodiumMode,
+) -> tuple[tuple[int, int], str]:
+    """Choose the footer side with the least overlap from podium labels."""
+    draw = ImageDraw.Draw(canvas)
+    y = canvas.height - ATTRIBUTION_BOTTOM_MARGIN
+    max_width = canvas.width - 2 * ATTRIBUTION_SIDE_MARGIN
+    candidates = (
+        ((ATTRIBUTION_SIDE_MARGIN, y), "la"),
+        ((canvas.width - ATTRIBUTION_SIDE_MARGIN, y), "ra"),
+    )
+    obstacles = _footer_text_bounds(draw, entrants, font=font, mode=mode)
+
+    def overlap_score(candidate: tuple[tuple[int, int], str]) -> int:
+        position, anchor = candidate
+        attribution_bounds = _text_bounds(
+            draw,
+            position,
+            ATTRIBUTION_TEXT,
+            anchor=anchor,
+            max_width=max_width,
+            preferred_size=ATTRIBUTION_PREFERRED_SIZE,
+            font=font,
+        )
+        return sum(
+            _box_intersection_area(attribution_bounds, obstacle)
+            for obstacle in obstacles
+        )
+
+    left, right = candidates
+    # Preserve the original right-side placement when both sides are equally clear.
+    return left if overlap_score(left) < overlap_score(right) else right
+
+
 def _centered_header_fields(
     canvas: Image.Image,
     tournament: Tournament,
@@ -971,14 +1106,21 @@ def _draw_text_fields(
         max_width=title_max_width,
         preferred_size=92,
     )
-    # Keep a consistent attribution link on every generated podium.
+    # Draw the attribution before podium labels so those labels retain visual
+    # priority, but first move it to whichever bottom corner they cover less.
+    attribution_position, attribution_anchor = _attribution_layout(
+        canvas,
+        entrants,
+        font=font,
+        mode=mode,
+    )
     draw_text(
         draw,
-        (width - 10, canvas.height - 30),
-        "make your own podium at tyro.work/melee-podium-template",
-        anchor="ra",
-        max_width=width - 36,
-        preferred_size=18,
+        attribution_position,
+        ATTRIBUTION_TEXT,
+        anchor=attribution_anchor,
+        max_width=width - 2 * ATTRIBUTION_SIDE_MARGIN,
+        preferred_size=ATTRIBUTION_PREFERRED_SIZE,
         fill=(25, 25, 25),
     )
 
