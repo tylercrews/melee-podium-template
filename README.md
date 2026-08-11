@@ -12,6 +12,7 @@
 
 
 TODO LIST:
+* tags without sponsors in top 8 4 podium mode could be a little bigger still
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
