@@ -41,6 +41,33 @@ class BracketImportTests(unittest.TestCase):
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Second", "seed": 3, "final_rank": 2}}, {"participant": {"id": 2, "display_name": "First", "seed": 1, "final_rank": 1}}]}}, link)
         self.assertEqual([player.tag for player in result.players], ["First", "Second"])
 
+    def test_challonge_derives_ranks_while_results_await_review(self):
+        link = identify_bracket_link("https://challonge.com/5q3o6uxz")
+        participants = [
+            {"participant": {"id": 1, "name": "qwain.mp3", "seed": 7, "final_rank": None}},
+            {"participant": {"id": 2, "name": "WhiteclawWarriors", "seed": 8, "final_rank": None}},
+            {"participant": {"id": 3, "name": "30", "seed": 3, "final_rank": None}},
+            {"participant": {"id": 4, "name": "I mead Brain", "seed": 9, "final_rank": None}},
+        ]
+        matches = [
+            {"match": {"id": 1, "round": 1, "state": "complete", "player1_id": 1, "player2_id": 4, "winner_id": 1, "loser_id": 4}},
+            {"match": {"id": 2, "round": 1, "state": "complete", "player1_id": 2, "player2_id": 3, "winner_id": 2, "loser_id": 3}},
+            {"match": {"id": 3, "round": 2, "state": "complete", "player1_id": 1, "player2_id": 2, "winner_id": 1, "loser_id": 2}},
+            {"match": {"id": 4, "round": -1, "state": "complete", "player1_id": 3, "player2_id": 4, "winner_id": 3, "loser_id": 4}},
+            {"match": {"id": 5, "round": -2, "state": "complete", "player1_id": 2, "player2_id": 3, "winner_id": 2, "loser_id": 3}},
+            {"match": {"id": 6, "round": 3, "state": "complete", "player1_id": 1, "player2_id": 2, "winner_id": 1, "loser_id": 2}},
+        ]
+        result = parse_challonge({"tournament": {"name": "Weekly", "state": "awaiting_review", "tournament_type": "double elimination", "participants": participants, "matches": matches}}, link)
+        self.assertEqual(
+            [(player.tag, player.placement, player.seed) for player in result.players],
+            [
+                ("qwain.mp3", 1, 7),
+                ("WhiteclawWarriors", 2, 8),
+                ("30", 3, 3),
+                ("I mead Brain", 4, 9),
+            ],
+        )
+
     def test_tournament_conversion_keeps_the_source_link(self):
         link = identify_bracket_link("https://challonge.com/melee")
         result = parse_challonge({"tournament": {"name": "Weekly: Downtown", "participants": [{"participant": {"id": 1, "name": "Winner", "final_rank": 1}}]}}, link)

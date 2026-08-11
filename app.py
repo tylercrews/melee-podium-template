@@ -288,6 +288,16 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                     {"fighter": character.name, "color": character.costume, "pose": None}
                     for character in player.characters
                 ],
+                "members": [
+                    {
+                        "tag": member.tag,
+                        "characters": [
+                            {"fighter": character.name, "color": character.costume, "pose": None}
+                            for character in member.characters
+                        ],
+                    }
+                    for member in player.members
+                ],
             }
             for player in imported.players
         ],

@@ -485,3 +485,10 @@ input::placeholder {
 .shoutouts-dialog__heading button:focus-visible { background: #30323d; }
 .shoutouts-dialog ul { display: grid; gap: 0.8rem; margin: 1.25rem 0 0; padding-left: 1.3rem; line-height: 1.5; }
 .shoutouts-dialog a { color: #c2b7ff; }
+.bracket-format-dialog { width: min(32rem, calc(100% - 2rem)); padding: 0; border: 1px solid #575a6d; border-radius: 0.75rem; background: #181920; color: #e9e9ef; box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 65%); }
+.bracket-format-dialog::backdrop { background: rgb(0 0 0 / 70%); }
+.bracket-format-dialog__content { display: grid; gap: 1rem; padding: 1.5rem; }
+.bracket-format-dialog__content h2,
+.bracket-format-dialog__content p { margin: 0; }
+.bracket-format-dialog__content p { color: #c7c8d1; line-height: 1.5; }
+.bracket-format-dialog__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }

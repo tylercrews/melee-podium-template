@@ -384,7 +384,11 @@ def fetch_challonge(link: BracketLink) -> BracketImport:
     try:
         response = requests.get(
             endpoint,
-            params={"api_key": api_key, "include_participants": "1"},
+            params={
+                "api_key": api_key,
+                "include_participants": "1",
+                "include_matches": "1",
+            },
             headers={"Accept": "application/json", "User-Agent": "MeleePodiumTemplate/1.0"},
             timeout=20,
         )
@@ -403,10 +407,106 @@ def fetch_challonge(link: BracketLink) -> BracketImport:
     except (KeyError, TypeError, requests.JSONDecodeError) as error:
         raise ValueError("Challonge returned an incomplete tournament response") from error
 
+def _challonge_provisional_ranks(tournament: Mapping[str, Any]) -> dict[str, int]:
+    """Derive final ranks from completed elimination matches.
+
+    Challonge leaves ``final_rank`` empty while a completed bracket is in its
+    ``awaiting_review`` state. In that state the participant array remains in
+    seed order. Only return ranks when the completed match graph proves that
+    every participant except one has been eliminated.
+    """
+    tournament_type = str(tournament.get("tournament_type") or "").casefold()
+    if "double elimination" in tournament_type:
+        losses_to_eliminate = 2
+    elif "single elimination" in tournament_type:
+        losses_to_eliminate = 1
+    else:
+        return {}
+
+    participant_ids = {
+        str(participant["participant"].get("id"))
+        for participant in tournament.get("participants", [])
+        if isinstance(participant, Mapping)
+        and isinstance(participant.get("participant"), Mapping)
+        and participant["participant"].get("id") is not None
+    }
+    matches = []
+    for index, wrapped_match in enumerate(tournament.get("matches", [])):
+        if not isinstance(wrapped_match, Mapping):
+            continue
+        match = wrapped_match.get("match", wrapped_match)
+        if not isinstance(match, Mapping) or match.get("state") != "complete":
+            continue
+        winner_id = match.get("winner_id")
+        loser_id = match.get("loser_id")
+        if winner_id is None or loser_id is None:
+            continue
+        play_order = match.get("suggested_play_order")
+        match_id = match.get("id")
+        matches.append((
+            play_order if isinstance(play_order, int) else 1_000_000 + index,
+            match_id if isinstance(match_id, int) else index,
+            index,
+            match,
+        ))
+    matches.sort(key=lambda item: item[:3])
+    if not participant_ids or not matches:
+        return {}
+
+    losses = {participant_id: 0 for participant_id in participant_ids}
+    elimination_groups: list[tuple[int, list[str]]] = []
+    group_by_round: dict[int, list[str]] = {}
+    group_order: list[int] = []
+    for _, _, _, match in matches:
+        loser_id = str(match["loser_id"])
+        if loser_id not in losses:
+            continue
+        losses[loser_id] += 1
+        if losses[loser_id] != losses_to_eliminate:
+            continue
+        round_number = match.get("round")
+        group_key = round_number if isinstance(round_number, int) else len(group_order)
+        if group_key not in group_by_round:
+            group_by_round[group_key] = []
+            group_order.append(group_key)
+        group_by_round[group_key].append(loser_id)
+
+    survivors = [
+        participant_id
+        for participant_id, loss_count in losses.items()
+        if loss_count < losses_to_eliminate
+    ]
+    eliminated_count = sum(len(group_by_round[key]) for key in group_order)
+    if len(survivors) != 1 or eliminated_count != len(participant_ids) - 1:
+        return {}
+
+    elimination_groups.extend(
+        (round_number, group_by_round[round_number])
+        for round_number in reversed(group_order)
+    )
+    ranks = {survivors[0]: 1}
+    placement = 2
+    for _, eliminated_ids in elimination_groups:
+        for participant_id in eliminated_ids:
+            ranks[participant_id] = placement
+        placement += len(eliminated_ids)
+    return ranks
+
+
 def parse_challonge(payload: Mapping[str, Any], link: BracketLink) -> BracketImport:
     tournament = payload.get("tournament", payload)
     participants = tournament.get("participants", [])
-    players = tuple(ImportedPlayer(p["participant"].get("display_name") or p["participant"]["name"], p["participant"].get("final_rank"), p["participant"].get("seed"), provider_id=str(p["participant"].get("id"))) for p in participants)
+    provisional_ranks = _challonge_provisional_ranks(tournament)
+    players = tuple(
+        ImportedPlayer(
+            p["participant"].get("display_name") or p["participant"]["name"],
+            p["participant"].get("final_rank")
+            or provisional_ranks.get(str(p["participant"].get("id"))),
+            p["participant"].get("seed"),
+            provider_id=str(p["participant"].get("id")),
+        )
+        for p in participants
+    )
     return BracketImport(link, tournament["name"], None, _iso_time(tournament.get("completed_at") or tournament.get("started_at")), None, len(players), tuple(sorted(players, key=lambda player: player.placement or 999999)), TournamentFormat.UNKNOWN, {"bracket_type": tournament.get("tournament_type")})
 
 

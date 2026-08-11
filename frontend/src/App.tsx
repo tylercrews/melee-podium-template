@@ -323,6 +323,7 @@ function App() {
   const [entrants, setEntrants] = useState<EntrantFormState[]>(initialSelections.entrants);
   const [bracketUrl, setBracketUrl] = useState(initialSelections.bracketUrl);
   const [importState, setImportState] = useState("");
+  const [pendingChallongeImport, setPendingChallongeImport] = useState<unknown | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState("");
@@ -330,6 +331,14 @@ function App() {
   const [copyStatus, setCopyStatus] = useState("");
   const [favorites, setFavorites] = useState<FavoritesData>(() => loadFavorites());
   const skipNextSelectionSave = useRef(false);
+  const bracketFormatDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = bracketFormatDialogRef.current;
+    if (pendingChallongeImport !== null && dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }, [pendingChallongeImport]);
 
   useEffect(() => {
     let active = true;
@@ -672,7 +681,7 @@ function App() {
     const next = { id: current?.id ?? newFavoriteId(), team_name: team.team_name, team_color: team.team_color, entrant_1: { tag: team.entrant_1.tag, characters: team.entrant_1.characters.map((character) => ({ ...character })) }, entrant_2: { tag: team.entrant_2.tag, characters: team.entrant_2.characters.map((character) => ({ ...character })) } };
     changeFavorites({ ...favorites, doubles: current ? favorites.doubles.map((favorite) => favorite.id === current.id ? next : favorite) : [...favorites.doubles, next] });
   }
-  function applyImport(result: unknown) {
+  function applyImport(result: unknown, formatOverride?: EventFormat) {
     if (!isRecord(result)) {
       throw new Error("The bracket response was not in the expected format.");
     }
@@ -693,7 +702,7 @@ function App() {
         result.event_format ??
         result.format,
     );
-    const nextFormat = importedFormat ?? eventFormat;
+    const nextFormat = formatOverride ?? importedFormat ?? eventFormat;
     const nextSize = recommendedPodiumSize(
       nextFormat,
       Number.isFinite(entrantsCount) && entrantsCount > 0 ? entrantsCount : undefined,
@@ -762,18 +771,21 @@ function App() {
                 : importedCharacterForms.length ? importedCharacterForms : [importedCharacter],
           });
         }
+        const importedMembers = Array.isArray(imported.members)
+          ? imported.members.filter(isRecord)
+          : [];
         const entrantOne = isRecord(imported.entrant_1)
           ? imported.entrant_1
           : isRecord(imported.player_1)
             ? imported.player_1
-            : imported;
+            : importedMembers[0];
         const entrantTwo = isRecord(imported.entrant_2)
           ? imported.entrant_2
           : isRecord(imported.player_2)
             ? imported.player_2
-            : imported;
-        const entrantOneCharacter = firstCharacter(entrantOne);
-        const entrantTwoCharacter = firstCharacter(entrantTwo);
+            : importedMembers[1];
+        const entrantOneCharacter = firstCharacter(entrantOne ?? {});
+        const entrantTwoCharacter = firstCharacter(entrantTwo ?? {});
 
         return createDoublesTeam(index + 1, {
           kind: "doubles",
@@ -785,50 +797,77 @@ function App() {
             stringValue(imported.team_color, imported.color) ||
             (existing.kind === "doubles" ? existing.team_color : ""),
           entrant_1: {
-            tag:
-              stringValue(
-                entrantOne.tag,
-                entrantOne.name,
-                entrantOne.player_tag,
-              ) ||
-              (existing.kind === "doubles" ? existing.entrant_1.tag : ""),
-            characters: [
-              createCharacterForm(
-                stringValue(
-                  entrantOne.fighter,
-                  entrantOne.melee_fighter_name,
-                  entrantOneCharacter.fighter,
-                  entrantOneCharacter.melee_fighter_name,
-                ),
-                stringValue(entrantOne.color, entrantOneCharacter.color),
-                stringValue(entrantOne.pose, entrantOneCharacter.pose),
-              ),
-            ],
+            tag: entrantOne
+              ? stringValue(
+                  entrantOne.tag,
+                  entrantOne.name,
+                  entrantOne.player_tag,
+                ) || (existing.kind === "doubles" ? existing.entrant_1.tag : "")
+              : "",
+            characters: entrantOne
+              ? [
+                  createCharacterForm(
+                    stringValue(
+                      entrantOne.fighter,
+                      entrantOne.melee_fighter_name,
+                      entrantOneCharacter.fighter,
+                      entrantOneCharacter.melee_fighter_name,
+                    ),
+                    stringValue(entrantOne.color, entrantOneCharacter.color),
+                    stringValue(entrantOne.pose, entrantOneCharacter.pose),
+                  ),
+                ]
+              : existing.kind === "doubles"
+                ? existing.entrant_1.characters
+                : [createCharacterForm()],
           },
           entrant_2: {
-            tag:
-              stringValue(
-                entrantTwo.tag,
-                entrantTwo.name,
-                entrantTwo.player_tag,
-              ) ||
-              (existing.kind === "doubles" ? existing.entrant_2.tag : ""),
-            characters: [
-              createCharacterForm(
-                stringValue(
-                  entrantTwo.fighter,
-                  entrantTwo.melee_fighter_name,
-                  entrantTwoCharacter.fighter,
-                  entrantTwoCharacter.melee_fighter_name,
-                ),
-                stringValue(entrantTwo.color, entrantTwoCharacter.color),
-                stringValue(entrantTwo.pose, entrantTwoCharacter.pose),
-              ),
-            ],
+            tag: entrantTwo
+              ? stringValue(
+                  entrantTwo.tag,
+                  entrantTwo.name,
+                  entrantTwo.player_tag,
+                ) || (existing.kind === "doubles" ? existing.entrant_2.tag : "")
+              : "",
+            characters: entrantTwo
+              ? [
+                  createCharacterForm(
+                    stringValue(
+                      entrantTwo.fighter,
+                      entrantTwo.melee_fighter_name,
+                      entrantTwoCharacter.fighter,
+                      entrantTwoCharacter.melee_fighter_name,
+                    ),
+                    stringValue(entrantTwo.color, entrantTwoCharacter.color),
+                    stringValue(entrantTwo.pose, entrantTwoCharacter.pose),
+                  ),
+                ]
+              : existing.kind === "doubles"
+                ? existing.entrant_2.characters
+                : [createCharacterForm()],
           },
         });
       }),
     );
+  }
+
+  function chooseChallongeFormat(format: EventFormat) {
+    if (pendingChallongeImport === null) return;
+    try {
+      applyImport(pendingChallongeImport, format);
+      setImportState(`Challonge ${format} bracket imported. Review the fields before rendering.`);
+    } catch (error) {
+      setImportState(error instanceof Error ? error.message : "Bracket import failed.");
+    } finally {
+      setPendingChallongeImport(null);
+      bracketFormatDialogRef.current?.close();
+    }
+  }
+
+  function cancelChallongeImport() {
+    setPendingChallongeImport(null);
+    setImportState("Challonge import canceled.");
+    bracketFormatDialogRef.current?.close();
   }
 
   async function handleImport(event: FormEvent) {
@@ -838,8 +877,13 @@ function App() {
 
     try {
       const result = await importBracket(bracketUrl.trim(), 8);
-      applyImport(result);
-      setImportState("Bracket imported. Review the fields before rendering.");
+      if (isRecord(result) && stringValue(result.provider).toLowerCase() === "challonge") {
+        setPendingChallongeImport(result);
+        setImportState("Choose whether this Challonge bracket is singles or doubles.");
+      } else {
+        applyImport(result);
+        setImportState("Bracket imported. Review the fields before rendering.");
+      }
     } catch (error) {
       setImportState(
         error instanceof Error ? error.message : "Bracket import failed.",
@@ -938,6 +982,26 @@ function App() {
         </form>
         {importState && <p className="form-message">{importState}</p>}
       </section>
+
+      <dialog
+        ref={bracketFormatDialogRef}
+        className="bracket-format-dialog"
+        aria-labelledby="bracket-format-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          cancelChallongeImport();
+        }}
+      >
+        <div className="bracket-format-dialog__content">
+          <h2 id="bracket-format-title">What kind of bracket is this?</h2>
+          <p>Choose how Challonge entrants should be imported. Doubles bracket names will populate the Team Name fields.</p>
+          <div className="bracket-format-dialog__actions">
+            <button type="button" className="button-primary" onClick={() => chooseChallongeFormat("singles")}>Singles</button>
+            <button type="button" className="button-primary" onClick={() => chooseChallongeFormat("doubles")}>Doubles</button>
+            <button type="button" onClick={cancelChallongeImport}>Cancel</button>
+          </div>
+        </div>
+      </dialog>
 
       <form onSubmit={handleRender}>
         <section className="panel">
