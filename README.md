@@ -12,8 +12,6 @@
 
 
 TODO LIST:
-* add a checkbox to explicitly ignore the url link when rendering - the link is already optional, but they might not think to delete it
-* feels like for top 3 singles the 2nd place (left podium) anchor is a little too skewed to the right
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
