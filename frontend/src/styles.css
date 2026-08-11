@@ -197,6 +197,19 @@ input::placeholder {
   gap: 1rem;
 }
 
+.tournament-link-control {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.8rem;
+}
+
+.tournament-link-control__ignore {
+  min-height: 2.75rem;
+  white-space: nowrap;
+}
+
 .format-controls {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -345,6 +358,16 @@ input::placeholder {
   .entrant-grid,
   .format-controls {
     grid-template-columns: 1fr;
+  }
+
+  .tournament-link-control {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-link-control__ignore {
+    min-height: auto;
+    white-space: normal;
   }
 }
 

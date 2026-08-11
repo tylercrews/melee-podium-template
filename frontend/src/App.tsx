@@ -59,6 +59,7 @@ interface PodiumSelections {
   podiumSize: PodiumSize;
   top8Layout: Top8Layout;
   includeSeeds: boolean;
+  ignoreTournamentLink: boolean;
   entrants: EntrantFormState[];
   bracketUrl: string;
 }
@@ -186,6 +187,7 @@ function defaultPodiumSelections(): PodiumSelections {
     podiumSize: 8,
     top8Layout: "all_showing",
     includeSeeds: true,
+    ignoreTournamentLink: false,
     entrants: createEntrants(8, "singles"),
     bracketUrl: "",
   };
@@ -222,6 +224,7 @@ function loadPodiumSelections(): PodiumSelections {
       podiumSize: normalizedSize,
       top8Layout,
       includeSeeds: typeof saved.includeSeeds === "boolean" ? saved.includeSeeds : defaults.includeSeeds,
+      ignoreTournamentLink: typeof saved.ignoreTournamentLink === "boolean" ? saved.ignoreTournamentLink : defaults.ignoreTournamentLink,
       entrants: createEntrants(entrantStorageCount(format), format, savedEntrants as EntrantFormState[]),
       bracketUrl: stringValue(saved.bracketUrl),
     };
@@ -320,6 +323,7 @@ function App() {
   const [top8Layout, setTop8Layout] = useState<Top8Layout>(initialSelections.top8Layout);
   const [podiumFont, setPodiumFont] = useState<PodiumFont>(loadPreferredFont);
   const [includeSeeds, setIncludeSeeds] = useState(initialSelections.includeSeeds);
+  const [ignoreTournamentLink, setIgnoreTournamentLink] = useState(initialSelections.ignoreTournamentLink);
   const [entrants, setEntrants] = useState<EntrantFormState[]>(initialSelections.entrants);
   const [bracketUrl, setBracketUrl] = useState(initialSelections.bracketUrl);
   const [importState, setImportState] = useState("");
@@ -453,13 +457,14 @@ function App() {
         podiumSize,
         top8Layout,
         includeSeeds,
+        ignoreTournamentLink,
         entrants,
         bracketUrl,
       } satisfies PodiumSelections));
     } catch {
       // Keep the maker usable if browser storage is unavailable.
     }
-  }, [bracketUrl, entrants, eventFormat, includeSeeds, podiumSize, top8Layout, tournament]);
+  }, [bracketUrl, entrants, eventFormat, ignoreTournamentLink, includeSeeds, podiumSize, top8Layout, tournament]);
 
   useEffect(() => {
     try {
@@ -480,7 +485,7 @@ function App() {
         entrants_count: Number(tournament.entrantsCount),
         subtitle: tournament.subtitle.trim() || null,
         event: tournament.event.trim() || null,
-        link: tournament.link.trim() || null,
+        link: ignoreTournamentLink ? null : tournament.link.trim() || null,
         event_format: eventFormat,
       },
       entrants: entrants.slice(0, podiumSize).map((entrant, index) => {
@@ -524,7 +529,7 @@ function App() {
         };
       }),
     }),
-    [entrants, eventFormat, includeSeeds, podiumFont, podiumSize, top8Layout, tournament],
+    [entrants, eventFormat, ignoreTournamentLink, includeSeeds, podiumFont, podiumSize, top8Layout, tournament],
   );
 
   function startFresh() {
@@ -540,6 +545,7 @@ function App() {
     setPodiumSize(defaults.podiumSize);
     setTop8Layout(defaults.top8Layout);
     setIncludeSeeds(defaults.includeSeeds);
+    setIgnoreTournamentLink(defaults.ignoreTournamentLink);
     setEntrants(defaults.entrants);
     setBracketUrl(defaults.bracketUrl);
     setImportState("");
@@ -1122,15 +1128,25 @@ function App() {
                 placeholder={`Melee ${eventFormat === "doubles" ? "Doubles" : "Singles"}`}
               />
             </label>
-            <label>
-              Tournament link (optional)
-              <input
-                type="url"
-                value={tournament.link}
-                onChange={(event) => setTournament((current) => ({ ...current, link: event.target.value }))}
-                placeholder="https://start.gg/..."
-              />
-            </label>
+            <div className="tournament-link-control">
+              <label>
+                Tournament link (optional)
+                <input
+                  type="url"
+                  value={tournament.link}
+                  onChange={(event) => setTournament((current) => ({ ...current, link: event.target.value }))}
+                  placeholder="https://start.gg/..."
+                />
+              </label>
+              <label className="choice tournament-link-control__ignore">
+                <input
+                  type="checkbox"
+                  checked={ignoreTournamentLink}
+                  onChange={(event) => setIgnoreTournamentLink(event.target.checked)}
+                />
+                Ignore URL when rendering
+              </label>
+            </div>
           </div>
         </section>
 
