@@ -34,37 +34,65 @@ Different Layout Styles One Day:
 * top8.gg has a really cool type of layout where they have title bar, podium-arranged top 3, then 5 on the bottom. But they do all squares. What if I had a half-and-half layout where the top 3 get their characters on short podiums, then the subsequent players get their characters in boxes underneath.
 * instead of straight up boxes what if you maximized space by having / vs style diagonal split portraits
 
-## Bracket-import groundwork
+## Bracket importing
 
-`bracket_import.py` now recognizes public Start.gg, Challonge, Tonamel, and
-ParryGG bracket links and normalizes the data returned by their APIs into one
-provider-neutral result format.  It deliberately retains data that cannot yet
-be drawn (source URL, event, dates, seeds, handles, country, and raw metadata)
-instead of throwing it away.
+The UI currently imports public Start.gg and Challonge URLs. Their credentials
+stay on the Flask server: Start.gg uses `START_GG_TOKEN` and Challonge uses
+`CHALLONGE_API_KEY`. `bracket_import.py` normalizes both providers into the same
+internal result format before the frontend fills the tournament and placement
+fields.
 
-Start.gg can provide tournament/event name, start time, city/country, entrant
-count, placements, seeds, player tags, linked X handles, and game character
-selections.  Character selections require the Start.gg character-ID map and
-the event's game/selection payload.  No supported provider offers a reliable
-Melee costume/color field: Start.gg score encoding has been used as a heuristic
-by Top8er, but it is not treated as verified here.  Challonge contributes names,
-seeds, and final ranks; Tonamel contributes placement/display-name data; and
-ParryGG contributes placements, tags, country, entrant count, and tournament
-date/location when present.
+The module also recognizes Tonamel and ParryGG URLs and contains parsing logic
+for responses from both providers, but I do not currently have either service
+configured. The live `/api/import` route therefore returns “not configured yet”
+for those URLs instead of attempting a request. The existing Tonamel parser can
+normalize placement and display-name data from a supplied response. The ParryGG
+parser can normalize placements, tags, countries, entrant counts, dates, and
+locations, and can identify doubles when every entrant record contains exactly
+two users. Enabling either provider still requires implementing and configuring
+its authenticated server-side fetch.
 
-Start.gg explicitly identifies an event's entrant size, so an entrant size of
-two imports as doubles.  Its entrant display name is retained as the team name
-and its two participant tags are retained as team members.  ParryGG can do the
-same when its entrant records expose exactly two users.  Challonge and Tonamel
-bracket-result payloads do not reliably state whether a display name is a team,
-so their imports stay `unknown` until a UI allows confirmation.
+### Provider data limitations
 
-The module currently parses API JSON rather than embedding credentials in this
-desktop project.  A future URL-import UI should obtain server-side credentials
-for Start.gg (GraphQL bearer token), Challonge (API/OAuth), Tonamel (OAuth
-client credentials), and ParryGG (API-key/gRPC), then pass each response to the
-matching `parse_*` function.  `startgg_query()` supplies the safe base GraphQL
-request for the first provider.
+Start.gg provides the richest import: tournament and event names, time,
+location, entrant count, placements, seeds, participant tags, linked X handles,
+and reported game-character selections. Start.gg also reports entrant size, so
+an entrant size of two can be imported automatically as doubles. The entrant
+display name becomes the team name and its two participant tags become the team
+members.
+
+No supported provider supplies a reliable Melee costume/color field, so the
+user still reviews those selections. The importer does not treat score strings
+or other undocumented values as verified costume data.
+
+Challonge supplies bracket entrant names and seeds, but it does not reliably
+tell us whether those names represent singles players or doubles teams, and it
+does not supply the two player identities, Melee characters, or costumes for a
+doubles team. After a Challonge request succeeds, the UI explicitly asks whether
+the bracket is singles or doubles. In doubles mode the Challonge entrant name is
+placed in the **Team name** field, while the two member fields are left for the
+user to complete.
+
+### Challonge placements and incomplete brackets
+
+Challonge normally provides `final_rank`, and those ranks are used directly.
+However, a bracket can have every match completed while Challonge still reports
+its state as `awaiting_review`; during that state every participant's
+`final_rank` may be `null`, and the participant list may still be in seed order.
+To avoid mistaking seeds for placements, the Challonge request also includes
+match results. For single- and double-elimination brackets, the importer derives
+provisional ranks from completed losses only when the match graph proves that
+all participants except one have been eliminated. It preserves tied placements
+for players eliminated in the same round.
+
+If a bracket is genuinely incomplete, has unresolved matches, has more than one
+possible survivor, or uses a tournament type whose elimination rules are not
+implemented, the importer does not invent final placements. Missing placements
+remain `null` in the normalized result. Because the podium form itself is
+positional, provider-order entrants may still fill its placement cards; that
+must not be treated as a final standing. The user should finish/review the
+bracket in Challonge or manually correct and verify every podium field before
+rendering.
 
 LocalStorage and LocalStorage Management page.
 * should be able to store 300-350 entrants per MB, and localstorage can have up to 5MB, but I don't really want to push it.
