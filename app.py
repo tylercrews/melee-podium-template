@@ -98,12 +98,20 @@ def _optional_positive_int(data: Mapping[str, Any], name: str) -> int | None:
     return value
 
 
+def _optional_boolean(data: Mapping[str, Any], name: str, default: bool = False) -> bool:
+    value = data.get(name, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"{name} must be a boolean")
+    return value
+
+
 def _character(data: Any) -> Character:
     source = _json_object(data, "character")
     return Character(
         _required_text(source, "melee_fighter_name"),
         color=_optional_text(source, "color"),
         pose=_optional_text(source, "pose"),
+        mirror_horizontally=_optional_boolean(source, "mirror_horizontally"),
     )
 
 

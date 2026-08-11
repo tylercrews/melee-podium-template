@@ -2,6 +2,7 @@
   fighter: string;
   color: string;
   pose: string;
+  mirrorHorizontally: boolean;
 }
 
 export interface FavoriteSinglesEntrant {
@@ -33,14 +34,20 @@ function isCharacter(value: unknown): value is FavoriteCharacter {
   return !!value && typeof value === "object" &&
     typeof (value as FavoriteCharacter).fighter === "string" &&
     typeof (value as FavoriteCharacter).color === "string" &&
-    typeof (value as FavoriteCharacter).pose === "string";
+    typeof (value as FavoriteCharacter).pose === "string" &&
+    ((value as Partial<FavoriteCharacter>).mirrorHorizontally === undefined ||
+      typeof (value as FavoriteCharacter).mirrorHorizontally === "boolean");
+}
+
+function normalizeCharacter(character: FavoriteCharacter): FavoriteCharacter {
+  return { ...character, mirrorHorizontally: character.mirrorHorizontally === true };
 }
 
 function asMember(value: unknown): Omit<FavoriteSinglesEntrant, "id" | "primary"> | undefined {
   if (!value || typeof value !== "object") return undefined;
   const member = value as Record<string, unknown>;
   if (typeof member.tag !== "string" || !Array.isArray(member.characters) || !member.characters.every(isCharacter)) return undefined;
-  return { tag: member.tag, characters: member.characters };
+  return { tag: member.tag, characters: member.characters.map(normalizeCharacter) };
 }
 
 function isPrimary(value: unknown): boolean {

@@ -2,8 +2,8 @@ import { useId, useState } from "react";
 import { FighterOption } from "./api";
 import { FavoriteCharacter } from "./favorites";
 
-export function createCharacterForm(fighter = "", color = "", pose = ""): FavoriteCharacter {
-  return { fighter, color, pose };
+export function createCharacterForm(fighter = "", color = "", pose = "", mirrorHorizontally = false): FavoriteCharacter {
+  return { fighter, color, pose, mirrorHorizontally };
 }
 
 const FALLBACK_COLOR_ORDER = ["default", "red", "green", "blue", "black", "white", "yellow", "pink", "purple", "cyan"];
@@ -26,7 +26,7 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
       if (currentIndex !== characterIndex) return character;
       if (field === "fighter") {
         const option = fighters.find((fighter) => fighter.name === value)?.options[0];
-        return { fighter: value, color: option?.color ?? "", pose: "" };
+        return { fighter: value, color: option?.color ?? "", pose: "", mirrorHorizontally: character.mirrorHorizontally === true };
       }
       if (field === "color") {
         return { ...character, color: value, pose: "" };
@@ -57,8 +57,9 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
               <label>Color<select value={character.color} onChange={(event) => updateCharacter(characterIndex, "color", event.target.value)}><option value="">Random</option>{character.color && !colors.includes(character.color) && <option value={character.color}>{character.color}</option>}{colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></label>
               <label>Pose<select value={character.pose} onChange={(event) => updateCharacter(characterIndex, "pose", event.target.value)}><option value="">Random</option>{character.pose && !poseOptions.some((option) => option.pose === character.pose) && <option value={character.pose}>{character.pose}</option>}{poseOptions.map((option) => <option key={option.pose} value={option.pose}>{option.pose_label ?? option.pose}</option>)}</select></label>
             </div>
+            <label className="choice"><input type="checkbox" checked={character.mirrorHorizontally === true} onChange={(event) => onChange(characters.map((item, index) => index === characterIndex ? { ...item, mirrorHorizontally: event.target.checked } : item))} /> Mirror Horizontally</label>
           </div>
-          {previewUrl && <figure className="character-preview"><img src={previewUrl} alt={`${character.color} ${character.pose} ${character.fighter} portrait`} /><figcaption>Selected portrait preview</figcaption></figure>}
+          {previewUrl && <figure className="character-preview"><img className={character.mirrorHorizontally ? "character-preview__image--mirrored" : undefined} src={previewUrl} alt={`${character.color} ${character.pose} ${character.fighter} portrait`} /><figcaption>Selected portrait preview</figcaption></figure>}
         </div>
       </fieldset>;
     })}

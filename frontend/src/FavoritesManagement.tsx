@@ -5,7 +5,7 @@ import { FighterOption } from "./api";
 import Footer from "./Footer";
 import { FavoritesData, FavoriteSinglesEntrant, FavoriteDoublesTeam, characterSummary, newFavoriteId, normalizeFavorites, normalizedFavoriteTag } from "./favorites";
 
-const emptyMember = (): Omit<FavoriteSinglesEntrant, "id" | "primary"> => ({ tag: "", characters: [{ fighter: "", color: "", pose: "" }] });
+const emptyMember = (): Omit<FavoriteSinglesEntrant, "id" | "primary"> => ({ tag: "", characters: [{ fighter: "", color: "", pose: "", mirrorHorizontally: false }] });
 const copyFavoriteMember = (favorite: FavoriteSinglesEntrant): Omit<FavoriteSinglesEntrant, "id" | "primary"> => ({ tag: favorite.tag, characters: favorite.characters.map((character) => ({ ...character })) });
 
 export default function FavoritesManagement({ favorites, fighters, renderCount, onChange, onBack }: { favorites: FavoritesData; fighters: FighterOption[]; renderCount: number | null; onChange: (favorites: FavoritesData) => void; onBack: () => void }) {

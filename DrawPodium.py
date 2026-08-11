@@ -254,7 +254,10 @@ def _load_character(character: Character, mode_scale: float) -> Image.Image:
         max(1, round(image.width * total_scale)),
         max(1, round(image.height * total_scale)),
     )
-    return image.resize(size, Image.Resampling.LANCZOS)
+    image = image.resize(size, Image.Resampling.LANCZOS)
+    if character.mirror_horizontally:
+        image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    return image
 
 
 def _place_image(

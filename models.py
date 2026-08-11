@@ -95,8 +95,11 @@ class Character:
     melee_fighter_name: str
     color: str | None = "default"
     pose: str | None = "a"
+    mirror_horizontally: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.mirror_horizontally, bool):
+            raise TypeError("Character mirror_horizontally must be a boolean")
         if self.melee_fighter_name not in MELEE_FIGHTERS:
             choices = ", ".join(MELEE_FIGHTERS)
             raise ValueError(

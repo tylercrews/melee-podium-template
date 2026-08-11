@@ -18,6 +18,7 @@ interface CharacterForm {
   fighter: string;
   color: string;
   pose: string;
+  mirrorHorizontally: boolean;
 }
 
 interface EntrantForm {
@@ -84,7 +85,7 @@ function createEntrantForm(existing?: EntrantForm): EntrantForm {
   return {
     tag: existing?.tag ?? "",
     characters: existing?.characters?.length
-      ? existing.characters.map((character) => ({ ...character }))
+      ? existing.characters.map((character) => ({ ...character, mirrorHorizontally: character.mirrorHorizontally === true }))
       : [createCharacterForm()],
   };
 }
@@ -98,7 +99,7 @@ function createSinglesEntrant(
     tag: existing?.tag ?? "",
     seed: existing?.seed ?? String(placement),
     characters: existing?.characters?.length
-      ? existing.characters.map((character) => ({ ...character }))
+      ? existing.characters.map((character) => ({ ...character, mirrorHorizontally: character.mirrorHorizontally === true }))
       : [createCharacterForm()],
   };
 }
@@ -374,6 +375,7 @@ function App() {
                       fighter: first.name,
                       color: firstOption?.color ?? "",
                       pose: "",
+                      mirrorHorizontally: false,
                     },
                   ],
                 };
@@ -390,6 +392,7 @@ function App() {
                       fighter: firstMember.fighter || first.name,
                       color: firstMember.color || (firstOption?.color ?? ""),
                       pose: firstMember.pose,
+                      mirrorHorizontally: firstMember.mirrorHorizontally === true,
                     },
                   ],
                 },
@@ -400,6 +403,7 @@ function App() {
                       fighter: secondMember.fighter || first.name,
                       color: secondMember.color || (firstOption?.color ?? ""),
                       pose: secondMember.pose,
+                      mirrorHorizontally: secondMember.mirrorHorizontally === true,
                     },
                   ],
                 },
@@ -480,6 +484,7 @@ function App() {
               melee_fighter_name: character.fighter,
               color: character.color || null,
               pose: character.pose || null,
+              mirror_horizontally: character.mirrorHorizontally,
             })),
           };
         }
@@ -495,6 +500,7 @@ function App() {
               melee_fighter_name: character.fighter,
               color: character.color || null,
               pose: character.pose || null,
+              mirror_horizontally: character.mirrorHorizontally,
             })),
           },
           entrant_2: {
@@ -503,6 +509,7 @@ function App() {
               melee_fighter_name: character.fighter,
               color: character.color || null,
               pose: character.pose || null,
+              mirror_horizontally: character.mirrorHorizontally,
             })),
           },
         };
@@ -599,7 +606,7 @@ function App() {
         if (field === "fighter") {
           if (characters.some((character, currentIndex) => currentIndex !== characterIndex && character.fighter === value)) return character;
           const option = fighterByName(value)?.options[0];
-          return { fighter: value, color: option?.color ?? "", pose: "" };
+          return { fighter: value, color: option?.color ?? "", pose: "", mirrorHorizontally: character.mirrorHorizontally === true };
         }
         if (field === "color") {
           return { ...character, color: value, pose: "" };
