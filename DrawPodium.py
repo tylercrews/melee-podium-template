@@ -114,9 +114,9 @@ class PodiumMode(str, Enum):
 # Pillow has a top-left origin; character bottoms are centered on these points.
 SINGLES_ANCHORS = {
     3: {
-        1: (817, 497),
+        1: (847, 497),
         2: (365, 579),
-        3: (1321, 614),
+        3: (1312, 614),
     },
     4: {
         1: (236, 505),
@@ -138,9 +138,9 @@ SINGLES_ANCHORS = {
 
 DOUBLES_ANCHORS = {
     3: {
-        1: ((743, 497), (911, 497)),
+        1: ((763, 497), (931, 497)),
         2: ((278, 579), (452, 579)),
-        3: ((1242, 614), (1400, 614)),
+        3: ((1233, 614), (1391, 614)),
     },
     4: {
         1: ((176, 505), (316, 505)),
