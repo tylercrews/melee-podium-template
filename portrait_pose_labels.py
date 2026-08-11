@@ -15,7 +15,7 @@ POSE_LABELS = {
     "Kirby": {"a": "Tippie Toes", "b": "Char Select Portrait - Waving"},
     "Link": {"a": "Standing", "b": "Char Select Portrait - Blocking"},
     "Luigi": {"a": "Bashful", "b": "Char Select Portrait - Hat Tip", "c": "Victory B - Plank", "d": "Victory Y - Finger Guns", "e": "Brawl Up Taunt - Point Right"},
-    "Mario": {"a": "Victory Hand", "b": "Char Select Portrait - Jumping"},
+    "Mario": {"a": "Victory Hand", "b": "Char Select Portrait - Jumping", "c": "Victory Y - Pointing"},
     "Marth": {"a": "Wide Stance", "b": "Char Select Portrait - Narrow Stance", "c": "Victory B - Sword Point", "d": "Victory Y - Looking Back", "e": "Victory X - Jojo Pose"},
     "Mewtwo": {"a": "Glaring", "b": "Char Select Portrait - Crystal Sprite", "c": "Victory B - Shadow Blast", "d": "Victory X - Levitate"},
     "Mr. Game and Watch": {"a": "Walking", "b": "Char Select Portrait - Aghast", "c": "Flag"},
@@ -28,5 +28,5 @@ POSE_LABELS = {
     "Sheik": {"a": "Archived Zelda And Sheik Standing", "b": "Archived Falling With Needles", "c": "Victory Y - Standing", "d": "Victory X - Squat", "e": "Balancing", "f": "Handstand"},
     "Yoshi": {"a": "On One Foot", "b": "Char Select Portrait - Hop On!", "c": "Victory B - Victory Hand", "d": "Victory X - Backwards Flex"},
     "Young Link": {"a": "Walking", "b": "Char Select Portrait - Blocking"},
-    "Zelda": {"a": "Zelda And Sheik Standing", "b": "Char Select Portrait - Idle Pose - Arms Crossed"},
+    "Zelda": {"a": "Zelda And Sheik Standing", "b": "Char Select Portrait - Idle Pose - Arms Crossed", "c": "Victory B - Praying"},
 }
