@@ -115,7 +115,7 @@ class PodiumMode(str, Enum):
 SINGLES_ANCHORS = {
     3: {
         1: (817, 497),
-        2: (393, 579),
+        2: (365, 579),
         3: (1321, 614),
     },
     4: {
