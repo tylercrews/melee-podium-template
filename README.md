@@ -25,6 +25,7 @@ Maybes/Eventuallies:
 * similar to the tournament graphic, what if the user could upload a font, then you give them the ability to adjust the size and thickness the same way that I've adjusted my fonts.
 
 Different Layout Styles One Day:
+* once we have placement numbers rendered instead of static assets, create an alternate counting mode where it puts 1-8 (5th 6th 7th 8th instead of 5th 5th 7th 7th) so that people can use it for PRs as well. Or maybe a top 10 pr mode.
 * flying v with first place centered
 * top 8er / waddle wednesday layout
 * long rectangles just showing the eyes of the characters
