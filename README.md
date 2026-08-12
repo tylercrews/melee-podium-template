@@ -14,6 +14,7 @@
 TODO LIST:
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
+* in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
 * tags without sponsors in top 8 4 podium mode could be a little bigger still
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
