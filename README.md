@@ -19,6 +19,7 @@ TODO LIST:
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
+* get a dedicated domain name? meleepodium.meme ? meleepodium.free? meleepodium.photo? meleepodium.pics ? just need to be sure if I want to keep calling it meleepodium or if we're gonna change the name when we have all the functionality done
 * formatting positioners - if you want the title centered or to the side, if you want the metadata on the right (default) or swapped with the title
 * add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
 * Fit in tournament location?
