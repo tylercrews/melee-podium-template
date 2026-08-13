@@ -56,12 +56,19 @@ SINGLES_CHARACTER_NAME_Y_OFFSET = -30
 SINGLES_TOP_8_CHARACTER_NAME_Y_OFFSET = -22
 TAG_COLLISION_GUTTER = 12
 TAG_PREFERRED_SIZE = 56
+SPONSOR_PREFERRED_SIZE = 34
+FOUR_PODIUM_TAG_PREFERRED_SIZE = 72
+FOUR_PODIUM_SPONSOR_PREFERRED_SIZE = 40
+FOUR_PODIUM_TAG_MAX_WIDTH = 330
 HEADER_METADATA_GUTTER = 15
 LOWER_SUMMARY_MAX_WIDTH = 370
 LOWER_SUMMARY_PLACEMENT_SIZE = 30
 LOWER_SUMMARY_SEED_SIZE = 15
-LOWER_SUMMARY_TAG_SIZE = 35
+LOWER_SUMMARY_TAG_SIZE = 50
+LOWER_SUMMARY_SPONSOR_SIZE = 24
 LOWER_SUMMARY_TAG_LINE_SPACING = 39
+LOWER_SUMMARY_SPONSORED_SPONSOR_Y_OFFSET = 38
+LOWER_SUMMARY_SPONSORED_PLAYER_Y_OFFSET = 78
 ATTRIBUTION_TEXT = "make your own podium at tyro.work/melee-podium-template"
 ATTRIBUTION_SIDE_MARGIN = 10
 ATTRIBUTION_BOTTOM_MARGIN = 30
@@ -80,6 +87,8 @@ class CharacterTag:
     text: str
     glow_fill: tuple[int, int, int]
     max_width: int
+    preferred_size: int = TAG_PREFERRED_SIZE
+    sponsor_preferred_size: int = SPONSOR_PREFERRED_SIZE
 
 
 class PodiumMode(str, Enum):
@@ -489,6 +498,8 @@ def _draw_character_tag(
     tag = character_tag.text
     glow_fill = character_tag.glow_fill
     max_width = character_tag.max_width
+    preferred_size = character_tag.preferred_size
+    sponsor_preferred_size = character_tag.sponsor_preferred_size
     sponsor, separator, player_tag = tag.partition("|")
     if not separator or not player_tag.strip():
         _draw_text(
@@ -497,7 +508,7 @@ def _draw_character_tag(
             tag,
             anchor="ms",
             max_width=max_width,
-            preferred_size=TAG_PREFERRED_SIZE,
+            preferred_size=preferred_size,
             font=font,
             glow_fill=glow_fill,
         )
@@ -511,12 +522,12 @@ def _draw_character_tag(
         player_tag,
         anchor="ms",
         max_width=max_width,
-        preferred_size=TAG_PREFERRED_SIZE,
+        preferred_size=preferred_size,
         font=font,
         glow_fill=glow_fill,
     )
 
-    player_font = _font_to_fit(player_tag, max_width, TAG_PREFERRED_SIZE, font)
+    player_font = _font_to_fit(player_tag, max_width, preferred_size, font)
     player_bounds = player_font.getbbox(player_tag)
     player_height = player_bounds[3] - player_bounds[1]
     sponsor_position = (position[0], position[1] - player_height - 6)
@@ -526,7 +537,7 @@ def _draw_character_tag(
         sponsor_tag,
         anchor="ms",
         max_width=max_width,
-        preferred_size=TAG_PREFERRED_SIZE,
+        preferred_size=sponsor_preferred_size,
         font=font,
         glow_fill=glow_fill,
     )
@@ -541,24 +552,28 @@ def _character_tag_bounds(
     position = character_tag.position
     tag = character_tag.text
     max_width = character_tag.max_width
+    preferred_size = character_tag.preferred_size
+    sponsor_preferred_size = character_tag.sponsor_preferred_size
     sponsor, separator, player_tag = tag.partition("|")
     stroke_width = 2  # Include the visible halo in collision detection.
     if not separator or not player_tag.strip():
-        loaded_font = _font_to_fit(tag, max_width, TAG_PREFERRED_SIZE, font)
+        loaded_font = _font_to_fit(tag, max_width, preferred_size, font)
         return draw.multiline_textbbox(
             position, tag, font=loaded_font, anchor="ms", stroke_width=stroke_width
         )
 
     player_tag = player_tag.strip()
     sponsor_tag = f"{sponsor.rstrip()} |"
-    player_font = _font_to_fit(player_tag, max_width, TAG_PREFERRED_SIZE, font)
+    player_font = _font_to_fit(player_tag, max_width, preferred_size, font)
     player_bounds = draw.multiline_textbbox(
         position, player_tag, font=player_font, anchor="ms", stroke_width=stroke_width
     )
     player_font_bounds = player_font.getbbox(player_tag)
     player_height = player_font_bounds[3] - player_font_bounds[1]
     sponsor_position = (position[0], position[1] - player_height - 6)
-    sponsor_font = _font_to_fit(sponsor_tag, max_width, TAG_PREFERRED_SIZE, font)
+    sponsor_font = _font_to_fit(
+        sponsor_tag, max_width, sponsor_preferred_size, font
+    )
     sponsor_bounds = draw.multiline_textbbox(
         sponsor_position,
         sponsor_tag,
@@ -701,6 +716,36 @@ def _draw_stock_icons(
         x += icon.width + gap
 
 
+def _lower_summary_identity_fields(
+    entrant: SinglesEntrant,
+    *,
+    anchor: tuple[int, int],
+) -> tuple[tuple[tuple[int, int], str, int], ...]:
+    """Return the sponsor/player lines for a lower Top 8 summary."""
+    first_line_y = anchor[1] - 11
+    sponsor, separator, player_tag = entrant.tag.partition("|")
+    if separator and player_tag.strip():
+        return (
+            (
+                (anchor[0], first_line_y + LOWER_SUMMARY_SPONSORED_SPONSOR_Y_OFFSET),
+                sponsor.strip(),
+                LOWER_SUMMARY_SPONSOR_SIZE,
+            ),
+            (
+                (anchor[0], first_line_y + LOWER_SUMMARY_SPONSORED_PLAYER_Y_OFFSET),
+                player_tag.strip(),
+                LOWER_SUMMARY_TAG_SIZE,
+            ),
+        )
+    return (
+        (
+            (anchor[0], first_line_y + LOWER_SUMMARY_TAG_LINE_SPACING),
+            entrant.tag,
+            LOWER_SUMMARY_TAG_SIZE,
+        ),
+    )
+
+
 def _draw_lower_entrant_summary(
     canvas: Image.Image,
     entrant: SinglesEntrant,
@@ -772,23 +817,16 @@ def _draw_lower_entrant_summary(
             fill=fill,
             anchor="lb",
         )
-    sponsor, separator, player_tag = entrant.tag.partition("|")
-    identity_lines = (
-        [sponsor.strip(), player_tag.strip()]
-        if separator and player_tag.strip()
-        else [entrant.tag]
-    )
-    for line_index, line in enumerate(identity_lines, start=1):
+    for position, text, preferred_size in _lower_summary_identity_fields(
+        entrant, anchor=anchor
+    ):
         _draw_text(
             draw,
-            (
-                anchor[0],
-                first_line_y + line_index * LOWER_SUMMARY_TAG_LINE_SPACING,
-            ),
-            line,
+            position,
+            text,
             anchor="mm",
             max_width=max_width,
-            preferred_size=LOWER_SUMMARY_TAG_SIZE,
+            preferred_size=preferred_size,
             font=font,
             glow_fill=fill,
         )
@@ -990,26 +1028,17 @@ def _footer_text_bounds(
         for summary_slot, entrant in enumerate(entrants[4:], start=1):
             assert isinstance(entrant, SinglesEntrant)
             anchor = PODIUM_TEXT_ANCHORS[4][summary_slot]["label"]
-            sponsor, separator, player_tag = entrant.tag.partition("|")
-            identity_lines = (
-                [sponsor.strip(), player_tag.strip()]
-                if separator and player_tag.strip()
-                else [entrant.tag]
-            )
-            first_line_y = anchor[1] - 11
-            for line_index, line in enumerate(identity_lines, start=1):
+            for position, text, preferred_size in _lower_summary_identity_fields(
+                entrant, anchor=anchor
+            ):
                 bounds.append(
                     _text_bounds(
                         draw,
-                        (
-                            anchor[0],
-                            first_line_y
-                            + line_index * LOWER_SUMMARY_TAG_LINE_SPACING,
-                        ),
-                        line,
+                        position,
+                        text,
                         anchor="mm",
                         max_width=LOWER_SUMMARY_MAX_WIDTH,
-                        preferred_size=LOWER_SUMMARY_TAG_SIZE,
+                        preferred_size=preferred_size,
                         font=font,
                     )
                 )
@@ -1352,7 +1381,12 @@ def draw_podium(
                 _draw_character_tag(tag_draw, character_tag, font)
     else:
         anchors = SINGLES_ANCHORS[mode.layout_count]
-        tag_max_width = SINGLES_TAG_WIDTHS[mode.layout_count]
+        four_podium_top_8 = mode is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM
+        tag_max_width = (
+            FOUR_PODIUM_TAG_MAX_WIDTH
+            if four_podium_top_8
+            else SINGLES_TAG_WIDTHS[mode.layout_count]
+        )
         # Render lowest to highest, interleaving each portrait group and tag.
         for podium_slot, entrant in reversed(
             list(enumerate(entrants[:mode.layout_count], start=1))
@@ -1380,6 +1414,16 @@ def draw_podium(
                 entrant.tag,
                 glow_fill,
                 tag_max_width,
+                (
+                    FOUR_PODIUM_TAG_PREFERRED_SIZE
+                    if four_podium_top_8
+                    else TAG_PREFERRED_SIZE
+                ),
+                (
+                    FOUR_PODIUM_SPONSOR_PREFERRED_SIZE
+                    if four_podium_top_8
+                    else SPONSOR_PREFERRED_SIZE
+                ),
             )
             _draw_character_tag(tag_draw, character_tag, font)
 
