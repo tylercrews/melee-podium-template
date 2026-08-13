@@ -362,9 +362,19 @@ def _wrap_text(
 
 
 def _wrap_url(
-    text: str, max_width: int, preferred_size: int, font: PodiumFont
+    text: str,
+    target_width: int,
+    max_width: int,
+    preferred_size: int,
+    font: PodiumFont,
 ) -> str:
-    """Wrap a URL at path separators, falling back to character breaks."""
+    """Wrap a URL near a target width, preferring path separators.
+
+    A URL line may extend past ``target_width`` through its next slash-delimited
+    segment. This avoids short, awkward lines when the nearest useful break is
+    just beyond the metadata width. ``max_width`` remains a hard header-safety
+    limit; only a single segment wider than that falls back to character breaks.
+    """
     font_path, _ = _font_settings(font)
     loaded_font = ImageFont.truetype(font_path, _adjusted_font_size(preferred_size, font))
     lines: list[str] = []
@@ -372,7 +382,14 @@ def _wrap_url(
 
     for segment in re.findall(r"[^/]+/?", text):
         candidate = f"{line}{segment}"
-        if loaded_font.getlength(candidate) <= max_width:
+        if not line:
+            if loaded_font.getlength(segment) <= max_width:
+                line = segment
+                continue
+        elif (
+            loaded_font.getlength(line) < target_width
+            and loaded_font.getlength(candidate) <= max_width
+        ):
             line = candidate
             continue
 
@@ -834,11 +851,28 @@ def _metadata_layout(
     """Build the metadata fields once for collision checks and drawing."""
     title_max_width = width * 2 // 3
     link_max_width = width - title_max_width - 25
+    metadata_max_width = width // 3
+    event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
+    count_label = "Teams" if is_doubles else "Entrants"
+    metadata_text = (
+        (event_label, 42),
+        (str(tournament.date), 36),
+        (f"{tournament.entrants_count} {count_label}", 32),
+    )
+    metadata_width = max(
+        _font_to_fit(text, metadata_max_width, preferred_size, font).getlength(text)
+        for text, preferred_size in metadata_text
+    )
+    link_target_width = min(link_max_width, round(metadata_width))
     fields: list[dict[str, object]] = []
     metadata_top = 10
     if tournament.link is not None:
         source_link = _wrap_url(
-            _display_link(tournament.link), link_max_width, 14, font
+            _display_link(tournament.link),
+            link_target_width,
+            link_max_width,
+            14,
+            font,
         )
         source_link_font = _font_to_fit(source_link, link_max_width, 14, font)
         link_bounds = source_link_font.getbbox("Ag")
@@ -859,8 +893,6 @@ def _metadata_layout(
             }
         )
 
-    event_label = tournament.event or ("DOUBLES!!" if is_doubles else "SINGLES!")
-    count_label = "Teams" if is_doubles else "Entrants"
     for y, text, preferred_size in (
         (metadata_top, event_label, 42),
         (metadata_top + 54, str(tournament.date), 36),
