@@ -14,6 +14,7 @@
 TODO LIST:
 * seems like when you use a favorited entrant, then uncheck the box to save changes, and then render, it DELETES the favorited entrant. that's no good
 * make it so when you select a new color for a character it doesn't reset the pose you already picked
+* if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
