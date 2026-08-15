@@ -12,6 +12,7 @@
 
 
 TODO LIST:
+* handling for parry.gg
 * seems like when you use a favorited entrant, then uncheck the box to save changes, and then render, it DELETES the favorited entrant. that's no good
 * make it so when you select a new color for a character it doesn't reset the pose you already picked
 * if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
@@ -21,6 +22,7 @@ TODO LIST:
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
+* implementation of multiple backgrounds - solid color (with color picker), transparent, melee themed ones
 * get a dedicated domain name? meleepodium.meme ? meleepodium.free? meleepodium.photo? meleepodium.pics ? just need to be sure if I want to keep calling it meleepodium or if we're gonna change the name when we have all the functionality done
 * formatting positioners - if you want the title centered or to the side, if you want the metadata on the right (default) or swapped with the title
 * add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
