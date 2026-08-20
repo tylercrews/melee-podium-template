@@ -12,7 +12,9 @@
 
 
 TODO LIST:
+* start.gg USB reporting [enables character colors] - https://x.com/jmlee337/status/2033357599291085075 -  https://github.com/jmlee337/replay-manager-for-slippi/blob/main/src/docs/color.md
 * handling for parry.gg
+* update shoutout page to shoutout Nicolet specifically
 * seems like when you use a favorited entrant, then uncheck the box to save changes, and then render, it DELETES the favorited entrant. that's no good
 * make it so when you select a new color for a character it doesn't reset the pose you already picked
 * if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
