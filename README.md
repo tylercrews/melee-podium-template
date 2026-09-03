@@ -12,6 +12,16 @@
 
 
 TODO LIST:
+* recreate podiums and placement numbers as individual assets to go with the new backgrounds
+* See if there's a way to programmatically draw the podiums in whatever color you want - that way people could custom pick whatever colors they want for the podium.
+    - different podium color options:
+    1. gold, silver, bronze, x colors
+    2. smash controller colors (what we have now)
+    3. custom 1 - pick all
+    4. custom 2 - pick 1 color
+    5. custom 3 - pick 2 colors and they alternate
+    - this podium color picker would also be good for background colors for the top 8er style, as long as transparent is also an option. Maybe transparent should be an option for the podiums too?
+* full layout customizability saving and loading - pick where you want your emblem, title, and metadata to go, the podium colors, your preferred background, etc. You should be able to import a save file and/or paste some code to import/export these layout settings. 
 * start.gg USB reporting [enables character colors] - https://x.com/jmlee337/status/2033357599291085075 -  https://github.com/jmlee337/replay-manager-for-slippi/blob/main/src/docs/color.md
 * handling for parry.gg
 * update shoutout page to shoutout Nicolet specifically
@@ -24,6 +34,7 @@ TODO LIST:
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
+* if you implement profiles and logins you could make it so that you can have multiple saved tournament preferences attached to your account - like med could pick his TYM layout or his moondog layout and have it already be ready. Profiles would also be able to save custom assets like backgrounds and emblems
 * implementation of multiple backgrounds - solid color (with color picker), transparent, melee themed ones
 * get a dedicated domain name? meleepodium.meme ? meleepodium.free? meleepodium.photo? meleepodium.pics ? just need to be sure if I want to keep calling it meleepodium or if we're gonna change the name when we have all the functionality done
 * formatting positioners - if you want the title centered or to the side, if you want the metadata on the right (default) or swapped with the title
