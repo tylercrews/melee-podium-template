@@ -13,6 +13,7 @@
 
 TODO LIST:
 * recreate podiums and placement numbers as individual assets to go with the new backgrounds
+* Add alternative spellings to Entrant tag configurations. For example when an entrant in a bracket is named 'busta' or 'bu$ta' they should both be identified as the favorited entrant 'BU$TA' (capitalization is already ignored)
 * See if there's a way to programmatically draw the podiums in whatever color you want - that way people could custom pick whatever colors they want for the podium.
     - different podium color options:
     1. gold, silver, bronze, x colors
@@ -31,10 +32,12 @@ TODO LIST:
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
+* see if decompiled melee can be used to generate melee assets - would need to be a separate repo. But would be amazing to programmatically create claps, victory screens, and tech roll animations. on top of other things.
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
 * if you implement profiles and logins you could make it so that you can have multiple saved tournament preferences attached to your account - like med could pick his TYM layout or his moondog layout and have it already be ready. Profiles would also be able to save custom assets like backgrounds and emblems
+    * Need to do some research on costs of login systems, image/blob storage pricing, and see if I would need to limit access to a certain extent before asking for money.
 * implementation of multiple backgrounds - solid color (with color picker), transparent, melee themed ones
 * get a dedicated domain name? meleepodium.meme ? meleepodium.free? meleepodium.photo? meleepodium.pics ? just need to be sure if I want to keep calling it meleepodium or if we're gonna change the name when we have all the functionality done
 * formatting positioners - if you want the title centered or to the side, if you want the metadata on the right (default) or swapped with the title
