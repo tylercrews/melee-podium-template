@@ -23,6 +23,9 @@ TODO LIST:
     5. custom 3 - pick 2 colors and they alternate
     - this podium color picker would also be good for background colors for the top 8er style, as long as transparent is also an option. Maybe transparent should be an option for the podiums too?
 * full layout customizability saving and loading - pick where you want your emblem, title, and metadata to go, the podium colors, your preferred background, etc. You should be able to import a save file and/or paste some code to import/export these layout settings. 
+* layout should include "Vods At" and "Streamed At" options with Twitch + Youtube icon shortening so people know where to watch matches
+* layout could also have the twitter/bluesky of the TO
+* should I also turn start.gg, parry.gg, and challonge urls into their icons for the tournament links?
 * start.gg USB reporting [enables character colors] - https://x.com/jmlee337/status/2033357599291085075 -  https://github.com/jmlee337/replay-manager-for-slippi/blob/main/src/docs/color.md
 * handling for parry.gg
 * update shoutout page to shoutout Nicolet specifically
