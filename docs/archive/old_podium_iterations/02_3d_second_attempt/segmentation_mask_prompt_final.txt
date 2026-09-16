@@ -1,0 +1,336 @@
+Create exactly ONE image: a flat-color semantic segmentation mask of the attached podium.
+
+IMPORTANT OUTPUT RULES:
+- Generate exactly ONE image only.
+- Do NOT create a collage, grid, contact sheet, comparison image, labeled diagram, presentation sheet, or multiple outputs inside one image.
+- Do NOT include titles, labels, captions, numbers, arrows, legends, or text.
+- Return only the segmentation mask.
+
+THIS IS A TECHNICAL SEGMENTATION TASK.
+This is NOT a creative redesign.
+This is NOT a rendered recoloring.
+
+Use the attached podium image ONLY as the authoritative geometry reference.
+
+PRESERVE EXACTLY:
+- outer silhouette
+- canvas placement
+- overall width and height
+- perspective
+- camera angle
+- visible top geometry
+- visible front geometry
+- visible right-side geometry
+- corner radii
+- bevel boundaries
+- center-bottom notch shape
+- trim widths
+- inset-panel boundaries
+
+Do NOT resize, recenter, simplify, beautify, reinterpret, or redraw the podium into a different shape.
+
+==================================================
+BACKGROUND
+==================================================
+
+The entire background must be fully transparent RGBA alpha 0.
+
+Do NOT use black, white, gray, or any other background color.
+
+==================================================
+STRICT COLOR PALETTE
+==================================================
+
+Use ONLY these five exact RGB colors on visible podium pixels:
+
+YELLOW  #FFFF00
+RED     #FF0000
+BLUE    #0000FF
+CYAN    #00FFFF
+MAGENTA #FF00FF
+
+GREEN IS FORBIDDEN.
+
+Do NOT use:
+#00FF00
+or any other green color anywhere.
+
+No other visible RGB colors are allowed.
+
+==================================================
+SEMANTIC COLOR DEFINITIONS
+==================================================
+
+YELLOW #FFFF00
+= main outer TOP frame / upper shell
+
+RED #FF0000
+= inset PANEL FILL
+
+RED is used for BOTH:
+- the central top inset panel
+- the central front inset panel when a front inset panel exists
+
+These two surfaces belong to the SAME semantic class.
+
+BLUE #0000FF
+= dark structural material and recessed channels
+
+BLUE includes:
+- main dark podium body
+- underside
+- visible right-side body
+- dark recessed channel around the top panel
+- dark recessed channel around the front panel
+- other clearly dark structural/recessed areas
+
+CYAN #00FFFF
+= main OUTER FRONT trim / bright front frame
+
+MAGENTA #FF00FF
+= THIN INNER ACCENT TRIM immediately surrounding an inset RED panel
+
+MAGENTA is a trim class, NOT a large filled panel class.
+
+==================================================
+MANDATORY TOP TOPOLOGY
+==================================================
+
+The top must contain these FOUR nested regions.
+
+FROM OUTSIDE TO INSIDE:
+
+1. YELLOW #FFFF00
+   outer top frame
+
+2. BLUE #0000FF
+   dark recessed channel
+
+3. MAGENTA #FF00FF
+   thin interior accent trim
+
+4. RED #FF0000
+   central inset panel fill
+
+REQUIRED ORDER:
+
+YELLOW
+→ BLUE
+→ MAGENTA
+→ RED
+
+THIS ORDER IS MANDATORY.
+
+The MAGENTA trim and RED panel MUST TOUCH EACH OTHER DIRECTLY.
+
+There must be NO:
+- blue gap between MAGENTA and RED
+- yellow gap between MAGENTA and RED
+- transparent gap between MAGENTA and RED
+- black outline between MAGENTA and RED
+
+The RED panel must be directly enclosed by the MAGENTA trim.
+
+The MAGENTA trim must be directly outside the RED panel.
+
+The BLUE recessed channel must be outside the MAGENTA trim.
+
+The YELLOW frame must surround the BLUE recessed channel.
+
+CRITICAL:
+DO NOT OMIT THE MAGENTA TOP INTERIOR TRIM.
+
+Even if it is thin in the reference, preserve it as a continuous distinct MAGENTA region.
+
+==================================================
+REGULAR / TALL PODIUM FRONT
+==================================================
+
+If the source podium contains a large recessed front panel, use the following FOUR nested regions.
+
+FROM OUTSIDE TO INSIDE:
+
+1. CYAN #00FFFF
+   main outer front trim/frame
+
+2. BLUE #0000FF
+   dark recessed channel
+
+3. MAGENTA #FF00FF
+   thin inner accent trim
+
+4. RED #FF0000
+   large front inset panel fill
+
+REQUIRED ORDER:
+
+CYAN
+→ BLUE
+→ MAGENTA
+→ RED
+
+THIS ORDER IS MANDATORY.
+
+The front RED panel and the top RED panel are the SAME semantic class.
+
+DO NOT make the front panel green.
+
+The MAGENTA front trim must touch the RED panel directly.
+
+There must be NO:
+- blue gap between MAGENTA and RED
+- cyan gap between MAGENTA and RED
+- black outline between MAGENTA and RED
+- transparent gap between MAGENTA and RED
+
+The front RED panel must preserve:
+- its exact shape
+- its exact rounded corners
+- its exact dimensions
+- the exact center-bottom notch
+
+The MAGENTA trim must follow the same panel contour and notch.
+
+==================================================
+FLAT PODIUM FRONT
+==================================================
+
+If the source is the extremely low-profile FLAT podium:
+
+DO NOT invent a large front panel.
+DO NOT increase its height.
+DO NOT convert it into a regular podium.
+
+Preserve only the shallow front-edge geometry actually visible in the reference.
+
+Use:
+
+CYAN #00FFFF
+= main outer shallow front trim
+
+BLUE #0000FF
+= dark structural body / recessed channel around the shallow front trim
+
+MAGENTA #FF00FF
+= thin inner accent trim if that distinct trim exists in the reference
+
+RED #FF0000
+= central inset portion inside the shallow front trim if that inset region exists in the reference
+
+If both MAGENTA and RED are present on the flat front:
+
+MAGENTA MUST TOUCH RED DIRECTLY.
+
+Do NOT insert a black or blue outline between them.
+
+Do NOT create any GREEN region.
+
+==================================================
+ABSOLUTELY NO BLACK OUTLINES
+==================================================
+
+DO NOT draw black outlines between semantic regions.
+
+Black is NOT a segmentation class.
+
+There must be NO black border:
+- between YELLOW and BLUE
+- between BLUE and MAGENTA
+- between MAGENTA and RED
+- between CYAN and BLUE
+- around RED panels
+- around trim regions
+
+Adjacent semantic regions must meet directly at their shared boundary.
+
+For example:
+
+CORRECT:
+MAGENTA pixels directly touch RED pixels.
+
+INCORRECT:
+MAGENTA → BLACK → RED
+
+CORRECT:
+BLUE pixels directly touch MAGENTA pixels.
+
+INCORRECT:
+BLUE → BLACK → MAGENTA
+
+==================================================
+STRICT FLAT-COLOR RULES
+==================================================
+
+Every interior pixel of every region must use EXACTLY its assigned RGB color.
+
+NO:
+- gradients
+- shading
+- shadows
+- highlights
+- reflections
+- glow
+- bloom
+- texture
+- noise
+- material appearance
+- lighting
+- darkened versions of palette colors
+- lightened versions of palette colors
+- black outlines
+- white outlines
+- gray outlines
+
+Do NOT preserve any lighting information from the original image.
+
+This should look like a crude computer semantic segmentation map, NOT finished artwork.
+
+==================================================
+EDGE RULES
+==================================================
+
+Internal boundaries between semantic regions must be sharp.
+
+Only the TRUE EXTERIOR SILHOUETTE where the podium meets transparency may use minimal antialiasing.
+
+Do NOT antialias internal semantic boundaries using intermediate colors or black pixels.
+
+==================================================
+FINAL VALIDATION
+==================================================
+
+Before producing the image, verify:
+
+TOP:
+YELLOW → BLUE → MAGENTA → RED
+
+- MAGENTA exists
+- MAGENTA directly touches RED
+- RED is the panel fill
+- no black outline separates classes
+
+REGULAR FRONT:
+CYAN → BLUE → MAGENTA → RED
+
+- RED is the front panel fill
+- GREEN does not exist
+- MAGENTA directly touches RED
+- center-bottom notch is preserved
+- no black outline separates classes
+
+FLAT FRONT:
+- no invented large front panel
+- no GREEN
+- shallow geometry is preserved
+- if MAGENTA and RED are both present, they touch directly
+
+PALETTE:
+Only:
+#FFFF00
+#FF0000
+#0000FF
+#00FFFF
+#FF00FF
+
+OUTPUT:
+Return exactly ONE full-size transparent semantic segmentation mask image and nothing else.
