@@ -13,6 +13,7 @@
 
 TODO LIST:
 * recreate podiums and placement numbers as individual assets to go with the new backgrounds
+* did new podiums, but some people want to be able to do the old podiums too. Gotta make those
 * Add alternative spellings to Entrant tag configurations. For example when an entrant in a bracket is named 'busta' or 'bu$ta' they should both be identified as the favorited entrant 'BU$TA' (capitalization is already ignored)
 * See if there's a way to programmatically draw the podiums in whatever color you want - that way people could custom pick whatever colors they want for the podium.
     - different podium color options:
