@@ -36,6 +36,10 @@ TODO LIST:
 * in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
 * see if decompiled melee can be used to generate melee assets - would need to be a separate repo. But would be amazing to programmatically create claps, victory screens, and tech roll animations. on top of other things.
+* "Test template with example entrants" button. Use the gods as entrants, and lets them see if they like what they've done with their template before moving on to filling stuff out or saving.
+* color picker - RGBA for background color. -> upload image, and image picker for background. Should give pixel count of the uploaded pic and say how big the image is. Then let them use a multiplier to scale up or down the image, then position it in a frame to select what section the bacground should be.
+* Background color for entrants should have presets but still allow a transparency slider on presets.
+* Defaulting to Top 4 seems to be confusing users - should have a popup or something. Need to try the url brooke was using to make sure that the upload didn't have some other error, but I think what she was talking about was it just nudging her to do a top 4.
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 
 Maybes/Eventuallies:
