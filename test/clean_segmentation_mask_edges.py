@@ -128,6 +128,43 @@ def flatten_transition_rows(labels: list[list[int]], width: int, height: int) ->
         labels[x][:] = cleaned[x]
 
 
+def straighten_transition_segment(
+    labels: list[list[int]],
+    start_x: int,
+    end_x: int,
+    target_y: int,
+    above: int,
+    below: int,
+) -> None:
+    """Move a known nearly-level interior transition onto one exact row."""
+
+    for x in range(start_x, end_x + 1):
+        old_rows = [
+            y
+            for y in range(target_y - 2, target_y + 3)
+            if labels[x][y - 1] == above and labels[x][y] == below
+        ]
+        if not old_rows:
+            continue
+        old_y = min(old_rows, key=lambda y: abs(y - target_y))
+        if target_y > old_y:
+            for y in range(old_y, target_y):
+                labels[x][y] = above
+        elif target_y < old_y:
+            for y in range(target_y, old_y):
+                labels[x][y] = below
+
+
+def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
+    """Apply narrow corrections where generated geometry defeats heuristics."""
+
+    if filename == "01x_x_short_segmentation_mask.png":
+        # The front inset's lower red edge alternates between rows 747 and 748.
+        # Stop before both notch diagonals and the rounded outer corners.
+        straighten_transition_segment(labels, 146, 361, 748, above=1, below=4)
+        straighten_transition_segment(labels, 852, 1070, 748, above=1, below=4)
+
+
 def clean_mask(source_path: Path, output_path: Path) -> int:
     """Quantize a mask and straighten each long, nearly horizontal boundary."""
 
@@ -224,6 +261,7 @@ def clean_mask(source_path: Path, output_path: Path) -> int:
             straightened += 1
 
     flatten_transition_rows(labels, width, height)
+    repair_known_mask_artifacts(labels, source_path.name)
 
     result = Image.new("RGBA", source.size)
     result_pixels = result.load()
@@ -245,9 +283,19 @@ def main() -> None:
         action="store_true",
         help="replace the source masks after writing the preview copies",
     )
+    parser.add_argument(
+        "--only",
+        help="clean only the segmentation mask with this exact filename",
+    )
     args = parser.parse_args()
 
-    for source_path in sorted(MASK_FOLDER.glob("*segmentation_mask.png")):
+    source_paths = sorted(MASK_FOLDER.glob("*segmentation_mask.png"))
+    if args.only:
+        source_paths = [path for path in source_paths if path.name == args.only]
+        if not source_paths:
+            parser.error(f"mask not found: {args.only}")
+
+    for source_path in source_paths:
         output_path = OUTPUT_FOLDER / source_path.name
         count = clean_mask(source_path, output_path)
         if args.apply:
