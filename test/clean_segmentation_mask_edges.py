@@ -216,8 +216,32 @@ def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
         # Stop before both notch diagonals and the rounded outer corners.
         straighten_transition_segment(labels, 146, 361, 748, above=1, below=4)
         straighten_transition_segment(labels, 852, 1070, 748, above=1, below=4)
+
+        # Lock every straight vertical boundary on the front face.  Each span
+        # ends before its rounded top and bottom corner transitions.
+        straighten_vertical_transition_segment(
+            labels, 701, 747, 98, left=2, right=3
+        )
+        straighten_vertical_transition_segment(
+            labels, 704, 737, 118, left=3, right=2
+        )
+        straighten_vertical_transition_segment(
+            labels, 707, 742, 129, left=2, right=4
+        )
+        straighten_vertical_transition_segment(
+            labels, 708, 741, 138, left=4, right=1
+        )
         straighten_vertical_transition_segment(
             labels, 707, 742, 1075, left=1, right=4
+        )
+        straighten_vertical_transition_segment(
+            labels, 708, 744, 1085, left=4, right=2
+        )
+        straighten_vertical_transition_segment(
+            labels, 703, 747, 1095, left=2, right=3
+        )
+        straighten_vertical_transition_segment(
+            labels, 703, 747, 1116, left=3, right=2
         )
     elif filename == "02x_short_segmentation_mask.png":
         # Level only the straight outer-top run; adjacent pixels belong to the
@@ -225,8 +249,30 @@ def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
         straighten_exterior_top_segment(
             labels, 202, 1127, 473, fill_label=0
         )
+
+        straighten_vertical_transition_segment(
+            labels, 663, 776, 98, left=2, right=3
+        )
+        straighten_vertical_transition_segment(
+            labels, 666, 770, 118, left=3, right=2
+        )
+        straighten_vertical_transition_segment(
+            labels, 666, 765, 132, left=2, right=4
+        )
+        straighten_vertical_transition_segment(
+            labels, 665, 764, 141, left=4, right=1
+        )
         straighten_vertical_transition_segment(
             labels, 669, 761, 1064, left=1, right=4
+        )
+        straighten_vertical_transition_segment(
+            labels, 664, 767, 1071, left=4, right=2
+        )
+        straighten_vertical_transition_segment(
+            labels, 663, 775, 1084, left=2, right=3
+        )
+        straighten_vertical_transition_segment(
+            labels, 662, 777, 1105, left=3, right=2
         )
 
 
