@@ -7,7 +7,8 @@ from typing import Final, TypeAlias
 RGB: TypeAlias = tuple[int, int, int]
 
 
-BLACK: Final[RGB] = (0, 0, 0)
+# Near-black keeps dark structure visible against a truly black background.
+BLACK: Final[RGB] = (17, 17, 17)
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,7 +31,7 @@ SEVENTH_PLACE_GRAY_BOX: Final = PodiumBoxColors((141, 141, 141), (48, 44, 57), (
 
 # Alternate podium finish used by the mask-coloring experiment.  The exterior
 # color is the bright metal while the interior color fills the recessed faces.
-GOLD_PODIUM: Final = PodiumBoxColors((255, 191, 0), (92, 55, 0), BLACK)
+GOLD_PODIUM: Final = PodiumBoxColors((212, 175, 55), (92, 69, 20), BLACK)
 
 # Visual order on the top-8 background. This also corresponds to podium slots
 # in top 3/top 4, so renderers can safely select a box by slot number.
