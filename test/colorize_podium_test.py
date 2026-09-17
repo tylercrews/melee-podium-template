@@ -210,6 +210,44 @@ def apply_metallic_finish(image: Image.Image, metal_mask: Image.Image, base: RGB
             alpha = image_pixels[x, y][3]
             image_pixels[x, y] = (*shaded, alpha)
 
+
+def apply_right_side_shadow(image: Image.Image, visible_mask: Image.Image) -> None:
+    """Darken the rightmost face to separate it from the podium front."""
+
+    bounds = visible_mask.getbbox()
+    if bounds is None:
+        return
+    _, top, _, bottom = bounds
+    podium_height = max(1, bottom - top - 1)
+    side_width = max(56, round(image.width * 0.058))
+    image_pixels = image.load()
+    mask_pixels = visible_mask.load()
+
+    for y in range(top, bottom):
+        visible_columns = [x for x in range(image.width) if mask_pixels[x, y]]
+        if not visible_columns:
+            continue
+        right_edge = max(visible_columns)
+        side_start = max(0, right_edge - side_width)
+        vertical = (y - top) / podium_height
+        # Keep the upper edge readable while making the side face distinctly
+        # deeper toward the base.  This ranges from 31% to 54% at the rim.
+        maximum_shadow = 0.31 + 0.23 * vertical
+
+        for x in range(side_start, right_edge + 1):
+            if not mask_pixels[x, y]:
+                continue
+            progress = (x - side_start) / side_width
+            smooth_progress = progress * progress * (3.0 - 2.0 * progress)
+            value = 1.0 - maximum_shadow * smooth_progress
+            red, green, blue, alpha = image_pixels[x, y]
+            image_pixels[x, y] = (
+                round(red * value),
+                round(green * value),
+                round(blue * value),
+                alpha,
+            )
+
 def colorize_podium(
     mask: Image.Image,
     reference: Image.Image,
@@ -225,6 +263,7 @@ def colorize_podium(
     metal_pixels: list[int] = []
     panel_pixels: list[int] = []
     structure_pixels: list[int] = []
+    visible_pixels: list[int] = []
 
     for red, green, blue, alpha in source.getdata():
         if alpha == 0:
@@ -232,6 +271,7 @@ def colorize_podium(
             metal_pixels.append(0)
             panel_pixels.append(0)
             structure_pixels.append(0)
+            visible_pixels.append(0)
             continue
 
         mask_class = nearest_mask_class((red, green, blue))
@@ -255,6 +295,7 @@ def colorize_podium(
         metal_pixels.append(255 if is_metal else 0)
         panel_pixels.append(255 if is_panel else 0)
         structure_pixels.append(255 if is_structure else 0)
+        visible_pixels.append(255)
 
     result = Image.new("RGBA", source.size)
     result.putdata(output_pixels)
@@ -264,6 +305,8 @@ def colorize_podium(
     panel_mask.putdata(panel_pixels)
     structure_mask = Image.new("L", source.size)
     structure_mask.putdata(structure_pixels)
+    visible_mask = Image.new("L", source.size)
+    visible_mask.putdata(visible_pixels)
     apply_podium_lighting(
         result,
         structure_mask,
@@ -276,6 +319,7 @@ def colorize_podium(
     )
     if metallic:
         apply_metallic_finish(result, accent_mask, color)
+    apply_right_side_shadow(result, visible_mask)
     return result
 
 
