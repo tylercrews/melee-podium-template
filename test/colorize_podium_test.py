@@ -81,6 +81,18 @@ def brightened_color(color: RGB, peak: int, white_mix: float) -> RGB:
     )
 
 
+def prepare_reference_lighting(
+    reference: Image.Image,
+    target_size: tuple[int, int],
+) -> Image.Image:
+    """Align an original image with its generated segmentation-mask canvas."""
+
+    aligned = reference.convert("RGBA")
+    if aligned.size != target_size:
+        aligned = aligned.resize(target_size, Image.Resampling.LANCZOS)
+    return aligned.filter(ImageFilter.GaussianBlur(10))
+
+
 def apply_reference_to_region(
     image: Image.Image,
     mask: Image.Image,
@@ -352,14 +364,7 @@ def main() -> None:
             Image.open(ARTWORK_FOLDER / mask_filename) as mask,
             Image.open(ARTWORK_FOLDER / reference_filename) as reference,
         ):
-            if mask.size != reference.size:
-                raise ValueError(
-                    f"{size_name} mask/reference size mismatch: "
-                    f"{mask.size} != {reference.size}"
-                )
-            reference_lighting = reference.convert("RGBA").filter(
-                ImageFilter.GaussianBlur(10)
-            )
+            reference_lighting = prepare_reference_lighting(reference, mask.size)
             output_path = OUTPUT_FOLDER / f"{size_name}_red.png"
             colorize_podium(
                 mask,
@@ -376,9 +381,7 @@ def main() -> None:
         Image.open(medium_mask_path) as mask,
         Image.open(medium_reference_path) as reference,
     ):
-        reference_lighting = reference.convert("RGBA").filter(
-            ImageFilter.GaussianBlur(10)
-        )
+        reference_lighting = prepare_reference_lighting(reference, mask.size)
         variants = {
             "03_medium_blue.png": (
                 SECOND_PLACE_BOX.exterior_line,
