@@ -10,7 +10,7 @@ from PIL import Image, ImageFilter
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from constants import BLACK, GOLD_PODIUM, RGB, SECOND_PLACE_BOX
+from constants import BLACK, FIRST_PLACE_BOX, GOLD_PODIUM, RGB, SECOND_PLACE_BOX
 
 
 MASK_PATH = (
@@ -21,6 +21,7 @@ MASK_PATH = (
     / "02_3d_second_attempt"
     / "03x_medium_segmentation_mask.png"
 )
+REFERENCE_PATH = MASK_PATH.with_name("03_medium.png")
 OUTPUT_FOLDER = Path(__file__).with_name("colorize_podium_test_outputs")
 
 # The source mask is generated artwork, so its nominal class colors contain
@@ -55,6 +56,98 @@ def interpolate_stops(value: float, stops: tuple[tuple[float, float], ...]) -> f
             progress = (value - start_at) / (end_at - start_at)
             return start_value + (end_value - start_value) * progress
     return stops[-1][1]
+
+
+def brightened_color(color: RGB, peak: int, white_mix: float) -> RGB:
+    scale = peak / max(color)
+    saturated = tuple(min(255, round(channel * scale)) for channel in color)
+    return tuple(
+        round(channel + (255 - channel) * white_mix) for channel in saturated
+    )
+
+
+def apply_reference_to_region(
+    image: Image.Image,
+    mask: Image.Image,
+    reference: Image.Image,
+    base: RGB,
+    highlight: RGB,
+    strength: float,
+) -> None:
+    """Transfer positive-only lighting detail from the original artwork."""
+
+    bounds = mask.getbbox()
+    if bounds is None:
+        return
+    left, top, right, bottom = bounds
+    mask_pixels = mask.load()
+    reference_pixels = reference.load()
+    image_pixels = image.load()
+
+    values = sorted(
+        max(reference_pixels[x, y][:3])
+        for x in range(left, right)
+        for y in range(top, bottom)
+        if mask_pixels[x, y]
+    )
+    low = values[len(values) * 5 // 100]
+    high = values[len(values) * 95 // 100]
+    span = max(1, high - low)
+
+    for x in range(left, right):
+        for y in range(top, bottom):
+            if not mask_pixels[x, y]:
+                continue
+            reference_value = max(reference_pixels[x, y][:3])
+            normalized = min(1.0, max(0.0, (reference_value - low) / span))
+            blend = normalized * strength
+            lit = tuple(
+                round(channel + (light - channel) * blend)
+                for channel, light in zip(base, highlight)
+            )
+            image_pixels[x, y] = (*lit, image_pixels[x, y][3])
+
+
+def apply_podium_lighting(
+    image: Image.Image,
+    structure_mask: Image.Image,
+    panel_mask: Image.Image,
+    accent_mask: Image.Image,
+    reference: Image.Image,
+    accent_color: RGB,
+    panel_color: RGB,
+    *,
+    shade_accents: bool,
+) -> None:
+    """Transfer the original podium's lighting without darkening palette colors."""
+
+    apply_reference_to_region(
+        image,
+        structure_mask,
+        reference,
+        BLACK,
+        (42, 42, 46),
+        0.72,
+    )
+    apply_reference_to_region(
+        image,
+        panel_mask,
+        reference,
+        panel_color,
+        brightened_color(panel_color, min(255, round(max(panel_color) * 1.65)), 0.05),
+        0.68,
+    )
+
+    if not shade_accents:
+        return
+    apply_reference_to_region(
+        image,
+        accent_mask,
+        reference,
+        accent_color,
+        brightened_color(accent_color, 255, 0.14),
+        0.78,
+    )
 
 
 def apply_metallic_finish(image: Image.Image, metal_mask: Image.Image, base: RGB) -> None:
@@ -119,6 +212,7 @@ def apply_metallic_finish(image: Image.Image, metal_mask: Image.Image, base: RGB
 
 def colorize_podium(
     mask: Image.Image,
+    reference: Image.Image,
     color: RGB,
     dark_color: RGB,
     *,
@@ -129,41 +223,75 @@ def colorize_podium(
     source = mask.convert("RGBA")
     output_pixels: list[tuple[int, int, int, int]] = []
     metal_pixels: list[int] = []
+    panel_pixels: list[int] = []
+    structure_pixels: list[int] = []
 
     for red, green, blue, alpha in source.getdata():
         if alpha == 0:
             output_pixels.append((0, 0, 0, 0))
             metal_pixels.append(0)
+            panel_pixels.append(0)
+            structure_pixels.append(0)
             continue
 
         mask_class = nearest_mask_class((red, green, blue))
         if mask_class == (0, 0, 255):
             replacement = BLACK
             is_metal = False
+            is_panel = False
+            is_structure = True
         elif mask_class == (255, 0, 0):
             replacement = dark_color
             is_metal = False
+            is_panel = True
+            is_structure = False
         else:
             replacement = color
             is_metal = True
+            is_panel = False
+            is_structure = False
 
         output_pixels.append((*replacement, alpha))
         metal_pixels.append(255 if is_metal else 0)
+        panel_pixels.append(255 if is_panel else 0)
+        structure_pixels.append(255 if is_structure else 0)
 
     result = Image.new("RGBA", source.size)
     result.putdata(output_pixels)
+    accent_mask = Image.new("L", source.size)
+    accent_mask.putdata(metal_pixels)
+    panel_mask = Image.new("L", source.size)
+    panel_mask.putdata(panel_pixels)
+    structure_mask = Image.new("L", source.size)
+    structure_mask.putdata(structure_pixels)
+    apply_podium_lighting(
+        result,
+        structure_mask,
+        panel_mask,
+        accent_mask,
+        reference,
+        color,
+        dark_color,
+        shade_accents=not metallic,
+    )
     if metallic:
-        metal_mask = Image.new("L", source.size)
-        metal_mask.putdata(metal_pixels)
-        apply_metallic_finish(result, metal_mask, color)
+        apply_metallic_finish(result, accent_mask, color)
     return result
 
 
 def main() -> None:
     OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    with Image.open(MASK_PATH) as mask:
+    with Image.open(MASK_PATH) as mask, Image.open(REFERENCE_PATH) as reference:
+        reference_lighting = reference.convert("RGBA").filter(
+            ImageFilter.GaussianBlur(10)
+        )
         variants = {
+            "03_medium_red.png": (
+                FIRST_PLACE_BOX.exterior_line,
+                FIRST_PLACE_BOX.interior_line,
+                False,
+            ),
             "03_medium_blue.png": (
                 SECOND_PLACE_BOX.exterior_line,
                 SECOND_PLACE_BOX.interior_line,
@@ -180,6 +308,7 @@ def main() -> None:
             output_path = OUTPUT_FOLDER / filename
             colorize_podium(
                 mask,
+                reference_lighting,
                 color,
                 dark_color,
                 metallic=metallic,
