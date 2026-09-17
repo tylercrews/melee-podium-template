@@ -93,6 +93,33 @@ def prepare_reference_lighting(
     return aligned.filter(ImageFilter.GaussianBlur(10))
 
 
+def premultiplied_blur(image: Image.Image, radius: float) -> Image.Image:
+    """Blur RGBA without introducing black halos at transparent edges."""
+
+    return image.convert("RGBa").filter(
+        ImageFilter.GaussianBlur(radius)
+    ).convert("RGBA")
+
+
+def antialias_boundaries(
+    image: Image.Image,
+    region_masks: tuple[Image.Image, ...],
+) -> Image.Image:
+    """Smooth region contours while retaining crisp interior lighting."""
+
+    class_map = Image.new("L", image.size)
+    for value, mask in zip((64, 128, 192), region_masks[:3]):
+        class_map.paste(value, mask=mask)
+    edge = class_map.filter(ImageFilter.FIND_EDGES).point(
+        lambda value: 255 if value else 0
+    )
+    edge = edge.filter(ImageFilter.MaxFilter(3)).filter(
+        ImageFilter.GaussianBlur(0.45)
+    )
+    softened = premultiplied_blur(image, 0.70)
+    return Image.composite(softened, image, edge)
+
+
 def apply_reference_to_region(
     image: Image.Image,
     mask: Image.Image,
@@ -351,7 +378,10 @@ def colorize_podium(
     if metallic:
         apply_metallic_finish(result, accent_mask, color, metal_highlight)
     apply_right_side_shadow(result, visible_mask)
-    return result
+    return antialias_boundaries(
+        result,
+        (accent_mask, panel_mask, structure_mask, visible_mask),
+    )
 
 
 def main() -> None:

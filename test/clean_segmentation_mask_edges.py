@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 from statistics import median
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -276,6 +276,42 @@ def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
         )
 
 
+def premultiplied_blur(image: Image.Image, radius: float) -> Image.Image:
+    """Blur RGBA without creating dark fringes around transparency."""
+
+    return image.convert("RGBa").filter(
+        ImageFilter.GaussianBlur(radius)
+    ).convert("RGBA")
+
+
+def antialias_mask_boundaries(
+    image: Image.Image,
+    labels: list[list[int]],
+    width: int,
+    height: int,
+) -> Image.Image:
+    """Soften only class edges, preserving flat semantic-color interiors."""
+
+    edge = Image.new("L", image.size)
+    edge_pixels = edge.load()
+    for x in range(width):
+        for y in range(height):
+            label = labels[x][y]
+            if (
+                (x > 0 and labels[x - 1][y] != label)
+                or (x + 1 < width and labels[x + 1][y] != label)
+                or (y > 0 and labels[x][y - 1] != label)
+                or (y + 1 < height and labels[x][y + 1] != label)
+            ):
+                edge_pixels[x, y] = 255
+
+    edge = edge.filter(ImageFilter.MaxFilter(3)).filter(
+        ImageFilter.GaussianBlur(0.45)
+    )
+    softened = premultiplied_blur(image, 0.70)
+    return Image.composite(softened, image, edge)
+
+
 def clean_mask(source_path: Path, output_path: Path) -> int:
     """Quantize a mask and straighten each long, nearly horizontal boundary."""
 
@@ -381,6 +417,8 @@ def clean_mask(source_path: Path, output_path: Path) -> int:
             label = labels[x][y]
             if label != TRANSPARENT:
                 result_pixels[x, y] = (*PALETTE[label], 255)
+
+    result = antialias_mask_boundaries(result, labels, width, height)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.save(output_path)
