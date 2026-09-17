@@ -155,6 +155,59 @@ def straighten_transition_segment(
                 labels[x][y] = below
 
 
+def straighten_exterior_top_segment(
+    labels: list[list[int]],
+    start_x: int,
+    end_x: int,
+    target_y: int,
+    fill_label: int,
+) -> None:
+    """Level a straight silhouette run without extending into its corners."""
+
+    for x in range(start_x, end_x + 1):
+        visible_rows = [
+            y
+            for y in range(target_y - 2, target_y + 3)
+            if labels[x][y] != TRANSPARENT
+        ]
+        if not visible_rows:
+            continue
+        old_y = min(visible_rows)
+        if target_y < old_y:
+            for y in range(target_y, old_y):
+                labels[x][y] = fill_label
+        elif target_y > old_y:
+            for y in range(old_y, target_y):
+                labels[x][y] = TRANSPARENT
+
+
+def straighten_vertical_transition_segment(
+    labels: list[list[int]],
+    start_y: int,
+    end_y: int,
+    target_x: int,
+    left: int,
+    right: int,
+) -> None:
+    """Move a nearly-level vertical transition onto one exact column."""
+
+    for y in range(start_y, end_y + 1):
+        old_columns = [
+            x
+            for x in range(target_x - 2, target_x + 3)
+            if labels[x - 1][y] == left and labels[x][y] == right
+        ]
+        if not old_columns:
+            continue
+        old_x = min(old_columns, key=lambda x: abs(x - target_x))
+        if target_x > old_x:
+            for x in range(old_x, target_x):
+                labels[x][y] = left
+        elif target_x < old_x:
+            for x in range(target_x, old_x):
+                labels[x][y] = right
+
+
 def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
     """Apply narrow corrections where generated geometry defeats heuristics."""
 
@@ -163,6 +216,18 @@ def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
         # Stop before both notch diagonals and the rounded outer corners.
         straighten_transition_segment(labels, 146, 361, 748, above=1, below=4)
         straighten_transition_segment(labels, 852, 1070, 748, above=1, below=4)
+        straighten_vertical_transition_segment(
+            labels, 707, 742, 1075, left=1, right=4
+        )
+    elif filename == "02x_short_segmentation_mask.png":
+        # Level only the straight outer-top run; adjacent pixels belong to the
+        # rounded corners and must retain their gradual vertical transition.
+        straighten_exterior_top_segment(
+            labels, 202, 1127, 473, fill_label=0
+        )
+        straighten_vertical_transition_segment(
+            labels, 669, 761, 1064, left=1, right=4
+        )
 
 
 def clean_mask(source_path: Path, output_path: Path) -> int:
