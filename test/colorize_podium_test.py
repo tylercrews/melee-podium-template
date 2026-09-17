@@ -1,4 +1,4 @@
-"""Create simple blue and gold podiums from a semantic segmentation mask."""
+"""Create colored podium previews from semantic segmentation masks."""
 
 from math import sin
 from pathlib import Path
@@ -10,19 +10,34 @@ from PIL import Image, ImageFilter
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from constants import BLACK, FIRST_PLACE_BOX, GOLD_PODIUM, RGB, SECOND_PLACE_BOX
+from constants import (
+    BLACK,
+    BRONZE_PODIUM,
+    FIRST_PLACE_BOX,
+    GOLD_PODIUM,
+    RGB,
+    SECOND_PLACE_BOX,
+    SILVER_PODIUM,
+)
 
 
-MASK_PATH = (
+ARTWORK_FOLDER = (
     PROJECT_ROOT
     / "docs"
     / "archive"
     / "old_podium_iterations"
     / "02_3d_second_attempt"
-    / "03x_medium_segmentation_mask.png"
 )
-REFERENCE_PATH = MASK_PATH.with_name("03_medium.png")
 OUTPUT_FOLDER = Path(__file__).with_name("colorize_podium_test_outputs")
+
+PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
+    ("00_flat", "00x_flat_segmentation_mask.png", "00_flat.png"),
+    ("01_x_short", "01x_x_short_segmentation_mask.png", "01_x_short.png"),
+    ("02_short", "02x_short_segmentation_mask.png", "02_short.png"),
+    ("03_medium", "03x_medium_segmentation_mask.png", "03_medium.png"),
+    ("04_tall", "04x_tall_segmentation_mask.png", "04_tall.png"),
+    ("05_x_tall", "05x_x_tall_segmentation_mask.png", "05_x_tall.png"),
+)
 
 # The source mask is generated artwork, so its nominal class colors contain
 # small one- or two-channel variations.  Nearest-color matching makes those
@@ -150,7 +165,12 @@ def apply_podium_lighting(
     )
 
 
-def apply_metallic_finish(image: Image.Image, metal_mask: Image.Image, base: RGB) -> None:
+def apply_metallic_finish(
+    image: Image.Image,
+    metal_mask: Image.Image,
+    base: RGB,
+    highlight: RGB,
+) -> None:
     """Shade all metal with one continuous field so reflections join cleanly."""
 
     image_pixels = image.load()
@@ -177,8 +197,6 @@ def apply_metallic_finish(image: Image.Image, metal_mask: Image.Image, base: RGB
         (0.91, 0.84),
         (1.00, 0.68),
     )
-    highlight = (255, 239, 166)
-
     for x in range(width):
         for y in range(height):
             if not mask_pixels[x, y]:
@@ -255,6 +273,7 @@ def colorize_podium(
     dark_color: RGB,
     *,
     metallic: bool = False,
+    metal_highlight: RGB = (255, 255, 255),
 ) -> Image.Image:
     """Colorize a mask with bright trim, dark inset faces, and a black body."""
 
@@ -318,7 +337,7 @@ def colorize_podium(
         shade_accents=not metallic,
     )
     if metallic:
-        apply_metallic_finish(result, accent_mask, color)
+        apply_metallic_finish(result, accent_mask, color, metal_highlight)
     apply_right_side_shadow(result, visible_mask)
     return result
 
@@ -326,29 +345,68 @@ def colorize_podium(
 def main() -> None:
     OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    with Image.open(MASK_PATH) as mask, Image.open(REFERENCE_PATH) as reference:
+    # Red is the geometry control: render it for every height to confirm the
+    # mask mapping and lighting transfer work across the complete size set.
+    for size_name, mask_filename, reference_filename in PODIUM_SIZES:
+        with (
+            Image.open(ARTWORK_FOLDER / mask_filename) as mask,
+            Image.open(ARTWORK_FOLDER / reference_filename) as reference,
+        ):
+            if mask.size != reference.size:
+                raise ValueError(
+                    f"{size_name} mask/reference size mismatch: "
+                    f"{mask.size} != {reference.size}"
+                )
+            reference_lighting = reference.convert("RGBA").filter(
+                ImageFilter.GaussianBlur(10)
+            )
+            output_path = OUTPUT_FOLDER / f"{size_name}_red.png"
+            colorize_podium(
+                mask,
+                reference_lighting,
+                FIRST_PLACE_BOX.exterior_line,
+                FIRST_PLACE_BOX.interior_line,
+            ).save(output_path)
+            print(f"Generated {output_path}")
+
+    # Keep the color/finish comparison on the medium geometry.
+    medium_mask_path = ARTWORK_FOLDER / "03x_medium_segmentation_mask.png"
+    medium_reference_path = ARTWORK_FOLDER / "03_medium.png"
+    with (
+        Image.open(medium_mask_path) as mask,
+        Image.open(medium_reference_path) as reference,
+    ):
         reference_lighting = reference.convert("RGBA").filter(
             ImageFilter.GaussianBlur(10)
         )
         variants = {
-            "03_medium_red.png": (
-                FIRST_PLACE_BOX.exterior_line,
-                FIRST_PLACE_BOX.interior_line,
-                False,
-            ),
             "03_medium_blue.png": (
                 SECOND_PLACE_BOX.exterior_line,
                 SECOND_PLACE_BOX.interior_line,
                 False,
+                (255, 255, 255),
             ),
             "03_medium_gold.png": (
                 GOLD_PODIUM.exterior_line,
                 GOLD_PODIUM.interior_line,
                 True,
+                (255, 239, 166),
+            ),
+            "03_medium_silver.png": (
+                SILVER_PODIUM.exterior_line,
+                SILVER_PODIUM.interior_line,
+                True,
+                (250, 253, 255),
+            ),
+            "03_medium_bronze.png": (
+                BRONZE_PODIUM.exterior_line,
+                BRONZE_PODIUM.interior_line,
+                True,
+                (255, 205, 132),
             ),
         }
 
-        for filename, (color, dark_color, metallic) in variants.items():
+        for filename, (color, dark_color, metallic, highlight) in variants.items():
             output_path = OUTPUT_FOLDER / filename
             colorize_podium(
                 mask,
@@ -356,6 +414,7 @@ def main() -> None:
                 color,
                 dark_color,
                 metallic=metallic,
+                metal_highlight=highlight,
             ).save(output_path)
             print(f"Generated {output_path}")
 

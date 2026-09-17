@@ -32,6 +32,8 @@ SEVENTH_PLACE_GRAY_BOX: Final = PodiumBoxColors((141, 141, 141), (48, 44, 57), (
 # Alternate podium finish used by the mask-coloring experiment.  The exterior
 # color is the bright metal while the interior color fills the recessed faces.
 GOLD_PODIUM: Final = PodiumBoxColors((212, 175, 55), (92, 69, 20), BLACK)
+SILVER_PODIUM: Final = PodiumBoxColors((190, 198, 210), (72, 78, 88), BLACK)
+BRONZE_PODIUM: Final = PodiumBoxColors((184, 115, 51), (82, 48, 24), BLACK)
 
 # Visual order on the top-8 background. This also corresponds to podium slots
 # in top 3/top 4, so renderers can safely select a box by slot number.
