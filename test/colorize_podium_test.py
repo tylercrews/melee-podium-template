@@ -1,7 +1,9 @@
 """Create colored podium previews from semantic segmentation masks."""
 
+from collections import Counter, defaultdict
 from math import sin
 from pathlib import Path
+from statistics import median
 import sys
 
 from PIL import Image, ImageChops, ImageFilter
@@ -53,6 +55,10 @@ MASK_CLASSES: tuple[RGB, ...] = (
     (0, 255, 0),  # outer body used by the replacement medium mask
 )
 MASK_ALPHA_THRESHOLD = 64
+PRESERVED_COMPONENT_MINIMUMS: dict[RGB, int] = {
+    (0, 0, 0): 32,
+    (255, 255, 255): 48,
+}
 
 
 def nearest_mask_class(pixel: RGB) -> RGB:
@@ -67,6 +73,182 @@ def nearest_mask_class(pixel: RGB) -> RGB:
             + (blue - color[2]) ** 2
         ),
     )
+
+
+def remove_preserved_color_speckles(
+    classes: list[RGB | None],
+    source_pixels: list[tuple[int, int, int, int]],
+    size: tuple[int, int],
+) -> None:
+    """Keep real black/white artwork while removing generated edge flecks."""
+
+    width, height = size
+    chromatic_classes = tuple(
+        color for color in MASK_CLASSES if color not in PRESERVED_COMPONENT_MINIMUMS
+    )
+
+    for target, minimum_size in PRESERVED_COMPONENT_MINIMUMS.items():
+        visited = bytearray(width * height)
+        for start, mask_class in enumerate(classes):
+            if mask_class != target or visited[start]:
+                continue
+
+            component: list[int] = []
+            pending = [start]
+            visited[start] = 1
+            while pending:
+                index = pending.pop()
+                component.append(index)
+                x, y = index % width, index // width
+                neighbors = []
+                if x:
+                    neighbors.append(index - 1)
+                if x + 1 < width:
+                    neighbors.append(index + 1)
+                if y:
+                    neighbors.append(index - width)
+                if y + 1 < height:
+                    neighbors.append(index + width)
+                for neighbor in neighbors:
+                    if not visited[neighbor] and classes[neighbor] == target:
+                        visited[neighbor] = 1
+                        pending.append(neighbor)
+
+            if len(component) >= minimum_size:
+                continue
+
+            for index in component:
+                red, green, blue, _ = source_pixels[index]
+                classes[index] = min(
+                    chromatic_classes,
+                    key=lambda color: (
+                        (red - color[0]) ** 2
+                        + (green - color[1]) ** 2
+                        + (blue - color[2]) ** 2
+                    ),
+                )
+
+
+def smooth_classification_noise(
+    classes: list[RGB | None],
+    size: tuple[int, int],
+) -> None:
+    """Remove isolated one-pixel bites without softening intentional edges."""
+
+    class_values = {color: index + 1 for index, color in enumerate(MASK_CLASSES)}
+    encoded = Image.new("L", size)
+    encoded.putdata([
+        0 if mask_class is None else class_values[mask_class]
+        for mask_class in classes
+    ])
+    filtered = encoded.filter(ImageFilter.ModeFilter(5))
+    decoded = (None, *MASK_CLASSES)
+    classes[:] = [
+        original
+        if original == (255, 255, 255)
+        else decoded[value]
+        for original, value in zip(classes, filtered.getdata())
+    ]
+
+
+def straighten_horizontal_class_boundaries(
+    classes: list[RGB | None],
+    size: tuple[int, int],
+) -> None:
+    """Level long near-horizontal class boundaries while preserving corners."""
+
+    width, height = size
+    transitions: dict[
+        tuple[RGB | None, RGB | None], list[tuple[int, int]]
+    ] = defaultdict(list)
+    for x in range(width):
+        for y in range(1, height):
+            above = classes[(y - 1) * width + x]
+            below = classes[y * width + x]
+            if above != below and (255, 255, 255) not in (above, below):
+                transitions[(above, below)].append((x, y))
+
+    for (above, below), points in transitions.items():
+        row_counts = Counter(y for _, y in points)
+        dense_rows = sorted(y for y, count in row_counts.items() if count >= 80)
+        if not dense_rows:
+            continue
+
+        row_groups: list[list[int]] = [[dense_rows[0]]]
+        for row in dense_rows[1:]:
+            if row - row_groups[-1][-1] <= 4:
+                row_groups[-1].append(row)
+            else:
+                row_groups.append([row])
+
+        for rows in row_groups:
+            candidates = [
+                (x, y)
+                for x, y in points
+                if rows[0] - 3 <= y <= rows[-1] + 3
+            ]
+            by_x: dict[int, list[int]] = defaultdict(list)
+            for x, y in candidates:
+                by_x[x].append(y)
+            if not by_x or max(by_x) - min(by_x) < 120:
+                continue
+
+            selected = [(x, round(median(ys))) for x, ys in by_x.items()]
+            target_y = round(median(y for _, y in selected))
+            stable_x = sorted(x for x, y in selected if abs(y - target_y) <= 3)
+            if not stable_x:
+                continue
+
+            runs: list[list[int]] = [[stable_x[0]]]
+            for x in stable_x[1:]:
+                if x - runs[-1][-1] <= 12:
+                    runs[-1].append(x)
+                else:
+                    runs.append([x])
+
+            for run in runs:
+                if run[-1] - run[0] < 120:
+                    continue
+                for x in range(run[0] + 4, run[-1] - 3):
+                    nearby = [
+                        y
+                        for y in range(max(1, target_y - 4), min(height, target_y + 5))
+                        if classes[(y - 1) * width + x] == above
+                        and classes[y * width + x] == below
+                    ]
+                    if nearby:
+                        old_y = min(nearby, key=lambda y: abs(y - target_y))
+                        if target_y > old_y:
+                            for y in range(old_y, target_y):
+                                classes[y * width + x] = above
+                        elif target_y < old_y:
+                            for y in range(target_y, old_y):
+                                classes[y * width + x] = below
+
+                    # Generated masks often contain a third-color tooth that
+                    # touches the main region and therefore is not a removable
+                    # speckle.  Lock a narrow band on both sides of a detected
+                    # long boundary to its two intended classes.
+                    for y in range(max(0, target_y - 3), target_y):
+                        if classes[y * width + x] != (255, 255, 255):
+                            classes[y * width + x] = above
+                    for y in range(target_y, min(height, target_y + 3)):
+                        if classes[y * width + x] != (255, 255, 255):
+                            classes[y * width + x] = below
+
+
+def repair_medium_mask_artifacts(
+    classes: list[RGB | None],
+    size: tuple[int, int],
+) -> None:
+    """Lock the generated medium mask's long center trim to clean rows."""
+
+    if size != (1774, 887):
+        return
+    width, _ = size
+    for y in range(628, 651):
+        for x in range(548, 1135):
+            classes[y * width + x] = (255, 0, 0)
 
 
 def interpolate_stops(value: float, stops: tuple[tuple[float, float], ...]) -> float:
@@ -333,14 +515,33 @@ def colorize_podium(
     """Colorize a mask with bright trim, dark inset faces, and a black body."""
 
     source = mask.convert("RGBA")
+    source_pixels = list(source.getdata())
+    classified_pixels: list[RGB | None] = [
+        nearest_mask_class((red, green, blue))
+        if alpha > MASK_ALPHA_THRESHOLD
+        else None
+        for red, green, blue, alpha in source_pixels
+    ]
+    smooth_classification_noise(classified_pixels, source.size)
+    straighten_horizontal_class_boundaries(classified_pixels, source.size)
+    remove_preserved_color_speckles(
+        classified_pixels,
+        source_pixels,
+        source.size,
+    )
+    straighten_horizontal_class_boundaries(classified_pixels, source.size)
+    if panel_classes == ((0, 255, 255),):
+        repair_medium_mask_artifacts(classified_pixels, source.size)
     output_pixels: list[tuple[int, int, int, int]] = []
     metal_pixels: list[int] = []
     panel_pixels: list[int] = []
     structure_pixels: list[int] = []
     visible_pixels: list[int] = []
 
-    for red, green, blue, alpha in source.getdata():
-        if alpha <= MASK_ALPHA_THRESHOLD:
+    for (red, green, blue, alpha), mask_class in zip(
+        source_pixels, classified_pixels
+    ):
+        if mask_class is None:
             output_pixels.append((0, 0, 0, 0))
             metal_pixels.append(0)
             panel_pixels.append(0)
@@ -348,7 +549,6 @@ def colorize_podium(
             visible_pixels.append(0)
             continue
 
-        mask_class = nearest_mask_class((red, green, blue))
         if mask_class == (255, 255, 255):
             replacement = (255, 255, 255)
             is_metal = False
