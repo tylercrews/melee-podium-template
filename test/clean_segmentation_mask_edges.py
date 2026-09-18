@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 from statistics import median
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageChops, ImageFilter
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -18,9 +18,9 @@ MASK_FOLDER = (
 )
 OUTPUT_FOLDER = Path(__file__).with_name("cleaned_segmentation_mask_previews")
 STRONG_ALPHA = 64
-MIN_HORIZONTAL_LENGTH = 300
+MIN_HORIZONTAL_LENGTH = 96
 MAX_BOUNDARY_ADJUSTMENT = 8
-CORNER_GUARD = 12
+CORNER_GUARD = 3
 
 TRANSPARENT = -1
 PALETTE = (
@@ -208,10 +208,125 @@ def straighten_vertical_transition_segment(
                 labels[x][y] = right
 
 
+def trim_exterior_corner(
+    labels: list[list[int]],
+    start_y: int,
+    end_y: int,
+    maximum_x: int,
+    shell_label: int,
+) -> None:
+    """Trim only the transparent-facing tip of an oversized outer corner."""
+
+    for y in range(start_y, end_y + 1):
+        shell_columns = [
+            x for x, column in enumerate(labels) if column[y] == shell_label
+        ]
+        if not shell_columns:
+            continue
+        rightmost = max(shell_columns)
+        if rightmost <= maximum_x:
+            continue
+        # Never cut an interior class boundary.  These rows are eligible only
+        # while the shell's right edge still faces transparent canvas.
+        if rightmost + 1 < len(labels) and labels[rightmost + 1][y] != TRANSPARENT:
+            continue
+        for x in range(maximum_x + 1, rightmost + 1):
+            if labels[x][y] == shell_label:
+                labels[x][y] = TRANSPARENT
+
+
+def reshape_lower_boundary(
+    labels: list[list[int]],
+    boundary_points: tuple[tuple[int, int], ...],
+    upper_label: int,
+    upper_fill_y: int,
+    lower_label: int,
+    lower_fill_y: int,
+) -> None:
+    """Reshape a local lower edge to a piecewise-linear reference contour."""
+
+    for (start_x, start_y), (end_x, end_y) in zip(
+        boundary_points, boundary_points[1:]
+    ):
+        width = end_x - start_x
+        for x in range(start_x, end_x + 1):
+            progress = (x - start_x) / width
+            boundary_y = round(start_y + (end_y - start_y) * progress)
+            for y in range(upper_fill_y, boundary_y + 1):
+                labels[x][y] = upper_label
+            for y in range(boundary_y + 1, lower_fill_y + 1):
+                labels[x][y] = lower_label
+
+
 def repair_known_mask_artifacts(labels: list[list[int]], filename: str) -> None:
     """Apply narrow corrections where generated geometry defeats heuristics."""
 
-    if filename == "01x_x_short_segmentation_mask.png":
+    if filename == "00x_flat_segmentation_mask.png":
+        # The original top-face geometry remains intact; only the few pixels
+        # where the exterior tip pushes beyond the established arc are cut.
+        trim_exterior_corner(labels, 596, 630, 1222, shell_label=0)
+        straighten_transition_segment(labels, 1174, 1180, 721, above=0, below=2)
+    elif filename == "01x_x_short_segmentation_mask.png":
+        # X-short's transparent-facing rear tip is wider than the equivalent
+        # corner on the other heights.  Do not alter its inner lower contour.
+        trim_exterior_corner(labels, 532, 592, 1222, shell_label=0)
+
+        # Remove the left corner's uneven flat patch and retain a shallow,
+        # continuously rounded transition into the straight front edge.
+        reshape_lower_boundary(
+            labels,
+            (
+                (46, 666),
+                (47, 666),
+                (51, 667),
+                (55, 669),
+                (59, 670),
+                (64, 671),
+                (70, 672),
+                (76, 673),
+                (82, 672),
+                (87, 671),
+                (91, 669),
+                (95, 666),
+                (99, 664),
+                (104, 663),
+                (108, 663),
+            ),
+            upper_label=0,
+            upper_fill_y=663,
+            lower_label=2,
+            lower_fill_y=679,
+        )
+
+        # The right corner was generated as a deep, lopsided lobe.  Use the
+        # same rounded profile and blend it continuously into the sloped side
+        # instead of ending at a vertical blue notch.
+        reshape_lower_boundary(
+            labels,
+            (
+                (1119, 663),
+                (1123, 665),
+                (1127, 667),
+                (1131, 669),
+                (1135, 671),
+                (1139, 672),
+                (1143, 673),
+                (1147, 673),
+                (1151, 672),
+                (1155, 671),
+                (1159, 670),
+                (1163, 668),
+                (1167, 666),
+                (1171, 663),
+                (1175, 659),
+                (1177, 657),
+            ),
+            upper_label=0,
+            upper_fill_y=663,
+            lower_label=2,
+            lower_fill_y=679,
+        )
+
         # The front inset's lower red edge alternates between rows 747 and 748.
         # Stop before both notch diagonals and the rounded outer corners.
         straighten_transition_segment(labels, 146, 361, 748, above=1, below=4)
@@ -290,25 +405,30 @@ def antialias_mask_boundaries(
     width: int,
     height: int,
 ) -> Image.Image:
-    """Soften only class edges, preserving flat semantic-color interiors."""
+    """Soften curves and diagonals while keeping axis-aligned runs crisp."""
 
-    edge = Image.new("L", image.size)
-    edge_pixels = edge.load()
+    class_pixels = [0] * (width * height)
     for x in range(width):
         for y in range(height):
             label = labels[x][y]
-            if (
-                (x > 0 and labels[x - 1][y] != label)
-                or (x + 1 < width and labels[x + 1][y] != label)
-                or (y > 0 and labels[x][y - 1] != label)
-                or (y + 1 < height and labels[x][y + 1] != label)
-            ):
-                edge_pixels[x, y] = 255
+            if label != TRANSPARENT:
+                class_pixels[y * width + x] = (label + 1) * 40
 
-    edge = edge.filter(ImageFilter.MaxFilter(3)).filter(
-        ImageFilter.GaussianBlur(0.45)
+    class_map = Image.new("L", image.size)
+    class_map.putdata(class_pixels)
+    horizontal = ImageChops.difference(
+        class_map, ImageChops.offset(class_map, 1, 0)
+    ).point(lambda value: 255 if value else 0)
+    vertical = ImageChops.difference(
+        class_map, ImageChops.offset(class_map, 0, 1)
+    ).point(lambda value: 255 if value else 0)
+    edge = ImageChops.multiply(
+        horizontal.filter(ImageFilter.MaxFilter(3)),
+        vertical.filter(ImageFilter.MaxFilter(3)),
+    ).filter(ImageFilter.MaxFilter(3)).filter(
+        ImageFilter.GaussianBlur(0.35)
     )
-    softened = premultiplied_blur(image, 0.70)
+    softened = premultiplied_blur(image, 0.65)
     return Image.composite(softened, image, edge)
 
 

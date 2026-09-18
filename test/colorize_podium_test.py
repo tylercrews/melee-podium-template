@@ -4,7 +4,7 @@ from math import sin
 from pathlib import Path
 import sys
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageChops, ImageFilter
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -49,6 +49,7 @@ MASK_CLASSES: tuple[RGB, ...] = (
     (0, 255, 255),  # outer front trim
     (255, 0, 255),  # thin inner trim
 )
+MASK_ALPHA_THRESHOLD = 64
 
 
 def nearest_mask_class(pixel: RGB) -> RGB:
@@ -110,13 +111,23 @@ def antialias_boundaries(
     class_map = Image.new("L", image.size)
     for value, mask in zip((64, 128, 192), region_masks[:3]):
         class_map.paste(value, mask=mask)
-    edge = class_map.filter(ImageFilter.FIND_EDGES).point(
+    horizontal = ImageChops.difference(
+        class_map, ImageChops.offset(class_map, 1, 0)
+    ).point(
         lambda value: 255 if value else 0
     )
-    edge = edge.filter(ImageFilter.MaxFilter(3)).filter(
-        ImageFilter.GaussianBlur(0.45)
+    vertical = ImageChops.difference(
+        class_map, ImageChops.offset(class_map, 0, 1)
+    ).point(
+        lambda value: 255 if value else 0
     )
-    softened = premultiplied_blur(image, 0.70)
+    edge = ImageChops.multiply(
+        horizontal.filter(ImageFilter.MaxFilter(3)),
+        vertical.filter(ImageFilter.MaxFilter(3)),
+    ).filter(ImageFilter.MaxFilter(3)).filter(
+        ImageFilter.GaussianBlur(0.35)
+    )
+    softened = premultiplied_blur(image, 0.65)
     return Image.composite(softened, image, edge)
 
 
@@ -324,7 +335,7 @@ def colorize_podium(
     visible_pixels: list[int] = []
 
     for red, green, blue, alpha in source.getdata():
-        if alpha == 0:
+        if alpha <= MASK_ALPHA_THRESHOLD:
             output_pixels.append((0, 0, 0, 0))
             metal_pixels.append(0)
             panel_pixels.append(0)
