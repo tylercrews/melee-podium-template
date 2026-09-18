@@ -1,0 +1,90 @@
+Clean this segmentation mask using a deterministic, non-generative process:
+
+Mask: {MASK_PATH}
+Reference artwork: {REFERENCE_PATH}
+Preview name: {SIZE_NAME}
+
+The mask is an anti-aliased source image containing semantic color regions. Preserve its original geometry, silhouettes, curves, diagonals, line thicknesses, color regions, and intentional white highlights.
+
+Requirements:
+
+1. Work non-destructively.
+   - Do not overwrite the supplied mask.
+   - Save the cleaned candidate beside it as `<original_stem>_cleaned.png`.
+   - Do not modify the reference artwork.
+   - Do not use an image-generation model.
+
+2. Use only these exact RGBA output values unless the source clearly contains another established semantic class:
+   - Transparent: `(0, 0, 0, 0)`
+   - Black: `(0, 0, 0, 255)`
+   - White: `(255, 255, 255, 255)`
+   - Red: `(255, 0, 0, 255)`
+   - Blue: `(0, 0, 255, 255)`
+   - Cyan: `(0, 255, 255, 255)`
+
+3. Do not classify every transition pixel by nearest RGB color alone. Dark anti-aliased edge pixels must not automatically become black.
+   - Identify high-confidence interior pixels for each semantic region first.
+   - Assign ambiguous transition pixels using neighboring region continuity, connected components, and the surrounding edge direction.
+   - Use the source alpha channel to preserve the original silhouette.
+   - Keep transparent pixels transparent unless they are clearly enclosed pinholes.
+   - Do not turn partially transparent exterior pixels into an opaque fringe.
+
+4. Preserve primary-color geometry.
+   - Never globally erode, dilate, redraw, straighten, or reconstruct a red, blue, or cyan region.
+   - Do not replace complete lines with polygons.
+   - Do not flatten intended slopes, curves, rounded corners, notches, or perspective lines.
+   - Treat separate cyan panels and other disconnected regions independently.
+   - Solid panels may have enclosed one-pixel holes filled, but their outer contours must remain unchanged.
+
+5. Preserve black outlines carefully.
+   - Black is a deliberate semantic class, but dark transition pixels are not necessarily black.
+   - Retain continuous established black components.
+   - Remove a black pixel only when it is a clearly isolated intrusion into another region and local edge continuity confirms the replacement.
+   - Do not use global mode filters or repeated median filters that thicken black lines.
+   - Do not apply broad horizontal or vertical boundary-straightening passes.
+
+6. Preserve all intentional white lighting.
+   - White highlights may be very small and may appear on either side or at corners.
+   - Do not discard white components based only on their pixel count.
+   - Preserve white components surrounded by the podium’s painted regions.
+   - Remove white only when it is demonstrably an edge-classification artifact, such as a lone pixel embedded in a cyan boundary with no corresponding highlight in the source.
+   - The preview renderer must not suppress highlights based on their horizontal position.
+
+7. Cleanup must be conservative.
+   - Repair isolated one-pixel holes, spikes, or color islands only when there is an unambiguous surrounding-class consensus.
+   - Evaluate diagonal and curved boundaries along their local direction, not as horizontal or vertical lines.
+   - Prefer leaving an uncertain pixel unchanged over altering the geometry.
+   - Do not use two consecutive 5×5 mode filters.
+   - Total geometry-changing corrections should be reported and should remain a very small percentage of visible pixels.
+
+8. Validate before presenting the candidate.
+   - Report the source and output dimensions.
+   - Report every unique output RGBA value and its pixel count.
+   - Report how many pixels changed during palette classification and how many changed during geometric cleanup.
+   - Report connected-component counts and bounding boxes for white highlights.
+   - Check for new black fragments, broken outlines, missing highlights, color holes, doubled edges, and opaque exterior fringes.
+   - Produce enlarged nearest-neighbor comparison crops of all corners, long horizontal lines, diagonal edges, curves, and notches.
+   - Visually inspect both the full mask and the enlarged crops.
+
+9. Generate a test preview from the cleaned candidate.
+   - Recognize cyan as the inset-panel class for this new color scheme.
+   - Do not run the existing aggressive mask-cleanup functions again on an already-clean exact-palette mask.
+   - In particular, bypass repeated mode filtering and broad horizontal/vertical straightening.
+   - Preserve every accepted white highlight in the rendered preview.
+   - Save the preview separately without replacing other outputs.
+
+10. Stop without replacing the original mask if:
+    - any line becomes visibly chunkier;
+    - black pixels appear inside a colored region;
+    - a primary-color region loses pixels or changes thickness;
+    - a curve, corner, diagonal, or notch changes shape;
+    - an intentional white highlight disappears;
+    - the cleaned result cannot be produced confidently from the source.
+
+At completion, provide clickable paths to:
+- the untouched original mask;
+- the cleaned candidate;
+- the generated preview;
+- every enlarged comparison crop.
+
+Briefly summarize exactly what was changed and identify any remaining uncertain areas. Do not replace the original mask until I explicitly approve the cleaned candidate.
