@@ -141,7 +141,9 @@ def smooth_classification_noise(
         0 if mask_class is None else class_values[mask_class]
         for mask_class in classes
     ])
-    filtered = encoded.filter(ImageFilter.ModeFilter(5))
+    filtered = encoded.filter(ImageFilter.ModeFilter(5)).filter(
+        ImageFilter.ModeFilter(5)
+    )
     decoded = (None, *MASK_CLASSES)
     classes[:] = [
         original
@@ -237,6 +239,26 @@ def straighten_horizontal_class_boundaries(
                             classes[y * width + x] = below
 
 
+def straighten_vertical_class_boundaries(
+    classes: list[RGB | None],
+    size: tuple[int, int],
+) -> None:
+    """Straighten long vertical boundaries using the horizontal-pass rules."""
+
+    width, height = size
+    transposed = [
+        classes[y * width + x]
+        for x in range(width)
+        for y in range(height)
+    ]
+    straighten_horizontal_class_boundaries(transposed, (height, width))
+    classes[:] = [
+        transposed[x * height + y]
+        for y in range(height)
+        for x in range(width)
+    ]
+
+
 def repair_medium_mask_artifacts(
     classes: list[RGB | None],
     size: tuple[int, int],
@@ -246,6 +268,17 @@ def repair_medium_mask_artifacts(
     if size != (1774, 887):
         return
     width, _ = size
+    # Preserve the rounded endpoints but rebuild the short lower-left trim's
+    # straight center, which is too short for the general line detector.
+    for y in range(661, 675):
+        for x in range(64, 120):
+            classes[y * width + x] = (255, 0, 0)
+
+    # Lock the thin inner panel trim between its rounded end caps.
+    for y in range(385, 630):
+        for x in range(166, 176):
+            classes[y * width + x] = (255, 0, 0)
+
     for y in range(628, 651):
         for x in range(548, 1135):
             classes[y * width + x] = (255, 0, 0)
@@ -294,6 +327,7 @@ def antialias_boundaries(
     """Smooth region contours while retaining crisp interior lighting."""
 
     class_map = Image.new("L", image.size)
+    class_map.paste(32, mask=region_masks[3])
     for value, mask in zip((64, 128, 192), region_masks[:3]):
         class_map.paste(value, mask=mask)
     horizontal = ImageChops.difference(
@@ -307,12 +341,12 @@ def antialias_boundaries(
         lambda value: 255 if value else 0
     )
     edge = ImageChops.multiply(
-        horizontal.filter(ImageFilter.MaxFilter(3)),
-        vertical.filter(ImageFilter.MaxFilter(3)),
-    ).filter(ImageFilter.MaxFilter(3)).filter(
-        ImageFilter.GaussianBlur(0.35)
+        horizontal.filter(ImageFilter.MaxFilter(5)),
+        vertical.filter(ImageFilter.MaxFilter(5)),
+    ).filter(ImageFilter.MaxFilter(5)).filter(
+        ImageFilter.GaussianBlur(0.7)
     )
-    softened = premultiplied_blur(image, 0.65)
+    softened = premultiplied_blur(image, 1.0)
     return Image.composite(softened, image, edge)
 
 
@@ -524,12 +558,14 @@ def colorize_podium(
     ]
     smooth_classification_noise(classified_pixels, source.size)
     straighten_horizontal_class_boundaries(classified_pixels, source.size)
+    straighten_vertical_class_boundaries(classified_pixels, source.size)
     remove_preserved_color_speckles(
         classified_pixels,
         source_pixels,
         source.size,
     )
     straighten_horizontal_class_boundaries(classified_pixels, source.size)
+    straighten_vertical_class_boundaries(classified_pixels, source.size)
     if panel_classes == ((0, 255, 255),):
         repair_medium_mask_artifacts(classified_pixels, source.size)
     output_pixels: list[tuple[int, int, int, int]] = []
@@ -575,7 +611,7 @@ def colorize_podium(
             is_panel = False
             is_structure = False
 
-        output_pixels.append((*replacement, alpha))
+        output_pixels.append((*replacement, 255))
         metal_pixels.append(255 if is_metal else 0)
         panel_pixels.append(255 if is_panel else 0)
         structure_pixels.append(255 if is_structure else 0)
