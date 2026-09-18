@@ -43,11 +43,14 @@ PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
 # small one- or two-channel variations.  Nearest-color matching makes those
 # pixels behave like their intended flat segmentation classes.
 MASK_CLASSES: tuple[RGB, ...] = (
+    (0, 0, 0),  # outlines and recessed structure
+    (255, 255, 255),  # specular highlights preserved from the mask
     (255, 255, 0),  # outer top shell
     (255, 0, 0),  # top and front inset panels
     (0, 0, 255),  # dark body and recessed channels
     (0, 255, 255),  # outer front trim
     (255, 0, 255),  # thin inner trim
+    (0, 255, 0),  # outer body used by the replacement medium mask
 )
 MASK_ALPHA_THRESHOLD = 64
 
@@ -324,6 +327,8 @@ def colorize_podium(
     *,
     metallic: bool = False,
     metal_highlight: RGB = (255, 255, 255),
+    panel_classes: tuple[RGB, ...] = ((255, 0, 0),),
+    structure_classes: tuple[RGB, ...] = ((0, 0, 255),),
 ) -> Image.Image:
     """Colorize a mask with bright trim, dark inset faces, and a black body."""
 
@@ -344,12 +349,22 @@ def colorize_podium(
             continue
 
         mask_class = nearest_mask_class((red, green, blue))
-        if mask_class == (0, 0, 255):
+        if mask_class == (255, 255, 255):
+            replacement = (255, 255, 255)
+            is_metal = False
+            is_panel = False
+            is_structure = False
+        elif mask_class == (0, 0, 0):
+            replacement = BLACK
+            is_metal = False
+            is_panel = False
+            is_structure = False
+        elif mask_class in structure_classes:
             replacement = BLACK
             is_metal = False
             is_panel = False
             is_structure = True
-        elif mask_class == (255, 0, 0):
+        elif mask_class in panel_classes:
             replacement = dark_color
             is_metal = False
             is_panel = True
@@ -412,6 +427,9 @@ def main() -> None:
                 reference_lighting,
                 FIRST_PLACE_BOX.exterior_line,
                 FIRST_PLACE_BOX.interior_line,
+                panel_classes=((0, 255, 255),)
+                if size_name == "03_medium"
+                else ((255, 0, 0),),
             ).save(output_path)
             print(f"Generated {output_path}")
 
@@ -459,6 +477,7 @@ def main() -> None:
                 dark_color,
                 metallic=metallic,
                 metal_highlight=highlight,
+                panel_classes=((0, 255, 255),),
             ).save(output_path)
             print(f"Generated {output_path}")
 
