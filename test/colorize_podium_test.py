@@ -693,7 +693,7 @@ def main() -> None:
                 FIRST_PLACE_BOX.exterior_line,
                 FIRST_PLACE_BOX.interior_line,
                 panel_classes=((0, 255, 255),)
-                if size_name == "03_medium"
+                if size_name in ("00_flat", "03_medium")
                 else ((255, 0, 0),),
             ).save(output_path)
             print(f"Generated {output_path}")
