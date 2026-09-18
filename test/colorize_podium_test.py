@@ -303,13 +303,32 @@ def brightened_color(color: RGB, peak: int, white_mix: float) -> RGB:
 def prepare_reference_lighting(
     reference: Image.Image,
     target_size: tuple[int, int],
+    target_mask: Image.Image | None = None,
 ) -> Image.Image:
-    """Align an original image with its generated segmentation-mask canvas."""
+    """Align the visible reference podium with the target mask geometry."""
 
-    aligned = reference.convert("RGBA")
-    if aligned.size != target_size:
-        aligned = aligned.resize(target_size, Image.Resampling.LANCZOS)
-    return aligned.filter(ImageFilter.GaussianBlur(10))
+    source = reference.convert("RGBA")
+    if target_mask is None or source.size == target_size:
+        aligned = source.resize(target_size, Image.Resampling.LANCZOS)
+    else:
+        source_alpha = source.getchannel("A").point(
+            lambda value: 255 if value > MASK_ALPHA_THRESHOLD else 0
+        )
+        target_alpha = target_mask.convert("RGBA").getchannel("A").point(
+            lambda value: 255 if value > MASK_ALPHA_THRESHOLD else 0
+        )
+        source_bounds = source_alpha.getbbox()
+        target_bounds = target_alpha.getbbox()
+        aligned = Image.new("RGBA", target_size)
+        if source_bounds is not None and target_bounds is not None:
+            target_width = target_bounds[2] - target_bounds[0]
+            target_height = target_bounds[3] - target_bounds[1]
+            cropped = source.crop(source_bounds).resize(
+                (target_width, target_height),
+                Image.Resampling.LANCZOS,
+            )
+            aligned.paste(cropped, target_bounds[:2], cropped)
+    return aligned.filter(ImageFilter.GaussianBlur(14))
 
 
 def premultiplied_blur(image: Image.Image, radius: float) -> Image.Image:
@@ -574,8 +593,8 @@ def colorize_podium(
     structure_pixels: list[int] = []
     visible_pixels: list[int] = []
 
-    for (red, green, blue, alpha), mask_class in zip(
-        source_pixels, classified_pixels
+    for pixel_index, ((red, green, blue, alpha), mask_class) in enumerate(
+        zip(source_pixels, classified_pixels)
     ):
         if mask_class is None:
             output_pixels.append((0, 0, 0, 0))
@@ -586,8 +605,16 @@ def colorize_podium(
             continue
 
         if mask_class == (255, 255, 255):
-            replacement = (255, 255, 255)
-            is_metal = False
+            if pixel_index % source.width >= round(source.width * 0.70):
+                replacement = color
+                is_metal = True
+            else:
+                replacement = (
+                    metal_highlight
+                    if metallic
+                    else brightened_color(color, 255, 0.72)
+                )
+                is_metal = False
             is_panel = False
             is_structure = False
         elif mask_class == (0, 0, 0):
@@ -656,7 +683,9 @@ def main() -> None:
             Image.open(ARTWORK_FOLDER / mask_filename) as mask,
             Image.open(ARTWORK_FOLDER / reference_filename) as reference,
         ):
-            reference_lighting = prepare_reference_lighting(reference, mask.size)
+            reference_lighting = prepare_reference_lighting(
+                reference, mask.size, mask
+            )
             output_path = OUTPUT_FOLDER / f"{size_name}_red.png"
             colorize_podium(
                 mask,
@@ -676,7 +705,7 @@ def main() -> None:
         Image.open(medium_mask_path) as mask,
         Image.open(medium_reference_path) as reference,
     ):
-        reference_lighting = prepare_reference_lighting(reference, mask.size)
+        reference_lighting = prepare_reference_lighting(reference, mask.size, mask)
         variants = {
             "03_medium_blue.png": (
                 SECOND_PLACE_BOX.exterior_line,
