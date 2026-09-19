@@ -34,7 +34,11 @@ OUTPUT_FOLDER = Path(__file__).with_name("colorize_podium_test_outputs")
 
 PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
     ("00_flat", "00x_flat_segmentation_mask_cleaned.png", "00_flat.png"),
-    ("01_x_short", "01x_x_short_segmentation_mask.png", "01_x_short.png"),
+    (
+        "01_x_short",
+        "01x_x_short_segmentation_mask_cleaned.png",
+        "01_x_short.png",
+    ),
     ("02_short", "02x_short_segmentation_mask.png", "02_short.png"),
     ("03_medium", "03x_medium_segmentation_mask.png", "03_medium.png"),
     ("04_tall", "04x_tall_segmentation_mask.png", "04_tall.png"),
@@ -707,6 +711,7 @@ def main() -> None:
     # Red is the geometry control: render it for every height to confirm the
     # mask mapping and lighting transfer work across the complete size set.
     for size_name, mask_filename, reference_filename in PODIUM_SIZES:
+        precleaned = mask_filename.endswith("_cleaned.png")
         with (
             Image.open(ARTWORK_FOLDER / mask_filename) as mask,
             Image.open(ARTWORK_FOLDER / reference_filename) as reference,
@@ -723,7 +728,7 @@ def main() -> None:
                 panel_classes=((0, 255, 255),)
                 if size_name in ("00_flat", "01_x_short", "03_medium")
                 else ((255, 0, 0),),
-                precleaned=size_name == "00_flat",
+                precleaned=precleaned,
             ).save(output_path)
             print(f"Generated {output_path}")
 
