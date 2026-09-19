@@ -39,7 +39,11 @@ PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
         "01x_x_short_segmentation_mask_cleaned.png",
         "01_x_short.png",
     ),
-    ("02_short", "02x_short_segmentation_mask.png", "02_short.png"),
+    (
+        "02_short",
+        "02x_short_segmentation_mask_cleaned.png",
+        "02_short.png",
+    ),
     ("03_medium", "03x_medium_segmentation_mask.png", "03_medium.png"),
     ("04_tall", "04x_tall_segmentation_mask.png", "04_tall.png"),
     ("05_x_tall", "05x_x_tall_segmentation_mask.png", "05_x_tall.png"),
@@ -375,7 +379,7 @@ def antialias_boundaries(
 
 def antialias_all_boundaries(
     image: Image.Image,
-    region_masks: tuple[Image.Image, ...],
+    semantic_classes: list[RGB | None],
 ) -> Image.Image:
     """Antialias every semantic edge without changing the class geometry.
 
@@ -385,10 +389,19 @@ def antialias_all_boundaries(
     rendered consistently.
     """
 
+    class_values = {
+        None: 0,
+        (0, 0, 0): 32,
+        (255, 255, 255): 64,
+        (255, 0, 0): 96,
+        (0, 0, 255): 128,
+        (0, 255, 255): 160,
+        (255, 255, 0): 192,
+        (255, 0, 255): 224,
+        (0, 255, 0): 255,
+    }
     class_map = Image.new("L", image.size)
-    class_map.paste(32, mask=region_masks[3])
-    for value, mask in zip((64, 128, 192), region_masks[:3]):
-        class_map.paste(value, mask=mask)
+    class_map.putdata([class_values[mask_class] for mask_class in semantic_classes])
     horizontal = ImageChops.difference(
         class_map, ImageChops.offset(class_map, 1, 0)
     ).point(lambda value: 255 if value else 0)
@@ -701,7 +714,7 @@ def colorize_podium(
     apply_right_side_shadow(result, visible_mask)
     boundary_masks = (accent_mask, panel_mask, structure_mask, visible_mask)
     if precleaned:
-        return antialias_all_boundaries(result, boundary_masks)
+        return antialias_all_boundaries(result, classified_pixels)
     return antialias_boundaries(result, boundary_masks)
 
 
@@ -726,7 +739,7 @@ def main() -> None:
                 FIRST_PLACE_BOX.exterior_line,
                 FIRST_PLACE_BOX.interior_line,
                 panel_classes=((0, 255, 255),)
-                if size_name in ("00_flat", "01_x_short", "03_medium")
+                if size_name in ("00_flat", "01_x_short", "02_short", "03_medium")
                 else ((255, 0, 0),),
                 precleaned=precleaned,
             ).save(output_path)
