@@ -44,7 +44,11 @@ PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
         "02x_short_segmentation_mask_cleaned.png",
         "02_short.png",
     ),
-    ("03_medium", "03x_medium_segmentation_mask.png", "03_medium.png"),
+    (
+        "03_medium",
+        "03x_medium_segmentation_mask_cleaned.png",
+        "03_medium.png",
+    ),
     ("04_tall", "04x_tall_segmentation_mask_cleaned.png", "04_tall.png"),
     (
         "05_x_tall",
@@ -759,7 +763,9 @@ def main() -> None:
             print(f"Generated {output_path}")
 
     # Keep the color/finish comparison on the medium geometry.
-    medium_mask_path = ARTWORK_FOLDER / "03x_medium_segmentation_mask.png"
+    medium_mask_path = (
+        ARTWORK_FOLDER / "03x_medium_segmentation_mask_cleaned.png"
+    )
     medium_reference_path = ARTWORK_FOLDER / "03_medium.png"
     with (
         Image.open(medium_mask_path) as mask,
@@ -803,6 +809,7 @@ def main() -> None:
                 metallic=metallic,
                 metal_highlight=highlight,
                 panel_classes=((0, 255, 255),),
+                precleaned=True,
             ).save(output_path)
             print(f"Generated {output_path}")
 
