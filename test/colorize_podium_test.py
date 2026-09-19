@@ -33,7 +33,7 @@ ARTWORK_FOLDER = (
 OUTPUT_FOLDER = Path(__file__).with_name("colorize_podium_test_outputs")
 
 PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
-    ("00_flat", "00x_flat_segmentation_mask.png", "00_flat.png"),
+    ("00_flat", "00x_flat_segmentation_mask_cleaned.png", "00_flat.png"),
     ("01_x_short", "01x_x_short_segmentation_mask.png", "01_x_short.png"),
     ("02_short", "02x_short_segmentation_mask.png", "02_short.png"),
     ("03_medium", "03x_medium_segmentation_mask.png", "03_medium.png"),
@@ -369,6 +369,35 @@ def antialias_boundaries(
     return Image.composite(softened, image, edge)
 
 
+def antialias_all_boundaries(
+    image: Image.Image,
+    region_masks: tuple[Image.Image, ...],
+) -> Image.Image:
+    """Antialias every semantic edge without changing the class geometry.
+
+    The legacy helper deliberately intersects horizontal and vertical edge
+    maps, which limits smoothing mostly to corners.  A cleaned mask needs the
+    union so long horizontal, vertical, curved, and diagonal edges are all
+    rendered consistently.
+    """
+
+    class_map = Image.new("L", image.size)
+    class_map.paste(32, mask=region_masks[3])
+    for value, mask in zip((64, 128, 192), region_masks[:3]):
+        class_map.paste(value, mask=mask)
+    horizontal = ImageChops.difference(
+        class_map, ImageChops.offset(class_map, 1, 0)
+    ).point(lambda value: 255 if value else 0)
+    vertical = ImageChops.difference(
+        class_map, ImageChops.offset(class_map, 0, 1)
+    ).point(lambda value: 255 if value else 0)
+    edge = ImageChops.lighter(horizontal, vertical).filter(
+        ImageFilter.MaxFilter(3)
+    ).filter(ImageFilter.GaussianBlur(0.6))
+    softened = premultiplied_blur(image, 0.72)
+    return Image.composite(softened, image, edge)
+
+
 def apply_reference_to_region(
     image: Image.Image,
     mask: Image.Image,
@@ -564,29 +593,32 @@ def colorize_podium(
     metal_highlight: RGB = (255, 255, 255),
     panel_classes: tuple[RGB, ...] = ((255, 0, 0),),
     structure_classes: tuple[RGB, ...] = ((0, 0, 255),),
+    precleaned: bool = False,
 ) -> Image.Image:
     """Colorize a mask with bright trim, dark inset faces, and a black body."""
 
     source = mask.convert("RGBA")
     source_pixels = list(source.getdata())
+    alpha_threshold = 127 if precleaned else MASK_ALPHA_THRESHOLD
     classified_pixels: list[RGB | None] = [
         nearest_mask_class((red, green, blue))
-        if alpha > MASK_ALPHA_THRESHOLD
+        if alpha > alpha_threshold
         else None
         for red, green, blue, alpha in source_pixels
     ]
-    smooth_classification_noise(classified_pixels, source.size)
-    straighten_horizontal_class_boundaries(classified_pixels, source.size)
-    straighten_vertical_class_boundaries(classified_pixels, source.size)
-    remove_preserved_color_speckles(
-        classified_pixels,
-        source_pixels,
-        source.size,
-    )
-    straighten_horizontal_class_boundaries(classified_pixels, source.size)
-    straighten_vertical_class_boundaries(classified_pixels, source.size)
-    if panel_classes == ((0, 255, 255),):
-        repair_medium_mask_artifacts(classified_pixels, source.size)
+    if not precleaned:
+        smooth_classification_noise(classified_pixels, source.size)
+        straighten_horizontal_class_boundaries(classified_pixels, source.size)
+        straighten_vertical_class_boundaries(classified_pixels, source.size)
+        remove_preserved_color_speckles(
+            classified_pixels,
+            source_pixels,
+            source.size,
+        )
+        straighten_horizontal_class_boundaries(classified_pixels, source.size)
+        straighten_vertical_class_boundaries(classified_pixels, source.size)
+        if panel_classes == ((0, 255, 255),):
+            repair_medium_mask_artifacts(classified_pixels, source.size)
     output_pixels: list[tuple[int, int, int, int]] = []
     metal_pixels: list[int] = []
     panel_pixels: list[int] = []
@@ -663,10 +695,10 @@ def colorize_podium(
     if metallic:
         apply_metallic_finish(result, accent_mask, color, metal_highlight)
     apply_right_side_shadow(result, visible_mask)
-    return antialias_boundaries(
-        result,
-        (accent_mask, panel_mask, structure_mask, visible_mask),
-    )
+    boundary_masks = (accent_mask, panel_mask, structure_mask, visible_mask)
+    if precleaned:
+        return antialias_all_boundaries(result, boundary_masks)
+    return antialias_boundaries(result, boundary_masks)
 
 
 def main() -> None:
@@ -691,6 +723,7 @@ def main() -> None:
                 panel_classes=((0, 255, 255),)
                 if size_name in ("00_flat", "01_x_short", "03_medium")
                 else ((255, 0, 0),),
+                precleaned=size_name == "00_flat",
             ).save(output_path)
             print(f"Generated {output_path}")
 
