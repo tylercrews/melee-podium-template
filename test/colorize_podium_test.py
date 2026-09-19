@@ -568,13 +568,15 @@ def apply_metallic_finish(
 
 
 def apply_right_side_shadow(image: Image.Image, visible_mask: Image.Image) -> None:
-    """Darken the rightmost face to separate it from the podium front."""
+    """Add a soft shadow confined to the podium's outer-right depth."""
 
     bounds = visible_mask.getbbox()
     if bounds is None:
         return
     _, top, _, bottom = bounds
     podium_height = max(1, bottom - top - 1)
+    # Keep the field narrow so it follows the existing perspective edge rather
+    # than crossing onto the broad horizontal top and front planes.
     side_width = max(56, round(image.width * 0.058))
     image_pixels = image.load()
     mask_pixels = visible_mask.load()
@@ -586,16 +588,15 @@ def apply_right_side_shadow(image: Image.Image, visible_mask: Image.Image) -> No
         right_edge = max(visible_columns)
         side_start = max(0, right_edge - side_width)
         vertical = (y - top) / podium_height
-        # Keep the upper edge readable while making the side face distinctly
-        # deeper toward the base.  This ranges from 31% to 54% at the rim.
-        maximum_shadow = 0.31 + 0.23 * vertical
+        maximum_shadow = 0.42 + 0.18 * vertical
 
         for x in range(side_start, right_edge + 1):
             if not mask_pixels[x, y]:
                 continue
             progress = (x - side_start) / side_width
             smooth_progress = progress * progress * (3.0 - 2.0 * progress)
-            value = 1.0 - maximum_shadow * smooth_progress
+            shadow = maximum_shadow * smooth_progress
+            value = 1.0 - shadow
             red, green, blue, alpha = image_pixels[x, y]
             image_pixels[x, y] = (
                 round(red * value),
