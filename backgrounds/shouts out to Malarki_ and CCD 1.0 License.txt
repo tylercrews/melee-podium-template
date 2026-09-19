@@ -1,0 +1,25 @@
+After commissioning Malarki_ to expand the pose roster, he worked on separating all of the melee stage backgrounds so we could have more options for the background.
+
+https://x.com/Malarki_/status/2090539730828190004
+
+here's his twitter post if you'd like to download them, make sure you give him a like and a sub. He created them in various sizes with and without the stages. 
+I wanted to include more here, but file size limits for github prevented it
+
+These assets {
+00_Battlefield_5000_5000_resaved
+01_Dreamland_5000_5000_resaved
+02_FinalDestinationCloud_5000_5000_resaved
+03_FinalDestinationSpace_4000_4000_resaved
+04_FinalDestinationCyber_5000_5000_resaved
+05_FinalDestinationSpace_5000_5000_resaved
+06_FinalDestinationTunnel_5000_5000_resaved
+07_FinalDestinationWormhole_5000_5000_resaved
+08_FountainOfDreams_5000_5000_resaved
+09_PokemonStadium_5000_5000_resaved
+10_YoshisStory_5000_5000_resaved
+}
+ were taken from
+Malarki_'s Melee Backdrops Asset Pack Volume 1 by Malarki_ is marked CC0 1.0. To view a copy of this mark, visit https://creativecommons.org/publicdomain/zero/1.0/
+
+using the 5000x5000 no stage files,
+and then resaved just means I saved them in microsoft image editor to reduce the filesize and make it more manageable for use on the web.
