@@ -46,7 +46,11 @@ PODIUM_SIZES: tuple[tuple[str, str, str], ...] = (
     ),
     ("03_medium", "03x_medium_segmentation_mask.png", "03_medium.png"),
     ("04_tall", "04x_tall_segmentation_mask_cleaned.png", "04_tall.png"),
-    ("05_x_tall", "05x_x_tall_segmentation_mask.png", "05_x_tall.png"),
+    (
+        "05_x_tall",
+        "05x_x_tall_segmentation_mask_cleaned.png",
+        "05_x_tall.png",
+    ),
 )
 
 # The source mask is generated artwork, so its nominal class colors contain
@@ -740,7 +744,14 @@ def main() -> None:
                 FIRST_PLACE_BOX.interior_line,
                 panel_classes=((0, 255, 255),)
                 if size_name
-                in ("00_flat", "01_x_short", "02_short", "03_medium", "04_tall")
+                in (
+                    "00_flat",
+                    "01_x_short",
+                    "02_short",
+                    "03_medium",
+                    "04_tall",
+                    "05_x_tall",
+                )
                 else ((255, 0, 0),),
                 precleaned=precleaned,
             ).save(output_path)
