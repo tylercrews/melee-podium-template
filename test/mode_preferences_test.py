@@ -184,7 +184,8 @@ class ModePreferencesTest(unittest.TestCase):
                 self.assertTrue(item.formatting_assets)
             else:
                 self.assertFalse(item.formatting_assets)
-            if extracted_legacy:
+            extracted_podium_content = item.selection.mode is CreationMode.PODIUM
+            if extracted_podium_content:
                 self.assertTrue(item.character_slots)
                 self.assertTrue(item.text_slots)
             else:

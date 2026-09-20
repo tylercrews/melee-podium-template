@@ -29,11 +29,12 @@
 ## Customizable podium colors
 
 - Active customizable podium masks live in `formatting_assets/podium/customizable/` and are tightly cropped from the cleaned semantic masks in `docs/archive/old_podium_iterations/02_3d_second_attempt/`.
-- Customizable podium formatting layouts use a 1920x941 canvas. Preserve the customizable asset's aspect ratio and the corresponding legacy podium's bottom edge, enlarge the bodies relative to legacy, and distribute the complete podium group across the wider canvas with minimal overlap.
+- Customizable podium formatting layouts use a 1920x941 canvas. Preserve the customizable asset's aspect ratio and the corresponding legacy podium's bottom edge, enlarge the bodies relative to legacy, and distribute the complete podium group across the wider canvas. Top 8 uses five-pixel gaps instead of overlaps so all eight bodies remain distinct.
 - Customizable Top 8 uses x-tall, tall, medium, short, x-short, x-short, flat, and flat assets in placement order. Top 3 uses tall, medium, and short; four-podium layouts append x-short.
 - Flat customizable podiums never display placement-number art.
 - Customizable Top 8 displays placement-number art only for first through third; fourth, both tied fifths, and both flat tied sevenths omit it. Customizable gray placement-number art is deliberately much smaller than the first-place crest.
 - Size customizable placement-number art per layout and podium height rather than sharing bounds across formats. Use as much of the semantic front face as practical while leaving clearance above the bottom trim; very short faces, especially fourth place in four-podium layouts, require correspondingly tiny art.
+- Customizable first-place art keeps its taller bounds so the ribbon can hang below the number. Customizable portrait anchors follow the bottom edge of each semantic top face; text retains its legacy vertical baseline and is projected horizontally into the corresponding customizable podium bounds.
 - Customizable podiums require a main color and accept optional face and base colors plus a strict `metallic` boolean.
 - Preserve whether face and base were omitted in serialized input. Resolve those defaults only for rendering.
 - When face is omitted, preserve the main hue and saturation and darken its HSL lightness using the median face-to-main lightness ratio from the existing podium color pairs in `constants.py`.

@@ -34,17 +34,17 @@ EXPECTED_ASSETS = {
 }
 
 EXPECTED_TAG_MAX_SIZES = {
-    "doubles_top_3": ((155, 100), (100, 76), (54, 39)),
-    "singles_top_3": ((155, 100), (100, 76), (54, 39)),
-    "doubles_top_4": ((155, 84), (72, 56), (38, 30), (16, 12)),
-    "singles_top_4": ((155, 84), (72, 56), (38, 30), (16, 12)),
+    "doubles_top_3": ((155, 132), (100, 76), (54, 39)),
+    "singles_top_3": ((155, 132), (100, 76), (54, 39)),
+    "doubles_top_4": ((155, 132), (72, 56), (38, 30), (16, 12)),
+    "singles_top_4": ((155, 132), (72, 56), (38, 30), (16, 12)),
     "singles_top_8_four_podium": (
-        (155, 84),
+        (155, 132),
         (72, 56),
         (38, 30),
         (16, 12),
     ),
-    "singles_top_8": ((90, 78), (50, 43), (36, 28)),
+    "singles_top_8": ((90, 95), (50, 43), (36, 28)),
 }
 
 
@@ -85,7 +85,7 @@ class CustomizablePreferencesTest(unittest.TestCase):
             )
             self.assertEqual(actual, expected, submode_id)
 
-    def test_customizable_podiums_are_wider_and_keep_legacy_baselines(self) -> None:
+    def test_customizable_podiums_keep_legacy_baselines(self) -> None:
         for submode_id, customizable in self.customizable.items():
             legacy = self.legacy[submode_id]
             self.assertEqual(
@@ -97,11 +97,12 @@ class CustomizablePreferencesTest(unittest.TestCase):
                 legacy.formatting_assets,
                 strict=True,
             ):
-                self.assertGreater(
-                    custom_placement.destination.width,
-                    legacy_placement.destination.width,
-                    submode_id,
-                )
+                if submode_id != "singles_top_8":
+                    self.assertGreater(
+                        custom_placement.destination.width,
+                        legacy_placement.destination.width,
+                        submode_id,
+                    )
                 self.assertEqual(
                     custom_placement.destination.bottom,
                     legacy_placement.destination.bottom,
@@ -147,11 +148,38 @@ class CustomizablePreferencesTest(unittest.TestCase):
                 previous.destination.right - current.destination.left
                 for previous, current in zip(podiums, podiums[1:])
             ]
-            maximum_overlap = 17 if submode_id == "singles_top_8" else 0
             self.assertTrue(
-                all(overlap <= maximum_overlap for overlap in overlaps),
+                all(overlap <= 0 for overlap in overlaps),
                 submode_id,
             )
+
+    def test_top_8_uses_small_consistent_gaps(self) -> None:
+        podiums = sorted(
+            self.customizable["singles_top_8"].formatting_assets,
+            key=lambda placement: placement.destination.left,
+        )
+        self.assertEqual(
+            [
+                current.destination.left - previous.destination.right
+                for previous, current in zip(podiums, podiums[1:])
+            ],
+            [5] * 7,
+        )
+
+    def test_character_anchors_fit_their_custom_podiums(self) -> None:
+        for submode_id, preferences in self.customizable.items():
+            podiums = {
+                index: podium.destination
+                for index, podium in enumerate(preferences.formatting_assets, start=1)
+            }
+            self.assertTrue(preferences.character_slots, submode_id)
+            self.assertTrue(preferences.text_slots, submode_id)
+            for placement in preferences.character_slots:
+                destination = podiums[placement.entrant_slot]
+                self.assertLessEqual(destination.left, placement.anchor.x, submode_id)
+                self.assertLess(placement.anchor.x, destination.right, submode_id)
+                self.assertLessEqual(destination.top, placement.anchor.y, submode_id)
+                self.assertLess(placement.anchor.y, destination.bottom, submode_id)
 
     def test_active_masks_exist_and_are_tightly_cropped(self) -> None:
         self.assertEqual(

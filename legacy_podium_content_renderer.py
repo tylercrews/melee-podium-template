@@ -2,8 +2,9 @@
 
 This keeps the new creation coordinator independent from ``DrawPodium`` while
 the legacy character and typography helpers are decomposed into new modules.
-Layout geometry comes from ``ModePreferences``; only legacy drawing behavior is
-delegated to the old helpers.
+Layout geometry comes from ``ModePreferences``. Both podium styles can share
+these drawing helpers because each preference file supplies independent
+character and text anchors.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from PIL import Image, ImageDraw
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
 from creation import CreationRequest
-from creation_modes import CreationMode, PodiumStyle
+from creation_modes import CreationMode
 from DrawPodium import (
     ATTRIBUTION_PREFERRED_SIZE,
     ATTRIBUTION_SIDE_MARGIN,
@@ -52,7 +53,7 @@ from models import DoublesTeam, SinglesEntrant, TournamentFormat
 
 @dataclass(frozen=True, slots=True)
 class LegacyPodiumContentRenderer:
-    """Draw legacy portraits and text onto a background plus podium assets."""
+    """Draw podium portraits and text using serialized layout preferences."""
 
     font: PodiumFont = PodiumFont.TYROWO
 
@@ -63,11 +64,8 @@ class LegacyPodiumContentRenderer:
         preferences: ModePreferences,
     ) -> Image.Image:
         selection = request.selection
-        if (
-            selection.mode is not CreationMode.PODIUM
-            or selection.options.podium_style is not PodiumStyle.LEGACY
-        ):
-            raise ValueError("LegacyPodiumContentRenderer requires a legacy podium")
+        if selection.mode is not CreationMode.PODIUM:
+            raise ValueError("LegacyPodiumContentRenderer requires podium mode")
 
         mode = PodiumMode(selection.submode_id)
         _validate_placements(request.entrants, selection.options.entrant_count)

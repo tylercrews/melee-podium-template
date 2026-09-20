@@ -27,9 +27,16 @@ from creation_modes import (  # noqa: E402
     PodiumStyle,
 )
 from formatting_assets import FormattingAssetRenderer  # noqa: E402
+from legacy_podium_content_renderer import LegacyPodiumContentRenderer  # noqa: E402
 from mode_preferences import ModePreferenceRepository  # noqa: E402
 from models import TournamentFormat  # noqa: E402
 from podium_colors import PodiumColorSelection  # noqa: E402
+from creation import CreationRequest  # noqa: E402
+from sample_creation_data import (  # noqa: E402
+    sample_top_4_teams,
+    sample_top_8_entrants,
+    sample_tournament,
+)
 
 
 BACKGROUND_ASSET_ID = "00_Battlefield_5000_5000_resaved.png"
@@ -82,6 +89,67 @@ def generate_previews(
         )
         background = create_background(request)
         preview = renderer.draw(background, preferences, podium_colors)
+        path = output_folder / f"{submode_id}.png"
+        preview.save(path)
+        outputs.append((submode_id.replace("_", " ").title(), path))
+
+    overview_path = output_folder / "overview.png"
+    _create_overview(outputs, overview_path)
+    return tuple(path for _, path in outputs) + (overview_path,)
+
+
+def generate_creation_previews(
+    style: PodiumStyle,
+    *,
+    podium_colors: PodiumColorSelection | None = None,
+) -> tuple[Path, ...]:
+    """Render sample entrants and text for every podium preference under review."""
+
+    output_folder = OUTPUT_ROOT / "creation" / style.value
+    output_folder.mkdir(parents=True, exist_ok=True)
+    repository = ModePreferenceRepository()
+    formatting_renderer = FormattingAssetRenderer()
+    content_renderer = LegacyPodiumContentRenderer()
+    outputs: list[tuple[str, Path]] = []
+
+    for submode_id, event_format, entrant_count, variant in LAYOUTS:
+        selection = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                event_format=event_format,
+                entrant_count=entrant_count,
+                variant=variant,
+                podium_style=style,
+            ),
+        )
+        preferences = repository.load(selection)
+        size = preferences.canvas_size
+        source_size = BUILTIN_BACKGROUND_SIZES[BACKGROUND_ASSET_ID]
+        background_request = BackgroundRequest(
+            size=size,
+            image=ImagePlacement(
+                asset_id=BACKGROUND_ASSET_ID,
+                source_crop=cover_crop(source_size, size),
+                destination=PixelRect(0, 0, size.width, size.height),
+            ),
+        )
+        entrants = (
+            sample_top_8_entrants()[:entrant_count]
+            if event_format is TournamentFormat.SINGLES
+            else sample_top_4_teams()[:entrant_count]
+        )
+        request = CreationRequest(
+            selection=selection,
+            background=background_request,
+            entrants=entrants,
+            tournament=sample_tournament(event_format),
+            podium_colors=podium_colors,
+        )
+        background = create_background(background_request)
+        formatted = formatting_renderer.draw(
+            background, preferences, podium_colors
+        )
+        preview = content_renderer.draw(formatted, request, preferences)
         path = output_folder / f"{submode_id}.png"
         preview.save(path)
         outputs.append((submode_id.replace("_", " ").title(), path))
