@@ -168,17 +168,26 @@ class ModePreferencesTest(unittest.TestCase):
                 and item.selection.submode_id == "singles_top_8"
             )
             self.assertEqual(item.ready, reviewed_legacy_top_8)
-            self.assertEqual(item.canvas_size, PixelSize(1672, 941))
+            expected_canvas = (
+                PixelSize(1736, 941)
+                if item.selection.mode is CreationMode.PODIUM
+                and item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
+                else PixelSize(1672, 941)
+            )
+            self.assertEqual(item.canvas_size, expected_canvas)
             extracted_legacy = (
                 item.selection.mode is CreationMode.PODIUM
                 and item.selection.options.podium_style is PodiumStyle.LEGACY
             )
-            if extracted_legacy:
+            extracted_podium_formatting = item.selection.mode is CreationMode.PODIUM
+            if extracted_podium_formatting:
                 self.assertTrue(item.formatting_assets)
+            else:
+                self.assertFalse(item.formatting_assets)
+            if extracted_legacy:
                 self.assertTrue(item.character_slots)
                 self.assertTrue(item.text_slots)
             else:
-                self.assertFalse(item.formatting_assets)
                 self.assertFalse(item.character_slots)
                 self.assertFalse(item.text_slots)
             if item.selection.mode is CreationMode.PODIUM:
