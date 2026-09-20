@@ -109,11 +109,6 @@ class FormattingAssetRenderer:
             finally:
                 source.close()
             destination = placement.destination
-            if layer.size != (destination.width, destination.height):
-                layer = layer.resize(
-                    (destination.width, destination.height),
-                    Image.Resampling.LANCZOS,
-                )
             if customizable:
                 assert podium_colors is not None
                 try:
@@ -125,6 +120,15 @@ class FormattingAssetRenderer:
                 layer = apply_podium_colors(
                     layer,
                     podium_color_for_slot(podium_colors, slot),
+                )
+            if layer.size != (destination.width, destination.height):
+                # Recolor semantic masks before resampling. Lanczos creates
+                # intermediate colors at class boundaries; if it runs first,
+                # cyan/blue/red fringe pixels no longer reliably identify
+                # their semantic class and can leak into the final podium.
+                layer = layer.resize(
+                    (destination.width, destination.height),
+                    Image.Resampling.LANCZOS,
                 )
             _composite_clipped(result, layer, destination.as_tuple())
 

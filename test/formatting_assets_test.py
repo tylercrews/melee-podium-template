@@ -125,6 +125,52 @@ class FormattingAssetsTest(unittest.TestCase):
             ],
         )
 
+    def test_customizable_masks_are_recolored_before_resampling(self) -> None:
+        selection = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.CUSTOMIZABLE,
+            ),
+        )
+        preferences = ModePreferences(
+            selection=selection,
+            canvas_size=PixelSize(15, 1),
+            ready=True,
+            formatting_assets=(
+                FormattingAssetPlacement(
+                    "podium", "mask.png", PixelRect(0, 0, 15, 1)
+                ),
+            ),
+        )
+        mask = Image.new("RGBA", (3, 1))
+        mask.putdata(
+            [
+                (255, 0, 0, 255),
+                (255, 255, 255, 255),
+                (0, 255, 255, 255),
+            ]
+        )
+
+        result = FormattingAssetRenderer(
+            MemoryFormattingAssets({"mask.png": mask})
+        ).draw(
+            Image.new("RGBA", (15, 1)),
+            preferences,
+            PodiumColorSelection(
+                main_color="#00FF00FF",
+                face_color="#00FF00FF",
+                base_color="#00FF00FF",
+            ),
+        )
+
+        # White detail may blend into the selected green during resizing, but
+        # none of the semantic mask's original red/cyan hue may survive.
+        self.assertTrue(
+            all(red == blue for red, _, blue, alpha in result.getdata() if alpha)
+        )
+
     def test_customizable_assets_resolve_colors_by_podium_slot(self) -> None:
         selection = ModeSelection(
             CreationMode.PODIUM,
