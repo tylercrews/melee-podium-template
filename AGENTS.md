@@ -34,12 +34,17 @@
 - Flat customizable podiums never display placement-number art.
 - Customizable Top 8 displays placement-number art only for first through third; fourth, both tied fifths, and both flat tied sevenths omit it. Customizable gray placement-number art is deliberately much smaller than the first-place crest.
 - Size customizable placement-number art per layout and podium height rather than sharing bounds across formats. Use as much of the semantic front face as practical while leaving clearance above the bottom trim; very short faces, especially fourth place in four-podium layouts, require correspondingly tiny art.
-- Customizable first-place art keeps its taller bounds so the ribbon can hang below the number. Customizable portrait anchors follow the bottom edge of each semantic top face; text retains its legacy vertical baseline and is projected horizontally into the corresponding customizable podium bounds.
+- Customizable first-place art keeps its taller bounds so the ribbon can hang below the number. Customizable portrait anchors follow the bottom edge of each semantic top face; text is projected horizontally into the corresponding customizable podium bounds. Seed labels are vertically fitted inside each semantic front face immediately above its lower trim, shrinking on the shortest faces when necessary.
+- In customizable doubles Top 4, the second member of the first-place team has an additional 10-pixel rightward anchor offset after projection.
 - Customizable podiums require a main color and accept optional face and base colors plus a strict `metallic` boolean.
+- A customizable podium color configuration has exactly one of three modes: a named stock preset, one explicit color selection per podium, or two selections alternating by odd/even podium slot.
+- Stock presets include `legacy` (red, blue, yellow, green, orange, cyan, magenta, gray) and `medals` (metallic gold, silver, bronze, then gray through eighth).
 - Preserve whether face and base were omitted in serialized input. Resolve those defaults only for rendering.
 - When face is omitted, preserve the main hue and saturation and darken its HSL lightness using the median face-to-main lightness ratio from the existing podium color pairs in `constants.py`.
 - When base is omitted, use black. Any omitted color inherits the main color's alpha channel; explicitly supplied colors retain their own alpha.
 - In semantic podium masks, main replaces red, face replaces cyan, and base replaces blue. Combine the selected alpha with the mask pixel's existing alpha so antialiased edges stay intact.
+- Recolor shaded semantic-mask variants as well as exact red/cyan/blue class pixels so no source-mask blue or cyan leaks into the finished asset. A metallic selection adds a directional highlight to the main-color region.
+- Text placements may supply an explicit eight-digit RGBA color. When omitted for a customizable podium, entrant tags, labels, names, summaries, and seeds use that podium slot's resolved text color, which defaults to its main color.
 
 ## Background rendering decisions
 

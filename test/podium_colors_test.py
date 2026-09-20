@@ -7,6 +7,8 @@ from PIL import Image
 from color_values import parse_rgba_hex
 from podium_colors import (
     FACE_LIGHTNESS_RATIO,
+    PodiumColorConfiguration,
+    PodiumColorPreset,
     PodiumColorSelection,
     apply_podium_colors,
 )
@@ -32,6 +34,13 @@ class PodiumColorsTest(unittest.TestCase):
 
         self.assertEqual(colors.face_color, "#44556670")
         self.assertEqual(colors.base_color, "#00000040")
+        self.assertEqual(colors.text_color, "#11223340")
+
+    def test_explicit_text_color_overrides_the_main_color_default(self) -> None:
+        colors = PodiumColorSelection(
+            "#112233FF", text_color="#FEDCBAFF"
+        ).resolve()
+        self.assertEqual(colors.text_color, "#FEDCBAFF")
 
     def test_all_three_inputs_are_preserved(self) -> None:
         selection = PodiumColorSelection(
@@ -47,6 +56,7 @@ class PodiumColorsTest(unittest.TestCase):
                 "main_color": "#10203040",
                 "face_color": "#50607080",
                 "base_color": "#90A0B0C0",
+                "text_color": "#10203040",
                 "metallic": False,
             },
         )
@@ -97,6 +107,57 @@ class PodiumColorsTest(unittest.TestCase):
                 (255, 255, 0, 255),
             ],
         )
+
+    def test_shaded_semantic_pixels_are_recolored_without_touching_yellow(self) -> None:
+        mask = Image.new("RGBA", (4, 1))
+        mask.putdata(
+            [(215, 40, 40, 255), (40, 215, 215, 255), (0, 0, 40, 255), (255, 255, 0, 255)]
+        )
+        result = apply_podium_colors(
+            mask,
+            PodiumColorSelection("#C80000FF", "#640000FF", "#320000FF"),
+        )
+        pixels = list(result.getdata())
+        self.assertEqual(pixels[-1], (255, 255, 0, 255))
+        self.assertTrue(all(green == blue == 0 for _, green, blue, _ in pixels[:3]))
+
+    def test_metallic_finish_adds_a_highlight_to_the_main_mask(self) -> None:
+        mask = Image.new("RGBA", (5, 1), (255, 0, 0, 255))
+        flat = apply_podium_colors(mask, PodiumColorSelection("#806020FF"))
+        metallic = apply_podium_colors(
+            mask, PodiumColorSelection("#806020FF", metallic=True)
+        )
+        self.assertNotEqual(list(flat.getdata()), list(metallic.getdata()))
+        self.assertGreater(max(red for red, _, _, _ in metallic.getdata()), 128)
+
+    def test_legacy_and_medal_presets_resolve_all_eight_slots(self) -> None:
+        legacy = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        medals = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+        self.assertEqual(legacy.color_for_slot(1).main_color, "#D90300FF")
+        self.assertEqual(legacy.color_for_slot(8).main_color, "#8D8D8DFF")
+        self.assertTrue(all(medals.color_for_slot(slot).metallic for slot in (1, 2, 3)))
+        self.assertEqual(
+            {medals.color_for_slot(slot).main_color for slot in range(4, 9)},
+            {"#8D8D8DFF"},
+        )
+
+    def test_custom_and_alternating_modes_are_serializable(self) -> None:
+        red = PodiumColorSelection("#FF0000FF")
+        blue = PodiumColorSelection("#0000FFFF")
+        custom = PodiumColorConfiguration.per_podium(red, blue)
+        alternating = PodiumColorConfiguration.alternating(red, blue)
+        self.assertEqual(custom.color_for_slot(2), blue)
+        self.assertEqual(alternating.color_for_slot(3), red)
+        self.assertEqual(alternating.color_for_slot(4), blue)
+        for configuration in (
+            custom,
+            alternating,
+            PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS),
+        ):
+            self.assertEqual(
+                PodiumColorConfiguration.from_dict(configuration.to_dict()),
+                configuration,
+            )
 
 
 if __name__ == "__main__":

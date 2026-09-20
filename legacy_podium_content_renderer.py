@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
 from creation import CreationRequest
-from creation_modes import CreationMode
+from creation_modes import CreationMode, PodiumStyle
 from DrawPodium import (
     ATTRIBUTION_PREFERRED_SIZE,
     ATTRIBUTION_SIDE_MARGIN,
@@ -49,6 +49,7 @@ from DrawPodium import (
 )
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
+from podium_colors import podium_color_for_slot
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,7 +136,7 @@ class LegacyPodiumContentRenderer:
             tag = CharacterTag(
                 _tag_anchor(x, y, portrait, center_x=anchor[0]),
                 entrant.tag,
-                PODIUM_BOX_COLORS_BY_SLOT[placement.entrant_slot - 1].exterior_line,
+                self._default_text_color(request, placement.entrant_slot),
                 tag_max_width,
                 FOUR_PODIUM_TAG_PREFERRED_SIZE
                 if four_podium_top_8
@@ -193,7 +194,7 @@ class LegacyPodiumContentRenderer:
                     CharacterTag(
                         _tag_anchor(x, y, portrait, center_x=anchor[0]),
                         member.tag,
-                        PODIUM_BOX_COLORS_BY_SLOT[entrant_slot - 1].exterior_line,
+                        self._default_text_color(request, entrant_slot),
                         DOUBLES_TAG_WIDTHS[mode.layout_count],
                     )
                 )
@@ -228,9 +229,8 @@ class LegacyPodiumContentRenderer:
                     canvas,
                     entrant,
                     anchor=(placement.anchor.x, placement.anchor.y),
-                    fill=PODIUM_BOX_COLORS_BY_SLOT[
-                        placement.entrant_slot - 1
-                    ].exterior_line,
+                    fill=placement.color
+                    or self._default_text_color(request, placement.entrant_slot),
                     font=self.font,
                 )
                 continue
@@ -238,9 +238,9 @@ class LegacyPodiumContentRenderer:
             text = self._text_value(placement, entrant)
             if text is None:
                 continue
-            color = PODIUM_BOX_COLORS_BY_SLOT[
-                (placement.entrant_slot or 1) - 1
-            ].exterior_line
+            color = placement.color or self._default_text_color(
+                request, placement.entrant_slot or 1
+            )
             _draw_text(
                 draw,
                 (placement.anchor.x, placement.anchor.y),
@@ -258,6 +258,24 @@ class LegacyPodiumContentRenderer:
                     else None
                 ),
             )
+
+    @staticmethod
+    def _default_text_color(
+        request: CreationRequest,
+        entrant_slot: int,
+    ) -> tuple[int, int, int] | str:
+        if request.selection.options.podium_style is PodiumStyle.LEGACY:
+            return PODIUM_BOX_COLORS_BY_SLOT[entrant_slot - 1].exterior_line
+        assert request.podium_colors is not None
+        podium_slot = entrant_slot
+        if (
+            request.selection.options.variant == "four_podium"
+            and entrant_slot > 4
+        ):
+            podium_slot -= 4
+        return podium_color_for_slot(
+            request.podium_colors, podium_slot
+        ).resolve().text_color
 
     @staticmethod
     def _text_value(

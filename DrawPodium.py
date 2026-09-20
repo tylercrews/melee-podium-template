@@ -85,7 +85,7 @@ class CharacterTag:
 
     position: tuple[int, int]
     text: str
-    glow_fill: tuple[int, int, int]
+    glow_fill: tuple[int, int, int] | str
     max_width: int
     preferred_size: int = TAG_PREFERRED_SIZE
     sponsor_preferred_size: int = SPONSOR_PREFERRED_SIZE

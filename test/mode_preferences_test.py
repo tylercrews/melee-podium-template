@@ -132,6 +132,7 @@ class ModePreferencesTest(unittest.TestCase):
                     pillow_anchor="ms",
                     preferred_size=24,
                     z_index=4,
+                    color="#AABBCCDD",
                 ),
             ),
         )

@@ -18,7 +18,10 @@ Run both generators from the repository root:
 .\.venv\Scripts\python.exe test\podium_layout_previews\generate_customizable_previews.py
 .\.venv\Scripts\python.exe test\podium_layout_previews\generate_legacy_creation_previews.py
 .\.venv\Scripts\python.exe test\podium_layout_previews\generate_customizable_creation_previews.py
+.\.venv\Scripts\python.exe test\podium_layout_previews\generate_customizable_color_mode_previews.py
 ```
 
 Each script writes all six layouts plus a contact sheet beneath `outputs/`.
 Full creation previews are kept separately in `outputs/creation/`.
+The color-mode generator creates separate contact sheets for the legacy and
+medal presets, per-podium colors, and an alternating two-color setup.

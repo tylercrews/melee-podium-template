@@ -181,6 +181,35 @@ class CustomizablePreferencesTest(unittest.TestCase):
                 self.assertLessEqual(destination.top, placement.anchor.y, submode_id)
                 self.assertLess(placement.anchor.y, destination.bottom, submode_id)
 
+    def test_doubles_top_4_second_member_of_first_team_is_offset_right(self) -> None:
+        placements = {
+            item.slot_id: item
+            for item in self.customizable["doubles_top_4"].character_slots
+        }
+        self.assertEqual(
+            placements["entrant_1_member_2_character"].anchor.x,
+            317,
+        )
+
+    def test_custom_seed_anchors_are_raised_from_the_legacy_baseline(self) -> None:
+        for submode_id, preferences in self.customizable.items():
+            custom_seeds = {
+                item.slot_id: item
+                for item in preferences.text_slots
+                if item.field == "entrant.seed"
+            }
+            legacy_seeds = {
+                item.slot_id: item
+                for item in self.legacy[submode_id].text_slots
+                if item.field == "entrant.seed"
+            }
+            self.assertEqual(set(custom_seeds), set(legacy_seeds), submode_id)
+            raised = 0
+            for slot_id, seed in custom_seeds.items():
+                raised += seed.anchor.y < legacy_seeds[slot_id].anchor.y
+                self.assertLessEqual(seed.preferred_size or 0, 24)
+            self.assertGreaterEqual(raised, len(custom_seeds) // 2, submode_id)
+
     def test_active_masks_exist_and_are_tightly_cropped(self) -> None:
         self.assertEqual(
             {path.name for path in self.asset_folder.glob("*.png")},

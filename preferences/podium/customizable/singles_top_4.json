@@ -183,7 +183,7 @@
       "member_slot": null,
       "anchor": {
         "x": 388,
-        "y": 785
+        "y": 760
       },
       "max_width": 80,
       "pillow_anchor": "ra",
@@ -213,7 +213,7 @@
       "member_slot": null,
       "anchor": {
         "x": 894,
-        "y": 785
+        "y": 770
       },
       "max_width": 80,
       "pillow_anchor": "ra",
@@ -243,7 +243,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1379,
-        "y": 785
+        "y": 771
       },
       "max_width": 80,
       "pillow_anchor": "ra",
@@ -273,11 +273,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1837,
-        "y": 785
+        "y": 790
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 24,
+      "preferred_size": 15,
       "wrap": false,
       "z_index": 100
     }

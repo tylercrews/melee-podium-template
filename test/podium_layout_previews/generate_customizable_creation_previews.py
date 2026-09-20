@@ -3,17 +3,14 @@
 from preview_support import generate_creation_previews
 
 from creation_modes import PodiumStyle
-from podium_colors import PodiumColorSelection
+from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 
 
 if __name__ == "__main__":
     outputs = generate_creation_previews(
         PodiumStyle.CUSTOMIZABLE,
-        podium_colors=PodiumColorSelection(
-            main_color="#C73C48FF",
-            face_color="#6E9CCAFF",
-            base_color="#202735FF",
-            metallic=True,
+        podium_colors=PodiumColorConfiguration.from_preset(
+            PodiumColorPreset.LEGACY
         ),
     )
     print(

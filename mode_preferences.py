@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from background_builder import PixelRect, PixelSize
+from color_values import normalize_rgba_hex
 from creation_modes import CreationMode, ModeSelection
 
 
@@ -32,6 +33,14 @@ def _items(value: object, name: str) -> list[Mapping[str, Any]]:
     if not isinstance(value, list):
         raise TypeError(f"{name} must be an array")
     return [_mapping(item, f"{name} item") for item in value]
+
+
+def _optional_string(value: object, name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be a string or null")
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -199,6 +208,7 @@ class TextPlacement:
     preferred_size: int | None = None
     wrap: bool = False
     z_index: int = 0
+    color: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.slot_id, str) or not self.slot_id.strip():
@@ -218,6 +228,12 @@ class TextPlacement:
                 raise ValueError("preferred_size must be greater than 0 or null")
         if not isinstance(self.wrap, bool):
             raise TypeError("wrap must be a boolean")
+        if self.color is not None:
+            object.__setattr__(
+                self,
+                "color",
+                normalize_rgba_hex(self.color, field_name="text color"),
+            )
         for name in ("entrant_slot", "member_slot"):
             value = getattr(self, name)
             if value is not None:
@@ -254,6 +270,7 @@ class TextPlacement:
             ),
             wrap=value.get("wrap", False),
             z_index=_integer(value.get("z_index", 0), "z_index"),
+            color=_optional_string(value.get("color"), "text color"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -268,6 +285,7 @@ class TextPlacement:
             "preferred_size": self.preferred_size,
             "wrap": self.wrap,
             "z_index": self.z_index,
+            "color": self.color,
         }
 
 

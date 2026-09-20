@@ -30,7 +30,7 @@ from formatting_assets import FormattingAssetRenderer  # noqa: E402
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer  # noqa: E402
 from mode_preferences import ModePreferenceRepository  # noqa: E402
 from models import TournamentFormat  # noqa: E402
-from podium_colors import PodiumColorSelection  # noqa: E402
+from podium_colors import PodiumColorInput  # noqa: E402
 from creation import CreationRequest  # noqa: E402
 from sample_creation_data import (  # noqa: E402
     sample_top_4_teams,
@@ -55,7 +55,7 @@ LAYOUTS = (
 def generate_previews(
     style: PodiumStyle,
     *,
-    podium_colors: PodiumColorSelection | None = None,
+    podium_colors: PodiumColorInput | None = None,
 ) -> tuple[Path, ...]:
     """Render all podium formatting layouts and return their output paths."""
 
@@ -101,11 +101,14 @@ def generate_previews(
 def generate_creation_previews(
     style: PodiumStyle,
     *,
-    podium_colors: PodiumColorSelection | None = None,
+    podium_colors: PodiumColorInput | None = None,
+    output_variant: str | None = None,
 ) -> tuple[Path, ...]:
     """Render sample entrants and text for every podium preference under review."""
 
     output_folder = OUTPUT_ROOT / "creation" / style.value
+    if output_variant is not None:
+        output_folder /= output_variant
     output_folder.mkdir(parents=True, exist_ok=True)
     repository = ModePreferenceRepository()
     formatting_renderer = FormattingAssetRenderer()

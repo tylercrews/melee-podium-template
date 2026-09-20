@@ -22,7 +22,7 @@ from mode_preferences import (
     ModePreferencesProvider,
 )
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
-from podium_colors import PodiumColorSelection
+from podium_colors import PodiumColorConfiguration, PodiumColorInput, PodiumColorSelection
 
 
 EntrantResult = SinglesEntrant | DoublesTeam
@@ -40,7 +40,7 @@ class CreationRequest:
     background: BackgroundRequest
     entrants: Sequence[EntrantResult]
     tournament: Tournament
-    podium_colors: PodiumColorSelection | None = None
+    podium_colors: PodiumColorInput | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.selection, ModeSelection):
@@ -51,9 +51,12 @@ class CreationRequest:
             raise TypeError("tournament must be a Tournament")
         if self.podium_colors is not None and not isinstance(
             self.podium_colors,
-            PodiumColorSelection,
+            (PodiumColorSelection, PodiumColorConfiguration),
         ):
-            raise TypeError("podium_colors must be a PodiumColorSelection or null")
+            raise TypeError(
+                "podium_colors must be a PodiumColorSelection, "
+                "PodiumColorConfiguration, or null"
+            )
         entrants = tuple(self.entrants)
         object.__setattr__(self, "entrants", entrants)
         options = self.selection.options

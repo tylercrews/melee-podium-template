@@ -10,7 +10,11 @@ from PIL import Image
 
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
 from mode_preferences import FormattingAssetPlacement, ModePreferences
-from podium_colors import PodiumColorSelection, apply_podium_colors
+from podium_colors import (
+    PodiumColorInput,
+    apply_podium_colors,
+    podium_color_for_slot,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -33,7 +37,7 @@ class FormattingRenderer(Protocol):
         self,
         canvas: Image.Image,
         preferences: ModePreferences,
-        podium_colors: PodiumColorSelection | None = None,
+        podium_colors: PodiumColorInput | None = None,
     ) -> Image.Image:
         """Draw the mode's framing assets over ``canvas``."""
 
@@ -83,7 +87,7 @@ class FormattingAssetRenderer:
         self,
         canvas: Image.Image,
         preferences: ModePreferences,
-        podium_colors: PodiumColorSelection | None = None,
+        podium_colors: PodiumColorInput | None = None,
     ) -> Image.Image:
         """Composite mode assets in their mode-specific visual order."""
 
@@ -104,14 +108,23 @@ class FormattingAssetRenderer:
                 layer = source.copy()
             finally:
                 source.close()
-            if customizable:
-                assert podium_colors is not None
-                layer = apply_podium_colors(layer, podium_colors)
             destination = placement.destination
             if layer.size != (destination.width, destination.height):
                 layer = layer.resize(
                     (destination.width, destination.height),
                     Image.Resampling.LANCZOS,
+                )
+            if customizable:
+                assert podium_colors is not None
+                try:
+                    slot = int(placement.slot_id.removeprefix("podium_"))
+                except ValueError:
+                    # Generic/custom providers may expose a single asset under
+                    # a semantic ID rather than a numbered layout slot.
+                    slot = 1
+                layer = apply_podium_colors(
+                    layer,
+                    podium_color_for_slot(podium_colors, slot),
                 )
             _composite_clipped(result, layer, destination.as_tuple())
 

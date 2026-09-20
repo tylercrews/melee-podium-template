@@ -258,11 +258,11 @@
       "member_slot": null,
       "anchor": {
         "x": 232,
-        "y": 792
+        "y": 777
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 24,
       "wrap": false,
       "z_index": 100
     },
@@ -288,11 +288,11 @@
       "member_slot": null,
       "anchor": {
         "x": 474,
-        "y": 794
+        "y": 779
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 24,
       "wrap": false,
       "z_index": 100
     },
@@ -318,11 +318,11 @@
       "member_slot": null,
       "anchor": {
         "x": 708,
-        "y": 795
+        "y": 785
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 24,
       "wrap": false,
       "z_index": 100
     },
@@ -348,11 +348,11 @@
       "member_slot": null,
       "anchor": {
         "x": 939,
-        "y": 796
+        "y": 794
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 18,
       "wrap": false,
       "z_index": 100
     },
@@ -378,11 +378,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1170,
-        "y": 799
+        "y": 808
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 11,
       "wrap": false,
       "z_index": 100
     },
@@ -408,11 +408,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1402,
-        "y": 800
+        "y": 809
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 11,
       "wrap": false,
       "z_index": 100
     },
@@ -438,11 +438,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1629,
-        "y": 802
+        "y": 805
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 11,
       "wrap": false,
       "z_index": 100
     },
@@ -468,11 +468,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1863,
-        "y": 804
+        "y": 805
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 20,
+      "preferred_size": 11,
       "wrap": false,
       "z_index": 100
     }

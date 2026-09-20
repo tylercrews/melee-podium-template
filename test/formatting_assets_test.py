@@ -14,7 +14,7 @@ from mode_preferences import (
     PlacementTagPlacement,
 )
 from models import TournamentFormat
-from podium_colors import PodiumColorSelection
+from podium_colors import PodiumColorConfiguration, PodiumColorSelection
 
 
 class MemoryFormattingAssets:
@@ -124,6 +124,37 @@ class FormattingAssetsTest(unittest.TestCase):
                 (112, 128, 144, 255),
             ],
         )
+
+    def test_customizable_assets_resolve_colors_by_podium_slot(self) -> None:
+        selection = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.CUSTOMIZABLE,
+            ),
+        )
+        preferences = ModePreferences(
+            selection=selection,
+            canvas_size=PixelSize(2, 1),
+            ready=True,
+            formatting_assets=(
+                FormattingAssetPlacement("podium_1", "mask.png", PixelRect(0, 0, 1, 1)),
+                FormattingAssetPlacement("podium_2", "mask.png", PixelRect(1, 0, 2, 1)),
+            ),
+        )
+        mask = Image.new("RGBA", (1, 1), (255, 0, 0, 255))
+        result = FormattingAssetRenderer(
+            MemoryFormattingAssets({"mask.png": mask})
+        ).draw(
+            Image.new("RGBA", (2, 1)),
+            preferences,
+            PodiumColorConfiguration.per_podium(
+                PodiumColorSelection("#FF0000FF"),
+                PodiumColorSelection("#00FF00FF"),
+            ),
+        )
+        self.assertEqual(list(result.getdata()), [(255, 0, 0, 255), (0, 255, 0, 255)])
 
     def test_placement_tags_are_centered_and_aspect_fitted_after_podiums(self) -> None:
         selection = ModeSelection(
