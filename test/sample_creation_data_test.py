@@ -36,6 +36,15 @@ class SampleCreationDataTest(unittest.TestCase):
             },
         )
 
+    def test_every_sample_character_requests_a_random_available_pose(self) -> None:
+        self.assertTrue(
+            all(
+                character.pose is None
+                for entrant in SAMPLE_TOP_8_ENTRANT_POOL
+                for character in entrant.characters
+            )
+        )
+
     def test_random_helper_assigns_unique_values_and_orders_by_placement(self) -> None:
         entrants = sample_top_8_entrants(random.Random(42))
 

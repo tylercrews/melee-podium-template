@@ -11,34 +11,40 @@ from models import Character, Entrant, SinglesEntrant, Tournament, TournamentFor
 SAMPLE_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
     Entrant(
         tag="C9 | Mang0",
-        characters=[Character("Fox"), Character("Falco")],
+        characters=[
+            Character("Fox", pose=None),
+            Character("Falco", pose=None),
+        ],
     ),
-    Entrant(tag="Armada", characters=[Character("Peach")]),
+    Entrant(tag="Armada", characters=[Character("Peach", pose=None)]),
     Entrant(
         tag="GG | PPMD",
-        characters=[Character("Falco", "green"), Character("Marth")],
+        characters=[
+            Character("Falco", color="green", pose=None),
+            Character("Marth", pose=None),
+        ],
     ),
-    Entrant(tag="Cody", characters=[Character("Fox", "green")]),
-    Entrant(tag="Zain", characters=[Character("Marth", "red")]),
+    Entrant(tag="Cody", characters=[Character("Fox", color="green", pose=None)]),
+    Entrant(tag="Zain", characters=[Character("Marth", color="red", pose=None)]),
     Entrant(
         tag="Mew2King",
         characters=[
-            Character("Sheik", "green", "c"),
-            Character("Marth", "black"),
+            Character("Sheik", color="green", pose=None),
+            Character("Marth", color="black", pose=None),
         ],
     ),
     Entrant(
         tag="Liquid | Hungrybox",
-        characters=[Character("Jigglypuff", "green")],
+        characters=[Character("Jigglypuff", color="green", pose=None)],
     ),
-    Entrant(tag="TSM | Leffen", characters=[Character("Fox")]),
+    Entrant(tag="TSM | Leffen", characters=[Character("Fox", pose=None)]),
 )
 
 
 def sample_top_8_entrants(
     rng: random.Random | None = None,
 ) -> list[SinglesEntrant]:
-    """Return the sample pool with unique random seeds and placements."""
+    """Return sample entrants with random placements, seeds, and portrait poses."""
 
     randomizer = rng if rng is not None else random
     placements = randomizer.sample(range(1, 9), k=8)
