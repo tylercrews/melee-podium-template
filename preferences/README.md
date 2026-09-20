@@ -6,9 +6,10 @@ mode includes its required podium style in the path:
 the remaining selection, for example `singles_top_3.json` or
 `singles_top_8_four_podium.json`.
 
-The initial files are intentionally empty and marked `ready: false`. Set a file
-to `ready: true` only after its real positions have been extracted and visually
-reviewed. The creation pipeline rejects unfinished files.
+Files remain marked `ready: false` until their real positions and required
+assets have been extracted and visually reviewed. A file may therefore contain
+partially or fully extracted coordinates while still being unavailable to the
+creation pipeline.
 
 - `formatting_assets` places podium, square, or rectangle PNGs. Each entry has
   a stable slot ID, asset filename, destination rectangle, and z-index.
@@ -19,6 +20,9 @@ reviewed. The creation pipeline rejects unfinished files.
 - Character and text z-index values share one logical content layer order. The
   eventual content renderer must merge both lists rather than drawing every
   character before every text label (or vice versa).
+- Legacy podium destination rectangles are half-open visible bounds measured
+  from the old `top_3.png`, `top_4.png`, and `top_8.png` outputs. Their asset IDs
+  reserve tightly cropped filenames in `formatting_assets/podium/legacy/`.
 
 Adding a supported sub-mode means adding another validated JSON file; entrant
 counts are not hard-coded in the mode model.

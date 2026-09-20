@@ -11,7 +11,22 @@
     }
   },
   "canvas_size": {"width": 1672, "height": 941},
-  "formatting_assets": [],
-  "character_slots": [],
-  "text_slots": []
+  "formatting_assets": [
+    {"slot_id": "podium_1", "asset_id": "top_3_slot_1.png", "destination": {"left": 623, "top": 462, "right": 1072, "bottom": 804}, "z_index": 2},
+    {"slot_id": "podium_2", "asset_id": "top_3_slot_2.png", "destination": {"left": 130, "top": 539, "right": 601, "bottom": 802}, "z_index": 1},
+    {"slot_id": "podium_3", "asset_id": "top_3_slot_3.png", "destination": {"left": 1092, "top": 578, "right": 1532, "bottom": 806}, "z_index": 0}
+  ],
+  "character_slots": [
+    {"slot_id": "entrant_1_character", "entrant_slot": 1, "member_slot": null, "anchor": {"x": 847, "y": 497}, "scale": 0.28, "z_index": 2},
+    {"slot_id": "entrant_2_character", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 365, "y": 579}, "scale": 0.28, "z_index": 1},
+    {"slot_id": "entrant_3_character", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1312, "y": 614}, "scale": 0.28, "z_index": 0}
+  ],
+  "text_slots": [
+    {"slot_id": "entrant_1_character_name", "field": "entrant.primary_character_name", "entrant_slot": 1, "member_slot": null, "anchor": {"x": 825, "y": 810}, "max_width": 290, "pillow_anchor": "ma", "preferred_size": 34, "wrap": true, "z_index": 100},
+    {"slot_id": "entrant_1_seed", "field": "entrant.seed", "entrant_slot": 1, "member_slot": null, "anchor": {"x": 1005, "y": 767}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
+    {"slot_id": "entrant_2_character_name", "field": "entrant.primary_character_name", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 335, "y": 810}, "max_width": 290, "pillow_anchor": "ma", "preferred_size": 34, "wrap": true, "z_index": 100},
+    {"slot_id": "entrant_2_seed", "field": "entrant.seed", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 528, "y": 767}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
+    {"slot_id": "entrant_3_character_name", "field": "entrant.primary_character_name", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1295, "y": 810}, "max_width": 290, "pillow_anchor": "ma", "preferred_size": 34, "wrap": true, "z_index": 100},
+    {"slot_id": "entrant_3_seed", "field": "entrant.seed", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1470, "y": 770}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100}
+  ]
 }

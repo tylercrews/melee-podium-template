@@ -150,6 +150,9 @@ class TextPlacement:
     max_width: int
     entrant_slot: int | None = None
     member_slot: int | None = None
+    pillow_anchor: str = "ma"
+    preferred_size: int | None = None
+    wrap: bool = False
     z_index: int = 0
 
     def __post_init__(self) -> None:
@@ -162,6 +165,14 @@ class TextPlacement:
         _integer(self.max_width, "max_width")
         if self.max_width <= 0:
             raise ValueError("max_width must be greater than 0")
+        if not isinstance(self.pillow_anchor, str) or not self.pillow_anchor.strip():
+            raise ValueError("pillow_anchor must be a non-empty string")
+        if self.preferred_size is not None:
+            _integer(self.preferred_size, "preferred_size")
+            if self.preferred_size <= 0:
+                raise ValueError("preferred_size must be greater than 0 or null")
+        if not isinstance(self.wrap, bool):
+            raise TypeError("wrap must be a boolean")
         for name in ("entrant_slot", "member_slot"):
             value = getattr(self, name)
             if value is not None:
@@ -186,6 +197,17 @@ class TextPlacement:
             max_width=_integer(value.get("max_width"), "max_width"),
             entrant_slot=entrant_slot,
             member_slot=member_slot,
+            pillow_anchor=(
+                value.get("pillow_anchor")
+                if isinstance(value.get("pillow_anchor"), str)
+                else ""
+            ),
+            preferred_size=(
+                None
+                if value.get("preferred_size") is None
+                else _integer(value.get("preferred_size"), "preferred_size")
+            ),
+            wrap=value.get("wrap", False),
             z_index=_integer(value.get("z_index", 0), "z_index"),
         )
 
@@ -197,6 +219,9 @@ class TextPlacement:
             "member_slot": self.member_slot,
             "anchor": self.anchor.to_dict(),
             "max_width": self.max_width,
+            "pillow_anchor": self.pillow_anchor,
+            "preferred_size": self.preferred_size,
+            "wrap": self.wrap,
             "z_index": self.z_index,
         }
 

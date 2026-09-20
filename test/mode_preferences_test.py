@@ -119,6 +119,8 @@ class ModePreferencesTest(unittest.TestCase):
                     entrant_slot=1,
                     anchor=PixelPoint(20, 35),
                     max_width=40,
+                    pillow_anchor="ms",
+                    preferred_size=24,
                     z_index=4,
                 ),
             ),
@@ -152,9 +154,18 @@ class ModePreferencesTest(unittest.TestCase):
         for item in preferences:
             self.assertFalse(item.ready)
             self.assertEqual(item.canvas_size, PixelSize(1672, 941))
-            self.assertFalse(item.formatting_assets)
-            self.assertFalse(item.character_slots)
-            self.assertFalse(item.text_slots)
+            extracted_legacy = (
+                item.selection.mode is CreationMode.PODIUM
+                and item.selection.options.podium_style is PodiumStyle.LEGACY
+            )
+            if extracted_legacy:
+                self.assertTrue(item.formatting_assets)
+                self.assertTrue(item.character_slots)
+                self.assertTrue(item.text_slots)
+            else:
+                self.assertFalse(item.formatting_assets)
+                self.assertFalse(item.character_slots)
+                self.assertFalse(item.text_slots)
             self.assertEqual(
                 ModePreferenceRepository().load(item.selection),
                 item,

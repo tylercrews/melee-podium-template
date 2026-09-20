@@ -18,6 +18,8 @@
 - Formatting assets vary by mode: Podium uses podiums, Squares uses squares, and Eyes uses rectangles.
 - Store layout preferences as JSON under `preferences/<mode>/<sub-mode>.json`. Podium preferences add the required style level: `preferences/podium/<legacy|customizable>/<sub-mode>.json`. Each file owns canvas dimensions plus formatting-asset, character, and text placements for exactly one selection.
 - A scaffold preference file stays marked `ready: false` until its real positions have been extracted and reviewed. The creation pipeline must refuse to render with an unfinished preference file rather than silently producing an empty layout.
+- Legacy Podium preferences preserve the 1672x941 output, portrait scales, character anchors, and fixed label/seed anchors from `DrawPodium.py`. Legacy player-tag vertical anchors are not fixed pixels; retain the rule that derives them from the visible top of each rendered portrait with a 15-pixel upward offset.
+- Legacy podium formatting-asset rectangles use half-open visible bounds measured from `top_3.png`, `top_4.png`, and `top_8.png`. The corresponding active legacy assets should be tightly cropped to those visible bounds.
 
 ## Customizable podium colors
 
