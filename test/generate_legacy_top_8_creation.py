@@ -1,7 +1,6 @@
-"""Generate a deterministic legacy Top 8 preview through ``creation.py``."""
+"""Generate a randomized legacy Top 8 preview through ``creation.py``."""
 
 from pathlib import Path
-import random
 import sys
 
 
@@ -50,7 +49,7 @@ def main() -> None:
             size=BACKGROUND_FORMAT_SIZES[FORMAT_ID],
             image=default_placement(FORMAT_ID, BACKGROUND_ASSET_ID),
         ),
-        entrants=sample_top_8_entrants(random.Random(42)),
+        entrants=sample_top_8_entrants(),
         tournament=sample_tournament(),
     )
     pipeline = CreationPipeline(

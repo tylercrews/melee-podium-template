@@ -47,10 +47,13 @@ def sample_top_8_entrants(
     """Return sample entrants with random placements, seeds, and portrait poses."""
 
     randomizer = rng if rng is not None else random
-    placements = randomizer.sample(range(1, 9), k=8)
+    entrants_in_result_order = randomizer.sample(
+        SAMPLE_TOP_8_ENTRANT_POOL,
+        k=len(SAMPLE_TOP_8_ENTRANT_POOL),
+    )
     seeds = randomizer.sample(range(1, 9), k=8)
 
-    entrants = [
+    return [
         SinglesEntrant(
             tag=entrant.tag,
             characters=list(entrant.characters),
@@ -59,14 +62,15 @@ def sample_top_8_entrants(
             seed=seed,
             placement=placement,
         )
-        for entrant, placement, seed in zip(
-            SAMPLE_TOP_8_ENTRANT_POOL,
-            placements,
-            seeds,
-            strict=True,
+        for placement, (entrant, seed) in enumerate(
+            zip(
+                entrants_in_result_order,
+                seeds,
+                strict=True,
+            ),
+            start=1,
         )
     ]
-    return sorted(entrants, key=lambda entrant: entrant.placement)
 
 
 def sample_tournament(

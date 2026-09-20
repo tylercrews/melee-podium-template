@@ -61,6 +61,15 @@ class SampleCreationDataTest(unittest.TestCase):
 
         self.assertEqual(first, second)
 
+    def test_different_rng_seeds_change_result_order_and_seeding(self) -> None:
+        first = sample_top_8_entrants(random.Random(7))
+        second = sample_top_8_entrants(random.Random(8))
+
+        self.assertNotEqual(
+            [(entrant.tag, entrant.seed) for entrant in first],
+            [(entrant.tag, entrant.seed) for entrant in second],
+        )
+
     def test_returned_character_lists_do_not_mutate_the_pool(self) -> None:
         entrants = sample_top_8_entrants(random.Random(1))
 
