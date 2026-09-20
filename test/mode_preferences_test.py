@@ -11,6 +11,7 @@ from mode_preferences import (
     ModePreferenceRepository,
     ModePreferences,
     PixelPoint,
+    PlacementTagPlacement,
     TextPlacement,
 )
 from models import TournamentFormat
@@ -103,6 +104,15 @@ class ModePreferencesTest(unittest.TestCase):
                     2,
                 ),
             ),
+            placement_tags=(
+                PlacementTagPlacement(
+                    "first_place",
+                    "01st.png",
+                    anchor=PixelPoint(25, 30),
+                    max_size=PixelSize(30, 25),
+                    z_index=3,
+                ),
+            ),
             character_slots=(
                 CharacterPlacement(
                     "first_character",
@@ -171,6 +181,15 @@ class ModePreferencesTest(unittest.TestCase):
                 self.assertFalse(item.formatting_assets)
                 self.assertFalse(item.character_slots)
                 self.assertFalse(item.text_slots)
+            if item.selection.mode is CreationMode.PODIUM:
+                expected_tag_count = (
+                    4
+                    if item.selection.options.variant == "four_podium"
+                    else item.selection.options.entrant_count
+                )
+                self.assertEqual(len(item.placement_tags), expected_tag_count)
+            else:
+                self.assertFalse(item.placement_tags)
             self.assertEqual(
                 ModePreferenceRepository().load(item.selection),
                 item,

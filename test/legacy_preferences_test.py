@@ -88,9 +88,7 @@ class LegacyPreferencesTest(unittest.TestCase):
                     (source[0], source[1] + label_offset),
                 )
 
-    def test_reviewed_top_8_assets_exist_and_are_tightly_cropped(self) -> None:
-        preferences = self.preferences["singles_top_8"]
-        self.assertTrue(preferences.ready)
+    def test_active_legacy_assets_exist_and_are_tightly_cropped(self) -> None:
         folder = (
             Path(__file__).resolve().parents[1]
             / "formatting_assets"
@@ -98,12 +96,35 @@ class LegacyPreferencesTest(unittest.TestCase):
             / "legacy"
         )
 
-        for placement in preferences.formatting_assets:
-            path = folder / placement.asset_id
-            self.assertTrue(path.is_file(), placement.asset_id)
+        asset_ids = {
+            placement.asset_id
+            for preferences in self.preferences.values()
+            for placement in preferences.formatting_assets
+        }
+        self.assertEqual(len(asset_ids), 15)
+        for asset_id in asset_ids:
+            path = folder / asset_id
+            self.assertTrue(path.is_file(), asset_id)
             with Image.open(path) as source:
                 alpha = source.convert("RGBA").getchannel("A")
                 self.assertEqual(alpha.getbbox(), (0, 0, source.width, source.height))
+
+    def test_top_8_placement_tags_preserve_tied_bracket_results(self) -> None:
+        tags = self.preferences["singles_top_8"].placement_tags
+
+        self.assertEqual(
+            [item.asset_id for item in tags],
+            [
+                "01st.png",
+                "02nd.png",
+                "03rd.png",
+                "04th.png",
+                "05th.png",
+                "05th.png",
+                "07th.png",
+                "07th.png",
+            ],
+        )
 
 
 if __name__ == "__main__":

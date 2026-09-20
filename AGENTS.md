@@ -20,6 +20,8 @@
 - A scaffold preference file stays marked `ready: false` until its real positions have been extracted and reviewed. The creation pipeline must refuse to render with an unfinished preference file rather than silently producing an empty layout.
 - Legacy Podium preferences preserve the 1672x941 output, portrait scales, character anchors, and fixed label/seed anchors from `DrawPodium.py`. Legacy player-tag vertical anchors are not fixed pixels; retain the rule that derives them from the visible top of each rendered portrait with a 15-pixel upward offset.
 - Legacy podium formatting-asset rectangles use half-open visible bounds measured from `top_3.png`, `top_4.png`, and `top_8.png`. The corresponding active legacy assets should be tightly cropped to those visible bounds.
+- Store podium placement-number art in `formatting_assets/placement_numbers/` using zero-padded ordinal filenames such as `01st.png`, `02nd.png`, and `25th.png`.
+- Podium preferences own placement-tag entries separately from podium-body placements. Each entry identifies an asset plus a center anchor and a maximum size; render these tags after podium bodies and before entrant character/text content. Tied legacy Top 8 results use `05th.png` for both fifth-place podiums and `07th.png` for both seventh-place podiums.
 
 ## Customizable podium colors
 

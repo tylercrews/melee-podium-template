@@ -21,6 +21,16 @@
     {"slot_id": "podium_7", "asset_id": "top_8_slot_7.png", "destination": {"left": 1251, "top": 637, "right": 1451, "bottom": 833}, "z_index": 1},
     {"slot_id": "podium_8", "asset_id": "top_8_slot_8.png", "destination": {"left": 1449, "top": 641, "right": 1651, "bottom": 833}, "z_index": 0}
   ],
+  "placement_tags": [
+    {"slot_id": "podium_1_placement_tag","asset_id": "01st.png","anchor": {"x": 122,"y": 673},"max_size": {"width": 150,"height": 160},"z_index": 0},
+    {"slot_id": "podium_2_placement_tag","asset_id": "02nd.png","anchor": {"x": 342,"y": 668},"max_size": {"width": 115,"height": 90},"z_index": 1},
+    {"slot_id": "podium_3_placement_tag","asset_id": "03rd.png","anchor": {"x": 544,"y": 690},"max_size": {"width": 105,"height": 82},"z_index": 2},
+    {"slot_id": "podium_4_placement_tag","asset_id": "04th.png","anchor": {"x": 744,"y": 707},"max_size": {"width": 95,"height": 75},"z_index": 3},
+    {"slot_id": "podium_5_placement_tag","asset_id": "05th.png","anchor": {"x": 945,"y": 720},"max_size": {"width": 95,"height": 70},"z_index": 4},
+    {"slot_id": "podium_6_placement_tag","asset_id": "05th.png","anchor": {"x": 1143,"y": 724},"max_size": {"width": 95,"height": 70},"z_index": 5},
+    {"slot_id": "podium_7_placement_tag","asset_id": "07th.png","anchor": {"x": 1346,"y": 736},"max_size": {"width": 90,"height": 70},"z_index": 6},
+    {"slot_id": "podium_8_placement_tag","asset_id": "07th.png","anchor": {"x": 1546,"y": 740},"max_size": {"width": 90,"height": 70},"z_index": 7}
+  ],
   "character_slots": [
     {"slot_id": "entrant_1_character", "entrant_slot": 1, "member_slot": null, "anchor": {"x": 139, "y": 525}, "scale": 0.22, "z_index": 7},
     {"slot_id": "entrant_2_character", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 354, "y": 552}, "scale": 0.22, "z_index": 6},

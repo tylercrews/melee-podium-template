@@ -15,11 +15,17 @@ from podium_colors import PodiumColorSelection, apply_podium_colors
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 FORMATTING_ASSET_FOLDER = PROJECT_ROOT / "formatting_assets"
+PLACEMENT_TAG_ASSET_FOLDER = FORMATTING_ASSET_FOLDER / "placement_numbers"
 
 
 class FormattingAssetProvider(Protocol):
     def open(self, selection: ModeSelection, asset_id: str) -> Image.Image:
         """Return a caller-owned RGBA image for a formatting asset."""
+
+
+class PlacementTagAssetProvider(Protocol):
+    def open(self, asset_id: str) -> Image.Image:
+        """Return a caller-owned RGBA image for a placement-number asset."""
 
 
 class FormattingRenderer(Protocol):
@@ -53,8 +59,25 @@ class LocalFormattingAssets:
 
 
 @dataclass(frozen=True, slots=True)
+class LocalPlacementTagAssets:
+    """Load canonical placement-number PNGs shared by podium layouts."""
+
+    root: Path = PLACEMENT_TAG_ASSET_FOLDER
+
+    def open(self, asset_id: str) -> Image.Image:
+        if not isinstance(asset_id, str) or Path(asset_id).name != asset_id:
+            raise ValueError("placement tag asset_id must be a filename, not a path")
+        path = self.root / asset_id
+        if path.suffix.casefold() != ".png" or not path.is_file():
+            raise FileNotFoundError(f"Placement tag asset does not exist: {asset_id}")
+        with Image.open(path) as source:
+            return source.convert("RGBA")
+
+
+@dataclass(frozen=True, slots=True)
 class FormattingAssetRenderer:
     assets: FormattingAssetProvider = LocalFormattingAssets()
+    placement_tag_assets: PlacementTagAssetProvider = LocalPlacementTagAssets()
 
     def draw(
         self,
@@ -94,6 +117,27 @@ class FormattingAssetRenderer:
                     Image.Resampling.LANCZOS,
                 )
             _composite_clipped(result, layer, destination.as_tuple())
+
+        for placement in sorted(
+            preferences.placement_tags,
+            key=lambda item: (item.z_index, item.slot_id),
+        ):
+            source = self.placement_tag_assets.open(placement.asset_id)
+            try:
+                layer = source.copy()
+            finally:
+                source.close()
+            layer.thumbnail(
+                placement.max_size.as_tuple(),
+                Image.Resampling.LANCZOS,
+            )
+            left = placement.anchor.x - layer.width // 2
+            top = placement.anchor.y - layer.height // 2
+            _composite_clipped(
+                result,
+                layer,
+                (left, top, left + layer.width, top + layer.height),
+            )
         return result
 
 

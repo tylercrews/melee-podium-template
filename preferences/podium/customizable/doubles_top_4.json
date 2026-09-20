@@ -12,6 +12,12 @@
   },
   "canvas_size": {"width": 1672, "height": 941},
   "formatting_assets": [],
+  "placement_tags": [
+    {"slot_id": "podium_1_placement_tag","asset_id": "01st.png","anchor": {"x": 235,"y": 662},"max_size": {"width": 315,"height": 275},"z_index": 0},
+    {"slot_id": "podium_2_placement_tag","asset_id": "02nd.png","anchor": {"x": 641,"y": 680},"max_size": {"width": 170,"height": 135},"z_index": 1},
+    {"slot_id": "podium_3_placement_tag","asset_id": "03rd.png","anchor": {"x": 1032,"y": 698},"max_size": {"width": 145,"height": 110},"z_index": 2},
+    {"slot_id": "podium_4_placement_tag","asset_id": "04th.png","anchor": {"x": 1421,"y": 710},"max_size": {"width": 145,"height": 105},"z_index": 3}
+  ],
   "character_slots": [],
   "text_slots": []
 }

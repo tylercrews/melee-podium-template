@@ -87,6 +87,51 @@ class FormattingAssetPlacement:
 
 
 @dataclass(frozen=True, slots=True)
+class PlacementTagPlacement:
+    """A placement-number asset centered on a podium face."""
+
+    slot_id: str
+    asset_id: str
+    anchor: PixelPoint
+    max_size: PixelSize
+    z_index: int = 0
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.slot_id, str) or not self.slot_id.strip():
+            raise ValueError("placement tag slot_id must be a non-empty string")
+        if not isinstance(self.asset_id, str) or not self.asset_id.strip():
+            raise ValueError("placement tag asset_id must be a non-empty string")
+        if not isinstance(self.anchor, PixelPoint):
+            raise TypeError("placement tag anchor must be a PixelPoint")
+        if not isinstance(self.max_size, PixelSize):
+            raise TypeError("placement tag max_size must be a PixelSize")
+        _integer(self.z_index, "z_index")
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> PlacementTagPlacement:
+        anchor = _mapping(value.get("anchor"), "anchor")
+        max_size = _mapping(value.get("max_size"), "max_size")
+        return cls(
+            slot_id=value.get("slot_id") if isinstance(value.get("slot_id"), str) else "",
+            asset_id=(
+                value.get("asset_id") if isinstance(value.get("asset_id"), str) else ""
+            ),
+            anchor=PixelPoint.from_dict(anchor),
+            max_size=PixelSize.from_dict(max_size),
+            z_index=_integer(value.get("z_index", 0), "z_index"),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "slot_id": self.slot_id,
+            "asset_id": self.asset_id,
+            "anchor": self.anchor.to_dict(),
+            "max_size": self.max_size.to_dict(),
+            "z_index": self.z_index,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class CharacterPlacement:
     slot_id: str
     entrant_slot: int
@@ -234,6 +279,7 @@ class ModePreferences:
     canvas_size: PixelSize
     ready: bool = False
     formatting_assets: tuple[FormattingAssetPlacement, ...] = ()
+    placement_tags: tuple[PlacementTagPlacement, ...] = ()
     character_slots: tuple[CharacterPlacement, ...] = ()
     text_slots: tuple[TextPlacement, ...] = ()
     schema_version: int = PREFERENCE_SCHEMA_VERSION
@@ -251,6 +297,7 @@ class ModePreferences:
             raise TypeError("ready must be a boolean")
         placement_fields = (
             ("formatting_assets", FormattingAssetPlacement),
+            ("placement_tags", PlacementTagPlacement),
             ("character_slots", CharacterPlacement),
             ("text_slots", TextPlacement),
         )
@@ -278,6 +325,10 @@ class ModePreferences:
                 FormattingAssetPlacement.from_dict(item)
                 for item in _items(value.get("formatting_assets"), "formatting_assets")
             ),
+            placement_tags=tuple(
+                PlacementTagPlacement.from_dict(item)
+                for item in _items(value.get("placement_tags", []), "placement_tags")
+            ),
             character_slots=tuple(
                 CharacterPlacement.from_dict(item)
                 for item in _items(value.get("character_slots"), "character_slots")
@@ -296,6 +347,7 @@ class ModePreferences:
             "selection": self.selection.to_dict(),
             "canvas_size": self.canvas_size.to_dict(),
             "formatting_assets": [item.to_dict() for item in self.formatting_assets],
+            "placement_tags": [item.to_dict() for item in self.placement_tags],
             "character_slots": [item.to_dict() for item in self.character_slots],
             "text_slots": [item.to_dict() for item in self.text_slots],
         }
