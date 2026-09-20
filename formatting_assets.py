@@ -8,8 +8,9 @@ from typing import Protocol
 
 from PIL import Image
 
-from creation_modes import CreationMode, ModeSelection
+from creation_modes import CreationMode, ModeSelection, PodiumStyle
 from mode_preferences import ModePreferences
+from podium_colors import PodiumColorSelection, apply_podium_colors
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -26,6 +27,7 @@ class FormattingRenderer(Protocol):
         self,
         canvas: Image.Image,
         preferences: ModePreferences,
+        podium_colors: PodiumColorSelection | None = None,
     ) -> Image.Image:
         """Draw the mode's framing assets over ``canvas``."""
 
@@ -58,8 +60,19 @@ class FormattingAssetRenderer:
         self,
         canvas: Image.Image,
         preferences: ModePreferences,
+        podium_colors: PodiumColorSelection | None = None,
     ) -> Image.Image:
         """Composite configured mode assets in ascending ``z_index`` order."""
+
+        customizable = (
+            preferences.selection.mode is CreationMode.PODIUM
+            and preferences.selection.options.podium_style
+            is PodiumStyle.CUSTOMIZABLE
+        )
+        if customizable and podium_colors is None:
+            raise ValueError("Customizable podiums require podium_colors")
+        if not customizable and podium_colors is not None:
+            raise ValueError("podium_colors are only valid for customizable podiums")
 
         result = canvas.convert("RGBA")
         for placement in sorted(
@@ -71,6 +84,9 @@ class FormattingAssetRenderer:
                 layer = source.copy()
             finally:
                 source.close()
+            if customizable:
+                assert podium_colors is not None
+                layer = apply_podium_colors(layer, podium_colors)
             destination = placement.destination
             if layer.size != (destination.width, destination.height):
                 layer = layer.resize(

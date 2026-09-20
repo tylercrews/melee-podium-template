@@ -9,6 +9,7 @@ from creation import CreationPipeline, CreationRequest, PreferencesNotReadyError
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from mode_preferences import ModePreferenceRepository, ModePreferences
 from models import Character, SinglesEntrant, Tournament, TournamentFormat
+from podium_colors import PodiumColorSelection
 
 
 def singles_entrants(count: int) -> tuple[SinglesEntrant, ...]:
@@ -45,7 +46,10 @@ class RecordingFormattingRenderer:
         self.events = events
 
     def draw(
-        self, canvas: Image.Image, preferences: ModePreferences
+        self,
+        canvas: Image.Image,
+        preferences: ModePreferences,
+        podium_colors: PodiumColorSelection | None = None,
     ) -> Image.Image:
         self.events.append("formatting")
         if canvas.getpixel((0, 0)) != (255, 0, 0, 255):
@@ -129,6 +133,34 @@ class CreationPipelineTest(unittest.TestCase):
                 entrants=singles_entrants(2),
                 tournament=tournament(),
             )
+
+    def test_customizable_podium_request_requires_colors(self) -> None:
+        selection = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.CUSTOMIZABLE,
+            ),
+        )
+
+        with self.assertRaisesRegex(ValueError, "require podium_colors"):
+            CreationRequest(
+                selection=selection,
+                background=BackgroundRequest(PixelSize(2, 2)),
+                entrants=singles_entrants(3),
+                tournament=tournament(),
+            )
+
+        request = CreationRequest(
+            selection=selection,
+            background=BackgroundRequest(PixelSize(2, 2)),
+            entrants=singles_entrants(3),
+            tournament=tournament(),
+            podium_colors=PodiumColorSelection("#336699FF"),
+        )
+
+        self.assertEqual(request.podium_colors.main_color, "#336699FF")
 
 
 if __name__ == "__main__":

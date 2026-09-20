@@ -14,7 +14,7 @@ from background_builder import (
     create_background,
 )
 from content_renderer import ContentRenderer
-from creation_modes import CreationMode, ModeSelection
+from creation_modes import CreationMode, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer, FormattingRenderer
 from mode_preferences import (
     ModePreferenceRepository,
@@ -22,6 +22,7 @@ from mode_preferences import (
     ModePreferencesProvider,
 )
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
+from podium_colors import PodiumColorSelection
 
 
 EntrantResult = SinglesEntrant | DoublesTeam
@@ -39,6 +40,7 @@ class CreationRequest:
     background: BackgroundRequest
     entrants: Sequence[EntrantResult]
     tournament: Tournament
+    podium_colors: PodiumColorSelection | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.selection, ModeSelection):
@@ -47,6 +49,11 @@ class CreationRequest:
             raise TypeError("background must be a BackgroundRequest")
         if not isinstance(self.tournament, Tournament):
             raise TypeError("tournament must be a Tournament")
+        if self.podium_colors is not None and not isinstance(
+            self.podium_colors,
+            PodiumColorSelection,
+        ):
+            raise TypeError("podium_colors must be a PodiumColorSelection or null")
         entrants = tuple(self.entrants)
         object.__setattr__(self, "entrants", entrants)
         options = self.selection.options
@@ -65,6 +72,14 @@ class CreationRequest:
             raise TypeError(
                 f"{options.event_format.value} mode requires {expected_type.__name__} entrants"
             )
+        customizable = (
+            self.selection.mode is CreationMode.PODIUM
+            and options.podium_style is PodiumStyle.CUSTOMIZABLE
+        )
+        if customizable and self.podium_colors is None:
+            raise ValueError("Customizable podiums require podium_colors")
+        if not customizable and self.podium_colors is not None:
+            raise ValueError("podium_colors are only valid for customizable podiums")
 
 
 @dataclass(slots=True)
@@ -88,7 +103,11 @@ class CreationPipeline:
             request.background,
             assets=self.background_assets,
         )
-        formatted = self.formatting_renderer.draw(background, mode_preferences)
+        formatted = self.formatting_renderer.draw(
+            background,
+            mode_preferences,
+            request.podium_colors,
+        )
         self._validate_stage_image("formatting", formatted, request.background)
 
         try:

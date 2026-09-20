@@ -10,18 +10,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-import re
 from typing import Any, Mapping, Protocol
 
 from PIL import Image
+
+from color_values import normalize_rgba_hex, parse_rgba_hex
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 BACKGROUND_ASSET_FOLDER = PROJECT_ROOT / "backgrounds"
 DEFAULT_BACKGROUND_COLOR = "#00000000"
-
-_RGBA_HEX = re.compile(r"^#[0-9a-fA-F]{8}$")
-
 
 def _require_int(value: object, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
@@ -150,8 +148,11 @@ class BackgroundRequest:
     def __post_init__(self) -> None:
         if not isinstance(self.size, PixelSize):
             raise TypeError("size must be a PixelSize")
-        parse_rgba_hex(self.fill_color)
-        object.__setattr__(self, "fill_color", self.fill_color.upper())
+        object.__setattr__(
+            self,
+            "fill_color",
+            normalize_rgba_hex(self.fill_color, field_name="fill_color"),
+        )
         if self.image is not None and not isinstance(self.image, ImagePlacement):
             raise TypeError("image must be an ImagePlacement or null")
 
@@ -232,14 +233,6 @@ class LocalBackgroundAssets:
 
 
 BUILTIN_BACKGROUND_ASSETS = LocalBackgroundAssets()
-
-
-def parse_rgba_hex(value: str) -> tuple[int, int, int, int]:
-    """Convert a ``#RRGGBBAA`` string into a Pillow RGBA tuple."""
-
-    if not isinstance(value, str) or _RGBA_HEX.fullmatch(value) is None:
-        raise ValueError("color must use 8-digit RGBA hex format: #RRGGBBAA")
-    return tuple(int(value[index : index + 2], 16) for index in range(1, 9, 2))  # type: ignore[return-value]
 
 
 def centered_cover_crop(source: PixelSize, destination: PixelSize) -> PixelRect:

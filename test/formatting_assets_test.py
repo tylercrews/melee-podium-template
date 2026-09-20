@@ -9,6 +9,7 @@ from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
 from mode_preferences import FormattingAssetPlacement, ModePreferences
 from models import TournamentFormat
+from podium_colors import PodiumColorSelection
 
 
 class MemoryFormattingAssets:
@@ -27,7 +28,7 @@ class FormattingAssetsTest(unittest.TestCase):
             ModeOptions(
                 TournamentFormat.SINGLES,
                 3,
-                podium_style=PodiumStyle.CUSTOMIZABLE,
+                podium_style=PodiumStyle.LEGACY,
             ),
         )
         preferences = ModePreferences(
@@ -57,6 +58,57 @@ class FormattingAssetsTest(unittest.TestCase):
         self.assertEqual(result.getpixel((0, 0)), (0, 0, 255, 255))
         self.assertEqual(result.getpixel((1, 1)), (255, 0, 0, 255))
         self.assertEqual(background.getpixel((1, 1)), (0, 0, 255, 255))
+
+    def test_customizable_assets_receive_the_selected_semantic_colors(self) -> None:
+        selection = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.CUSTOMIZABLE,
+            ),
+        )
+        preferences = ModePreferences(
+            selection=selection,
+            canvas_size=PixelSize(3, 1),
+            ready=True,
+            formatting_assets=(
+                FormattingAssetPlacement(
+                    "podium",
+                    "mask.png",
+                    PixelRect(0, 0, 3, 1),
+                ),
+            ),
+        )
+        mask = Image.new("RGBA", (3, 1))
+        mask.putdata(
+            [
+                (255, 0, 0, 255),
+                (0, 255, 255, 255),
+                (0, 0, 255, 255),
+            ]
+        )
+
+        result = FormattingAssetRenderer(
+            MemoryFormattingAssets({"mask.png": mask})
+        ).draw(
+            Image.new("RGBA", (3, 1)),
+            preferences,
+            PodiumColorSelection(
+                main_color="#102030FF",
+                face_color="#405060FF",
+                base_color="#708090FF",
+            ),
+        )
+
+        self.assertEqual(
+            list(result.getdata()),
+            [
+                (16, 32, 48, 255),
+                (64, 80, 96, 255),
+                (112, 128, 144, 255),
+            ],
+        )
 
 
 if __name__ == "__main__":
