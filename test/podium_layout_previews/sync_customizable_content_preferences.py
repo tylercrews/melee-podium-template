@@ -58,7 +58,7 @@ def _top_surface_bottom(asset_id: str, destination: dict) -> int:
     )
 
 
-def _position_seed(entry: dict, podium: dict) -> None:
+def _position_seed(entry: dict, podium: dict, *, maximum_size: int = 24) -> None:
     """Keep a seed's glyphs inside the front face above its lower trim."""
 
     destination = podium["destination"]
@@ -67,7 +67,7 @@ def _position_seed(entry: dict, podium: dict) -> None:
     height = destination["bottom"] - destination["top"]
     face_top = destination["top"] + round(face_start * height / source_height)
     face_bottom = destination["top"] + round((face_end + 1) * height / source_height)
-    preferred_size = min(24, max(11, face_bottom - face_top - 4))
+    preferred_size = min(maximum_size, max(11, face_bottom - face_top - 4))
     entry["preferred_size"] = preferred_size
     # Tyrowo's glyph bottom sits roughly 7/6 of the font size below an
     # ascender anchor. Leave one more pixel before the lower face trim.
@@ -120,7 +120,15 @@ def synchronize() -> None:
                 custom_podiums[slot]["destination"],
             )
             if entry["field"] == "entrant.seed":
-                _position_seed(entry, custom_podiums[slot])
+                _position_seed(
+                    entry,
+                    custom_podiums[slot],
+                    maximum_size=(
+                        20
+                        if len(custom_podiums) == 4 and slot == 3
+                        else 24
+                    ),
+                )
             custom["text_slots"].append(entry)
 
         if custom_path.name == "doubles_top_4.json":
@@ -129,7 +137,15 @@ def synchronize() -> None:
                 for entry in custom["character_slots"]
                 if entry["slot_id"] == "entrant_1_member_2_character"
             )
-            second_member["anchor"]["x"] += 10
+            second_member["anchor"]["x"] += 20
+        if custom_path.name == "singles_top_4.json":
+            for entry in custom["character_slots"] + custom["text_slots"]:
+                if (
+                    entry.get("entrant_slot") == 1
+                    and entry.get("field", "entrant.primary_character_name")
+                    == "entrant.primary_character_name"
+                ):
+                    entry["anchor"]["x"] += 25
 
         custom_path.write_text(json.dumps(custom, indent=2) + "\n")
 

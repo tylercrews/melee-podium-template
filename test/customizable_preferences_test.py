@@ -188,8 +188,31 @@ class CustomizablePreferencesTest(unittest.TestCase):
         }
         self.assertEqual(
             placements["entrant_1_member_2_character"].anchor.x,
-            317,
+            327,
         )
+
+    def test_singles_top_4_winner_is_centered_on_the_first_podium(self) -> None:
+        preferences = self.customizable["singles_top_4"]
+        character = next(
+            item
+            for item in preferences.character_slots
+            if item.entrant_slot == 1
+        )
+        self.assertEqual(character.anchor.x, 244)
+
+    def test_four_podium_third_place_seed_is_smaller_than_first_and_second(self) -> None:
+        for submode_id in (
+            "doubles_top_4",
+            "singles_top_4",
+            "singles_top_8_four_podium",
+        ):
+            seeds = {
+                item.entrant_slot: item
+                for item in self.customizable[submode_id].text_slots
+                if item.field == "entrant.seed"
+            }
+            self.assertEqual(seeds[1].preferred_size, seeds[2].preferred_size)
+            self.assertLess(seeds[3].preferred_size, seeds[1].preferred_size)
 
     def test_custom_seed_anchors_are_raised_from_the_legacy_baseline(self) -> None:
         for submode_id, preferences in self.customizable.items():

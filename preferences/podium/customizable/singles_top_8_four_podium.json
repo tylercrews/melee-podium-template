@@ -198,11 +198,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1379,
-        "y": 771
+        "y": 776
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 24,
+      "preferred_size": 20,
       "wrap": false,
       "z_index": 100
     },

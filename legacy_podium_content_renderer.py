@@ -267,14 +267,8 @@ class LegacyPodiumContentRenderer:
         if request.selection.options.podium_style is PodiumStyle.LEGACY:
             return PODIUM_BOX_COLORS_BY_SLOT[entrant_slot - 1].exterior_line
         assert request.podium_colors is not None
-        podium_slot = entrant_slot
-        if (
-            request.selection.options.variant == "four_podium"
-            and entrant_slot > 4
-        ):
-            podium_slot -= 4
         return podium_color_for_slot(
-            request.podium_colors, podium_slot
+            request.podium_colors, entrant_slot
         ).resolve().text_color
 
     @staticmethod

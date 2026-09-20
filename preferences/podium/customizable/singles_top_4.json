@@ -120,7 +120,7 @@
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 219,
+        "x": 244,
         "y": 642
       },
       "scale": 0.26,
@@ -167,7 +167,7 @@
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 219,
+        "x": 244,
         "y": 818
       },
       "max_width": 290,
@@ -243,11 +243,11 @@
       "member_slot": null,
       "anchor": {
         "x": 1379,
-        "y": 771
+        "y": 776
       },
       "max_width": 80,
       "pillow_anchor": "ra",
-      "preferred_size": 24,
+      "preferred_size": 20,
       "wrap": false,
       "z_index": 100
     },
