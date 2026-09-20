@@ -37,12 +37,12 @@ class PlacementNumberAssetsTest(unittest.TestCase):
 
         self.assertEqual({path.name for path in ASSET_FOLDER.glob("*.png")}, expected)
 
-    def test_fifth_through_twenty_fifth_share_the_reference_silver(self) -> None:
+    def test_second_through_twenty_fifth_share_the_reference_silver(self) -> None:
         target = tuple(
             int(TARGET_SILVER_RGBA[index : index + 2], 16)
             for index in (1, 3, 5)
         )
-        for value in range(5, 26):
+        for value in range(2, 26):
             path = ASSET_FOLDER / f"{value:02d}{ordinal_suffix(value)}.png"
             with Image.open(path) as source:
                 red, green, blue, alpha = source.convert("RGBA").split()
