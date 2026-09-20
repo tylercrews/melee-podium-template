@@ -192,7 +192,7 @@ class ModePreferencesTest(unittest.TestCase):
                 self.assertFalse(item.text_slots)
             if item.selection.mode is CreationMode.PODIUM:
                 expected_tag_count = (
-                    6
+                    3
                     if item.selection.options.podium_style
                     is PodiumStyle.CUSTOMIZABLE
                     and item.selection.submode_id == "singles_top_8"

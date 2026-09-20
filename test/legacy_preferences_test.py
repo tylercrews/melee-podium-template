@@ -34,22 +34,31 @@ class LegacyPreferencesTest(unittest.TestCase):
             options = preferences.selection.options
             layout_count = 4 if options.variant == "four_podium" else options.entrant_count
             expected_scale = get_mode_portrait_scale(submode_id)
+
+            def horizontal_offset(entrant_slot: int) -> int:
+                if submode_id == "singles_top_8":
+                    return 5 * (entrant_slot - 1)
+                if layout_count == 4:
+                    return {2: 16, 3: 17}.get(entrant_slot, 0)
+                return 0
+
             if options.event_format is TournamentFormat.SINGLES:
                 expected = {
                     (
                         entrant_slot,
                         None,
                     ): (
-                        anchor[0]
-                        + (5 * (entrant_slot - 1)
-                           if submode_id == "singles_top_8" else 0),
+                        anchor[0] + horizontal_offset(entrant_slot),
                         anchor[1] + (8 if submode_id == "singles_top_8" else 0),
                     )
                     for entrant_slot, anchor in SINGLES_ANCHORS[layout_count].items()
                 }
             else:
                 expected = {
-                    (entrant_slot, member_slot): anchor
+                    (entrant_slot, member_slot): (
+                        anchor[0] + horizontal_offset(entrant_slot),
+                        anchor[1],
+                    )
                     for entrant_slot, anchors in DOUBLES_ANCHORS[layout_count].items()
                     for member_slot, anchor in enumerate(anchors, start=1)
                 }
@@ -70,19 +79,23 @@ class LegacyPreferencesTest(unittest.TestCase):
             layout_count = 4 if options.variant == "four_podium" else options.entrant_count
             by_slot_id = {item.slot_id: item for item in preferences.text_slots}
 
+            def horizontal_offset(entrant_slot: int) -> int:
+                if submode_id == "singles_top_8":
+                    return 5 * (entrant_slot - 1)
+                if layout_count == 4:
+                    return {2: 16, 3: 17}.get(entrant_slot, 0)
+                return 0
+
             for entrant_slot in range(1, layout_count + 1):
                 seed = by_slot_id[f"entrant_{entrant_slot}_seed"]
                 expected_seed = PODIUM_TEXT_ANCHORS[layout_count][entrant_slot]["seed"]
-                horizontal_offset = (
-                    5 * (entrant_slot - 1)
-                    if submode_id == "singles_top_8"
-                    else 0
-                )
                 seed_edge_offset = 10 if submode_id == "singles_top_8" else 0
                 self.assertEqual(
                     (seed.anchor.x, seed.anchor.y),
                     (
-                        expected_seed[0] + horizontal_offset + seed_edge_offset,
+                        expected_seed[0]
+                        + horizontal_offset(entrant_slot)
+                        + seed_edge_offset,
                         expected_seed[1],
                     ),
                 )
@@ -92,7 +105,13 @@ class LegacyPreferencesTest(unittest.TestCase):
                 for summary_slot, entrant_slot in enumerate(range(5, 9), start=1):
                     summary = by_slot_id[f"entrant_{entrant_slot}_summary"]
                     expected = PODIUM_TEXT_ANCHORS[4][summary_slot]["label"]
-                    self.assertEqual((summary.anchor.x, summary.anchor.y), expected)
+                    self.assertEqual(
+                        (summary.anchor.x, summary.anchor.y),
+                        (
+                            expected[0] + horizontal_offset(summary_slot),
+                            expected[1],
+                        ),
+                    )
                 continue
 
             label_offset = -22 if layout_count == 8 else -30
@@ -104,14 +123,12 @@ class LegacyPreferencesTest(unittest.TestCase):
             for entrant_slot in range(1, layout_count + 1):
                 label = by_slot_id[f"entrant_{entrant_slot}_{label_kind}"]
                 source = PODIUM_TEXT_ANCHORS[layout_count][entrant_slot]["label"]
-                horizontal_offset = (
-                    5 * (entrant_slot - 1)
-                    if submode_id == "singles_top_8"
-                    else 0
-                )
                 self.assertEqual(
                     (label.anchor.x, label.anchor.y),
-                    (source[0] + horizontal_offset, source[1] + label_offset),
+                    (
+                        source[0] + horizontal_offset(entrant_slot),
+                        source[1] + label_offset,
+                    ),
                 )
 
     def test_active_legacy_assets_exist_and_are_tightly_cropped(self) -> None:
@@ -192,6 +209,19 @@ class LegacyPreferencesTest(unittest.TestCase):
                 for previous, current in zip(podiums, podiums[1:])
             )
         )
+
+    def test_top_4_podiums_have_even_overlap(self) -> None:
+        for submode_id in (
+            "doubles_top_4",
+            "singles_top_4",
+            "singles_top_8_four_podium",
+        ):
+            podiums = self.preferences[submode_id].formatting_assets
+            overlaps = [
+                previous.destination.right - current.destination.left
+                for previous, current in zip(podiums, podiums[1:])
+            ]
+            self.assertEqual(overlaps, [13, 13, 12], submode_id)
 
 
 if __name__ == "__main__":

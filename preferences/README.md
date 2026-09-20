@@ -36,6 +36,9 @@ Their tightly cropped semantic masks live in
   uses x-tall, tall, medium, short, two x-short, and two flat podiums. The
   remaining layouts use tall, medium, short, and x-short as slots permit.
 - Flat customizable podiums intentionally omit placement-number art.
+- Customizable Top 8 shows placement-number art only for first through third;
+  fourth and both tied fifths also omit it. Gray placement-number art uses
+  substantially smaller bounds than the first-place crest.
 
 Adding a supported sub-mode means adding another validated JSON file; entrant
 counts are not hard-coded in the mode model.

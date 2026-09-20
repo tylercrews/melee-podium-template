@@ -13,33 +13,33 @@
   "canvas_size": {"width": 1672, "height": 941},
   "formatting_assets": [
     {"slot_id": "podium_1", "asset_id": "top_4_slot_1.png", "destination": {"left": 55, "top": 460, "right": 479, "bottom": 823}, "z_index": 3},
-    {"slot_id": "podium_2", "asset_id": "top_4_slot_2.png", "destination": {"left": 450, "top": 497, "right": 853, "bottom": 823}, "z_index": 2},
-    {"slot_id": "podium_3", "asset_id": "top_4_slot_3.png", "destination": {"left": 839, "top": 536, "right": 1234, "bottom": 824}, "z_index": 1},
+    {"slot_id": "podium_2", "asset_id": "top_4_slot_2.png", "destination": {"left": 466, "top": 497, "right": 869, "bottom": 823}, "z_index": 2},
+    {"slot_id": "podium_3", "asset_id": "top_4_slot_3.png", "destination": {"left": 856, "top": 536, "right": 1251, "bottom": 824}, "z_index": 1},
     {"slot_id": "podium_4", "asset_id": "top_4_slot_4.png", "destination": {"left": 1239, "top": 573, "right": 1616, "bottom": 824}, "z_index": 0}
   ],
   "placement_tags": [
     {"slot_id": "podium_1_placement_tag","asset_id": "01st.png","anchor": {"x": 235,"y": 662},"max_size": {"width": 270,"height": 235},"z_index": 0},
-    {"slot_id": "podium_2_placement_tag","asset_id": "02nd.png","anchor": {"x": 641,"y": 680},"max_size": {"width": 170,"height": 135},"z_index": 1},
-    {"slot_id": "podium_3_placement_tag","asset_id": "03rd.png","anchor": {"x": 1032,"y": 698},"max_size": {"width": 145,"height": 110},"z_index": 2},
+    {"slot_id": "podium_2_placement_tag","asset_id": "02nd.png","anchor": {"x": 657,"y": 680},"max_size": {"width": 170,"height": 135},"z_index": 1},
+    {"slot_id": "podium_3_placement_tag","asset_id": "03rd.png","anchor": {"x": 1049,"y": 698},"max_size": {"width": 145,"height": 110},"z_index": 2},
     {"slot_id": "podium_4_placement_tag","asset_id": "04th.png","anchor": {"x": 1421,"y": 710},"max_size": {"width": 145,"height": 105},"z_index": 3}
   ],
   "character_slots": [
     {"slot_id": "entrant_1_member_1_character", "entrant_slot": 1, "member_slot": 1, "anchor": {"x": 176, "y": 505}, "scale": 0.26, "z_index": 31},
     {"slot_id": "entrant_1_member_2_character", "entrant_slot": 1, "member_slot": 2, "anchor": {"x": 316, "y": 505}, "scale": 0.26, "z_index": 32},
-    {"slot_id": "entrant_2_member_1_character", "entrant_slot": 2, "member_slot": 1, "anchor": {"x": 585, "y": 540}, "scale": 0.26, "z_index": 21},
-    {"slot_id": "entrant_2_member_2_character", "entrant_slot": 2, "member_slot": 2, "anchor": {"x": 725, "y": 540}, "scale": 0.26, "z_index": 22},
-    {"slot_id": "entrant_3_member_1_character", "entrant_slot": 3, "member_slot": 1, "anchor": {"x": 980, "y": 577}, "scale": 0.26, "z_index": 11},
-    {"slot_id": "entrant_3_member_2_character", "entrant_slot": 3, "member_slot": 2, "anchor": {"x": 1128, "y": 577}, "scale": 0.26, "z_index": 12},
+    {"slot_id": "entrant_2_member_1_character", "entrant_slot": 2, "member_slot": 1, "anchor": {"x": 601, "y": 540}, "scale": 0.26, "z_index": 21},
+    {"slot_id": "entrant_2_member_2_character", "entrant_slot": 2, "member_slot": 2, "anchor": {"x": 741, "y": 540}, "scale": 0.26, "z_index": 22},
+    {"slot_id": "entrant_3_member_1_character", "entrant_slot": 3, "member_slot": 1, "anchor": {"x": 997, "y": 577}, "scale": 0.26, "z_index": 11},
+    {"slot_id": "entrant_3_member_2_character", "entrant_slot": 3, "member_slot": 2, "anchor": {"x": 1145, "y": 577}, "scale": 0.26, "z_index": 12},
     {"slot_id": "entrant_4_member_1_character", "entrant_slot": 4, "member_slot": 1, "anchor": {"x": 1370, "y": 618}, "scale": 0.26, "z_index": 1},
     {"slot_id": "entrant_4_member_2_character", "entrant_slot": 4, "member_slot": 2, "anchor": {"x": 1510, "y": 618}, "scale": 0.26, "z_index": 2}
   ],
   "text_slots": [
     {"slot_id": "entrant_1_team_name", "field": "entrant.team_name", "entrant_slot": 1, "member_slot": null, "anchor": {"x": 236, "y": 818}, "max_width": 370, "pillow_anchor": "ma", "preferred_size": 42, "wrap": true, "z_index": 100},
     {"slot_id": "entrant_1_seed", "field": "entrant.seed", "entrant_slot": 1, "member_slot": null, "anchor": {"x": 390, "y": 785}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
-    {"slot_id": "entrant_2_team_name", "field": "entrant.team_name", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 630, "y": 818}, "max_width": 370, "pillow_anchor": "ma", "preferred_size": 42, "wrap": true, "z_index": 100},
-    {"slot_id": "entrant_2_seed", "field": "entrant.seed", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 785, "y": 785}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
-    {"slot_id": "entrant_3_team_name", "field": "entrant.team_name", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1020, "y": 818}, "max_width": 370, "pillow_anchor": "ma", "preferred_size": 42, "wrap": true, "z_index": 100},
-    {"slot_id": "entrant_3_seed", "field": "entrant.seed", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1175, "y": 785}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
+    {"slot_id": "entrant_2_team_name", "field": "entrant.team_name", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 646, "y": 818}, "max_width": 370, "pillow_anchor": "ma", "preferred_size": 42, "wrap": true, "z_index": 100},
+    {"slot_id": "entrant_2_seed", "field": "entrant.seed", "entrant_slot": 2, "member_slot": null, "anchor": {"x": 801, "y": 785}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
+    {"slot_id": "entrant_3_team_name", "field": "entrant.team_name", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1037, "y": 818}, "max_width": 370, "pillow_anchor": "ma", "preferred_size": 42, "wrap": true, "z_index": 100},
+    {"slot_id": "entrant_3_seed", "field": "entrant.seed", "entrant_slot": 3, "member_slot": null, "anchor": {"x": 1192, "y": 785}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100},
     {"slot_id": "entrant_4_team_name", "field": "entrant.team_name", "entrant_slot": 4, "member_slot": null, "anchor": {"x": 1415, "y": 818}, "max_width": 370, "pillow_anchor": "ma", "preferred_size": 42, "wrap": true, "z_index": 100},
     {"slot_id": "entrant_4_seed", "field": "entrant.seed", "entrant_slot": 4, "member_slot": null, "anchor": {"x": 1560, "y": 785}, "max_width": 80, "pillow_anchor": "ra", "preferred_size": 24, "wrap": false, "z_index": 100}
   ]

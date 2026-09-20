@@ -176,14 +176,21 @@ class CustomizablePreferencesTest(unittest.TestCase):
             }
             self.assertTrue(flat_slots.isdisjoint(tagged_slots), submode_id)
 
+    def test_top_8_only_displays_first_through_third_place_art(self) -> None:
+        tags = self.customizable["singles_top_8"].placement_tags
+        self.assertEqual(
+            [tag.asset_id for tag in tags],
+            ["01st.png", "02nd.png", "03rd.png"],
+        )
+
     def test_customizable_placement_art_uses_reduced_bounds(self) -> None:
         for submode_id, preferences in self.customizable.items():
             self.assertTrue(
-                all(tag.max_size.width <= 170 for tag in preferences.placement_tags),
+                all(tag.max_size.width <= 155 for tag in preferences.placement_tags),
                 submode_id,
             )
             self.assertTrue(
-                all(tag.max_size.height <= 145 for tag in preferences.placement_tags),
+                all(tag.max_size.height <= 132 for tag in preferences.placement_tags),
                 submode_id,
             )
 
