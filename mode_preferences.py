@@ -281,7 +281,11 @@ class ModePreferenceRepository:
     root: Path = MODE_PREFERENCES_FOLDER
 
     def path_for(self, selection: ModeSelection) -> Path:
-        return self.root / selection.mode.value / f"{selection.submode_id}.json"
+        folder = self.root / selection.mode.value
+        if selection.mode is CreationMode.PODIUM:
+            assert selection.options.podium_style is not None
+            folder /= selection.options.podium_style.value
+        return folder / f"{selection.submode_id}.json"
 
     def load(self, selection: ModeSelection) -> ModePreferences:
         path = self.path_for(selection)
@@ -306,13 +310,13 @@ class ModePreferenceRepository:
         preferences: list[ModePreferences] = []
         for current_mode in modes:
             folder = self.root / current_mode.value
-            for path in sorted(folder.glob("*.json")):
+            for path in sorted(folder.rglob("*.json")):
                 raw = json.loads(path.read_text(encoding="utf-8"))
                 preference = ModePreferences.from_dict(_mapping(raw, "preference file"))
                 if preference.selection.mode is not current_mode:
                     raise ValueError(f"Preference mode does not match its folder: {path}")
-                if path.stem != preference.selection.submode_id:
-                    raise ValueError(f"Preference selection does not match its filename: {path}")
+                if path != self.path_for(preference.selection):
+                    raise ValueError(f"Preference selection does not match its path: {path}")
                 preferences.append(preference)
         return tuple(preferences)
 

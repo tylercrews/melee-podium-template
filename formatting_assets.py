@@ -8,7 +8,7 @@ from typing import Protocol
 
 from PIL import Image
 
-from creation_modes import CreationMode
+from creation_modes import CreationMode, ModeSelection
 from mode_preferences import ModePreferences
 
 
@@ -17,7 +17,7 @@ FORMATTING_ASSET_FOLDER = PROJECT_ROOT / "formatting_assets"
 
 
 class FormattingAssetProvider(Protocol):
-    def open(self, mode: CreationMode, asset_id: str) -> Image.Image:
+    def open(self, selection: ModeSelection, asset_id: str) -> Image.Image:
         """Return a caller-owned RGBA image for a formatting asset."""
 
 
@@ -32,14 +32,18 @@ class FormattingRenderer(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class LocalFormattingAssets:
-    """Load assets from ``formatting_assets/<mode>/<filename>``."""
+    """Load assets from the selected mode/style's formatting-asset folder."""
 
     root: Path = FORMATTING_ASSET_FOLDER
 
-    def open(self, mode: CreationMode, asset_id: str) -> Image.Image:
+    def open(self, selection: ModeSelection, asset_id: str) -> Image.Image:
         if not isinstance(asset_id, str) or Path(asset_id).name != asset_id:
             raise ValueError("formatting asset_id must be a filename, not a path")
-        path = self.root / mode.value / asset_id
+        folder = self.root / selection.mode.value
+        if selection.mode is CreationMode.PODIUM:
+            assert selection.options.podium_style is not None
+            folder /= selection.options.podium_style.value
+        path = folder / asset_id
         if path.suffix.casefold() != ".png" or not path.is_file():
             raise FileNotFoundError(f"Formatting asset does not exist: {asset_id}")
         with Image.open(path) as source:
@@ -62,7 +66,7 @@ class FormattingAssetRenderer:
             preferences.formatting_assets,
             key=lambda item: (item.z_index, item.slot_id),
         ):
-            source = self.assets.open(preferences.selection.mode, placement.asset_id)
+            source = self.assets.open(preferences.selection, placement.asset_id)
             try:
                 layer = source.copy()
             finally:

@@ -3,7 +3,12 @@
   "ready": false,
   "selection": {
     "mode": "podium",
-    "options": {"event_format": "doubles", "entrant_count": 4, "variant": null}
+    "options": {
+      "event_format": "doubles",
+      "entrant_count": 4,
+      "variant": null,
+      "podium_style": "customizable"
+    }
   },
   "canvas_size": {"width": 1672, "height": 941},
   "formatting_assets": [],

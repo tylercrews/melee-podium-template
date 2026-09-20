@@ -1,7 +1,9 @@
 # Mode layout preferences
 
-Each JSON file under `<mode>/<sub-mode>.json` owns one complete layout. The
-filename is derived from the selection, for example `singles_top_3.json` or
+Each JSON file under `<mode>/<sub-mode>.json` owns one complete layout. Podium
+mode includes its required podium style in the path:
+`podium/<legacy|customizable>/<sub-mode>.json`. The filename is derived from
+the remaining selection, for example `singles_top_3.json` or
 `singles_top_8_four_podium.json`.
 
 The initial files are intentionally empty and marked `ready: false`. Set a file

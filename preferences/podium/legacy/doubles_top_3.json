@@ -2,8 +2,13 @@
   "schema_version": 1,
   "ready": false,
   "selection": {
-    "mode": "eyes",
-    "options": {"event_format": "doubles", "entrant_count": 4, "variant": null, "podium_style": null}
+    "mode": "podium",
+    "options": {
+      "event_format": "doubles",
+      "entrant_count": 3,
+      "variant": null,
+      "podium_style": "legacy"
+    }
   },
   "canvas_size": {"width": 1672, "height": 941},
   "formatting_assets": [],

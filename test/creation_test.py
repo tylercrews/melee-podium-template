@@ -6,7 +6,7 @@ from PIL import Image
 
 from background_builder import BackgroundRequest, PixelSize
 from creation import CreationPipeline, CreationRequest, PreferencesNotReadyError
-from creation_modes import CreationMode, ModeOptions, ModeSelection
+from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from mode_preferences import ModePreferenceRepository, ModePreferences
 from models import Character, SinglesEntrant, Tournament, TournamentFormat
 
@@ -77,7 +77,11 @@ class CreationPipelineTest(unittest.TestCase):
     def setUp(self) -> None:
         self.selection = ModeSelection(
             CreationMode.PODIUM,
-            ModeOptions(TournamentFormat.SINGLES, 3),
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.LEGACY,
+            ),
         )
 
     def request(self, size: PixelSize = PixelSize(2, 2)) -> CreationRequest:

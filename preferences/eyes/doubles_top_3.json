@@ -3,7 +3,7 @@
   "ready": false,
   "selection": {
     "mode": "eyes",
-    "options": {"event_format": "doubles", "entrant_count": 3, "variant": null}
+    "options": {"event_format": "doubles", "entrant_count": 3, "variant": null, "podium_style": null}
   },
   "canvas_size": {"width": 1672, "height": 941},
   "formatting_assets": [],

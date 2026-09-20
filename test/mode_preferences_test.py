@@ -4,7 +4,7 @@ from collections import Counter
 import unittest
 
 from background_builder import PixelRect, PixelSize
-from creation_modes import CreationMode, ModeOptions, ModeSelection
+from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from mode_preferences import (
     CharacterPlacement,
     FormattingAssetPlacement,
@@ -26,18 +26,70 @@ class ModePreferencesTest(unittest.TestCase):
     def test_mode_options_are_part_of_the_serialized_selection(self) -> None:
         selection = ModeSelection(
             CreationMode.PODIUM,
-            ModeOptions(TournamentFormat.SINGLES, 8, "four_podium"),
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                8,
+                "four_podium",
+                PodiumStyle.CUSTOMIZABLE,
+            ),
         )
 
         restored = ModeSelection.from_dict(selection.to_dict())
 
         self.assertEqual(restored, selection)
         self.assertEqual(restored.submode_id, "singles_top_8_four_podium")
+        self.assertEqual(restored.options.podium_style, PodiumStyle.CUSTOMIZABLE)
+
+    def test_podium_style_is_required_only_for_podium_mode(self) -> None:
+        with self.assertRaisesRegex(ValueError, "requires"):
+            ModeSelection(
+                CreationMode.PODIUM,
+                ModeOptions(TournamentFormat.SINGLES, 3),
+            )
+        with self.assertRaisesRegex(ValueError, "only valid"):
+            ModeSelection(
+                CreationMode.EYES,
+                ModeOptions(
+                    TournamentFormat.SINGLES,
+                    3,
+                    podium_style=PodiumStyle.LEGACY,
+                ),
+            )
+
+    def test_podium_styles_resolve_to_independent_preference_paths(self) -> None:
+        repository = ModePreferenceRepository()
+        legacy = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.LEGACY,
+            ),
+        )
+        customizable = ModeSelection(
+            CreationMode.PODIUM,
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.CUSTOMIZABLE,
+            ),
+        )
+
+        self.assertNotEqual(
+            repository.path_for(legacy),
+            repository.path_for(customizable),
+        )
+        self.assertEqual(repository.path_for(legacy).parent.name, "legacy")
+        self.assertEqual(repository.path_for(customizable).parent.name, "customizable")
 
     def test_preferences_round_trip_all_placement_types(self) -> None:
         selection = ModeSelection(
             CreationMode.PODIUM,
-            ModeOptions(TournamentFormat.SINGLES, 3),
+            ModeOptions(
+                TournamentFormat.SINGLES,
+                3,
+                podium_style=PodiumStyle.LEGACY,
+            ),
         )
         preferences = ModePreferences(
             selection=selection,
@@ -83,10 +135,19 @@ class ModePreferencesTest(unittest.TestCase):
         self.assertEqual(
             counts,
             {
-                CreationMode.PODIUM: 6,
+                CreationMode.PODIUM: 12,
                 CreationMode.EYES: 5,
                 CreationMode.SQUARES: 5,
             },
+        )
+        podium_styles = Counter(
+            item.selection.options.podium_style
+            for item in preferences
+            if item.selection.mode is CreationMode.PODIUM
+        )
+        self.assertEqual(
+            podium_styles,
+            {PodiumStyle.LEGACY: 6, PodiumStyle.CUSTOMIZABLE: 6},
         )
         for item in preferences:
             self.assertFalse(item.ready)
