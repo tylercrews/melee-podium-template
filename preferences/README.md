@@ -11,6 +11,9 @@ assets have been extracted and visually reviewed. A file may therefore contain
 partially or fully extracted coordinates while still being unavailable to the
 creation pipeline.
 
+The legacy `singles_top_8` layout is the first reviewed preference. Its active,
+tightly cropped podium assets live in `formatting_assets/podium/legacy/`.
+
 - `formatting_assets` places podium, square, or rectangle PNGs. Each entry has
   a stable slot ID, asset filename, destination rectangle, and z-index.
 - `character_slots` uses one-based entrant/member slots, a pixel anchor, scale,

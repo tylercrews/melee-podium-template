@@ -43,3 +43,4 @@
 
 - Update this file when the user establishes a durable design or architecture decision.
 - Add focused tests with new rendering modules, including serialization and image-boundary behavior.
+- Keep reusable sample entrants and complete sample tournament metadata together in `sample_creation_data.py`; generation scripts and tests should import from that single fixture module.

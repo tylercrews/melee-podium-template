@@ -1,13 +1,14 @@
-"""Reusable entrant pools for layout previews and tests."""
+"""Reusable sample tournament and entrant data for previews and tests."""
 
 from __future__ import annotations
 
+from datetime import date
 import random
 
-from models import Character, Entrant, SinglesEntrant
+from models import Character, Entrant, SinglesEntrant, Tournament, TournamentFormat
 
 
-DEFAULT_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
+SAMPLE_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
     Entrant(
         tag="C9 | Mang0",
         characters=[Character("Fox"), Character("Falco")],
@@ -21,7 +22,10 @@ DEFAULT_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
     Entrant(tag="Zain", characters=[Character("Marth", "red")]),
     Entrant(
         tag="Mew2King",
-        characters=[Character("Sheik", "green"), Character("Marth", "black")],
+        characters=[
+            Character("Sheik", "green", "c"),
+            Character("Marth", "black"),
+        ],
     ),
     Entrant(
         tag="Liquid | Hungrybox",
@@ -31,14 +35,10 @@ DEFAULT_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
 )
 
 
-def random_top_8_entrants(
+def sample_top_8_entrants(
     rng: random.Random | None = None,
 ) -> list[SinglesEntrant]:
-    """Return the default pool with unique random seeds and placements.
-
-    Supplying a ``random.Random`` instance allows callers to reproduce a
-    particular assignment. The returned entrants are ordered by placement.
-    """
+    """Return the sample pool with unique random seeds and placements."""
 
     randomizer = rng if rng is not None else random
     placements = randomizer.sample(range(1, 9), k=8)
@@ -54,10 +54,28 @@ def random_top_8_entrants(
             placement=placement,
         )
         for entrant, placement, seed in zip(
-            DEFAULT_TOP_8_ENTRANT_POOL,
+            SAMPLE_TOP_8_ENTRANT_POOL,
             placements,
             seeds,
             strict=True,
         )
     ]
     return sorted(entrants, key=lambda entrant: entrant.placement)
+
+
+def sample_tournament(
+    event_format: TournamentFormat = TournamentFormat.SINGLES,
+) -> Tournament:
+    """Return complete tournament metadata with today's date."""
+
+    if event_format not in {TournamentFormat.SINGLES, TournamentFormat.DOUBLES}:
+        raise ValueError("Sample tournament format must be singles or doubles")
+    return Tournament(
+        title="Test Tournament Name",
+        subtitle="Test Tournament Subtitle",
+        event="Test Singles" if event_format is TournamentFormat.SINGLES else "Test Doubles",
+        date=date.today(),
+        entrants_count=50,
+        link="start.gg/notareallink/tournamentlink",
+        event_format=event_format,
+    )

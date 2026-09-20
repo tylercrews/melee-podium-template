@@ -130,7 +130,7 @@ class ModePreferencesTest(unittest.TestCase):
 
         self.assertEqual(restored, preferences)
 
-    def test_every_initialized_preference_file_is_valid_and_unfinished(self) -> None:
+    def test_every_initialized_preference_file_is_valid(self) -> None:
         preferences = ModePreferenceRepository().list_preferences()
         counts = Counter(item.selection.mode for item in preferences)
 
@@ -152,7 +152,12 @@ class ModePreferencesTest(unittest.TestCase):
             {PodiumStyle.LEGACY: 6, PodiumStyle.CUSTOMIZABLE: 6},
         )
         for item in preferences:
-            self.assertFalse(item.ready)
+            reviewed_legacy_top_8 = (
+                item.selection.mode is CreationMode.PODIUM
+                and item.selection.options.podium_style is PodiumStyle.LEGACY
+                and item.selection.submode_id == "singles_top_8"
+            )
+            self.assertEqual(item.ready, reviewed_legacy_top_8)
             self.assertEqual(item.canvas_size, PixelSize(1672, 941))
             extracted_legacy = (
                 item.selection.mode is CreationMode.PODIUM

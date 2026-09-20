@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "ready": false,
+  "ready": true,
   "selection": {
     "mode": "podium",
     "options": {

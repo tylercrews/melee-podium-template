@@ -1,6 +1,9 @@
 """Regression checks for values extracted from the legacy podium renderer."""
 
 import unittest
+from pathlib import Path
+
+from PIL import Image
 
 from background_builder import PixelSize
 from creation_modes import CreationMode, PodiumStyle
@@ -84,6 +87,23 @@ class LegacyPreferencesTest(unittest.TestCase):
                     (label.anchor.x, label.anchor.y),
                     (source[0], source[1] + label_offset),
                 )
+
+    def test_reviewed_top_8_assets_exist_and_are_tightly_cropped(self) -> None:
+        preferences = self.preferences["singles_top_8"]
+        self.assertTrue(preferences.ready)
+        folder = (
+            Path(__file__).resolve().parents[1]
+            / "formatting_assets"
+            / "podium"
+            / "legacy"
+        )
+
+        for placement in preferences.formatting_assets:
+            path = folder / placement.asset_id
+            self.assertTrue(path.is_file(), placement.asset_id)
+            with Image.open(path) as source:
+                alpha = source.convert("RGBA").getchannel("A")
+                self.assertEqual(alpha.getbbox(), (0, 0, source.width, source.height))
 
 
 if __name__ == "__main__":
