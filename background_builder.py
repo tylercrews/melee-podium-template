@@ -4,6 +4,14 @@ The data classes in this module intentionally mirror a JSON-friendly request:
 an output size, an RGBA hex fill, and image placement expressed as source and
 destination rectangles.  This keeps background preferences independent from
 the UI and from the eventual asset storage provider.
+
+Image positioning is stored as pixels, not as a transient instruction such as
+"center bottom": ``ImagePlacement.source_crop`` records which part of the
+source is visible and ``destination`` records where that crop is drawn.  The
+built-in defaults below convert readable alignment preferences from
+``DEFAULT_IMAGE_ALIGNMENTS`` into those persisted rectangles.  Add or change
+an asset's alignment there; keep format-specific, hand-tuned framing in
+``DEFAULT_CROP_POSITIONS`` when a simple alignment is not sufficient.
 """
 
 from __future__ import annotations
@@ -235,17 +243,55 @@ class LocalBackgroundAssets:
 BUILTIN_BACKGROUND_ASSETS = LocalBackgroundAssets()
 
 
-def centered_cover_crop(source: PixelSize, destination: PixelSize) -> PixelRect:
-    """Return a centered source crop that fills ``destination`` without bars."""
+def cover_crop(
+    source: PixelSize,
+    destination: PixelSize,
+    *,
+    horizontal_alignment: str = "center",
+    vertical_alignment: str = "center",
+) -> PixelRect:
+    """Return an aligned source crop that fills ``destination`` without bars.
+
+    Horizontal alignment may be ``left``, ``center``, or ``right``; vertical
+    alignment may be ``top``, ``center``, or ``bottom``.  An alignment only
+    affects an axis on which the cover crop removes source pixels.
+    """
+
+    def aligned_offset(
+        extra_pixels: int,
+        alignment: str,
+        choices: tuple[str, ...],
+    ) -> int:
+        if alignment not in choices:
+            raise ValueError(f"alignment must be one of {', '.join(choices)}")
+        if alignment == choices[0]:
+            return 0
+        if alignment == choices[-1]:
+            return extra_pixels
+        return extra_pixels // 2
 
     if source.width * destination.height > destination.width * source.height:
         crop_width = round(source.height * destination.width / destination.height)
-        left = (source.width - crop_width) // 2
+        left = aligned_offset(
+            source.width - crop_width,
+            horizontal_alignment,
+            ("left", "center", "right"),
+        )
         return PixelRect(left, 0, left + crop_width, source.height)
 
     crop_height = round(source.width * destination.height / destination.width)
-    top = (source.height - crop_height) // 2
+    top = aligned_offset(
+        source.height - crop_height,
+        vertical_alignment,
+        ("top", "center", "bottom"),
+    )
     return PixelRect(0, top, source.width, top + crop_height)
+
+
+def centered_cover_crop(source: PixelSize, destination: PixelSize) -> PixelRect:
+    """Return a centered source crop that fills ``destination`` without bars."""
+
+    return cover_crop(source, destination)
 
 
 def default_placement(
@@ -337,20 +383,40 @@ BACKGROUND_FORMAT_SIZES: dict[str, PixelSize] = {
 BUILTIN_BACKGROUND_SIZES: dict[str, PixelSize] = {
     "00_Battlefield_5000_5000_resaved.png": PixelSize(5000, 5000),
     "01_Dreamland_5000_5000_resaved.png": PixelSize(5000, 5000),
-    "02_FinalDestinationCloud_5000_5000_resaved.png": PixelSize(5000, 5000),
-    "03_FinalDestinationSpace_4000_4000_resaved.png": PixelSize(4000, 3000),
+    "02_YoshisStory_5000_5000_resaved.png": PixelSize(5000, 5000),
+    "03_FinalDestinationCloud_5000_5000_resaved.png": PixelSize(5000, 5000),
     "04_FinalDestinationCyber_5000_5000_resaved.png": PixelSize(5000, 5000),
     "05_FinalDestinationSpace_5000_5000_resaved.png": PixelSize(5000, 5000),
     "06_FinalDestinationTunnel_5000_5000_resaved.png": PixelSize(5000, 5000),
     "07_FinalDestinationWormhole_5000_5000_resaved.png": PixelSize(5000, 5000),
     "08_FountainOfDreams_5000_5000_resaved.png": PixelSize(5000, 5000),
     "09_PokemonStadium_5000_5000_resaved.png": PixelSize(5000, 5000),
-    "10_YoshisStory_5000_5000_resaved.png": PixelSize(5000, 5000),
+}
+
+# These are cover-crop anchors, equivalent to CSS-style image positioning.
+# Keep every asset explicit so renamed or reordered files cannot silently inherit
+# framing that was intended for a different image.
+DEFAULT_IMAGE_ALIGNMENTS: dict[str, tuple[str, str]] = {
+    "00_Battlefield_5000_5000_resaved.png": ("center", "center"),
+    "01_Dreamland_5000_5000_resaved.png": ("center", "center"),
+    "02_YoshisStory_5000_5000_resaved.png": ("center", "center"),
+    "03_FinalDestinationCloud_5000_5000_resaved.png": ("center", "center"),
+    "04_FinalDestinationCyber_5000_5000_resaved.png": ("center", "center"),
+    "05_FinalDestinationSpace_5000_5000_resaved.png": ("center", "bottom"),
+    "06_FinalDestinationTunnel_5000_5000_resaved.png": ("center", "center"),
+    "07_FinalDestinationWormhole_5000_5000_resaved.png": ("center", "center"),
+    "08_FountainOfDreams_5000_5000_resaved.png": ("center", "center"),
+    "09_PokemonStadium_5000_5000_resaved.png": ("center", "center"),
 }
 
 DEFAULT_CROP_POSITIONS: dict[str, dict[str, PixelRect]] = {
     format_id: {
-        asset_id: centered_cover_crop(asset_size, output_size)
+        asset_id: cover_crop(
+            asset_size,
+            output_size,
+            horizontal_alignment=DEFAULT_IMAGE_ALIGNMENTS[asset_id][0],
+            vertical_alignment=DEFAULT_IMAGE_ALIGNMENTS[asset_id][1],
+        )
         for asset_id, asset_size in BUILTIN_BACKGROUND_SIZES.items()
     }
     for format_id, output_size in BACKGROUND_FORMAT_SIZES.items()

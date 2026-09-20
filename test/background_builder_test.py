@@ -9,12 +9,14 @@ from background_builder import (
     BUILTIN_BACKGROUND_SIZES,
     DEFAULT_BACKGROUND_COLOR,
     DEFAULT_CROP_POSITIONS,
+    DEFAULT_IMAGE_ALIGNMENTS,
     BackgroundRequest,
     ImagePlacement,
     LocalBackgroundAssets,
     PixelRect,
     PixelSize,
     create_background,
+    cover_crop,
     default_placement,
     parse_rgba_hex,
 )
@@ -149,6 +151,35 @@ class BackgroundBuilderTest(unittest.TestCase):
                     (placement.destination.width, placement.destination.height),
                     BACKGROUND_FORMAT_SIZES[format_id].as_tuple(),
                 )
+
+    def test_builtin_registry_matches_the_numbered_background_files(self) -> None:
+        actual_assets = {
+            asset.asset_id for asset in LocalBackgroundAssets().list_assets()
+        }
+
+        self.assertEqual(set(BUILTIN_BACKGROUND_SIZES), actual_assets)
+
+    def test_default_images_are_centered_except_final_destination_space(self) -> None:
+        self.assertEqual(set(DEFAULT_IMAGE_ALIGNMENTS), set(BUILTIN_BACKGROUND_SIZES))
+        bottom_asset = "05_FinalDestinationSpace_5000_5000_resaved.png"
+        self.assertEqual(DEFAULT_IMAGE_ALIGNMENTS[bottom_asset], ("center", "bottom"))
+        for asset_id, alignment in DEFAULT_IMAGE_ALIGNMENTS.items():
+            if asset_id != bottom_asset:
+                self.assertEqual(alignment, ("center", "center"))
+
+        for format_id, output_size in BACKGROUND_FORMAT_SIZES.items():
+            crops = DEFAULT_CROP_POSITIONS[format_id]
+            for asset_id, source_size in BUILTIN_BACKGROUND_SIZES.items():
+                horizontal_alignment, vertical_alignment = DEFAULT_IMAGE_ALIGNMENTS[
+                    asset_id
+                ]
+                expected = cover_crop(
+                    source_size,
+                    output_size,
+                    horizontal_alignment=horizontal_alignment,
+                    vertical_alignment=vertical_alignment,
+                )
+                self.assertEqual(crops[asset_id], expected)
 
 
 if __name__ == "__main__":

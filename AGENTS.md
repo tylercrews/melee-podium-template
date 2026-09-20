@@ -42,6 +42,7 @@
 - Compose in this order: create the RGBA canvas with the selected color, crop the selected image, resize the crop to its destination rectangle, composite it over the canvas, and return the new RGBA image.
 - Built-in images live in `backgrounds/`. Refer to them by asset ID/filename rather than storing absolute paths. A future cloud-storage provider should implement the same asset-provider boundary instead of changing the compositor.
 - Default crop positions are keyed by podium format and background asset. Keep format-specific overrides possible even when several formats currently share the same dimensions.
+- Default built-in background framing uses a centered cover crop. `05_FinalDestinationSpace_5000_5000_resaved.png` is the exception and uses a center-bottom cover crop. Capture future simple framing choices in `DEFAULT_IMAGE_ALIGNMENTS` in `background_builder.py`; the resulting pixel crop remains the serialized preference.
 
 ## Maintenance
 
