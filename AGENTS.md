@@ -33,6 +33,7 @@
 - Customizable Top 8 uses x-tall, tall, medium, short, x-short, x-short, flat, and flat assets in placement order. Top 3 uses tall, medium, and short; four-podium layouts append x-short.
 - Flat customizable podiums never display placement-number art.
 - Customizable Top 8 displays placement-number art only for first through third; fourth, both tied fifths, and both flat tied sevenths omit it. Customizable gray placement-number art is deliberately much smaller than the first-place crest.
+- Size customizable placement-number art per layout and podium height rather than sharing bounds across formats. Use as much of the semantic front face as practical while leaving clearance above the bottom trim; very short faces, especially fourth place in four-podium layouts, require correspondingly tiny art.
 - Customizable podiums require a main color and accept optional face and base colors plus a strict `metallic` boolean.
 - Preserve whether face and base were omitted in serialized input. Resolve those defaults only for rendering.
 - When face is omitted, preserve the main hue and saturation and darken its HSL lightness using the median face-to-main lightness ratio from the existing podium color pairs in `constants.py`.

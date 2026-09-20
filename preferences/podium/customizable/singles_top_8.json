@@ -22,9 +22,9 @@
     {"slot_id": "podium_8", "asset_id": "flat.png", "destination": {"left": 1653, "top": 798, "right": 1900, "bottom": 833}, "z_index": 0}
   ],
   "placement_tags": [
-    {"slot_id": "podium_1_placement_tag", "asset_id": "01st.png", "anchor": {"x": 152, "y": 757}, "max_size": {"width": 90, "height": 95}, "z_index": 0},
-    {"slot_id": "podium_2_placement_tag", "asset_id": "02nd.png", "anchor": {"x": 399, "y": 779}, "max_size": {"width": 50, "height": 38}, "z_index": 1},
-    {"slot_id": "podium_3_placement_tag", "asset_id": "03rd.png", "anchor": {"x": 630, "y": 794}, "max_size": {"width": 45, "height": 34}, "z_index": 2}
+    {"slot_id": "podium_1_placement_tag", "asset_id": "01st.png", "anchor": {"x": 152, "y": 757}, "max_size": {"width": 90, "height": 78}, "z_index": 0},
+    {"slot_id": "podium_2_placement_tag", "asset_id": "02nd.png", "anchor": {"x": 399, "y": 779}, "max_size": {"width": 50, "height": 43}, "z_index": 1},
+    {"slot_id": "podium_3_placement_tag", "asset_id": "03rd.png", "anchor": {"x": 630, "y": 794}, "max_size": {"width": 36, "height": 28}, "z_index": 2}
   ],
   "character_slots": [],
   "text_slots": []

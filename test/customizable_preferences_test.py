@@ -33,6 +33,20 @@ EXPECTED_ASSETS = {
     ),
 }
 
+EXPECTED_TAG_MAX_SIZES = {
+    "doubles_top_3": ((155, 100), (100, 76), (54, 39)),
+    "singles_top_3": ((155, 100), (100, 76), (54, 39)),
+    "doubles_top_4": ((155, 84), (72, 56), (38, 30), (16, 12)),
+    "singles_top_4": ((155, 84), (72, 56), (38, 30), (16, 12)),
+    "singles_top_8_four_podium": (
+        (155, 84),
+        (72, 56),
+        (38, 30),
+        (16, 12),
+    ),
+    "singles_top_8": ((90, 78), (50, 43), (36, 28)),
+}
+
 
 class CustomizablePreferencesTest(unittest.TestCase):
     @classmethod
@@ -183,14 +197,14 @@ class CustomizablePreferencesTest(unittest.TestCase):
             ["01st.png", "02nd.png", "03rd.png"],
         )
 
-    def test_customizable_placement_art_uses_reduced_bounds(self) -> None:
+    def test_customizable_placement_art_uses_layout_specific_bounds(self) -> None:
         for submode_id, preferences in self.customizable.items():
-            self.assertTrue(
-                all(tag.max_size.width <= 155 for tag in preferences.placement_tags),
-                submode_id,
+            actual = tuple(
+                tag.max_size.as_tuple() for tag in preferences.placement_tags
             )
-            self.assertTrue(
-                all(tag.max_size.height <= 132 for tag in preferences.placement_tags),
+            self.assertEqual(
+                actual,
+                EXPECTED_TAG_MAX_SIZES[submode_id],
                 submode_id,
             )
 

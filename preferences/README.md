@@ -39,6 +39,9 @@ Their tightly cropped semantic masks live in
 - Customizable Top 8 shows placement-number art only for first through third;
   fourth and both tied fifths also omit it. Gray placement-number art uses
   substantially smaller bounds than the first-place crest.
+- Customizable placement-number maximum sizes are layout-specific. They should
+  fill the usable front-face area while retaining clearance from the bottom
+  trim, so shorter podium faces receive progressively smaller art.
 
 Adding a supported sub-mode means adding another validated JSON file; entrant
 counts are not hard-coded in the mode model.
