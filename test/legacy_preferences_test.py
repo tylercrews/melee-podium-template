@@ -43,7 +43,7 @@ class LegacyPreferencesTest(unittest.TestCase):
                         anchor[0]
                         + (5 * (entrant_slot - 1)
                            if submode_id == "singles_top_8" else 0),
-                        anchor[1],
+                        anchor[1] + (8 if submode_id == "singles_top_8" else 0),
                     )
                     for entrant_slot, anchor in SINGLES_ANCHORS[layout_count].items()
                 }
@@ -78,10 +78,15 @@ class LegacyPreferencesTest(unittest.TestCase):
                     if submode_id == "singles_top_8"
                     else 0
                 )
+                seed_edge_offset = 10 if submode_id == "singles_top_8" else 0
                 self.assertEqual(
                     (seed.anchor.x, seed.anchor.y),
-                    (expected_seed[0] + horizontal_offset, expected_seed[1]),
+                    (
+                        expected_seed[0] + horizontal_offset + seed_edge_offset,
+                        expected_seed[1],
+                    ),
                 )
+                self.assertEqual(seed.pillow_anchor, "ra")
 
             if options.variant == "four_podium":
                 for summary_slot, entrant_slot in enumerate(range(5, 9), start=1):
