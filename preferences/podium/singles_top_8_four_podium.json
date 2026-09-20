@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "ready": false,
+  "selection": {
+    "mode": "podium",
+    "options": {
+      "event_format": "singles",
+      "entrant_count": 8,
+      "variant": "four_podium"
+    }
+  },
+  "canvas_size": {"width": 1672, "height": 941},
+  "formatting_assets": [],
+  "character_slots": [],
+  "text_slots": []
+}

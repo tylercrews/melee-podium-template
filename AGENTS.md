@@ -6,10 +6,21 @@
 - Keep rendering logic independent from Flask routes and React UI state. UI/API layers translate requests into renderer data structures; renderers accept validated values and return images.
 - Prefer serializable, explicit data models at module boundaries so layout preferences can be saved and restored.
 
+## Creation modes and pipeline
+
+- The initial creation modes are Podium, Eyes, and Squares. Podium is the first mode being implemented; keep Eyes and Squares explicit even while their renderers are pending, and allow more modes to be added later.
+- Select the mode before other creation settings. Keep the mode and its settings, including singles/doubles, included entrant count, and any layout variant, together in one mode-selection value.
+- `creation.py` is the overall composition coordinator. Do not use a generic `main.py` for this responsibility.
+- Run creation stages in this order: resolve mode/sub-mode preferences, build the background, draw mode formatting assets, then draw entrant character assets and text.
+- Character assets and text belong to one combined content-rendering stage. Their placements carry layer-order values so text and characters can overlap in either order when a layout requires it.
+- Formatting assets vary by mode: Podium uses podiums, Squares uses squares, and Eyes uses rectangles.
+- Store layout preferences as JSON under `preferences/<mode>/<sub-mode>.json`. Each file owns canvas dimensions plus formatting-asset, character, and text placements for exactly one mode/sub-mode.
+- A scaffold preference file stays marked `ready: false` until its real positions have been extracted and reviewed. The creation pipeline must refuse to render with an unfinished preference file rather than silently producing an empty layout.
+
 ## Background rendering decisions
 
 - Backgrounds are composed at render time; do not create or select fixed Top 3, Top 4, or Top 8 background placeholder assets.
-- Every background request specifies its output width and height. Podium format selection is responsible for supplying those dimensions.
+- Every background request specifies its output width and height. The selected mode/sub-mode is responsible for supplying those dimensions.
 - Persist colors as 8-digit RGBA hex strings (`#RRGGBBAA`). The default is fully transparent black (`#00000000`).
 - A saved image placement contains an asset ID, a source crop rectangle, and a destination rectangle. Rectangles use Pillow-style half-open pixel coordinates: left/top are included and right/bottom are excluded.
 - Compose in this order: create the RGBA canvas with the selected color, crop the selected image, resize the crop to its destination rectangle, composite it over the canvas, and return the new RGBA image.
