@@ -36,7 +36,15 @@ class LegacyPreferencesTest(unittest.TestCase):
             expected_scale = get_mode_portrait_scale(submode_id)
             if options.event_format is TournamentFormat.SINGLES:
                 expected = {
-                    (entrant_slot, None): anchor
+                    (
+                        entrant_slot,
+                        None,
+                    ): (
+                        anchor[0]
+                        + (5 * (entrant_slot - 1)
+                           if submode_id == "singles_top_8" else 0),
+                        anchor[1],
+                    )
                     for entrant_slot, anchor in SINGLES_ANCHORS[layout_count].items()
                 }
             else:
@@ -65,7 +73,15 @@ class LegacyPreferencesTest(unittest.TestCase):
             for entrant_slot in range(1, layout_count + 1):
                 seed = by_slot_id[f"entrant_{entrant_slot}_seed"]
                 expected_seed = PODIUM_TEXT_ANCHORS[layout_count][entrant_slot]["seed"]
-                self.assertEqual((seed.anchor.x, seed.anchor.y), expected_seed)
+                horizontal_offset = (
+                    5 * (entrant_slot - 1)
+                    if submode_id == "singles_top_8"
+                    else 0
+                )
+                self.assertEqual(
+                    (seed.anchor.x, seed.anchor.y),
+                    (expected_seed[0] + horizontal_offset, expected_seed[1]),
+                )
 
             if options.variant == "four_podium":
                 for summary_slot, entrant_slot in enumerate(range(5, 9), start=1):
@@ -83,9 +99,14 @@ class LegacyPreferencesTest(unittest.TestCase):
             for entrant_slot in range(1, layout_count + 1):
                 label = by_slot_id[f"entrant_{entrant_slot}_{label_kind}"]
                 source = PODIUM_TEXT_ANCHORS[layout_count][entrant_slot]["label"]
+                horizontal_offset = (
+                    5 * (entrant_slot - 1)
+                    if submode_id == "singles_top_8"
+                    else 0
+                )
                 self.assertEqual(
                     (label.anchor.x, label.anchor.y),
-                    (source[0], source[1] + label_offset),
+                    (source[0] + horizontal_offset, source[1] + label_offset),
                 )
 
     def test_active_legacy_assets_exist_and_are_tightly_cropped(self) -> None:
@@ -124,6 +145,37 @@ class LegacyPreferencesTest(unittest.TestCase):
                 "07th.png",
                 "07th.png",
             ],
+        )
+        self.assertEqual(
+            [(tag.anchor.x, tag.anchor.y) for tag in tags],
+            [
+                (122, 673),
+                (347, 668),
+                (554, 690),
+                (759, 707),
+                (965, 720),
+                (1168, 724),
+                (1376, 736),
+                (1581, 740),
+            ],
+        )
+
+    def test_top_8_podiums_are_enlarged_with_controlled_overlap(self) -> None:
+        podiums = self.preferences["singles_top_8"].formatting_assets
+
+        self.assertEqual(podiums[0].destination.left, 6)
+        self.assertEqual(podiums[-1].destination.right, 1701)
+        self.assertTrue(
+            all(
+                current.destination.left < previous.destination.right
+                for previous, current in zip(podiums, podiums[1:])
+            )
+        )
+        self.assertTrue(
+            all(
+                previous.destination.right - current.destination.left <= 32
+                for previous, current in zip(podiums, podiums[1:])
+            )
         )
 
 
