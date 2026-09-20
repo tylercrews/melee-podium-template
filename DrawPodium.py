@@ -515,7 +515,7 @@ def _draw_character_tag(
         return
 
     player_tag = player_tag.strip()
-    sponsor_tag = f"{sponsor.rstrip()} |"
+    sponsor_tag = sponsor.rstrip()
     _draw_text(
         draw,
         position,
@@ -563,7 +563,7 @@ def _character_tag_bounds(
         )
 
     player_tag = player_tag.strip()
-    sponsor_tag = f"{sponsor.rstrip()} |"
+    sponsor_tag = sponsor.rstrip()
     player_font = _font_to_fit(player_tag, max_width, preferred_size, font)
     player_bounds = draw.multiline_textbbox(
         position, player_tag, font=player_font, anchor="ms", stroke_width=stroke_width
