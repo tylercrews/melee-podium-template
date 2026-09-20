@@ -13,7 +13,7 @@ creation pipeline.
 
 The legacy `singles_top_8` layout is the first reviewed preference. Its active,
 tightly cropped podium assets live in `formatting_assets/podium/legacy/`.
-The initial customizable formatting layouts use a 1736x941 review canvas and
+The initial customizable formatting layouts use a 1920x941 review canvas and
 remain unready while their character and text placements are still empty.
 Their tightly cropped semantic masks live in
 `formatting_assets/podium/customizable/`.
@@ -30,10 +30,12 @@ Their tightly cropped semantic masks live in
 - Legacy podium destination rectangles are half-open visible bounds measured
   from the old `top_3.png`, `top_4.png`, and `top_8.png` outputs. Their asset IDs
   reserve tightly cropped filenames in `formatting_assets/podium/legacy/`.
-- Customizable podiums preserve the matching legacy podium's width and bottom
-  edge, then derive height from the customizable asset's aspect ratio. Top 8
+- Customizable podiums preserve the matching legacy podium's bottom edge,
+  enlarge the body while preserving its aspect ratio, and spread the group
+  across the wider canvas with minimal overlap. Top 8
   uses x-tall, tall, medium, short, two x-short, and two flat podiums. The
   remaining layouts use tall, medium, short, and x-short as slots permit.
+- Flat customizable podiums intentionally omit placement-number art.
 
 Adding a supported sub-mode means adding another validated JSON file; entrant
 counts are not hard-coded in the mode model.

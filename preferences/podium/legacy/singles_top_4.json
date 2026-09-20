@@ -18,7 +18,7 @@
     {"slot_id": "podium_4", "asset_id": "top_4_slot_4.png", "destination": {"left": 1239, "top": 573, "right": 1616, "bottom": 824}, "z_index": 0}
   ],
   "placement_tags": [
-    {"slot_id": "podium_1_placement_tag","asset_id": "01st.png","anchor": {"x": 235,"y": 662},"max_size": {"width": 315,"height": 275},"z_index": 0},
+    {"slot_id": "podium_1_placement_tag","asset_id": "01st.png","anchor": {"x": 235,"y": 662},"max_size": {"width": 270,"height": 235},"z_index": 0},
     {"slot_id": "podium_2_placement_tag","asset_id": "02nd.png","anchor": {"x": 641,"y": 680},"max_size": {"width": 170,"height": 135},"z_index": 1},
     {"slot_id": "podium_3_placement_tag","asset_id": "03rd.png","anchor": {"x": 1032,"y": 698},"max_size": {"width": 145,"height": 110},"z_index": 2},
     {"slot_id": "podium_4_placement_tag","asset_id": "04th.png","anchor": {"x": 1421,"y": 710},"max_size": {"width": 145,"height": 105},"z_index": 3}

@@ -60,7 +60,7 @@ class CustomizablePreferencesTest(unittest.TestCase):
     def test_all_six_layouts_use_the_wider_review_canvas(self) -> None:
         self.assertEqual(set(self.customizable), set(EXPECTED_ASSETS))
         for preferences in self.customizable.values():
-            self.assertEqual(preferences.canvas_size, PixelSize(1736, 941))
+            self.assertEqual(preferences.canvas_size, PixelSize(1920, 941))
             self.assertFalse(preferences.ready)
 
     def test_rank_height_assets_match_the_requested_order(self) -> None:
@@ -71,7 +71,7 @@ class CustomizablePreferencesTest(unittest.TestCase):
             )
             self.assertEqual(actual, expected, submode_id)
 
-    def test_customizable_podiums_match_legacy_widths_and_baselines(self) -> None:
+    def test_customizable_podiums_are_wider_and_keep_legacy_baselines(self) -> None:
         for submode_id, customizable in self.customizable.items():
             legacy = self.legacy[submode_id]
             self.assertEqual(
@@ -83,7 +83,7 @@ class CustomizablePreferencesTest(unittest.TestCase):
                 legacy.formatting_assets,
                 strict=True,
             ):
-                self.assertEqual(
+                self.assertGreater(
                     custom_placement.destination.width,
                     legacy_placement.destination.width,
                     submode_id,
@@ -123,6 +123,22 @@ class CustomizablePreferencesTest(unittest.TestCase):
                 submode_id,
             )
 
+    def test_layouts_use_the_wider_canvas_to_reduce_overlap(self) -> None:
+        for submode_id, preferences in self.customizable.items():
+            podiums = sorted(
+                preferences.formatting_assets,
+                key=lambda placement: placement.destination.left,
+            )
+            overlaps = [
+                previous.destination.right - current.destination.left
+                for previous, current in zip(podiums, podiums[1:])
+            ]
+            maximum_overlap = 17 if submode_id == "singles_top_8" else 0
+            self.assertTrue(
+                all(overlap <= maximum_overlap for overlap in overlaps),
+                submode_id,
+            )
+
     def test_active_masks_exist_and_are_tightly_cropped(self) -> None:
         self.assertEqual(
             {path.name for path in self.asset_folder.glob("*.png")},
@@ -135,16 +151,41 @@ class CustomizablePreferencesTest(unittest.TestCase):
 
     def test_placement_tag_anchors_land_inside_their_podiums(self) -> None:
         for submode_id, preferences in self.customizable.items():
-            for podium, tag in zip(
-                preferences.formatting_assets,
-                preferences.placement_tags,
-                strict=True,
-            ):
+            podiums_by_slot = {
+                podium.slot_id: podium for podium in preferences.formatting_assets
+            }
+            for tag in preferences.placement_tags:
+                podium_slot = tag.slot_id.removesuffix("_placement_tag")
+                podium = podiums_by_slot[podium_slot]
                 destination = podium.destination
                 self.assertLessEqual(destination.left, tag.anchor.x, submode_id)
                 self.assertLess(tag.anchor.x, destination.right, submode_id)
                 self.assertLessEqual(destination.top, tag.anchor.y, submode_id)
                 self.assertLess(tag.anchor.y, destination.bottom, submode_id)
+
+    def test_flat_podiums_never_have_placement_tags(self) -> None:
+        for submode_id, preferences in self.customizable.items():
+            flat_slots = {
+                placement.slot_id
+                for placement in preferences.formatting_assets
+                if placement.asset_id == "flat.png"
+            }
+            tagged_slots = {
+                tag.slot_id.removesuffix("_placement_tag")
+                for tag in preferences.placement_tags
+            }
+            self.assertTrue(flat_slots.isdisjoint(tagged_slots), submode_id)
+
+    def test_customizable_placement_art_uses_reduced_bounds(self) -> None:
+        for submode_id, preferences in self.customizable.items():
+            self.assertTrue(
+                all(tag.max_size.width <= 170 for tag in preferences.placement_tags),
+                submode_id,
+            )
+            self.assertTrue(
+                all(tag.max_size.height <= 145 for tag in preferences.placement_tags),
+                submode_id,
+            )
 
 
 if __name__ == "__main__":

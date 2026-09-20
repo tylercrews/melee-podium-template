@@ -165,6 +165,16 @@ class LegacyPreferencesTest(unittest.TestCase):
             ],
         )
 
+    def test_first_place_art_stays_inside_the_podium_face(self) -> None:
+        for submode_id, preferences in self.preferences.items():
+            first_place = preferences.placement_tags[0]
+            expected = (
+                PixelSize(130, 140)
+                if submode_id == "singles_top_8"
+                else PixelSize(270, 235)
+            )
+            self.assertEqual(first_place.max_size, expected, submode_id)
+
     def test_top_8_podiums_are_enlarged_with_controlled_overlap(self) -> None:
         podiums = self.preferences["singles_top_8"].formatting_assets
 

@@ -169,7 +169,7 @@ class ModePreferencesTest(unittest.TestCase):
             )
             self.assertEqual(item.ready, reviewed_legacy_top_8)
             expected_canvas = (
-                PixelSize(1736, 941)
+                PixelSize(1920, 941)
                 if item.selection.mode is CreationMode.PODIUM
                 and item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
                 else PixelSize(1672, 941)
@@ -192,9 +192,15 @@ class ModePreferencesTest(unittest.TestCase):
                 self.assertFalse(item.text_slots)
             if item.selection.mode is CreationMode.PODIUM:
                 expected_tag_count = (
-                    4
-                    if item.selection.options.variant == "four_podium"
-                    else item.selection.options.entrant_count
+                    6
+                    if item.selection.options.podium_style
+                    is PodiumStyle.CUSTOMIZABLE
+                    and item.selection.submode_id == "singles_top_8"
+                    else (
+                        4
+                        if item.selection.options.variant == "four_podium"
+                        else item.selection.options.entrant_count
+                    )
                 )
                 self.assertEqual(len(item.placement_tags), expected_tag_count)
             else:

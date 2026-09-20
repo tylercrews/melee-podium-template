@@ -10,16 +10,16 @@
       "podium_style": "customizable"
     }
   },
-  "canvas_size": {"width": 1736, "height": 941},
+  "canvas_size": {"width": 1920, "height": 941},
   "formatting_assets": [
-    {"slot_id": "podium_1", "asset_id": "tall.png", "destination": {"left": 660, "top": 589, "right": 1109, "bottom": 804}, "z_index": 2},
-    {"slot_id": "podium_2", "asset_id": "medium.png", "destination": {"left": 167, "top": 625, "right": 638, "bottom": 802}, "z_index": 1},
-    {"slot_id": "podium_3", "asset_id": "short.png", "destination": {"left": 1129, "top": 671, "right": 1569, "bottom": 806}, "z_index": 0}
+    {"slot_id": "podium_1", "asset_id": "tall.png", "destination": {"left": 713, "top": 567, "right": 1207, "bottom": 804}, "z_index": 2},
+    {"slot_id": "podium_2", "asset_id": "medium.png", "destination": {"left": 20, "top": 607, "right": 538, "bottom": 802}, "z_index": 1},
+    {"slot_id": "podium_3", "asset_id": "short.png", "destination": {"left": 1416, "top": 657, "right": 1900, "bottom": 806}, "z_index": 0}
   ],
   "placement_tags": [
-    {"slot_id": "podium_1_placement_tag", "asset_id": "01st.png", "anchor": {"x": 873, "y": 723}, "max_size": {"width": 315, "height": 275}, "z_index": 0},
-    {"slot_id": "podium_2_placement_tag", "asset_id": "02nd.png", "anchor": {"x": 390, "y": 739}, "max_size": {"width": 130, "height": 100}, "z_index": 1},
-    {"slot_id": "podium_3_placement_tag", "asset_id": "03rd.png", "anchor": {"x": 1338, "y": 761}, "max_size": {"width": 120, "height": 90}, "z_index": 2}
+    {"slot_id": "podium_1_placement_tag", "asset_id": "01st.png", "anchor": {"x": 947, "y": 715}, "max_size": {"width": 170, "height": 145}, "z_index": 0},
+    {"slot_id": "podium_2_placement_tag", "asset_id": "02nd.png", "anchor": {"x": 265, "y": 733}, "max_size": {"width": 100, "height": 75}, "z_index": 1},
+    {"slot_id": "podium_3_placement_tag", "asset_id": "03rd.png", "anchor": {"x": 1646, "y": 757}, "max_size": {"width": 90, "height": 65}, "z_index": 2}
   ],
   "character_slots": [],
   "text_slots": []

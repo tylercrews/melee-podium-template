@@ -28,8 +28,9 @@
 ## Customizable podium colors
 
 - Active customizable podium masks live in `formatting_assets/podium/customizable/` and are tightly cropped from the cleaned semantic masks in `docs/archive/old_podium_iterations/02_3d_second_attempt/`.
-- Customizable podium formatting layouts use a 1736x941 canvas. Match each podium body's width and bottom edge to its corresponding legacy podium, preserve the customizable asset's aspect ratio, and center the complete podium group horizontally on the wider canvas.
+- Customizable podium formatting layouts use a 1920x941 canvas. Preserve the customizable asset's aspect ratio and the corresponding legacy podium's bottom edge, enlarge the bodies relative to legacy, and distribute the complete podium group across the wider canvas with minimal overlap.
 - Customizable Top 8 uses x-tall, tall, medium, short, x-short, x-short, flat, and flat assets in placement order. Top 3 uses tall, medium, and short; four-podium layouts append x-short.
+- Flat customizable podiums never display placement-number art.
 - Customizable podiums require a main color and accept optional face and base colors plus a strict `metallic` boolean.
 - Preserve whether face and base were omitted in serialized input. Resolve those defaults only for rendering.
 - When face is omitted, preserve the main hue and saturation and darken its HSL lightness using the median face-to-main lightness ratio from the existing podium color pairs in `constants.py`.
