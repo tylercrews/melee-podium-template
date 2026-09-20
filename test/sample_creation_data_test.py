@@ -6,7 +6,9 @@ import unittest
 
 from models import TournamentFormat
 from sample_creation_data import (
+    SAMPLE_TEAM_COLORS,
     SAMPLE_TOP_8_ENTRANT_POOL,
+    sample_top_4_teams,
     sample_top_8_entrants,
     sample_tournament,
 )
@@ -74,6 +76,45 @@ class SampleCreationDataTest(unittest.TestCase):
         entrants = sample_top_8_entrants(random.Random(1))
 
         entrants[0].characters.clear()
+
+        self.assertTrue(all(entrant.characters for entrant in SAMPLE_TOP_8_ENTRANT_POOL))
+
+    def test_team_helper_pairs_every_entrant_once_in_placement_order(self) -> None:
+        teams = sample_top_4_teams(random.Random(42))
+        members = [
+            member
+            for team in teams
+            for member in (team.entrant_1, team.entrant_2)
+        ]
+
+        self.assertEqual([team.placement for team in teams], list(range(1, 5)))
+        self.assertEqual(sorted(team.seed for team in teams), list(range(1, 5)))
+        self.assertCountEqual(
+            [member.tag for member in members],
+            [entrant.tag for entrant in SAMPLE_TOP_8_ENTRANT_POOL],
+        )
+        self.assertEqual(len({member.tag for member in members}), 8)
+        self.assertTrue(
+            all(team.team_color in SAMPLE_TEAM_COLORS for team in teams)
+        )
+        self.assertTrue(
+            all(
+                character.pose is None
+                for member in members
+                for character in member.characters
+            )
+        )
+
+    def test_seeded_team_helper_is_reproducible(self) -> None:
+        first = sample_top_4_teams(random.Random(7))
+        second = sample_top_4_teams(random.Random(7))
+
+        self.assertEqual(first, second)
+
+    def test_team_character_lists_do_not_mutate_the_pool(self) -> None:
+        teams = sample_top_4_teams(random.Random(1))
+
+        teams[0].entrant_1.characters.clear()
 
         self.assertTrue(all(entrant.characters for entrant in SAMPLE_TOP_8_ENTRANT_POOL))
 

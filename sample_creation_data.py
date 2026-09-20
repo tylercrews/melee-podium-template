@@ -5,7 +5,17 @@ from __future__ import annotations
 from datetime import date
 import random
 
-from models import Character, Entrant, SinglesEntrant, Tournament, TournamentFormat
+from models import (
+    Character,
+    DoublesTeam,
+    Entrant,
+    SinglesEntrant,
+    Tournament,
+    TournamentFormat,
+)
+
+
+SAMPLE_TEAM_COLORS = ("red", "green", "blue")
 
 
 SAMPLE_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
@@ -71,6 +81,46 @@ def sample_top_8_entrants(
             start=1,
         )
     ]
+
+
+def sample_top_4_teams(
+    rng: random.Random | None = None,
+) -> list[DoublesTeam]:
+    """Pair all sample entrants once and return randomized teams by placement."""
+
+    randomizer = rng if rng is not None else random
+    paired_entrants = randomizer.sample(
+        SAMPLE_TOP_8_ENTRANT_POOL,
+        k=len(SAMPLE_TOP_8_ENTRANT_POOL),
+    )
+    seeds = randomizer.sample(range(1, 5), k=4)
+
+    teams: list[DoublesTeam] = []
+    for placement, offset in enumerate(range(0, len(paired_entrants), 2), start=1):
+        first = paired_entrants[offset]
+        second = paired_entrants[offset + 1]
+        teams.append(
+            DoublesTeam(
+                seed=seeds[placement - 1],
+                placement=placement,
+                entrant_1=_copy_entrant(first),
+                entrant_2=_copy_entrant(second),
+                team_name=f"{first.tag} / {second.tag}",
+                team_color=randomizer.choice(SAMPLE_TEAM_COLORS),
+            )
+        )
+    return teams
+
+
+def _copy_entrant(entrant: Entrant) -> Entrant:
+    """Return a sample entrant with an independently mutable character list."""
+
+    return Entrant(
+        tag=entrant.tag,
+        characters=list(entrant.characters),
+        bluesky_handle=entrant.bluesky_handle,
+        x_handle=entrant.x_handle,
+    )
 
 
 def sample_tournament(

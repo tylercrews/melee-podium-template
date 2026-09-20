@@ -48,4 +48,4 @@
 - Update this file when the user establishes a durable design or architecture decision.
 - Add focused tests with new rendering modules, including serialization and image-boundary behavior.
 - Keep reusable sample entrants and complete sample tournament metadata together in `sample_creation_data.py`; generation scripts and tests should import from that single fixture module.
-- Sample entrant helpers return entrants already sorted in result-placement order, with unique randomized placements and seeds. Preview generators use unseeded randomness; tests may inject `random.Random` for reproducible assertions.
+- Sample entrant and team helpers return results already sorted in placement order, with unique randomized placements and seeds. Sample teams pair every entrant exactly once and independently randomize each team's color. Preview generators use unseeded randomness; tests may inject `random.Random` for reproducible assertions.
