@@ -36,7 +36,7 @@ class MemoryPlacementTagAssets:
 
 
 class FormattingAssetsTest(unittest.TestCase):
-    def test_assets_are_drawn_over_the_background_in_z_order(self) -> None:
+    def test_podium_assets_are_drawn_left_to_right_despite_z_indexes(self) -> None:
         selection = ModeSelection(
             CreationMode.PODIUM,
             ModeOptions(
@@ -51,10 +51,10 @@ class FormattingAssetsTest(unittest.TestCase):
             ready=True,
             formatting_assets=(
                 FormattingAssetPlacement(
-                    "upper", "red.png", PixelRect(1, 1, 3, 3), z_index=2
+                    "left", "red.png", PixelRect(0, 1, 3, 3), z_index=2
                 ),
                 FormattingAssetPlacement(
-                    "lower", "green.png", PixelRect(1, 1, 3, 3), z_index=1
+                    "right", "green.png", PixelRect(1, 1, 4, 3), z_index=1
                 ),
             ),
         )
@@ -70,7 +70,8 @@ class FormattingAssetsTest(unittest.TestCase):
 
         self.assertEqual(assets.last_selection, selection)
         self.assertEqual(result.getpixel((0, 0)), (0, 0, 255, 255))
-        self.assertEqual(result.getpixel((1, 1)), (255, 0, 0, 255))
+        self.assertEqual(result.getpixel((0, 1)), (255, 0, 0, 255))
+        self.assertEqual(result.getpixel((1, 1)), (0, 255, 0, 255))
         self.assertEqual(background.getpixel((1, 1)), (0, 0, 255, 255))
 
     def test_customizable_assets_receive_the_selected_semantic_colors(self) -> None:

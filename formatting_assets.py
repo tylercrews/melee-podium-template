@@ -9,7 +9,7 @@ from typing import Protocol
 from PIL import Image
 
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
-from mode_preferences import ModePreferences
+from mode_preferences import FormattingAssetPlacement, ModePreferences
 from podium_colors import PodiumColorSelection, apply_podium_colors
 
 
@@ -85,7 +85,7 @@ class FormattingAssetRenderer:
         preferences: ModePreferences,
         podium_colors: PodiumColorSelection | None = None,
     ) -> Image.Image:
-        """Composite configured mode assets in ascending ``z_index`` order."""
+        """Composite mode assets in their mode-specific visual order."""
 
         customizable = (
             preferences.selection.mode is CreationMode.PODIUM
@@ -98,10 +98,7 @@ class FormattingAssetRenderer:
             raise ValueError("podium_colors are only valid for customizable podiums")
 
         result = canvas.convert("RGBA")
-        for placement in sorted(
-            preferences.formatting_assets,
-            key=lambda item: (item.z_index, item.slot_id),
-        ):
+        for placement in _formatting_asset_draw_order(preferences):
             source = self.assets.open(preferences.selection, placement.asset_id)
             try:
                 layer = source.copy()
@@ -139,6 +136,33 @@ class FormattingAssetRenderer:
                 (left, top, left + layer.width, top + layer.height),
             )
         return result
+
+
+def _formatting_asset_draw_order(
+    preferences: ModePreferences,
+) -> tuple[FormattingAssetPlacement, ...]:
+    """Return framing assets in the order appropriate for their mode geometry."""
+
+    if preferences.selection.mode is CreationMode.PODIUM:
+        # The legacy and customizable podium boxes are viewed from above/right.
+        # Drawing from left to right keeps each box's right-facing edge in front
+        # of the podium immediately to its left.
+        return tuple(
+            sorted(
+                preferences.formatting_assets,
+                key=lambda item: (
+                    item.destination.left,
+                    item.destination.top,
+                    item.slot_id,
+                ),
+            )
+        )
+    return tuple(
+        sorted(
+            preferences.formatting_assets,
+            key=lambda item: (item.z_index, item.slot_id),
+        )
+    )
 
 
 def _composite_clipped(
