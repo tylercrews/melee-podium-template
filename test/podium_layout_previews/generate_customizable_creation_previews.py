@@ -7,6 +7,7 @@ from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 
 
 if __name__ == "__main__":
+    print("Generating full customizable creation previews...", flush=True)
     outputs = generate_creation_previews(
         PodiumStyle.CUSTOMIZABLE,
         podium_colors=PodiumColorConfiguration.from_preset(
@@ -15,5 +16,6 @@ if __name__ == "__main__":
     )
     print(
         f"Generated {len(outputs) - 1} customizable creation previews "
-        f"and {outputs[-1]}"
+        f"and overview: {outputs[-1].resolve()}",
+        flush=True,
     )
