@@ -8,7 +8,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from DrawPodium import _display_link
-from bracket_import import BracketProvider, fetch_startgg, identify_bracket_link, parse_challonge, parse_startgg
+from bracket_import import BracketProvider, ImportedCharacter, fetch_startgg, identify_bracket_link, parse_challonge, parse_parrygg, parse_startgg
 from models import Character, TournamentFormat
 
 
@@ -21,7 +21,11 @@ class BracketImportTests(unittest.TestCase):
         self.assertEqual(startgg_bracket.phase_group_id, "3382687")
         self.assertEqual(identify_bracket_link("https://foo.challonge.com/my-bracket").tournament_slug, "foo-my-bracket")
         self.assertEqual(identify_bracket_link("https://tonamel.com/competition/abc").provider, BracketProvider.TONAMEL)
-        self.assertEqual(identify_bracket_link("https://parry.gg/tournament/event").event_slug, "event")
+        parry_bracket = identify_bracket_link("https://parry.gg/tournament/event/main/bracket")
+        self.assertEqual(parry_bracket.event_slug, "event")
+        self.assertEqual(parry_bracket.phase_slug, "main")
+        self.assertEqual(parry_bracket.bracket_slug, "bracket")
+        self.assertIsNone(identify_bracket_link("https://parry.gg/tournament").event_slug)
 
     def test_startgg_keeps_reported_character_but_not_an_unproven_costume(self):
         link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
@@ -113,6 +117,73 @@ class BracketImportTests(unittest.TestCase):
         self.assertEqual([member.tag for member in result.players[0].members], ["Player One", "Player Two"])
         teams = result.to_doubles_teams(characters_by_member={"Player One": [Character("Fox")], "Player Two": [Character("Falco")]})
         self.assertEqual(teams[0].team_name, "The Team")
+
+    def test_parrygg_imports_seeds_members_characters_and_colors(self):
+        link = identify_bracket_link("https://parry.gg/weekly/melee-doubles/main/bracket")
+        user_one = {"id": "u1", "gamerTag": "Fox Player", "locationCountry": "US"}
+        user_two = {"id": "u2", "gamerTag": "Doc Player", "locationCountry": "CA"}
+        payload = {
+            "tournament": {
+                "name": "Weekly: Downtown",
+                "startDate": "2026-09-20T18:00:00Z",
+                "address": {
+                    "locality": "Boston",
+                    "administrativeAreaLevel1": "MA",
+                    "countryCode": "US",
+                },
+            },
+            "event": {
+                "name": "Melee Doubles",
+                "entrantSize": 2,
+                "entrantCount": 12,
+                "startDate": "2026-09-21T18:00:00Z",
+                "game": {"slug": "super-smash-bros-melee"},
+            },
+            "placements": [{
+                "placement": 1,
+                "seed": 3,
+                "eventEntrant": {
+                    "id": "ee1",
+                    "name": "Space Doctors",
+                    "entrant": {"id": "e1", "users": [user_one, user_two]},
+                },
+            }],
+            "brackets": [{"matches": [{"matchGames": [{"slots": [{"participants": [
+                {"userId": "u1", "characters": [{"slug": "fox", "name": "Fox", "color": "blue"}]},
+                {"userId": "u2", "characters": [{"slug": "doctor-mario", "name": "Doctor Mario", "images": [{"variant": {"color": "red"}}]}]},
+            ]}]}]}]}],
+        }
+
+        result = parse_parrygg(payload, link)
+
+        self.assertEqual(result.event_format, TournamentFormat.DOUBLES)
+        self.assertEqual(result.entrants_count, 12)
+        self.assertEqual(result.location, "Boston, MA, US")
+        self.assertEqual(result.players[0].tag, "Space Doctors")
+        self.assertEqual(result.players[0].seed, 3)
+        self.assertEqual(
+            [(member.tag, member.characters[0].name, member.characters[0].costume) for member in result.players[0].members],
+            [("Fox Player", "Fox", "blue"), ("Doc Player", "Dr. Mario", "red")],
+        )
+
+    def test_parrygg_treats_a_reported_character_without_variant_as_default(self):
+        link = identify_bracket_link("https://parry.gg/weekly/melee-singles/_standings")
+        payload = {
+            "tournament": {"name": "Weekly"},
+            "event": {"name": "Melee Singles", "entrantSize": 1, "entrantCount": 1},
+            "placements": [{
+                "placement": 1,
+                "seed": 1,
+                "eventEntrant": {"entrant": {"users": [{"id": "u1", "gamerTag": "Winner"}]}},
+            }],
+            "brackets": [{"matches": [{"matchGames": [{"slots": [{"participants": [
+                {"userId": "u1", "characters": [{"slug": "mr-game-and-watch", "name": "Mr. Game & Watch"}]},
+            ]}]}]}]}],
+        }
+
+        result = parse_parrygg(payload, link)
+
+        self.assertEqual(result.players[0].characters, (ImportedCharacter("Mr. Game and Watch", "default"),))
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
 from DrawPodium import CHARACTER_FOLDER, PodiumFont, PodiumMode, draw_podium
-from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_startgg, identify_bracket_link
+from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_parrygg, fetch_startgg, identify_bracket_link
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
 
@@ -317,6 +317,8 @@ def import_bracket() -> Any:
         imported = fetch_challonge(link)
     elif link.provider is BracketProvider.START_GG:
         imported = fetch_startgg(link, top_entrants=top_entrants)
+    elif link.provider is BracketProvider.PARRY_GG:
+        imported = fetch_parrygg(link, top_entrants=top_entrants)
     else:
         return jsonify(error=f"{link.provider} import is not configured yet", provider=link.provider.value), 501
     return jsonify(_import_response(imported))

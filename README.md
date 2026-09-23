@@ -75,34 +75,35 @@ Different Layout Styles One Day:
 
 ## Bracket importing
 
-The UI currently imports public Start.gg and Challonge URLs. Their credentials
-stay on the Flask server: Start.gg uses `START_GG_TOKEN` and Challonge uses
-`CHALLONGE_API_KEY`. `bracket_import.py` normalizes both providers into the same
+The UI imports public Start.gg, Challonge, and parry.gg URLs. Their credentials
+stay on the Flask server: Start.gg uses `START_GG_TOKEN`, Challonge uses
+`CHALLONGE_API_KEY`, and parry.gg uses `PARRY_GG_API_KEY`. `bracket_import.py`
+normalizes all three providers into the same
 internal result format before the frontend fills the tournament and placement
 fields.
 
-The module also recognizes Tonamel and ParryGG URLs and contains parsing logic
-for responses from both providers, but I do not currently have either service
-configured. The live `/api/import` route therefore returns “not configured yet”
-for those URLs instead of attempting a request. The existing Tonamel parser can
-normalize placement and display-name data from a supplied response. The ParryGG
-parser can normalize placements, tags, countries, entrant counts, dates, and
-locations, and can identify doubles when every entrant record contains exactly
-two users. Enabling either provider still requires implementing and configuring
-its authenticated server-side fetch.
+The module also recognizes Tonamel URLs and can normalize a supplied Tonamel
+response, but the live route does not yet fetch from that provider. A parry.gg
+tournament page works when it contains a single Melee event; for tournaments
+with multiple Melee events, paste the event standings or bracket URL so the
+importer can select the intended event.
 
 ### Provider data limitations
 
-Start.gg provides the richest import: tournament and event names, time,
+Start.gg provides a broad import: tournament and event names, time,
 location, entrant count, placements, seeds, participant tags, linked X handles,
 and reported game-character selections. Start.gg also reports entrant size, so
 an entrant size of two can be imported automatically as doubles. The entrant
 display name becomes the team name and its two participant tags become the team
 members.
 
-No supported provider supplies a reliable Melee costume/color field, so the
-user still reviews those selections. The importer does not treat score strings
-or other undocumented values as verified costume data.
+parry.gg provides the richest character import when individual games were
+reported: the importer reads each team member's selections and maps its reported
+Melee color variant to the renderer. Brackets without game reports still import
+their results and leave characters for review. Start.gg character selections do
+not expose a documented costume/color field, so those colors remain for the user
+to review. The importer does not treat score strings or other undocumented
+values as verified costume data.
 
 Challonge supplies bracket entrant names and seeds, but it does not reliably
 tell us whether those names represent singles players or doubles teams, and it

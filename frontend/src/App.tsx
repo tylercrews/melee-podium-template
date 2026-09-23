@@ -952,7 +952,7 @@ function App() {
           <p className="lede">
             Enter your bracket information and then render a
             downloadable podium graphic. 
-            <br/>Expedite the process by importing a bracket link from start.gg or challonge. 
+            <br/>Expedite the process by importing a bracket link from start.gg, parry.gg, or Challonge.
             <br/>Save entrants (via localstorage) to reuse in later podiums to save time picking characters and colors.
           </p>
         </div>
@@ -978,7 +978,7 @@ function App() {
               type="url"
               value={bracketUrl}
               onChange={(event) => setBracketUrl(event.target.value)}
-              placeholder="https://www.start.gg/tournament/..."
+              placeholder="https://start.gg/... or https://parry.gg/..."
               required
             />
           </label>

@@ -1,10 +1,8 @@
-"""Provider-neutral groundwork for importing public tournament brackets.
+"""Provider-neutral models and parsers for importing public tournament brackets.
 
-The four supported providers expose different shapes and levels of detail.  This
-module deliberately keeps imported data separate from the rendering models: a
-bracket can be useful even when it contains no character or costume data.
-Network/authentication is left to the future UI or service layer; pass the JSON
-returned by a provider to the appropriate parser.
+The supported providers expose different shapes and levels of detail. This
+module keeps imported data separate from rendering models, while small provider
+clients handle authenticated network requests.
 """
 
 from __future__ import annotations
@@ -21,7 +19,7 @@ import os
 import re
 
 import requests
-from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
+from models import Character, DoublesTeam, Entrant, MELEE_FIGHTERS, SinglesEntrant, Tournament, TournamentFormat
 
 
 class BracketProvider(StrEnum):
@@ -65,8 +63,8 @@ CAPABILITIES: dict[BracketProvider, ProviderCapabilities] = {
         notes="Competition-result data supplies placements and participant display names; exact event metadata varies by competition.",
     ),
     BracketProvider.PARRY_GG: ProviderCapabilities(
-        date=True, location=True,
-        notes="Placement records can include player tags and country. Character and costume choices are not exposed by its placement API.",
+        date=True, location=True, seeds=True, characters=True, costumes=True,
+        notes="Placements include seeds and team members. Per-game reports can include each member's character and costume color.",
     ),
 }
 
@@ -78,6 +76,8 @@ class BracketLink:
     tournament_slug: str
     event_slug: str | None = None
     phase_group_id: str | None = None
+    phase_slug: str | None = None
+    bracket_slug: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -215,8 +215,25 @@ def identify_bracket_link(url: str) -> BracketLink:
         return BracketLink(BracketProvider.CHALLONGE, clean_url, tournament_slug)
     if host == "tonamel.com" and len(parts) >= 2 and parts[0] == "competition":
         return BracketLink(BracketProvider.TONAMEL, clean_url, parts[1])
-    if host == "parry.gg" and len(parts) >= 2:
-        return BracketLink(BracketProvider.PARRY_GG, clean_url, parts[0], parts[1])
+    if host == "parry.gg" and parts:
+        # Public routes are /<tournament>, /<tournament>/<event>/_standings,
+        # and /<tournament>/<event>/<phase>/<bracket>. Accept the explicit
+        # /event(s)/ form too so older/shared links remain useful.
+        tournament_slug = parts[0]
+        remainder = parts[1:]
+        if remainder and remainder[0] == "events":
+            remainder = remainder[1:]
+        event_slug = remainder[0] if remainder and remainder[0] != "_standings" else None
+        phase_slug = remainder[1] if len(remainder) >= 3 and remainder[1] != "_standings" else None
+        bracket_slug = remainder[2] if len(remainder) >= 3 else None
+        return BracketLink(
+            BracketProvider.PARRY_GG,
+            clean_url,
+            tournament_slug,
+            event_slug,
+            phase_slug=phase_slug,
+            bracket_slug=bracket_slug,
+        )
     raise ValueError("Unsupported bracket URL. Expected start.gg, challonge.com, tonamel.com, or parry.gg")
 
 
@@ -519,21 +536,172 @@ def parse_tonamel(payload: Mapping[str, Any], link: BracketLink) -> BracketImpor
     return BracketImport(link, payload.get("competition_name") or payload.get("name") or link.tournament_slug, payload.get("event_name"), _iso_time(payload.get("start_date") or payload.get("date")), None, payload.get("entrant_count") or len(places), tuple(players), TournamentFormat.UNKNOWN)
 
 
-def parse_parrygg(payload: Mapping[str, Any], link: BracketLink) -> BracketImport:
+def fetch_parrygg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+    """Fetch a parry.gg event, including reported per-game character colors."""
+    if link.provider is not BracketProvider.PARRY_GG:
+        raise ValueError("fetch_parrygg requires a parry.gg link")
+    from parrygg_api import fetch_parrygg_data
+
+    payload = fetch_parrygg_data(
+        link.tournament_slug,
+        event_slug=link.event_slug,
+        phase_slug=link.phase_slug,
+        bracket_slug=link.bracket_slug,
+    )
+    return parse_parrygg(payload, link, top_entrants=top_entrants)
+
+
+_PARRY_FIGHTER_BY_SLUG = {
+    re.sub(r"[^a-z0-9]+", "-", fighter.casefold()).strip("-"): fighter
+    for fighter in MELEE_FIGHTERS
+}
+_PARRY_FIGHTER_BY_SLUG.update({
+    "doctor-mario": "Dr. Mario",
+    "mr-game-watch": "Mr. Game and Watch",
+    "mr-game-and-watch": "Mr. Game and Watch",
+})
+
+
+def _parry_character(character: Mapping[str, Any]) -> ImportedCharacter | None:
+    slug = str(character.get("slug") or character.get("characterSlug") or "").casefold()
+    raw_name = str(character.get("name") or "").strip()
+    name = _PARRY_FIGHTER_BY_SLUG.get(slug)
+    if name is None:
+        name = next((fighter for fighter in MELEE_FIGHTERS if fighter.casefold() == raw_name.casefold()), None)
+    if name is None:
+        return None
+
+    colors: list[str] = []
+    variants = [character.get("variant"), character.get("metadata")]
+    variants.extend(
+        image.get("variant")
+        for image in character.get("images", [])
+        if isinstance(image, Mapping)
+    )
+    direct_color = character.get("color")
+    if direct_color is not None:
+        colors.append(str(direct_color))
+    for variant in variants:
+        if isinstance(variant, Mapping) and variant.get("color") is not None:
+            colors.append(str(variant["color"]))
+    normalized = {color.strip().casefold() for color in colors if color.strip()}
+    # A reported selection without variant metadata is the neutral costume.
+    # Multiple image variants would be ambiguous, so only accept one color.
+    costume = next(iter(normalized)) if len(normalized) == 1 else "default" if not normalized else None
+    return ImportedCharacter(name, costume=costume)
+
+
+def _parry_character_usage(brackets: Any) -> dict[str, tuple[ImportedCharacter, ...]]:
+    usage: dict[str, list[ImportedCharacter]] = {}
+    for bracket in brackets if isinstance(brackets, list) else []:
+        if not isinstance(bracket, Mapping):
+            continue
+        for match in bracket.get("matches", []):
+            if not isinstance(match, Mapping):
+                continue
+            for game in match.get("matchGames", match.get("match_games", [])):
+                if not isinstance(game, Mapping):
+                    continue
+                for slot in game.get("slots", []):
+                    if not isinstance(slot, Mapping):
+                        continue
+                    for participant in slot.get("participants", []):
+                        if not isinstance(participant, Mapping):
+                            continue
+                        user_id = participant.get("userId") or participant.get("user_id")
+                        if not user_id:
+                            continue
+                        selected = usage.setdefault(str(user_id), [])
+                        for raw_character in participant.get("characters", []):
+                            if not isinstance(raw_character, Mapping):
+                                continue
+                            character = _parry_character(raw_character)
+                            if character is not None and character not in selected:
+                                selected.append(character)
+    return {user_id: tuple(characters) for user_id, characters in usage.items()}
+
+
+def _parry_location(tournament: Mapping[str, Any]) -> str | None:
+    address = tournament.get("address")
+    if isinstance(address, Mapping):
+        locality = address.get("locality")
+        region = address.get("administrativeAreaLevel1") or address.get("administrative_area_level_1")
+        country = address.get("countryCode") or address.get("country_code") or address.get("country")
+        concise = ", ".join(str(value) for value in (locality, region, country) if value)
+        if concise:
+            return concise
+        formatted = address.get("formattedAddress") or address.get("formatted_address")
+        if formatted:
+            return str(formatted)
+    venue = tournament.get("venueAddress") or tournament.get("venue_address")
+    return str(venue) if venue else None
+
+
+def parse_parrygg(
+    payload: Mapping[str, Any],
+    link: BracketLink,
+    *,
+    top_entrants: int = 8,
+) -> BracketImport:
+    """Normalize the combined responses returned by :mod:`parrygg_api`."""
     tournament = payload.get("tournament", payload)
+    if not isinstance(tournament, Mapping):
+        raise ValueError("parry.gg returned an incomplete tournament response")
+    event = payload.get("event", {})
+    if not isinstance(event, Mapping):
+        event = {}
     placements = payload.get("placements", tournament.get("placements", []))
+    usage = _parry_character_usage(payload.get("brackets", []))
     players = []
-    for placement in placements:
-        event_entrant = placement.get("event_entrant", placement.get("eventEntrant", {}))
+    for placement in placements if isinstance(placements, list) else []:
+        if not isinstance(placement, Mapping):
+            continue
+        event_entrant = placement.get("eventEntrant", placement.get("event_entrant", {}))
+        if not isinstance(event_entrant, Mapping):
+            event_entrant = {}
         entrant = event_entrant.get("entrant", {})
-        users = entrant.get("users") or []
-        tag = event_entrant.get("name") or " / ".join(user.get("gamer_tag") or user.get("gamerTag", "") for user in users)
-        members = tuple(ImportedMember(user.get("gamer_tag") or user.get("gamerTag") or "Unknown", country=user.get("location_country")) for user in users)
-        players.append(ImportedPlayer(tag or "Unknown", placement.get("placement"), country=(users[0].get("location_country") if len(users) == 1 else None), members=members))
-    event_format = _event_format(payload.get("entrant_size_min") or payload.get("entrantSizeMin"))
+        if not isinstance(entrant, Mapping):
+            entrant = {}
+        users = [user for user in entrant.get("users", []) if isinstance(user, Mapping)]
+        members = tuple(
+            ImportedMember(
+                str(user.get("gamerTag") or user.get("gamer_tag") or "Unknown"),
+                characters=usage.get(str(user.get("id")), ()),
+                country=user.get("locationCountry") or user.get("location_country"),
+            )
+            for user in users
+        )
+        tag = event_entrant.get("name") or " / ".join(member.tag for member in members)
+        player_characters = members[0].characters if len(members) == 1 else ()
+        players.append(ImportedPlayer(
+            str(tag or "Unknown"),
+            placement.get("placement"),
+            placement.get("seed") or event_entrant.get("seed"),
+            player_characters,
+            country=members[0].country if len(members) == 1 else None,
+            provider_id=str(event_entrant.get("id") or entrant.get("id") or "") or None,
+            members=members,
+        ))
+
+    entrant_size = event.get("entrantSize") or event.get("entrant_size")
+    event_format = _event_format(entrant_size)
     if event_format == TournamentFormat.UNKNOWN and players and all(len(player.members) == 2 for player in players):
         event_format = TournamentFormat.DOUBLES
-    return BracketImport(link, tournament.get("name", link.tournament_slug), payload.get("event_name") or link.event_slug, _protobuf_time(tournament.get("start_date") or tournament.get("startDate")), tournament.get("city") or tournament.get("country"), payload.get("entrant_count") or tournament.get("num_attendees"), tuple(sorted(players, key=lambda player: player.placement or 999999)), event_format)
+    sorted_players = tuple(sorted(players, key=lambda player: player.placement or 999999))
+    return BracketImport(
+        link,
+        str(tournament.get("name") or link.tournament_slug),
+        str(event.get("name") or link.event_slug) if (event.get("name") or link.event_slug) else None,
+        _protobuf_time(event.get("startDate") or event.get("start_date") or tournament.get("startDate") or tournament.get("start_date")),
+        _parry_location(tournament),
+        event.get("entrantCount") or event.get("entrant_count") or len(sorted_players) or tournament.get("numAttendees") or tournament.get("num_attendees"),
+        sorted_players,
+        event_format,
+        {
+            "game": event.get("game"),
+            "reported_character_players": sum(bool(player.characters) for player in sorted_players[:top_entrants]),
+        },
+    )
 
 
 def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int | str, str] | None) -> list[ImportedCharacter]:
