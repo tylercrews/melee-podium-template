@@ -44,6 +44,7 @@ TODO LIST:
 * need an option for Random. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament
 * when you import a character they should default to Default color not random. - Brooke
 * when someone has a ton of characters used it looks a little cluttered, would be nice to be able to convert some of the lower-use characters to stock icons instead. 
+* bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
 * have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses
 * the text under the podiums, namely the character names in singles, should be vertically aligned. Instead of row 1, row 2 always. So like right now chars with 
 * thank brooke for the feedback and compliments
