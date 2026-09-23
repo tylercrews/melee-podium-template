@@ -42,6 +42,12 @@ TODO LIST:
 * Background color for entrants should have presets but still allow a transparency slider on presets.
 * Defaulting to Top 4 seems to be confusing users - should have a popup or something. Need to try the url brooke was using to make sure that the upload didn't have some other error, but I think what she was talking about was it just nudging her to do a top 4.
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
+* need an option for Random. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament
+* when you import a character they should default to Default color not random. - Brooke
+* when someone has a ton of characters used it looks a little cluttered, would be nice to be able to convert some of the lower-use characters to stock icons instead. 
+* have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses
+* the text under the podiums, namely the character names in singles, should be vertically aligned. Instead of row 1, row 2 always. So like right now chars with 
+* thank brooke for the feedback and compliments
 
 Maybes/Eventuallies:
 * if you implement profiles and logins you could make it so that you can have multiple saved tournament preferences attached to your account - like med could pick his TYM layout or his moondog layout and have it already be ready. Profiles would also be able to save custom assets like backgrounds and emblems
