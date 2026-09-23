@@ -27,7 +27,6 @@ TODO LIST:
 * layout should include "Vods At" and "Streamed At" options with Twitch + Youtube icon shortening so people know where to watch matches
 * layout could also have the twitter/bluesky of the TO
 * should I also turn start.gg, parry.gg, and challonge urls into their icons for the tournament links?
-* start.gg USB reporting [enables character colors] - https://x.com/jmlee337/status/2033357599291085075 -  https://github.com/jmlee337/replay-manager-for-slippi/blob/main/src/docs/color.md
 * handling for parry.gg
 * update shoutout page to shoutout Nicolet specifically
 * seems like when you use a favorited entrant, then uncheck the box to save changes, and then render, it DELETES the favorited entrant. that's no good
@@ -100,10 +99,12 @@ members.
 parry.gg provides the richest character import when individual games were
 reported: the importer reads each team member's selections and maps its reported
 Melee color variant to the renderer. Brackets without game reports still import
-their results and leave characters for review. Start.gg character selections do
-not expose a documented costume/color field, so those colors remain for the user
-to review. The importer does not treat score strings or other undocumented
-values as verified costume data.
+their results and leave characters for review. Start.gg imports costume colors
+when a set was submitted with Replay Reporter's optional
+[USB Reporting format](https://github.com/jmlee337/replay-manager-for-slippi/blob/main/src/docs/color.md).
+That format stores a Slippi costume index in the hundreds portion of each
+entrant's per-game stock count. Ordinary scores remain uncolored for review,
+and out-of-range stock-glitch indices are ignored.
 
 Challonge supplies bracket entrant names and seeds, but it does not reliably
 tell us whether those names represent singles players or doubles teams, and it

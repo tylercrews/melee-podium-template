@@ -4,11 +4,12 @@ from pathlib import Path
 import os
 import sys
 import unittest
+from unittest.mock import patch
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from DrawPodium import _display_link
-from bracket_import import BracketProvider, ImportedCharacter, fetch_startgg, identify_bracket_link, parse_challonge, parse_parrygg, parse_startgg
+from bracket_import import BracketProvider, ImportedCharacter, _reported_character_usage, fetch_startgg, identify_bracket_link, parse_challonge, parse_parrygg, parse_startgg
 from models import Character, TournamentFormat
 
 
@@ -40,6 +41,41 @@ class BracketImportTests(unittest.TestCase):
         data = {"data": {"event": {"name": "Melee Singles", "numEntrants": 10, "startAt": 0, "videogame": {"id": 1, "name": "Melee"}, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "Player", "initialSeedNum": 2, "participants": []}}]}}}}
         result = parse_startgg(data, link, character_usage={"9": [{"character": {"name": "Fox"}}, {"character": {"name": "Fox"}}, {"character": {"name": "Falco"}}]})
         self.assertEqual([character.name for character in result.players[0].characters], ["Fox", "Falco"])
+
+    def test_startgg_imports_most_frequently_reported_usb_costume(self):
+        link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
+        data = {"data": {"event": {"name": "Melee Singles", "numEntrants": 10, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "Player", "participants": []}}]}}}}
+        selections = [
+            {"character": {"name": "Fox"}, "_startgg_score": 204},
+            {"character": {"name": "Fox"}, "_startgg_score": 204},
+            {"character": {"name": "Fox"}, "_startgg_score": 304},
+        ]
+
+        result = parse_startgg(data, link, character_usage={"9": selections})
+
+        self.assertEqual(result.players[0].characters, (ImportedCharacter("Fox", "red"),))
+
+    def test_startgg_collects_losing_selections_and_their_entrant_scores(self):
+        response = {"data": {"event": {"sets": {
+            "pageInfo": {"total": 1},
+            "nodes": [{
+                "slots": [{"entrant": {"id": 9}}, {"entrant": {"id": 12}}],
+                "games": [{
+                    "winnerId": 12,
+                    "entrant1Score": 204,
+                    "entrant2Score": 104,
+                    "selections": [
+                        {"entrant": {"id": 9}, "character": {"name": "Fox"}},
+                        {"entrant": {"id": 12}, "character": {"name": "Falco"}},
+                    ],
+                }],
+            }],
+        }}}}
+        with patch("bracket_import._startgg_request", return_value=response):
+            usage = _reported_character_usage(1, {"9", "12"}, "token")
+
+        self.assertEqual(usage["9"][0]["_startgg_score"], 204)
+        self.assertEqual(usage["12"][0]["_startgg_score"], 104)
     def test_challonge_orders_final_ranks(self):
         link = identify_bracket_link("https://challonge.com/melee")
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Second", "seed": 3, "final_rank": 2}}, {"participant": {"id": 2, "display_name": "First", "seed": 1, "final_rank": 1}}]}}, link)

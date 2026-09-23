@@ -20,6 +20,7 @@ import re
 
 import requests
 from models import Character, DoublesTeam, Entrant, MELEE_FIGHTERS, SinglesEntrant, Tournament, TournamentFormat
+from startgg_usb_reporting import canonical_fighter_name, costume_for_usb_score
 
 
 class BracketProvider(StrEnum):
@@ -52,8 +53,8 @@ class ProviderCapabilities:
 
 CAPABILITIES: dict[BracketProvider, ProviderCapabilities] = {
     BracketProvider.START_GG: ProviderCapabilities(
-        date=True, location=True, seeds=True, player_handles=True, characters=True,
-        notes="Game selections can report characters. Costume/color is not a documented field; never assume it is exact.",
+        date=True, location=True, seeds=True, player_handles=True, characters=True, costumes=True,
+        notes="Game selections report characters. Replay Reporter USB scores can also carry verified costume indices.",
     ),
     BracketProvider.CHALLONGE: ProviderCapabilities(
         date=True, seeds=True,
@@ -272,7 +273,10 @@ query MeleePodiumPhaseGroupCharacters($id: ID!, $page: Int!, $perPage: Int!) {
   phaseGroup(id: $id) {
     sets(page: $page, perPage: $perPage, sortType: STANDARD) {
       pageInfo { total }
-      nodes { games { winnerId selections { entrant { id } character { name } } } }
+      nodes {
+        slots { entrant { id } }
+        games { winnerId entrant1Score entrant2Score selections { entrant { id } character { name } } }
+      }
     }
   }
 }""", "variables": {"id": phase_group_id, "page": page, "perPage": per_page}}
@@ -284,7 +288,10 @@ query MeleePodiumSetCharacters($eventId: ID!, $page: Int!, $perPage: Int!) {
   event(id: $eventId) {
     sets(page: $page, perPage: $perPage, sortType: STANDARD) {
       pageInfo { total }
-      nodes { games { winnerId selections { entrant { id } character { name } } } }
+      nodes {
+        slots { entrant { id } }
+        games { winnerId entrant1Score entrant2Score selections { entrant { id } character { name } } }
+      }
     }
   }
 }""", "variables": {"eventId": event_id, "page": page, "perPage": per_page}}
@@ -308,8 +315,8 @@ def _startgg_request(request_body: Mapping[str, Any], token: str) -> Mapping[str
     return payload
 
 
-def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str, *, phase_group_id: str | None = None) -> dict[str, list[Mapping[str, Any]]]:
-    """Collect reported characters from games won by the requested entrants."""
+def _reported_character_usage(event_id: int | str, top_entrant_ids: set[str], token: str, *, phase_group_id: str | None = None) -> dict[str, list[Mapping[str, Any]]]:
+    """Collect reported selections and entrant scores for requested entrants."""
     usage: dict[str, list[Mapping[str, Any]]] = {entrant_id: [] for entrant_id in top_entrant_ids}
     page, per_page, total, seen_sets = 1, 50, None, 0
     while total is None or seen_sets < total:
@@ -325,14 +332,23 @@ def _winning_character_usage(event_id: int | str, top_entrant_ids: set[str], tok
             break
         seen_sets += len(nodes)
         for set_data in nodes:
+            slots = set_data.get("slots") or []
+            score_field_by_entrant = {}
+            for slot_index, slot in enumerate(slots[:2]):
+                entrant = slot.get("entrant") if isinstance(slot, Mapping) else None
+                if isinstance(entrant, Mapping) and entrant.get("id") is not None:
+                    score_field_by_entrant[str(entrant["id"])] = f"entrant{slot_index + 1}Score"
             for game in set_data.get("games") or []:
-                winner_id = str(game.get("winnerId"))
-                if winner_id not in top_entrant_ids:
-                    continue
                 for selection in game.get("selections") or []:
                     entrant = selection.get("entrant") or {}
-                    if str(entrant.get("id")) == winner_id:
-                        usage[winner_id].append(selection)
+                    entrant_id = str(entrant.get("id"))
+                    if entrant_id not in top_entrant_ids:
+                        continue
+                    enriched_selection = dict(selection)
+                    score_field = score_field_by_entrant.get(entrant_id)
+                    if score_field:
+                        enriched_selection["_startgg_score"] = game.get(score_field)
+                    usage[entrant_id].append(enriched_selection)
         page += 1
     return usage
 
@@ -358,7 +374,7 @@ def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
         # doubles is limited to the supported top-four layout.
         character_import_count = 4 if _event_format(event.get("entrantSizeMin")) is TournamentFormat.DOUBLES else 8
         top_ids = {str(item["entrant"]["id"]) for item in standings[:character_import_count]}
-        usage = _winning_character_usage(event["id"], top_ids, token, phase_group_id=link.phase_group_id)
+        usage = _reported_character_usage(event["id"], top_ids, token, phase_group_id=link.phase_group_id)
         return parse_startgg(payload, link, character_usage=usage)
     except (KeyError, TypeError) as error:
         raise ValueError("Start.gg returned an incomplete event response") from error
@@ -705,15 +721,29 @@ def parse_parrygg(
 
 
 def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int | str, str] | None) -> list[ImportedCharacter]:
-    result = []
+    ordered_names: list[str] = []
+    costume_counts: dict[str, dict[str, int]] = {}
     for selection in selections:
         character = selection.get("character") or {}
         raw = selection.get("selectionValue")
         name = character.get("name") if isinstance(character, Mapping) else None
         name = name or (names or {}).get(raw)
-        if name and name not in {item.name for item in result}:
-            result.append(ImportedCharacter(name))
-    return result
+        if not name:
+            continue
+        name = canonical_fighter_name(str(name))
+        if name not in costume_counts:
+            ordered_names.append(name)
+            costume_counts[name] = {}
+        costume = costume_for_usb_score(name, selection.get("_startgg_score"))
+        if costume:
+            costume_counts[name][costume] = costume_counts[name].get(costume, 0) + 1
+    return [
+        ImportedCharacter(
+            name,
+            costume=max(costume_counts[name], key=costume_counts[name].get) if costume_counts[name] else None,
+        )
+        for name in ordered_names
+    ]
 
 
 def _event_format(entrant_size: Any) -> TournamentFormat:
