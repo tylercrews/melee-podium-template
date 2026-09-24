@@ -49,6 +49,8 @@ TODO LIST:
 * the text under the podiums, namely the character names in singles, should be vertically aligned. Instead of row 1, row 2 always. So like right now chars with 
 * thank brooke for the feedback and compliments
 
+!! * remember to do the cpanel configuration files requirements.txt to run pip install and get the new dependencies for the next release
+
 Maybes/Eventuallies:
 * if you implement profiles and logins you could make it so that you can have multiple saved tournament preferences attached to your account - like med could pick his TYM layout or his moondog layout and have it already be ready. Profiles would also be able to save custom assets like backgrounds and emblems
     * Need to do some research on costs of login systems, image/blob storage pricing, and see if I would need to limit access to a certain extent before asking for money.
