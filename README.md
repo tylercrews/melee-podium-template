@@ -17,7 +17,7 @@ TODO LIST:
 * how to handle format saving. Like give them a chance to overwrite?
 * Add alternative spellings to Entrant tag configurations. For example when an entrant in a bracket is named 'busta' or 'bu$ta' they should both be identified as the favorited entrant 'BU$TA' (capitalization is already ignored)
 * different podium color options:
-    1. come up with another preset (we have gold silver bronze gray and controller colors)
+    1. come up with another preset (we have gold silver bronze gray and controller colors) - Rainbow (what to do for top 4?), Tyro colors
     3. custom 1 - pick all
     4. custom 2 - pick 1 color
     5. custom 3 - pick 2 colors and they alternate
