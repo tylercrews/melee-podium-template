@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
 
 # Build outputs
 frontend/dist/

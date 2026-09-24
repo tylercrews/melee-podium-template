@@ -58,9 +58,53 @@
 - Default crop positions are keyed by podium format and background asset. Keep format-specific overrides possible even when several formats currently share the same dimensions.
 - Default built-in background framing uses a centered cover crop. `05_FinalDestinationSpace_5000_5000_resaved.png` is the exception and uses a center-bottom cover crop. Capture future simple framing choices in `DEFAULT_IMAGE_ALIGNMENTS` in `background_builder.py`; the resulting pixel crop remains the serialized preference.
 
+## Firebase cloud services
+
+- Keep Firebase Admin integration in the `firebase_services/` package. Flask
+  routes translate authenticated requests into service calls; Firebase code
+  must not leak into renderers or React state management.
+- Initialize Firebase Admin with Application Default Credentials through
+  `GOOGLE_APPLICATION_CREDENTIALS`. Never hard-code a service-account path,
+  credential value, project-specific bucket name, or hosting account name in
+  committed source or documentation. Never copy credentials into the frontend,
+  deployment ZIP, logs, Firestore, or Cloud Storage.
+- Browser sign-in belongs to the Firebase Web SDK. The React client will obtain
+  a Firebase ID token and send it to Flask over HTTPS as a bearer token. Flask
+  verifies that token and derives the current `uid`; never authorize a request
+  with a user ID supplied in a URL, request body, or form field.
+- Firebase Admin calls bypass Firebase Security Rules. Every Firestore and
+  Storage operation must therefore be scoped by the server to the verified
+  user's `uid`. Keep client Firestore and Storage rules closed unless direct
+  browser access is deliberately designed and protected with tested rules.
+- Store user data as separate Firestore documents under
+  `users/{uid}/layouts/{layoutId}`, `users/{uid}/entrants/{entrantId}`, and
+  `users/{uid}/images/{imageId}`. Do not store a growing user's complete data
+  set in one document.
+- Saved entrant and layout records use an explicit envelope containing a name,
+  schema version, JSON-object data, and server timestamps. Validate their
+  structure and size at the API boundary so future schema migrations remain
+  possible and Firestore's document limit is not approached accidentally.
+- Store uploaded image bytes only in Cloud Storage. Store their stable image
+  ID, private Storage path, media type, dimensions, size, and timestamps in the
+  corresponding Firestore metadata document. Layouts reference the stable
+  image ID, never a temporary signed URL.
+- Keep uploaded objects private. Validate actual raster bytes rather than a
+  browser-supplied filename or MIME type, enforce byte and pixel limits, and
+  accept only explicitly supported formats. Generate short-lived download URLs
+  only after verifying ownership.
+- `FIREBASE_STORAGE_BUCKET` contains deployment configuration and must remain an
+  environment variable. Public examples use placeholders, never the real
+  bucket name. Firebase endpoints should fail without exposing credentials or
+  internal filesystem paths when configuration or a cloud operation is
+  unavailable.
+
 ## Maintenance
 
 - Update this file when the user establishes a durable design or architecture decision.
 - Add focused tests with new rendering modules, including serialization and image-boundary behavior.
 - Keep reusable sample entrants and complete sample tournament metadata together in `sample_creation_data.py`; generation scripts and tests should import from that single fixture module.
 - Sample entrant and team helpers return results already sorted in placement order, with unique randomized placements and seeds. Sample teams pair every entrant exactly once and independently randomize each team's color. Preview generators use unseeded randomness; tests may inject `random.Random` for reproducible assertions.
+- Add focused tests for Firebase authentication boundaries, per-user path
+  scoping, JSON serialization limits, image validation, and deployment archive
+  exclusions. Tests must not require live credentials unless they are explicitly
+  marked as opt-in integration checks.

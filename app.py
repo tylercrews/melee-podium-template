@@ -21,10 +21,16 @@ from portrait_pose_labels import POSE_LABELS
 PROJECT_ROOT = Path(__file__).resolve().parent
 # cPanel deployment secrets live outside the web root. Keep this before the
 # local fallback so production values win without overriding host variables.
-load_dotenv("/home/tyrowork/melee-podium-secrets", override=False)
+EXTERNAL_SECRETS_FILE = Path(
+    os.environ.get("PODIUM_SECRETS_FILE", Path.home() / "melee-podium-secrets")
+)
+load_dotenv(EXTERNAL_SECRETS_FILE, override=False)
 # The local development fallback is gitignored and must never be served from a
 # public web root.
 load_dotenv(PROJECT_ROOT / ".env", override=False)
+
+from firebase_services import firebase_blueprint, initialize_firebase_if_configured
+
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 STATS_DATABASE_PATH = Path(
     os.environ.get("PODIUM_STATS_DB", PROJECT_ROOT / "podium_stats.sqlite3")
@@ -34,6 +40,8 @@ _PORTRAIT_FILENAME = re.compile(
 )
 
 app = Flask(__name__, static_folder=None)
+app.register_blueprint(firebase_blueprint)
+initialize_firebase_if_configured()
 
 
 def _render_count() -> int:

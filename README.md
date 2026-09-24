@@ -155,6 +155,57 @@ flask --app app run --port 5000
 cd .\frontend
 npm run dev
 
+## Firebase backend
+
+The project has server-side groundwork for Firebase Authentication, Cloud
+Firestore, and Cloud Storage for Firebase. The login UI is not connected yet,
+but the protected Flask API and its storage boundaries are ready for that work.
+
+The intended request flow is:
+
+1. The React client signs a user in with Google or email/password through the
+   Firebase Web SDK.
+2. The client sends its short-lived Firebase ID token to Flask over HTTPS in an
+   `Authorization: Bearer ...` header.
+3. Flask verifies the token and uses the verified `uid` to select that user's
+   data. The API never trusts a user ID submitted by the browser.
+4. Firestore stores one document per saved layout or entrant. Cloud Storage
+   stores uploaded image bytes, while Firestore stores private image metadata.
+
+User resources follow these paths:
+
+```text
+users/{uid}/layouts/{layoutId}
+users/{uid}/entrants/{entrantId}
+users/{uid}/images/{imageId}
+```
+
+Layouts refer to uploaded images by stable image ID instead of embedding image
+data or saving an expiring download URL. The server validates PNG, JPEG, and
+WebP content before upload and creates short-lived URLs only after confirming
+the authenticated user owns the metadata record.
+
+Firebase Admin uses `GOOGLE_APPLICATION_CREDENTIALS`, whose value is an
+absolute path to a service-account JSON stored outside the repository and web
+root. The Storage bucket name is supplied separately through
+`FIREBASE_STORAGE_BUCKET`. These values belong only in an ignored local `.env`
+or the hosting provider's private application environment; real paths,
+credentials, and bucket names must never be committed or exposed to browser
+code. Hosted deployments may keep multiple server-only variables in a dotenv
+file outside the web root; `PODIUM_SECRETS_FILE` can override the default file
+in the hosting account's home directory without putting an account-specific
+path in source control.
+
+Because Firebase Admin uses privileged server credentials, it bypasses
+Firestore and Storage Security Rules. The Flask service therefore enforces
+ownership from the verified token on every operation. Client access should
+remain denied until direct browser access is intentionally implemented with
+tested rules.
+
+See [docs/firebase-backend.md](docs/firebase-backend.md) for the endpoint
+contract, configuration placeholders, data envelope, upload limits, and
+deployment checklist.
+
 ## Deploying to cPanel
 
 The application serves the built frontend from `frontend/dist`. Build that
@@ -188,7 +239,13 @@ contain `podium_stats.sqlite3`.
    normal ZIP extraction would otherwise leave behind.
 4. Upload `melee-podium-template-deploy.zip` to that application root and
    extract it there.
-5. Restart the Python application from cPanel. If the interface does not offer
+5. Install/update the Python dependencies from `requirements.txt` using
+   cPanel's Python application dependency installer or the application's
+   virtual-environment `pip`.
+6. Confirm the Python application environment contains
+   `GOOGLE_APPLICATION_CREDENTIALS` and `FIREBASE_STORAGE_BUCKET` as described
+   in [docs/firebase-backend.md](docs/firebase-backend.md).
+7. Restart the Python application from cPanel. If the interface does not offer
    a restart button, create or update `tmp/restart.txt` to tell Passenger to
    reload the application.
 

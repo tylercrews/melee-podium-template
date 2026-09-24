@@ -24,7 +24,7 @@ FILES = (
     "top_4.png",
     "top_8.png",
 )
-DIRECTORIES = ("char_assets", "frontend/dist")
+DIRECTORIES = ("char_assets", "firebase_services", "frontend/dist")
 
 with ZipFile(ARCHIVE, "w", compression=ZIP_DEFLATED) as archive:
     for relative_file in FILES:
@@ -33,7 +33,7 @@ with ZipFile(ARCHIVE, "w", compression=ZIP_DEFLATED) as archive:
     for relative_directory in DIRECTORIES:
         directory = ROOT / relative_directory
         for path in directory.rglob("*"):
-            if path.is_file():
+            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
                 archive.write(path, path.relative_to(ROOT).as_posix())
 
 print(f"Created {ARCHIVE}")
