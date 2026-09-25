@@ -20,7 +20,7 @@ from .client import FirebaseServiceError, firestore_client, storage_bucket
 from .documents import FirebaseResourceNotFound, validate_document_id
 
 
-DEFAULT_MAX_IMAGE_BYTES = 20 * 1024 * 1024
+DEFAULT_MAX_IMAGE_BYTES = 300 * 1024 * 1024
 MAX_IMAGE_PIXELS = 50_000_000
 SIGNED_URL_LIFETIME = timedelta(minutes=15)
 MAX_IMAGES_PER_CATEGORY = 10

@@ -33,7 +33,7 @@ Optional settings:
 
 ```dotenv
 FIREBASE_CHECK_REVOKED_TOKENS=false
-FIREBASE_MAX_IMAGE_BYTES=20971520
+FIREBASE_MAX_IMAGE_BYTES=314572800
 ```
 
 Revocation checks are disabled by default because enabling them adds an
@@ -101,8 +101,8 @@ All endpoints except `/api/firebase/status` require the bearer token above.
 | `GET`, `DELETE` | `/api/firebase/images/{id}` | Read metadata or delete an image |
 | `POST` | `/api/firebase/images/{id}/download-url` | Create a private 15-minute download URL |
 
-Image uploads accept validated PNG, JPEG, and WebP content. The server ignores a
-claimed MIME type, inspects the actual bytes, uses a generated Storage path, and
+Image uploads accept validated PNG, JPEG, and WebP content up to 300 MiB by
+default. The server ignores a claimed MIME type, inspects the actual bytes, uses a generated Storage path, and
 stores dimensions and other metadata in Firestore. `category` must be either
 `tournament_logo` or `background`. Names are unique case-insensitively within a
 category, and each account can store up to 10 images in each category.

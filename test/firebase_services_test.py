@@ -18,6 +18,7 @@ from firebase_services.documents import (
     validate_saved_document,
 )
 from firebase_services.images import (
+    DEFAULT_MAX_IMAGE_BYTES,
     read_image_upload,
     validate_image_bytes,
     validate_image_category,
@@ -69,6 +70,9 @@ class FirebaseDocumentBoundaryTests(unittest.TestCase):
 
 
 class FirebaseImageBoundaryTests(unittest.TestCase):
+    def test_default_upload_limit_is_300_mebibytes(self) -> None:
+        self.assertEqual(DEFAULT_MAX_IMAGE_BYTES, 300 * 1024 * 1024)
+
     def test_normalizes_image_names_and_restricts_categories(self) -> None:
         self.assertEqual(validate_image_name("  Main   Logo  "), ("Main Logo", "main logo"))
         self.assertEqual(validate_image_category("BACKGROUND"), "background")
