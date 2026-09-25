@@ -168,3 +168,55 @@ export async function renderPodium(payload: unknown): Promise<Blob> {
 
   return blob;
 }
+
+export type UserImageCategory = "tournament_logo" | "background";
+
+export interface UserImage {
+  id: string;
+  name: string;
+  category: UserImageCategory;
+  contentType: string;
+  width: number;
+  height: number;
+  sizeBytes: number;
+  createdAt?: string;
+}
+
+async function authenticatedRequest(endpoint: string, token: string, init?: RequestInit): Promise<Response> {
+  return request(endpoint, {
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, ...init?.headers },
+  });
+}
+
+export async function listUserImages(token: string): Promise<UserImage[]> {
+  const response = await authenticatedRequest("firebase/images?limit=100", token);
+  const body = (await response.json()) as { items?: UserImage[] };
+  return Array.isArray(body.items)
+    ? body.items.filter((image) => image.category === "tournament_logo" || image.category === "background")
+    : [];
+}
+
+export async function uploadUserImage(token: string, file: File, name: string, category: UserImageCategory): Promise<UserImage> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("name", name);
+  form.append("category", category);
+  const response = await authenticatedRequest("firebase/images", token, { method: "POST", body: form });
+  return (await response.json()) as UserImage;
+}
+
+export async function deleteUserImage(token: string, imageId: string): Promise<void> {
+  await authenticatedRequest(`firebase/images/${encodeURIComponent(imageId)}`, token, { method: "DELETE" });
+}
+
+export async function getUserImageUrl(token: string, imageId: string): Promise<string> {
+  const response = await authenticatedRequest(
+    `firebase/images/${encodeURIComponent(imageId)}/download-url`,
+    token,
+    { method: "POST" },
+  );
+  const body = (await response.json()) as { url?: string };
+  if (!body.url) throw new Error("The image preview URL was missing.");
+  return body.url;
+}

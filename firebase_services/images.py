@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 import os
 from pathlib import PurePath
+import re
 from typing import Any
 from uuid import uuid4
 
@@ -22,11 +23,31 @@ from .documents import FirebaseResourceNotFound, validate_document_id
 DEFAULT_MAX_IMAGE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 50_000_000
 SIGNED_URL_LIFETIME = timedelta(minutes=15)
+MAX_IMAGES_PER_CATEGORY = 10
+MAX_IMAGE_NAME_LENGTH = 80
+IMAGE_CATEGORIES = frozenset({"tournament_logo", "background"})
 IMAGE_FORMATS = {
     "JPEG": ("jpg", "image/jpeg"),
     "PNG": ("png", "image/png"),
     "WEBP": ("webp", "image/webp"),
 }
+
+
+def validate_image_name(value: str | None) -> tuple[str, str]:
+    """Return a display name and case-insensitive key for a saved image."""
+    name = re.sub(r"\s+", " ", value or "").strip()
+    if not name:
+        raise ValueError("An image name is required")
+    if len(name) > MAX_IMAGE_NAME_LENGTH:
+        raise ValueError(f"Image names must be {MAX_IMAGE_NAME_LENGTH} characters or fewer")
+    return name, name.casefold()
+
+
+def validate_image_category(value: str | None) -> str:
+    category = (value or "").strip().lower()
+    if category not in IMAGE_CATEGORIES:
+        raise ValueError("Image category must be tournament_logo or background")
+    return category
 
 
 def maximum_image_bytes() -> int:
@@ -119,7 +140,24 @@ class UserImageService:
             raise FirebaseResourceNotFound(image_id)
         return _image_json(snapshot)
 
-    def upload(self, upload: FileStorage) -> dict[str, Any]:
+    def upload(
+        self,
+        upload: FileStorage,
+        *,
+        name: str | None,
+        category: str | None,
+    ) -> dict[str, Any]:
+        display_name, name_key = validate_image_name(name)
+        image_category = validate_image_category(category)
+        category_images = [
+            image for image in self.list(100) if image.get("category") == image_category
+        ]
+        if len(category_images) >= MAX_IMAGES_PER_CATEGORY:
+            label = "tournament logos" if image_category == "tournament_logo" else "backgrounds"
+            raise ValueError(f"You can save up to {MAX_IMAGES_PER_CATEGORY} {label}")
+        if any(image.get("nameKey") == name_key for image in category_images):
+            raise ValueError("You already have an image with that name in this category")
+
         content, extension, content_type, width, height, original_name = read_image_upload(upload)
         image_id = uuid4().hex
         storage_path = f"users/{self._uid}/images/{image_id}/original.{extension}"
@@ -136,6 +174,9 @@ class UserImageService:
             reference.set(
                 {
                     "schemaVersion": 1,
+                    "name": display_name,
+                    "nameKey": name_key,
+                    "category": image_category,
                     "originalFilename": original_name,
                     "storagePath": storage_path,
                     "contentType": content_type,

@@ -138,7 +138,13 @@ def upload_image() -> Any:
     upload = request.files.get("file")
     if upload is None:
         raise ValueError("A multipart file field named 'file' is required")
-    return jsonify(UserImageService(current_user_id()).upload(upload)), 201
+    return jsonify(
+        UserImageService(current_user_id()).upload(
+            upload,
+            name=request.form.get("name"),
+            category=request.form.get("category"),
+        )
+    ), 201
 
 
 @firebase_blueprint.get("/images/<image_id>")

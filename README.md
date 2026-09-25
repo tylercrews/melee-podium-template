@@ -13,6 +13,7 @@
 
 TODO LIST:
 * Frontend UI - Image Uploader, Load Format, Create/Edit Format, Bracket Import Tool, Current Tournament + Entrants
+* Stress-test browser memory limits for guest image uploads, then implement safe in-memory tournament-logo and background selection for users who are not signed in.
 * Format needs image editing - resizing the image and positioning it
 * how to handle format saving. Like give them a chance to overwrite?
 * Add alternative spellings to Entrant tag configurations. For example when an entrant in a bracket is named 'busta' or 'bu$ta' they should both be identified as the favorited entrant 'BU$TA' (capitalization is already ignored)

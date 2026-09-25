@@ -42,9 +42,14 @@ and expiry verification always occurs.
 
 ## Browser authentication flow
 
-The eventual React UI should use the Firebase Web SDK to sign in with Google or
-email/password. It then obtains the signed-in user's Firebase ID token and sends
-it to Flask over HTTPS:
+The React UI uses the Firebase Web SDK with Google sign-in. Copy
+`frontend/.env.example` to `frontend/.env.local` and fill in the public Web app
+configuration from Firebase Console. Enable Google as a provider under
+Authentication > Sign-in method, and add each deployed hostname to the
+authorized domains list.
+
+The UI obtains the signed-in user's Firebase ID token and sends it to Flask over
+HTTPS:
 
 ```http
 Authorization: Bearer <Firebase ID token>
@@ -92,13 +97,15 @@ All endpoints except `/api/firebase/status` require the bearer token above.
 | `GET`, `PUT`, `DELETE` | `/api/firebase/layouts/{id}` | Read, replace, or delete a layout |
 | `GET`, `POST` | `/api/firebase/entrants` | List or create entrants |
 | `GET`, `PUT`, `DELETE` | `/api/firebase/entrants/{id}` | Read, replace, or delete an entrant |
-| `GET`, `POST` | `/api/firebase/images` | List metadata or upload a multipart `file` |
+| `GET`, `POST` | `/api/firebase/images` | List metadata or upload multipart `file`, `name`, and `category` fields |
 | `GET`, `DELETE` | `/api/firebase/images/{id}` | Read metadata or delete an image |
 | `POST` | `/api/firebase/images/{id}/download-url` | Create a private 15-minute download URL |
 
 Image uploads accept validated PNG, JPEG, and WebP content. The server ignores a
 claimed MIME type, inspects the actual bytes, uses a generated Storage path, and
-stores dimensions and other metadata in Firestore.
+stores dimensions and other metadata in Firestore. `category` must be either
+`tournament_logo` or `background`. Names are unique case-insensitively within a
+category, and each account can store up to 10 images in each category.
 
 ## Firebase security rules
 

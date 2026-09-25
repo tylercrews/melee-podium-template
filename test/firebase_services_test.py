@@ -17,7 +17,12 @@ from firebase_services.documents import (
     validate_document_id,
     validate_saved_document,
 )
-from firebase_services.images import read_image_upload, validate_image_bytes
+from firebase_services.images import (
+    read_image_upload,
+    validate_image_bytes,
+    validate_image_category,
+    validate_image_name,
+)
 from firebase_services.routes import firebase_blueprint
 
 
@@ -64,6 +69,13 @@ class FirebaseDocumentBoundaryTests(unittest.TestCase):
 
 
 class FirebaseImageBoundaryTests(unittest.TestCase):
+    def test_normalizes_image_names_and_restricts_categories(self) -> None:
+        self.assertEqual(validate_image_name("  Main   Logo  "), ("Main Logo", "main logo"))
+        self.assertEqual(validate_image_category("BACKGROUND"), "background")
+        for value in (None, "", "other"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate_image_category(value)
+
     def test_detects_image_content_instead_of_trusting_filename(self) -> None:
         upload = FileStorage(
             stream=BytesIO(png_bytes(12, 8)),
