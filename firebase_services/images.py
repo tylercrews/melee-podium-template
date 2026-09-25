@@ -28,6 +28,7 @@ MAX_IMAGE_NAME_LENGTH = 80
 IMAGE_CATEGORIES = frozenset({"tournament_logo", "background"})
 IMAGE_FORMATS = {
     "JPEG": ("jpg", "image/jpeg"),
+    "MPO": ("jpg", "image/jpeg"),
     "PNG": ("png", "image/png"),
     "WEBP": ("webp", "image/webp"),
     "GIF": ("gif", "image/gif"),
@@ -77,7 +78,11 @@ def validate_image_bytes(content: bytes) -> tuple[str, str, int, int]:
     except (UnidentifiedImageError, OSError, SyntaxError) as error:
         raise ValueError("The upload is not a valid image") from error
     if image_format not in IMAGE_FORMATS:
-        raise ValueError("Images must be PNG, JPG/JPEG, WebP, GIF, or BMP")
+        detected = image_format or "unknown"
+        raise ValueError(
+            "Images must be PNG, JPG/JPEG, WebP, GIF, or BMP "
+            f"(detected {detected})"
+        )
     if width < 1 or height < 1 or width * height > MAX_IMAGE_PIXELS:
         raise ValueError(
             f"Images must contain between 1 and {MAX_IMAGE_PIXELS:,} pixels"

@@ -19,6 +19,7 @@ from firebase_services.documents import (
 )
 from firebase_services.images import (
     DEFAULT_MAX_IMAGE_BYTES,
+    IMAGE_FORMATS,
     read_image_upload,
     validate_image_bytes,
     validate_image_category,
@@ -100,6 +101,9 @@ class FirebaseImageBoundaryTests(unittest.TestCase):
 
     def test_accepts_gif_content(self) -> None:
         self.assertEqual(validate_image_bytes(gif_bytes(12, 8)), ("gif", "image/gif", 12, 8))
+
+    def test_treats_mpo_as_jpeg_compatible(self) -> None:
+        self.assertEqual(IMAGE_FORMATS["MPO"], ("jpg", "image/jpeg"))
 
     def test_rejects_invalid_and_oversized_image_content(self) -> None:
         with self.assertRaisesRegex(ValueError, "valid image"):
