@@ -213,7 +213,8 @@ class LocalBackgroundAssets:
 
     folder: Path = BACKGROUND_ASSET_FOLDER
 
-    def _path(self, asset_id: str) -> Path:
+    def path(self, asset_id: str) -> Path:
+        """Return the validated path for one built-in background asset."""
         if not isinstance(asset_id, str) or not asset_id:
             raise ValueError("asset_id must be a non-empty string")
         if Path(asset_id).name != asset_id:
@@ -224,7 +225,7 @@ class LocalBackgroundAssets:
         return path
 
     def open(self, asset_id: str) -> Image.Image:
-        path = self._path(asset_id)
+        path = self.path(asset_id)
         with Image.open(path) as source:
             return source.convert("RGBA")
 

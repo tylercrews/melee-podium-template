@@ -24,7 +24,7 @@ FILES = (
     "top_4.png",
     "top_8.png",
 )
-DIRECTORIES = ("char_assets", "firebase_services", "frontend/dist")
+DIRECTORIES = ("backgrounds", "char_assets", "firebase_services", "frontend/dist")
 
 with ZipFile(ARCHIVE, "w", compression=ZIP_DEFLATED) as archive:
     for relative_file in FILES:

@@ -179,6 +179,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .image-list__empty p { margin: 0 0 8px; font-size: .8rem; }
 .image-list__empty button { padding: 0; border: 0; color: #9b3025ff; background: transparent; font-size: .78rem; font-weight: 800; text-decoration: underline; }
 .limit-message { margin: 0; padding: 8px 12px 12px; color: #8c514aff; font-size: .7rem; }
+.built-in-library { grid-column: 1 / -1; }
+.built-in-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; padding: 8px; background: #272d42ff; }
+.built-in-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; padding: 11px; border: 0; color: #e9eaf3ff; background: #111523ff; text-align: left; }
+.built-in-row:hover { background: #1a2033ff; }
+.built-in-row > span:last-child { display: grid; min-width: 0; gap: 2px; }
+.built-in-row strong { overflow: hidden; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+.built-in-row small { color: #8e95afff; font-size: .64rem; }
+.built-in-row--selected { background: #171d3dff; box-shadow: inset 3px 0 0 #238fe8ff; }
+.built-in-row--selected .image-row__radio { border: 3px solid #111523ff; background: #238fe8ff; box-shadow: 0 0 0 1px #238fe8ff, 0 0 10px #238fe866; }
+.asset-attribution { margin: 0; padding: 10px 14px 12px; border-top: 1px solid #303750ff; color: #a7adc5ff; background: #151a2aff; font-size: .7rem; }
+.asset-attribution strong { color: #ff75dbff; }
 .loading-card { padding: 30px; border: 1px dashed #cdbeb0ff; border-radius: 8px; color: #7b6a62ff; background: #fffaf3ff; text-align: center; }
 .inline-message { margin: 16px 0 0; padding: 10px 12px; border-left: 3px solid #b13327ff; color: #76251dff; background: #f7dfdaff; font-size: .82rem; }
 .future-note { margin: 24px 0 0; color: #89776fff; font-size: .72rem; line-height: 1.5; }
@@ -258,6 +269,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
   .image-library__upload { grid-column: 1 / -1; }
   .modal__content { padding: 28px 20px 22px; }
   .step-footer { align-items: stretch; flex-direction: column; }
+  .built-in-list { grid-template-columns: 1fr; }
 }
 
 /* Dark Tyrowo theme — colors sampled from the project favicon. */
@@ -383,6 +395,9 @@ body {
   box-shadow: 5px 5px 0 var(--theme-navy);
 }
 .preview-action:disabled { border-color: var(--theme-border); color: #777f9aff; background: var(--theme-surface-raised); box-shadow: none; }
+.preview-action--pink { border-color: #f044c1ff; background: linear-gradient(90deg, #d82caaff, #f044c1ff); }
+.preview-action--blue { border-color: #238fe8ff; background: linear-gradient(90deg, #176abaff, #238fe8ff); }
+.preview-action--green { border-color: #00dc68ff; color: #06170eff; background: linear-gradient(90deg, #00b957ff, #00dc68ff); }
 .preview-heading .eyebrow { color: #65b7ffff; }
 .preview-heading h2 { color: var(--theme-text); }
 .preview-heading__ratio { border-color: var(--theme-border-strong); color: var(--theme-muted); }

@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from DrawPodium import CHARACTER_FOLDER, PodiumFont, PodiumMode, draw_podium
 from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_parrygg, fetch_startgg, identify_bracket_link
+from background_builder import LocalBackgroundAssets
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
 
@@ -42,6 +43,7 @@ _PORTRAIT_FILENAME = re.compile(
 app = Flask(__name__, static_folder=None)
 app.register_blueprint(firebase_blueprint)
 initialize_firebase_if_configured()
+BUILTIN_BACKGROUNDS = LocalBackgroundAssets()
 
 
 def _render_count() -> int:
@@ -256,6 +258,17 @@ def options() -> Any:
         fighters=_fighter_options(),
         team_colors=["red", "green", "blue"],
     )
+
+
+@app.get("/api/backgrounds")
+def backgrounds() -> Any:
+    return jsonify(items=[asset.to_dict() for asset in BUILTIN_BACKGROUNDS.list_assets()])
+
+
+@app.get("/api/backgrounds/<asset_id>")
+def background_asset(asset_id: str) -> Any:
+    path = BUILTIN_BACKGROUNDS.path(asset_id)
+    return send_from_directory(path.parent, path.name)
 
 
 @app.post("/api/render")

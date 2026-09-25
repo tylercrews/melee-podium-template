@@ -182,6 +182,21 @@ export interface UserImage {
   createdAt?: string;
 }
 
+export interface BuiltInBackground {
+  asset_id: string;
+  size: { width: number; height: number };
+}
+
+export async function listBuiltInBackgrounds(): Promise<BuiltInBackground[]> {
+  const response = await request("backgrounds");
+  const body = (await response.json()) as { items?: BuiltInBackground[] };
+  return Array.isArray(body.items) ? body.items : [];
+}
+
+export function builtInBackgroundUrl(assetId: string): string {
+  return apiUrl(`backgrounds/${encodeURIComponent(assetId)}`);
+}
+
 async function authenticatedRequest(endpoint: string, token: string, init?: RequestInit): Promise<Response> {
   return request(endpoint, {
     ...init,
