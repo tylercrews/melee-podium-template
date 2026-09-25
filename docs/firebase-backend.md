@@ -101,7 +101,7 @@ All endpoints except `/api/firebase/status` require the bearer token above.
 | `GET`, `DELETE` | `/api/firebase/images/{id}` | Read metadata or delete an image |
 | `POST` | `/api/firebase/images/{id}/download-url` | Create a private 15-minute download URL |
 
-Image uploads accept validated PNG, JPEG, and WebP content up to 300 MiB by
+Image uploads accept validated PNG, JPG/JPEG, WebP, GIF, and BMP raster content up to 300 MiB by
 default. The server ignores a claimed MIME type, inspects the actual bytes, uses a generated Storage path, and
 stores dimensions and other metadata in Firestore. `category` must be either
 `tournament_logo` or `background`. Names are unique case-insensitively within a

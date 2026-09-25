@@ -33,6 +33,12 @@ def png_bytes(width: int = 4, height: int = 3) -> bytes:
     return output.getvalue()
 
 
+def gif_bytes(width: int = 4, height: int = 3) -> bytes:
+    output = BytesIO()
+    Image.new("RGB", (width, height), "#123456").save(output, "GIF")
+    return output.getvalue()
+
+
 class FirebaseAuthenticationBoundaryTests(unittest.TestCase):
     def test_extracts_bearer_token_case_insensitively(self) -> None:
         self.assertEqual(bearer_token("bearer token-value"), "token-value")
@@ -91,6 +97,9 @@ class FirebaseImageBoundaryTests(unittest.TestCase):
         self.assertEqual((extension, content_type), ("png", "image/png"))
         self.assertEqual((width, height), (12, 8))
         self.assertEqual(filename, "unsafe-name.jpg")
+
+    def test_accepts_gif_content(self) -> None:
+        self.assertEqual(validate_image_bytes(gif_bytes(12, 8)), ("gif", "image/gif", 12, 8))
 
     def test_rejects_invalid_and_oversized_image_content(self) -> None:
         with self.assertRaisesRegex(ValueError, "valid image"):

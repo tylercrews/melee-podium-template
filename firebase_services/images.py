@@ -30,6 +30,8 @@ IMAGE_FORMATS = {
     "JPEG": ("jpg", "image/jpeg"),
     "PNG": ("png", "image/png"),
     "WEBP": ("webp", "image/webp"),
+    "GIF": ("gif", "image/gif"),
+    "BMP": ("bmp", "image/bmp"),
 }
 
 
@@ -75,7 +77,7 @@ def validate_image_bytes(content: bytes) -> tuple[str, str, int, int]:
     except (UnidentifiedImageError, OSError, SyntaxError) as error:
         raise ValueError("The upload is not a valid image") from error
     if image_format not in IMAGE_FORMATS:
-        raise ValueError("Images must be PNG, JPEG, or WebP")
+        raise ValueError("Images must be PNG, JPG/JPEG, WebP, GIF, or BMP")
     if width < 1 or height < 1 or width * height > MAX_IMAGE_PIXELS:
         raise ValueError(
             f"Images must contain between 1 and {MAX_IMAGE_PIXELS:,} pixels"
