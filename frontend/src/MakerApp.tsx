@@ -41,7 +41,7 @@ function ImageLibrary({ category, heading, images, selectedId, busyId, onSelect,
   return <section className="image-library" aria-labelledby={`${category}-heading`}>
     <div className="image-library__header"><span className="image-library__type-icon"><ImageTypeIcon category={category} /></span><div><h3 id={`${category}-heading`}>{heading ?? categoryLabel(category)}</h3><p>Your uploads · {images.length} of {MAX_IMAGES} saved</p></div>{!atLimit && <button className="button button--outline image-library__upload" type="button" onClick={() => onUpload(category)}>+ Upload</button>}</div>
     <div className="image-list">{images.length ? images.map((image) => <div className={`image-row${selectedId === image.id ? " image-row--selected" : ""}`} key={image.id}>
-      <button className="image-row__select" type="button" onClick={() => onSelect(image)} disabled={busyId === image.id}><span className="image-row__radio" aria-hidden="true" /><span className="image-row__name">{image.name}</span><span className="image-row__size">{image.width} × {image.height}</span></button>
+      <button className="image-row__select" type="button" onClick={() => onSelect(image)} disabled={busyId === image.id} aria-pressed={selectedId === image.id}><span className="image-row__radio" aria-hidden="true" /><span className="image-row__name">{image.name}</span><span className="image-row__size">{image.width} × {image.height}</span></button>
       <button className="icon-button icon-button--danger" type="button" aria-label={`Delete ${image.name}`} onClick={() => onDelete(image)} disabled={Boolean(busyId)}><TrashIcon /></button>
     </div>) : <div className="image-list__empty"><p>No {category === "tournament_logo" ? "logos" : "backgrounds"} saved yet.</p><button type="button" onClick={() => onUpload(category)}>Upload your first</button></div>}</div>
     {atLimit && <p className="limit-message">You’ve reached the {MAX_IMAGES}-image limit. Delete one to upload another.</p>}
@@ -60,7 +60,7 @@ function BuiltInBackgroundLibrary({ backgrounds, selectedId, onSelect }: { backg
     <div className="image-library__header"><span className="image-library__type-icon"><ImageTypeIcon category="background" /></span><div><h3 id="built-in-backgrounds-heading">Included Backgrounds</h3><p>Provided collection · {backgrounds.length} available</p></div></div>
     <div className="built-in-list">{backgrounds.map((background) => {
       const selectionId = `builtin:${background.asset_id}`;
-      return <button className={`built-in-row${selectedId === selectionId ? " built-in-row--selected" : ""}`} type="button" key={background.asset_id} onClick={() => onSelect(background)}><span className="image-row__radio" aria-hidden="true" /><span><strong>{builtInBackgroundName(background.asset_id)}</strong><small>{background.size.width} × {background.size.height}</small></span></button>;
+      return <button className={`built-in-row${selectedId === selectionId ? " built-in-row--selected" : ""}`} type="button" key={background.asset_id} onClick={() => onSelect(background)} aria-pressed={selectedId === selectionId}><span className="image-row__radio" aria-hidden="true" /><span><strong>{builtInBackgroundName(background.asset_id)}</strong><small>{background.size.width} × {background.size.height}</small></span></button>;
     })}</div>
     <p className="asset-attribution">Stage background renders by <strong>Malarki_</strong>.</p>
   </section>;
@@ -131,13 +131,24 @@ export default function MakerApp() {
   function openUpload(category: UserImageCategory) { setUploadCategory(category); setUploadName(""); setUploadFile(null); setMessage(""); uploadDialogRef.current?.showModal(); }
   async function selectImage(image: UserImage) {
     if (!user) return;
+    if (selected[image.category] === image.id) {
+      setSelected((current) => ({ ...current, [image.category]: null }));
+      setPreviewUrls((current) => ({ ...current, [image.category]: "" }));
+      return;
+    }
     setBusyId(image.id); setMessage("");
     try { const url = await getUserImageUrl(await user.getIdToken(), image.id); setSelected((current) => ({ ...current, [image.category]: image.id })); setPreviewUrls((current) => ({ ...current, [image.category]: url })); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Could not preview that image."); }
     finally { setBusyId(""); }
   }
   function selectBuiltInBackground(background: BuiltInBackground) {
-    setSelected((current) => ({ ...current, background: `builtin:${background.asset_id}` }));
+    const selectionId = `builtin:${background.asset_id}`;
+    if (selected.background === selectionId) {
+      setSelected((current) => ({ ...current, background: null }));
+      setPreviewUrls((current) => ({ ...current, background: "" }));
+      return;
+    }
+    setSelected((current) => ({ ...current, background: selectionId }));
     setPreviewUrls((current) => ({ ...current, background: builtInBackgroundUrl(background.asset_id) }));
     setMessage("");
   }
