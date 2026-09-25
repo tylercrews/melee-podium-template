@@ -193,7 +193,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .loading-card { padding: 30px; border: 1px dashed #cdbeb0ff; border-radius: 8px; color: #7b6a62ff; background: #fffaf3ff; text-align: center; }
 .inline-message { margin: 16px 0 0; padding: 10px 12px; border-left: 3px solid #b13327ff; color: #76251dff; background: #f7dfdaff; font-size: .82rem; }
 .future-note { margin: 24px 0 0; color: #89776fff; font-size: .72rem; line-height: 1.5; }
-.step-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #d7c9bbff; }
+.step-footer { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #d7c9bbff; }
 .step-footer p { margin: 0; color: #89776fff; font-size: .8rem; }
 
 .preview-action { display: flex; width: 100%; min-height: 50px; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; padding: 12px 16px; border: 1px solid #f0ad45ff; border-radius: 8px 3px 8px 3px; color: #321611ff; background: #f0ad45ff; font-weight: 900; text-align: left; box-shadow: 5px 5px 0 #8f2a20ff; }
@@ -203,6 +203,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .preview-heading .eyebrow { color: #e8a743ff; }
 .preview-heading h2 { margin: 0; color: #fffaf0ff; font-family: Georgia, serif; font-size: 1.45rem; }
 .preview-heading__ratio { padding: 4px 7px; border: 1px solid #82615aff; border-radius: 3px; color: #d3bab0ff; font-size: .65rem; font-weight: 800; }
+.preview-assets { display: grid; gap: 18px; }
+.preview-asset { display: grid; gap: 8px; margin: 0; }
+.preview-asset figcaption { color: #c9ccdcff; font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.preview-asset__frame { display: grid; min-height: 120px; max-height: 32vh; padding: 12px; place-items: center; overflow: hidden; border: 1px solid #444b69ff; border-radius: 7px 2px 7px 2px; color: #7f869fff; background: #0b0e18ff; font-size: .72rem; }
+.preview-asset__frame--transparent { background-color: #0b0e18ff; background-image: linear-gradient(45deg, #171b2aff 25%, transparent 25%), linear-gradient(-45deg, #171b2aff 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #171b2aff 75%), linear-gradient(-45deg, transparent 75%, #171b2aff 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
+.preview-asset__frame img { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(32vh - 24px); object-fit: contain; }
 .canvas-preview { position: relative; display: grid; width: 100%; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; border: 1px solid #89675fff; border-radius: 7px 2px 7px 2px; background-color: #2a1d1bff; background-image: linear-gradient(45deg, #382725ff 25%, transparent 25%), linear-gradient(-45deg, #382725ff 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #382725ff 75%), linear-gradient(-45deg, transparent 75%, #382725ff 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; box-shadow: 0 20px 38px #11070666; }
 .canvas-preview__background { position: absolute; width: 100%; height: 100%; object-fit: cover; }
 .canvas-preview__logo { position: relative; z-index: 1; max-width: 45%; max-height: 55%; object-fit: contain; filter: drop-shadow(0 3px 8px #00000080); }
