@@ -22,10 +22,7 @@ function Footer({ renderCount }: FooterProps) {
         </div>
         <div>
           Melee Podium Template is free and{" "}
-          <a href="https://github.com/tylercrews/melee-podium-template" target="_blank" rel="noreferrer">
-            open source
-          </a>
-          .
+          <a href="https://github.com/tylercrews/melee-podium-template" target="_blank" rel="noreferrer">open source</a>.
         </div>
         <button className="site-footer__shoutouts-button" type="button" onClick={() => setIsShoutoutsOpen(true)}>
           Thank yous and shoutouts.
@@ -51,7 +48,7 @@ function Footer({ renderCount }: FooterProps) {
               <li>AeonSSB, Cjag01, radzo73, and caha1an, who created the <a href="https://github.com/AeonSSB/Melee-CSProject" target="_blank" rel="noreferrer">Melee-CSProject</a> that I got the original poses from.</li>
               <li><a href="https://smashboards.com/threads/character-stock-icon-dump.390494/" target="_blank" rel="noreferrer">CeLL on this old Smashboards thread</a> for posting a dump of all the character stock icons.</li>
               <li><a href="https://www.spriters-resource.com/gamecube/ssbm/asset/46039/" target="_blank" rel="noreferrer">Mr. C</a> for the Sheik stock icons.</li>
-              <li>Also shoutout to <a href="https://smashboards.com/" target="_blank" rel="noreferrer">SmashBoards</a> in general - what�what an amazing site still.</li>
+              <li>Also shoutout to <a href="https://smashboards.com/" target="_blank" rel="noreferrer">SmashBoards</a> in general—what an amazing site still.</li>
               <li>North Carolina Melee!! Love y'all.</li>
             </ul>
           </div>
