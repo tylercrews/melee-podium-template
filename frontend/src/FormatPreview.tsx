@@ -88,6 +88,7 @@ export default function FormatPreview({ format, backgroundImage, logoImage, font
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [expandedUsesCanvas, setExpandedUsesCanvas] = useState(false);
   const [refreshedSignature, setRefreshedSignature] = useState<string | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const expandedDialog = useRef<HTMLDialogElement>(null);
@@ -191,12 +192,10 @@ export default function FormatPreview({ format, backgroundImage, logoImage, font
       expandedCanvas.current.width = canvas.current.width;
       expandedCanvas.current.height = canvas.current.height;
       expandedCanvas.current.getContext("2d")?.drawImage(canvas.current, 0, 0);
-      expandedCanvas.current.hidden = false;
-      expandedImage.current.hidden = true;
+      setExpandedUsesCanvas(true);
     } else {
       expandedImage.current.src = displayed.url;
-      expandedImage.current.hidden = false;
-      expandedCanvas.current.hidden = true;
+      setExpandedUsesCanvas(false);
     }
     expandedDialog.current?.showModal();
   }
@@ -206,6 +205,6 @@ export default function FormatPreview({ format, backgroundImage, logoImage, font
     <button className={`button button--outline format-preview__refresh${needsRefresh ? " format-preview__refresh--needed" : ""}`} type="button" onClick={() => void refreshWithSelectedImages()} disabled={refreshing} aria-label={needsRefresh ? "Refresh Format Preview; changes are waiting" : "Refresh Format Preview; preview is up to date"}><span>{refreshing ? "Refreshing preview…" : "Refresh Format Preview"}</span>{needsRefresh && !refreshing && <span className="format-preview__refresh-status">Changes waiting</span>}</button>
     <p><strong>{customPreviewVisible ? "Your image preview" : "Cached layout demo"}</strong> · {request.label}</p>
     {failed && <span className="format-preview__waiting" role="alert">The new preview could not be rendered. The previous preview is still shown.</span>}
-    <dialog className="modal format-preview-modal" ref={expandedDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => expandedDialog.current?.close()} aria-label="Close enlarged preview">×</button><img className="format-preview-modal__image" ref={expandedImage} alt={`Enlarged format preview: ${request.label}`} /><canvas className="format-preview-modal__image" ref={expandedCanvas} hidden aria-label={`Enlarged customized format preview: ${request.label}`} /></div></dialog>
+    <dialog className="modal format-preview-modal" ref={expandedDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => expandedDialog.current?.close()} aria-label="Close enlarged preview">×</button><img className="format-preview-modal__image" ref={expandedImage} hidden={expandedUsesCanvas} alt={`Enlarged format preview: ${request.label}`} /><canvas className="format-preview-modal__image" ref={expandedCanvas} hidden={!expandedUsesCanvas} aria-label={`Enlarged customized format preview: ${request.label}`} /></div></dialog>
   </div>;
 }
