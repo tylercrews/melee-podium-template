@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+import json
 import os
 from pathlib import Path
 import sqlite3
@@ -15,11 +16,13 @@ from dotenv import load_dotenv
 from DrawPodium import CHARACTER_FOLDER, PodiumFont, PodiumMode, draw_podium
 from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_parrygg, fetch_startgg, identify_bracket_link
 from background_builder import LocalBackgroundAssets
+from creation import TextSettings
 from creation_modes import PodiumStyle
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
 from format_preview import render_format_preview, render_format_preview_png
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
+from firebase_services.fonts import read_font_upload
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -47,6 +50,11 @@ app = Flask(__name__, static_folder=None)
 app.register_blueprint(firebase_blueprint)
 initialize_firebase_if_configured()
 BUILTIN_BACKGROUNDS = LocalBackgroundAssets()
+PROVIDED_FONTS = {
+    "tyrowo": {"name": "Tyrowo Inked", "filename": "Tyrowo-Inked-Regular.ttf", "size_adjustment": 0},
+    "impact": {"name": "Impact", "filename": "Impact.ttf", "size_adjustment": 8},
+    "ubuntu": {"name": "Ubuntu", "filename": "Ubuntu-Regular.ttf", "size_adjustment": 1},
+}
 
 
 def _render_count() -> int:
@@ -274,6 +282,20 @@ def background_asset(asset_id: str) -> Any:
     return send_from_directory(path.parent, path.name)
 
 
+@app.get("/api/fonts")
+def provided_fonts() -> Any:
+    return jsonify(items=[{"asset_id": key, "name": value["name"], "size_adjustment": value["size_adjustment"]} for key, value in PROVIDED_FONTS.items()])
+
+
+@app.get("/api/fonts/<asset_id>")
+def provided_font_asset(asset_id: str) -> Any:
+    try:
+        filename = PROVIDED_FONTS[asset_id]["filename"]
+    except KeyError as error:
+        raise FileNotFoundError("Unknown provided font") from error
+    return send_from_directory(PROJECT_ROOT / "fonts", filename)
+
+
 @app.get("/api/format-preview")
 def format_preview() -> Any:
     try:
@@ -374,7 +396,17 @@ def _custom_preview_colors(
 
 @app.post("/api/format-preview")
 def customized_format_preview() -> Any:
-    payload = request.get_json(silent=True)
+    custom_font_bytes = None
+    if request.mimetype == "multipart/form-data":
+        try:
+            payload = json.loads(request.form.get("config", ""))
+        except json.JSONDecodeError as error:
+            raise ValueError("Format preview config must be valid JSON") from error
+        upload = request.files.get("font_file")
+        if upload is not None:
+            custom_font_bytes, _extension, _content_type, _filename = read_font_upload(upload)
+    else:
+        payload = request.get_json(silent=True)
     if not isinstance(payload, Mapping):
         return jsonify(error="Request body must be a JSON object"), 400
     try:
@@ -390,6 +422,24 @@ def customized_format_preview() -> Any:
         if style is PodiumStyle.CUSTOMIZABLE
         else None
     )
+    raw_text_settings = payload.get("text_settings")
+    if not isinstance(raw_text_settings, Mapping):
+        raw_text_settings = {}
+    font_asset_id = str(raw_text_settings.get("font_asset_id", "provided:tyrowo"))
+    if font_asset_id.startswith("provided:"):
+        try:
+            font = PodiumFont(font_asset_id.removeprefix("provided:"))
+        except ValueError as error:
+            raise ValueError("Unknown provided font") from error
+    elif font_asset_id.startswith("user:") and custom_font_bytes is not None:
+        font = PodiumFont.TYROWO
+    else:
+        raise ValueError("A selected custom font file is required for preview")
+    text_settings = TextSettings(
+        font_size_adjustment=0 if font_asset_id.startswith("provided:") else raw_text_settings.get("font_size_adjustment", 0),
+        replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", False),
+        metadata_fields=frozenset(raw_text_settings.get("metadata_fields", ("event", "date", "entrants_count", "tournament_link"))),
+    )
     image = render_format_preview(
         style,
         event_format,
@@ -398,6 +448,9 @@ def customized_format_preview() -> Any:
         transparent=bool(payload.get("transparent", True)),
         podium_colors=colors,
         header_layout=payload.get("header_layout") if isinstance(payload.get("header_layout"), Mapping) else None,
+        font=font,
+        custom_font_bytes=custom_font_bytes,
+        text_settings=text_settings,
     )
     output = BytesIO()
     image.save(output, format="PNG")

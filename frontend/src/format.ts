@@ -7,6 +7,7 @@ export type SizeMultiplier = number;
 export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to_height";
 export type FormattingColorSelectionMode = "premade" | "pick_1" | "pick_2" | "pick_all";
 export type FormattingColorPreset = "smash_player_colors" | "olympic_medals" | "rainbow";
+export type MetadataField = "event" | "date" | "entrants_count" | "tournament_link" | "stream_link" | "vod_link" | "to_x_account" | "to_twitch_account" | "to_bluesky_account";
 
 export interface FormattingAssetColor {
   main_color: string;
@@ -19,6 +20,13 @@ export interface FormattingAssetColors {
   mode: FormattingColorSelectionMode;
   preset: FormattingColorPreset | null;
   colors: FormattingAssetColor[];
+}
+
+export interface TextSettings {
+  font_asset_id: string;
+  font_size_adjustment: number;
+  replace_base_urls_with_icons: boolean;
+  metadata_fields: MetadataField[];
 }
 
 export interface PixelSize { width: number; height: number }
@@ -66,6 +74,7 @@ export interface FormatConfiguration {
   header_layout: HeaderLayout;
   image_settings: ImageSettings;
   formatting_asset_colors: FormattingAssetColors;
+  text_settings: TextSettings;
 }
 
 export const DEFAULT_HEADER_LAYOUT: HeaderLayout = {
@@ -87,6 +96,15 @@ export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
   colors: [],
 };
 
+export const ALL_METADATA_FIELDS: MetadataField[] = ["event", "date", "entrants_count", "tournament_link", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
+
+export const DEFAULT_TEXT_SETTINGS: TextSettings = {
+  font_asset_id: "provided:tyrowo",
+  font_size_adjustment: 0,
+  replace_base_urls_with_icons: false,
+  metadata_fields: ["event", "date", "entrants_count", "tournament_link"],
+};
+
 export const EMPTY_FORMAT: FormatConfiguration = {
   schema_version: 1,
   selection: {
@@ -101,6 +119,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
   header_layout: DEFAULT_HEADER_LAYOUT,
   image_settings: DEFAULT_IMAGE_SETTINGS,
   formatting_asset_colors: DEFAULT_FORMATTING_ASSET_COLORS,
+  text_settings: DEFAULT_TEXT_SETTINGS,
 };
 
 const modes = new Set<CreationMode>(["podium", "eyes", "squares"]);
@@ -122,6 +141,7 @@ const MAX_SIZE_MULTIPLIER = 100;
 const rgbaColor = /^#[0-9a-f]{8}$/i;
 const formattingColorModes = new Set<FormattingColorSelectionMode>(["premade", "pick_1", "pick_2", "pick_all"]);
 const formattingColorPresets = new Set<FormattingColorPreset>(["smash_player_colors", "olympic_medals", "rainbow"]);
+const metadataFields = new Set<MetadataField>(ALL_METADATA_FIELDS);
 
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
   podium: {
@@ -302,11 +322,29 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
   return { mode, preset, colors };
 }
 
+function normalizeTextSettings(value: unknown): TextSettings {
+  if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_fields: [...DEFAULT_TEXT_SETTINGS.metadata_fields] };
+  if (!isObject(value) || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || typeof value.replace_base_urls_with_icons !== "boolean" || !Array.isArray(value.metadata_fields)) {
+    throw new Error("Format code has invalid text settings.");
+  }
+  const fields = value.metadata_fields as unknown[];
+  if (fields.some((field) => !metadataFields.has(field as MetadataField)) || new Set(fields).size !== fields.length) {
+    throw new Error("Format code has invalid or duplicate metadata fields.");
+  }
+  const fontAssetId = value.font_asset_id.trim();
+  return {
+    font_asset_id: fontAssetId,
+    font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
+    replace_base_urls_with_icons: value.replace_base_urls_with_icons,
+    metadata_fields: fields as MetadataField[],
+  };
+}
+
 export function normalizeFormat(value: unknown): FormatConfiguration {
   if (!isObject(value) || value.schema_version !== 1) {
     throw new Error("Format code must be a version 1 format object.");
   }
-  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors) };
+  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors), text_settings: normalizeTextSettings(value.text_settings) };
   if (!isObject(value.selection) || !modes.has(value.selection.mode as CreationMode)) {
     throw new Error("Format code has an invalid creation mode.");
   }
@@ -345,6 +383,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     header_layout: normalizeHeaderLayout(value.header_layout),
     image_settings: normalizeImageSettings(value.image_settings),
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
+    text_settings: normalizeTextSettings(value.text_settings),
   };
 }
 

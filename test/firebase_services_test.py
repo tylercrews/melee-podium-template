@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import os
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -25,6 +26,7 @@ from firebase_services.images import (
     validate_image_category,
     validate_image_name,
 )
+from firebase_services.fonts import MAX_FONT_BYTES, read_font_upload, validate_font_bytes, validate_font_name
 from firebase_services.routes import firebase_blueprint
 
 
@@ -113,6 +115,21 @@ class FirebaseImageBoundaryTests(unittest.TestCase):
                 validate_image_bytes(png_bytes())
 
 
+class FirebaseFontBoundaryTests(unittest.TestCase):
+    def test_validates_real_font_bytes_instead_of_the_filename(self) -> None:
+        font_bytes = (Path(__file__).resolve().parents[1] / "fonts" / "Ubuntu-Regular.ttf").read_bytes()
+        upload = FileStorage(stream=BytesIO(font_bytes), filename="../../unsafe.otf", content_type="font/otf")
+        content, extension, content_type, filename = read_font_upload(upload)
+        self.assertEqual(content, font_bytes)
+        self.assertEqual((extension, content_type, filename), ("ttf", "font/ttf", "unsafe.otf"))
+
+    def test_rejects_invalid_fonts_and_normalizes_names(self) -> None:
+        self.assertEqual(validate_font_name("  Event   Sans  "), ("Event Sans", "event sans"))
+        self.assertEqual(MAX_FONT_BYTES, 10 * 1024 * 1024)
+        with self.assertRaisesRegex(ValueError, "TTF or OTF"):
+            validate_font_bytes(b"not a font")
+
+
 class FirebaseRouteTests(unittest.TestCase):
     def test_static_image_routes_win_over_generic_document_routes(self) -> None:
         app = Flask(__name__)
@@ -124,6 +141,8 @@ class FirebaseRouteTests(unittest.TestCase):
             "/api/firebase/images/image-id", method="GET"
         )
         self.assertEqual(endpoint, "firebase.get_image")
+        endpoint, _values = adapter.match("/api/firebase/fonts", method="GET")
+        self.assertEqual(endpoint, "firebase.list_fonts")
 
 
 if __name__ == "__main__":

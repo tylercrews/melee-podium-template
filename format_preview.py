@@ -18,6 +18,8 @@ from background_builder import (
     create_background,
 )
 from creation import CreationRequest
+from creation import TextSettings
+from DrawPodium import PodiumFont
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
@@ -49,6 +51,9 @@ def render_format_preview(
     transparent: bool = False,
     podium_colors: PodiumColorConfiguration | None = None,
     header_layout: Mapping[str, str] | None = None,
+    font: PodiumFont = PodiumFont.TYROWO,
+    custom_font_bytes: bytes | None = None,
+    text_settings: TextSettings | None = None,
 ) -> Image.Image:
     """Return a full example render for one currently supported podium format."""
 
@@ -99,13 +104,14 @@ def render_format_preview(
         tournament=sample_tournament(event_format),
         podium_colors=podium_colors,
         header_layout=header_layout,
+        text_settings=text_settings or TextSettings(),
     )
     # Format previews intentionally use the preview rendering path while these
     # reviewed preference files remain marked ready:false. Production creation
     # continues to refuse unfinished preference sets in CreationPipeline.
     canvas = create_background(background)
     formatted = FormattingAssetRenderer().draw(canvas, preferences, podium_colors)
-    return LegacyPodiumContentRenderer().draw(formatted, request, preferences)
+    return LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes).draw(formatted, request, preferences)
 
 
 @lru_cache(maxsize=len(SUPPORTED_LAYOUTS) * len(PodiumStyle) * 2)

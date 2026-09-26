@@ -7,7 +7,10 @@ interface FormatPreviewProps {
   format: FormatConfiguration;
   backgroundImage: FormatImageInfo | null;
   logoImage: FormatImageInfo | null;
+  fontAsset: FormatFontInfo | null;
 }
+
+export interface FormatFontInfo { id: string; name: string; url: string; custom: boolean }
 
 interface PreviewRequest { url: string; transparentUrl: string; label: string }
 
@@ -47,11 +50,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-async function loadConfiguredForeground(format: FormatConfiguration): Promise<HTMLImageElement> {
-  const response = await fetch(apiUrl("format-preview"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null): Promise<HTMLImageElement> {
+  const config = {
       style: format.selection.options.podium_style ?? "legacy",
       event_format: format.selection.options.event_format ?? "singles",
       entrant_count: format.selection.options.entrant_count ?? 8,
@@ -59,8 +59,20 @@ async function loadConfiguredForeground(format: FormatConfiguration): Promise<HT
       transparent: true,
       formatting_asset_colors: format.formatting_asset_colors,
       header_layout: format.header_layout,
-    }),
-  });
+      text_settings: format.text_settings,
+  };
+  let init: RequestInit;
+  if (fontAsset?.custom) {
+    const fontResponse = await fetch(fontAsset.url);
+    if (!fontResponse.ok) throw new Error("Could not load the selected custom font.");
+    const form = new FormData();
+    form.append("config", JSON.stringify(config));
+    form.append("font_file", await fontResponse.blob(), fontAsset.name);
+    init = { method: "POST", body: form };
+  } else {
+    init = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) };
+  }
+  const response = await fetch(apiUrl("format-preview"), init);
   if (!response.ok) throw new Error("Could not render the configured format preview.");
   const objectUrl = URL.createObjectURL(await response.blob());
   try {
@@ -70,7 +82,7 @@ async function loadConfiguredForeground(format: FormatConfiguration): Promise<HT
   }
 }
 
-export default function FormatPreview({ format, backgroundImage, logoImage }: FormatPreviewProps) {
+export default function FormatPreview({ format, backgroundImage, logoImage, fontAsset }: FormatPreviewProps) {
   const request = useMemo(() => previewRequest(format), [format]);
   const [displayed, setDisplayed] = useState(request);
   const [loading, setLoading] = useState(false);
@@ -88,6 +100,7 @@ export default function FormatPreview({ format, backgroundImage, logoImage }: Fo
     backgroundUrl: backgroundImage?.url ?? null,
     logoId: logoImage?.id ?? null,
     logoUrl: logoImage?.url ?? null,
+    fontId: fontAsset?.id ?? null,
   });
   const customPreviewVisible = refreshedSignature !== null;
   const needsRefresh = refreshedSignature !== previewSignature;
@@ -116,7 +129,7 @@ export default function FormatPreview({ format, backgroundImage, logoImage }: Fo
     setFailed(false);
     try {
       const [foreground, background, logo] = await Promise.all([
-        loadConfiguredForeground(format),
+        loadConfiguredForeground(format, fontAsset),
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);

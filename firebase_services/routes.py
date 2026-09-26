@@ -20,6 +20,7 @@ from .documents import (
     validate_saved_document,
 )
 from .images import UserImageService, maximum_image_bytes
+from .fonts import MAX_FONT_BYTES, UserFontService
 
 
 firebase_blueprint = Blueprint("firebase", __name__, url_prefix="/api/firebase")
@@ -164,4 +165,36 @@ def image_download_url(image_id: str) -> Any:
 @require_firebase_user
 def delete_image(image_id: str) -> tuple[str, int]:
     UserImageService(current_user_id()).delete(image_id)
+    return "", 204
+
+
+@firebase_blueprint.get("/fonts")
+@require_firebase_user
+def list_fonts() -> Any:
+    return jsonify(items=UserFontService(current_user_id()).list(_limit()))
+
+
+@firebase_blueprint.post("/fonts")
+@require_firebase_user
+def upload_font() -> Any:
+    content_length = request.content_length
+    if content_length is not None and content_length > MAX_FONT_BYTES + 100_000:
+        return jsonify(error="The uploaded font is too large"), 413
+    upload = request.files.get("file")
+    if upload is None:
+        raise ValueError("A multipart file field named 'file' is required")
+    return jsonify(UserFontService(current_user_id()).upload(upload, name=request.form.get("name"))), 201
+
+
+@firebase_blueprint.post("/fonts/<font_id>/download-url")
+@require_firebase_user
+def font_download_url(font_id: str) -> Any:
+    url, expiration = UserFontService(current_user_id()).signed_download_url(font_id)
+    return jsonify(url=url, expires_at=expiration.isoformat())
+
+
+@firebase_blueprint.delete("/fonts/<font_id>")
+@require_firebase_user
+def delete_font(font_id: str) -> tuple[str, int]:
+    UserFontService(current_user_id()).delete(font_id)
     return "", 204

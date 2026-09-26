@@ -187,6 +187,20 @@ export interface BuiltInBackground {
   size: { width: number; height: number };
 }
 
+export interface ProvidedFont {
+  asset_id: string;
+  name: string;
+  size_adjustment: number;
+}
+
+export interface UserFont {
+  id: string;
+  name: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt?: string;
+}
+
 export interface SavedFormat {
   id: string;
   name: string;
@@ -204,6 +218,16 @@ export async function listBuiltInBackgrounds(): Promise<BuiltInBackground[]> {
 
 export function builtInBackgroundUrl(assetId: string): string {
   return apiUrl(`backgrounds/${encodeURIComponent(assetId)}`);
+}
+
+export async function listProvidedFonts(): Promise<ProvidedFont[]> {
+  const response = await request("fonts");
+  const body = (await response.json()) as { items?: ProvidedFont[] };
+  return Array.isArray(body.items) ? body.items : [];
+}
+
+export function providedFontUrl(assetId: string): string {
+  return apiUrl(`fonts/${encodeURIComponent(assetId)}`);
 }
 
 async function authenticatedRequest(endpoint: string, token: string, init?: RequestInit): Promise<Response> {
@@ -266,5 +290,30 @@ export async function getUserImageUrl(token: string, imageId: string): Promise<s
   );
   const body = (await response.json()) as { url?: string };
   if (!body.url) throw new Error("The image preview URL was missing.");
+  return body.url;
+}
+
+export async function listUserFonts(token: string): Promise<UserFont[]> {
+  const response = await authenticatedRequest("firebase/fonts?limit=100", token);
+  const body = (await response.json()) as { items?: UserFont[] };
+  return Array.isArray(body.items) ? body.items : [];
+}
+
+export async function uploadUserFont(token: string, file: File, name: string): Promise<UserFont> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("name", name);
+  const response = await authenticatedRequest("firebase/fonts", token, { method: "POST", body: form });
+  return (await response.json()) as UserFont;
+}
+
+export async function deleteUserFont(token: string, fontId: string): Promise<void> {
+  await authenticatedRequest(`firebase/fonts/${encodeURIComponent(fontId)}`, token, { method: "DELETE" });
+}
+
+export async function getUserFontUrl(token: string, fontId: string): Promise<string> {
+  const response = await authenticatedRequest(`firebase/fonts/${encodeURIComponent(fontId)}/download-url`, token, { method: "POST" });
+  const body = (await response.json()) as { url?: string };
+  if (!body.url) throw new Error("The font preview URL was missing.");
   return body.url;
 }

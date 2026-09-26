@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from io import BytesIO
+import json
+from pathlib import Path
 import unittest
 
 from app import app
@@ -54,6 +57,42 @@ class FormatPreviewRouteTests(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_lists_provided_fonts_and_renders_uploaded_font_bytes(self) -> None:
+        fonts_response = self.client.get("/api/fonts")
+        self.assertEqual(fonts_response.status_code, 200)
+        self.assertEqual(
+            {item["asset_id"] for item in fonts_response.get_json()["items"]},
+            {"tyrowo", "impact", "ubuntu"},
+        )
+        font_bytes = (Path(__file__).resolve().parents[1] / "fonts" / "Ubuntu-Regular.ttf").read_bytes()
+        config = {
+            "style": "legacy",
+            "event_format": "singles",
+            "entrant_count": 3,
+            "transparent": True,
+            "header_layout": {
+                "top_left": "metadata",
+                "top_middle": "tournament_logo",
+                "top_right": "tournament_title",
+            },
+            "text_settings": {
+                "font_asset_id": "user:test-font",
+                "font_size_adjustment": 4,
+                "replace_base_urls_with_icons": True,
+                "metadata_fields": ["stream_link", "vod_link"],
+            },
+        }
+        preview_response = self.client.post(
+            "/api/format-preview",
+            data={
+                "config": json.dumps(config),
+                "font_file": (BytesIO(font_bytes), "custom.ttf"),
+            },
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(preview_response.status_code, 200)
+        self.assertTrue(preview_response.data.startswith(b"\x89PNG"))
 
 
 if __name__ == "__main__":

@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
+from pathlib import Path
 from random import choice
+from urllib.parse import urlsplit
 
 from PIL import Image, ImageDraw
 
@@ -45,11 +47,29 @@ from DrawPodium import (
     _place_characters,
     _resolve_doubles_tag_collisions,
     _tag_anchor,
+    _temporary_font_settings,
     _validate_placements,
 )
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
 from podium_colors import podium_color_for_slot
+
+
+WEBSITE_ICON_FOLDER = Path(__file__).resolve().parent / "formatting_assets" / "website_icons"
+WEBSITE_HOST_ICONS = {
+    "start.gg": "startgg.png",
+    "youtube.com": "youtube.png",
+    "youtu.be": "youtube.png",
+    "x.com": "x.png",
+    "twitter.com": "x.png",
+    "bsky.app": "bluesky.png",
+    "bluesky.com": "bluesky.png",
+    "parry.gg": "parrygg.png",
+    "challonge.com": "challonge.png",
+    "challonge.gg": "challonge.png",
+    "twitch.tv": "twitch.png",
+    "twitch.com": "twitch.png",
+}
 
 
 def _header_geometry(position: str, width: int) -> tuple[tuple[int, int], str, int, str]:
@@ -65,13 +85,39 @@ def _header_geometry(position: str, width: int) -> tuple[tuple[int, int], str, i
     raise ValueError(f"Unknown header position: {position}")
 
 
+def _website_icon_and_remainder(value: str) -> tuple[Path, str] | None:
+    candidate = value.strip()
+    parsed = urlsplit(candidate if "://" in candidate else f"https://{candidate}")
+    host = (parsed.hostname or "").casefold().removeprefix("www.")
+    filename = WEBSITE_HOST_ICONS.get(host)
+    if filename is None:
+        return None
+    remainder = parsed.path.strip("/")
+    if parsed.query:
+        remainder = f"{remainder}?{parsed.query}" if remainder else f"?{parsed.query}"
+    return WEBSITE_ICON_FOLDER / filename, remainder
+
+
 @dataclass(frozen=True, slots=True)
 class LegacyPodiumContentRenderer:
     """Draw podium portraits and text using serialized layout preferences."""
 
     font: PodiumFont = PodiumFont.TYROWO
+    custom_font_bytes: bytes | None = None
 
     def draw(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> Image.Image:
+        with _temporary_font_settings(
+            request.text_settings.font_size_adjustment,
+            self.custom_font_bytes,
+        ):
+            return self._draw_with_font(canvas, request, preferences)
+
+    def _draw_with_font(
         self,
         canvas: Image.Image,
         request: CreationRequest,
@@ -364,25 +410,42 @@ class LegacyPodiumContentRenderer:
         (metadata_x, _), metadata_anchor, metadata_width, metadata_align = (
             _header_geometry(metadata_position, width)
         )
-        is_doubles = request.tournament.event_format is TournamentFormat.DOUBLES
-        for field in _metadata_layout(
-            request.tournament,
-            font=self.font,
-            width=width,
-            is_doubles=is_doubles,
-        ):
-            original_y = field["position"][1]
-            draw_text(
-                draw,
-                (metadata_x, original_y),
-                field["text"],
-                anchor=metadata_anchor,
-                max_width=metadata_width,
-                preferred_size=field["preferred_size"],
-                fill=field.get("fill", "white"),
-                align=metadata_align,
-            )
+        metadata_items = self._metadata_items(request)
+        y = 3
+        for text, preferred_size in metadata_items:
+            icon = _website_icon_and_remainder(text) if request.text_settings.replace_base_urls_with_icons else None
+            if icon is None:
+                draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align)
+            else:
+                icon_path, remainder = icon
+                block_left = metadata_x if metadata_position == "top_left" else metadata_x - metadata_width // 2 if metadata_position == "top_middle" else metadata_x - metadata_width
+                with Image.open(icon_path) as source:
+                    website_icon = source.convert("RGBA")
+                    website_icon.thumbnail((22, 22), Image.Resampling.LANCZOS)
+                canvas.alpha_composite(website_icon, (round(block_left), y))
+                if remainder:
+                    draw_text(draw, (round(block_left) + 29, y), remainder, anchor="la", max_width=metadata_width - 29, preferred_size=preferred_size, align="left")
+            y += max(27, preferred_size + 7)
         self._draw_attribution(canvas, request, mode)
+
+    @staticmethod
+    def _metadata_items(request: CreationRequest) -> list[tuple[str, int]]:
+        tournament = request.tournament
+        selected = request.text_settings.metadata_fields
+        count_label = "Teams" if tournament.event_format is TournamentFormat.DOUBLES else "Entrants"
+        values = {
+            "event": (tournament.event, 34),
+            "date": (str(tournament.date), 28),
+            "entrants_count": (f"{tournament.entrants_count} {count_label}", 24),
+            "tournament_link": (tournament.link, 18),
+            "stream_link": (tournament.stream_link, 18),
+            "vod_link": (tournament.vod_link, 18),
+            "to_x_account": (tournament.organizer_x_account, 18),
+            "to_twitch_account": (tournament.organizer_twitch_account, 18),
+            "to_bluesky_account": (tournament.organizer_bluesky_account, 18),
+        }
+        order = ("event", "date", "entrants_count", "tournament_link", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account")
+        return [(str(values[field][0]), values[field][1]) for field in order if field in selected and values[field][0] is not None]
 
     def _draw_tournament_text(
         self,

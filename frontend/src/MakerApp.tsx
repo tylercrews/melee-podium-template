@@ -1,24 +1,46 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { BuiltInBackground, FighterOption, UserImage, UserImageCategory, builtInBackgroundUrl, deleteUserImage, getOptions, getStats, getUserImageUrl, listBuiltInBackgrounds, listUserImages, uploadUserImage } from "./api";
+import { BuiltInBackground, FighterOption, ProvidedFont, UserFont, UserImage, UserImageCategory, builtInBackgroundUrl, deleteUserFont, deleteUserImage, getOptions, getStats, getUserFontUrl, getUserImageUrl, listBuiltInBackgrounds, listProvidedFonts, listUserFonts, listUserImages, providedFontUrl, uploadUserFont, uploadUserImage } from "./api";
 import { User, firebaseAuthAvailable, firebaseAuthErrorMessage, signInWithGoogle, signOutCurrentUser, watchCurrentUser } from "./firebaseAuth";
 import EmailAuthForm from "./EmailAuthForm";
 import FavoritesManagement from "./FavoritesManagement";
 import FormatStep from "./FormatStep";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
-import FormatPreview from "./FormatPreview";
+import FormatPreview, { FormatFontInfo } from "./FormatPreview";
 import Footer from "./Footer";
 import { FavoritesData, loadFavorites, saveFavorites } from "./favorites";
 import { EMPTY_FORMAT, FormatConfiguration, isFormatComplete } from "./format";
 
-const STEPS = ["Images", "Format", "Bracket Import", "Tournament", "Entrants"] as const;
+const STEPS = ["Assets", "Format", "Bracket Import", "Tournament", "Entrants"] as const;
 const MAX_IMAGES = 10;
 const MAX_IMAGE_BYTES = 300 * 1024 * 1024;
+const MAX_FONT_BYTES = 10 * 1024 * 1024;
+type UploadKind = UserImageCategory | "font";
 type Page = "maker" | "saved";
 interface SelectedImages { tournament_logo: string | null; background: string | null }
 interface PreviewUrls { tournament_logo: string; background: string }
 const EMPTY_SELECTION: SelectedImages = { tournament_logo: null, background: null };
 const EMPTY_URLS: PreviewUrls = { tournament_logo: "", background: "" };
 const categoryLabel = (category: UserImageCategory) => category === "tournament_logo" ? "Tournament Logo" : "Background Image";
+
+function FontSpecimen({ font, compact = false }: { font: FormatFontInfo; compact?: boolean }) {
+  const family = `asset-font-${font.id.replace(/[^a-z0-9]/gi, "-")}`;
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const face = new FontFace(family, `url(${JSON.stringify(font.url)})`);
+    face.load().then((ready) => { if (active) { document.fonts.add(ready); setLoaded(true); } }).catch(() => { if (active) setLoaded(false); });
+    return () => { active = false; document.fonts.delete(face); };
+  }, [family, font.url]);
+  return <span className={`font-specimen${compact ? " font-specimen--compact" : ""}`} style={loaded ? { fontFamily: family } : undefined}>{loaded ? "Melee Podium Maker" : "Loading font…"}</span>;
+}
+
+function ProvidedFontLibrary({ fonts, selectedId, onSelect }: { fonts: ProvidedFont[]; selectedId: string; onSelect: (font: ProvidedFont) => void }) {
+  return <section className="image-library font-library"><div className="image-library__header"><span className="image-library__type-icon" aria-hidden="true">Aa</span><div><h3>Provided Fonts</h3><p>Included collection · {fonts.length} available</p></div></div><div className="font-list">{fonts.map((font) => { const id = `provided:${font.asset_id}`; const info = { id, name: font.name, url: providedFontUrl(font.asset_id), custom: false }; return <button className={`font-row${selectedId === id ? " font-row--selected" : ""}`} type="button" key={id} onClick={() => onSelect(font)} aria-pressed={selectedId === id}><span className="image-row__radio" aria-hidden="true" /><span><strong>{font.name}</strong><FontSpecimen font={info} compact /><small>Built-in calibration {font.size_adjustment >= 0 ? "+" : ""}{font.size_adjustment}px</small></span></button>; })}</div></section>;
+}
+
+function UserFontLibrary({ fonts, selectedId, busyId, urls, onSelect, onUpload, onDelete }: { fonts: UserFont[]; selectedId: string; busyId: string; urls: Record<string, string>; onSelect: (font: UserFont) => void; onUpload: () => void; onDelete: (font: UserFont) => void }) {
+  return <section className="image-library font-library"><div className="image-library__header"><span className="image-library__type-icon" aria-hidden="true">Aa</span><div><h3>Your Fonts</h3><p>Your uploads · {fonts.length} of 10 saved</p></div>{fonts.length < 10 && <button className="button button--outline image-library__upload" type="button" onClick={onUpload}>+ Upload</button>}</div><div className="font-list">{fonts.length ? fonts.map((font) => { const id = `user:${font.id}`; const info = urls[font.id] ? { id, name: font.name, url: urls[font.id], custom: true } : null; return <div className={`font-row-wrap${selectedId === id ? " font-row-wrap--selected" : ""}`} key={font.id}><button className="font-row" type="button" onClick={() => onSelect(font)} disabled={busyId === font.id} aria-pressed={selectedId === id}><span className="image-row__radio" aria-hidden="true" /><span><strong>{font.name}</strong>{info ? <FontSpecimen font={info} compact /> : <small>{Math.ceil(font.sizeBytes / 1024)} KB · select to preview</small>}</span></button><button className="icon-button icon-button--danger" type="button" aria-label={`Delete ${font.name}`} onClick={() => onDelete(font)} disabled={Boolean(busyId)}><TrashIcon /></button></div>; }) : <div className="image-list__empty"><p>No custom fonts saved yet.</p><button type="button" onClick={onUpload}>Upload your first</button></div>}</div></section>;
+}
 
 function ImageTypeIcon({ category }: { category: UserImageCategory }) {
   return category === "tournament_logo"
@@ -39,7 +61,7 @@ function StepRail({ activeStep, maxStep, onSelect }: { activeStep: number; maxSt
 }
 
 function SignInNotice({ onSignIn }: { onSignIn: () => void }) {
-  return <section className="signin-notice"><span className="signin-notice__icon"><AccountIcon signedIn={false} /></span><div><h3>Sign in to use your image library</h3><p>Create an account or sign in to save and select tournament logos and backgrounds. Guest uploads are coming later.</p></div><button className="button button--light" type="button" onClick={onSignIn}>Sign in or create account</button></section>;
+  return <section className="signin-notice"><span className="signin-notice__icon"><AccountIcon signedIn={false} /></span><div><h3>Sign in to use your asset library</h3><p>Create an account or sign in to save tournament logos, backgrounds, and custom fonts. Guest uploads are coming later.</p></div><button className="button button--light" type="button" onClick={onSignIn}>Sign in or create account</button></section>;
 }
 
 function ImageLibrary({ category, heading, images, selectedId, busyId, onSelect, onUpload, onDelete }: { category: UserImageCategory; heading?: string; images: UserImage[]; selectedId: string | null; busyId: string; onSelect: (image: UserImage) => void; onUpload: (category: UserImageCategory) => void; onDelete: (image: UserImage) => void }) {
@@ -72,7 +94,7 @@ function BuiltInBackgroundLibrary({ backgrounds, selectedId, onSelect }: { backg
   </section>;
 }
 
-function Preview({ activeStep, urls, format, backgroundImage, logoImage, renderCount, onContinue }: { activeStep: number; urls: PreviewUrls; format: FormatConfiguration; backgroundImage: FormatImageInfo | null; logoImage: FormatImageInfo | null; renderCount: number | null; onContinue: () => void }) {
+function Preview({ activeStep, urls, format, backgroundImage, logoImage, fontAsset, renderCount, onContinue }: { activeStep: number; urls: PreviewUrls; format: FormatConfiguration; backgroundImage: FormatImageInfo | null; logoImage: FormatImageInfo | null; fontAsset: FormatFontInfo | null; renderCount: number | null; onContinue: () => void }) {
   const hasLogo = Boolean(urls.tournament_logo);
   const hasBackground = Boolean(urls.background);
   const formatComplete = isFormatComplete(format);
@@ -94,9 +116,10 @@ function Preview({ activeStep, urls, format, backgroundImage, logoImage, renderC
     <div className="preview-column__content">
       <button className={`preview-action preview-action--${activeStep > 0 ? "green" : action.tone}`} type="button" onClick={onContinue} disabled={activeStep > 1 || (activeStep === 1 && !formatComplete)}><span>{activeStep > 0 ? workflowAction : action.label}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
       <div className="preview-heading"><h2>Image Preview</h2></div>
-      {activeStep > 0 ? <><FormatPreview format={format} backgroundImage={backgroundImage} logoImage={logoImage} />{activeStep === 1 && !formatComplete && <span className="format-preview__waiting">Choose all format properties to continue.</span>}</> : <div className="preview-assets">
+      {activeStep > 0 ? <><FormatPreview format={format} backgroundImage={backgroundImage} logoImage={logoImage} fontAsset={fontAsset} />{activeStep === 1 && !formatComplete && <span className="format-preview__waiting">Choose all format properties to continue.</span>}</> : <div className="preview-assets">
         <figure className="preview-asset"><figcaption>Background</figcaption><div className="preview-asset__frame">{urls.background ? <img src={urls.background} alt="Selected background" /> : <span>No background selected</span>}</div></figure>
         <figure className="preview-asset"><figcaption>Tournament Logo</figcaption><div className="preview-asset__frame preview-asset__frame--transparent">{urls.tournament_logo ? <img src={urls.tournament_logo} alt="Selected tournament logo" /> : <span>No logo selected</span>}</div></figure>
+        {fontAsset && <figure className="preview-asset preview-asset--font"><figcaption>Font</figcaption><div className="preview-asset__frame"><FontSpecimen font={fontAsset} /></div></figure>}
       </div>}
     </div>
     <Footer renderCount={renderCount} />
@@ -111,6 +134,10 @@ export default function MakerApp() {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [images, setImages] = useState<UserImage[]>([]);
+  const [providedFonts, setProvidedFonts] = useState<ProvidedFont[]>([]);
+  const [userFonts, setUserFonts] = useState<UserFont[]>([]);
+  const [selectedFontId, setSelectedFontId] = useState("provided:tyrowo");
+  const [fontUrls, setFontUrls] = useState<Record<string, string>>({});
   const [builtInBackgrounds, setBuiltInBackgrounds] = useState<BuiltInBackground[]>([]);
   const [selected, setSelected] = useState<SelectedImages>(EMPTY_SELECTION);
   const [imagesSkipped, setImagesSkipped] = useState(false);
@@ -118,7 +145,7 @@ export default function MakerApp() {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState("");
-  const [uploadCategory, setUploadCategory] = useState<UserImageCategory | null>(null);
+  const [uploadCategory, setUploadCategory] = useState<UploadKind | null>(null);
   const [uploadName, setUploadName] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -146,27 +173,49 @@ export default function MakerApp() {
     const logo = images.find((item) => item.id === selected.tournament_logo && item.category === "tournament_logo");
     return logo ? { id: logo.id, name: logo.name, url: previewUrls.tournament_logo, width: logo.width, height: logo.height } : null;
   }, [images, previewUrls.tournament_logo, selected.tournament_logo]);
+  const selectedFontAsset = useMemo<FormatFontInfo | null>(() => {
+    if (selectedFontId.startsWith("provided:")) {
+      const assetId = selectedFontId.slice("provided:".length);
+      const font = providedFonts.find((item) => item.asset_id === assetId);
+      return font ? { id: selectedFontId, name: font.name, url: providedFontUrl(assetId), custom: false } : null;
+    }
+    const fontId = selectedFontId.slice("user:".length);
+    const font = userFonts.find((item) => item.id === fontId);
+    const url = fontUrls[fontId];
+    return font && url ? { id: selectedFontId, name: font.name, url, custom: true } : null;
+  }, [fontUrls, providedFonts, selectedFontId, userFonts]);
   const bothImagesSelected = Boolean(selected.tournament_logo && selected.background);
   const imagesStepComplete = bothImagesSelected || imagesSkipped;
   const formatStepComplete = imagesStepComplete && isFormatComplete(format);
   const maxStep = formatStepComplete ? 2 : imagesStepComplete ? 1 : 0;
 
-  useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setImages([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); } }), []);
+  useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setImages([]); setUserFonts([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); setSelectedFontId((current) => { if (current.startsWith("user:")) { setFormat((formatValue) => ({ ...formatValue, text_settings: { ...formatValue.text_settings, font_asset_id: "provided:tyrowo", font_size_adjustment: 0 } })); return "provided:tyrowo"; } return current; }); } }), []);
   useEffect(() => { getOptions().then((options) => setFighters(options.fighters)).catch(() => undefined); }, []);
   useEffect(() => { getStats().then((stats) => setRenderCount(stats.render_count)).catch(() => undefined); }, []);
   useEffect(() => { listBuiltInBackgrounds().then(setBuiltInBackgrounds).catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Could not load the included backgrounds.")); }, []);
+  useEffect(() => { listProvidedFonts().then(setProvidedFonts).catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Could not load the provided fonts.")); }, []);
+  useEffect(() => {
+    const fontAssetId = format.text_settings.font_asset_id;
+    setSelectedFontId(fontAssetId);
+    if (!user || !fontAssetId.startsWith("user:")) return;
+    const fontId = fontAssetId.slice("user:".length);
+    if (fontUrls[fontId]) return;
+    let current = true;
+    user.getIdToken().then((token) => getUserFontUrl(token, fontId)).then((url) => { if (current) setFontUrls((urls) => ({ ...urls, [fontId]: url })); }).catch(() => { if (current) setMessage("The saved format's custom font is not available in this account."); });
+    return () => { current = false; };
+  }, [format.text_settings.font_asset_id, user]);
   useEffect(() => {
     if (!user) return;
     let current = true;
     setLibraryLoading(true);
-    user.getIdToken().then(listUserImages).then((items) => { if (current) { setImages(items); setLibraryLoading(false); } }).catch((error: unknown) => { if (current) { setMessage(error instanceof Error ? error.message : "Could not load your image library."); setLibraryLoading(false); } });
+    user.getIdToken().then(async (token) => Promise.all([listUserImages(token), listUserFonts(token)])).then(([items, fonts]) => { if (current) { setImages(items); setUserFonts(fonts); setLibraryLoading(false); } }).catch((error: unknown) => { if (current) { setMessage(error instanceof Error ? error.message : "Could not load your asset library."); setLibraryLoading(false); } });
     return () => { current = false; };
   }, [user]);
 
   function openAccount() { setAuthMessage(""); accountDialogRef.current?.showModal(); }
   async function handleSignIn() { setAuthMessage(""); try { await signInWithGoogle(); accountDialogRef.current?.close(); } catch (error) { setAuthMessage(firebaseAuthErrorMessage(error)); } }
   async function handleSignOut() { await signOutCurrentUser(); accountDialogRef.current?.close(); setImagesSkipped(false); setActiveStep(0); }
-  function openUpload(category: UserImageCategory) { setUploadCategory(category); setUploadName(""); setUploadFile(null); setMessage(""); uploadDialogRef.current?.showModal(); }
+  function openUpload(category: UploadKind) { setUploadCategory(category); setUploadName(""); setUploadFile(null); setMessage(""); uploadDialogRef.current?.showModal(); }
   async function selectImage(image: UserImage) {
     if (!user) return;
     if (selected[image.category] === image.id) {
@@ -190,9 +239,36 @@ export default function MakerApp() {
     setPreviewUrls((current) => ({ ...current, background: builtInBackgroundUrl(background.asset_id) }));
     setMessage("");
   }
+  function selectProvidedFont(font: ProvidedFont) {
+    const id = `provided:${font.asset_id}`;
+    setSelectedFontId(id);
+    setFormat((current) => ({ ...current, text_settings: { ...current.text_settings, font_asset_id: id, font_size_adjustment: 0 } }));
+    setMessage("");
+  }
+  async function selectUserFont(font: UserFont) {
+    if (!user) return;
+    setBusyId(font.id); setMessage("");
+    try {
+      const url = fontUrls[font.id] ?? await getUserFontUrl(await user.getIdToken(), font.id);
+      setFontUrls((current) => ({ ...current, [font.id]: url }));
+      const id = `user:${font.id}`;
+      setSelectedFontId(id);
+      setFormat((current) => ({ ...current, text_settings: { ...current.text_settings, font_asset_id: id } }));
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Could not preview that font."); }
+    finally { setBusyId(""); }
+  }
   async function handleUpload(event: FormEvent) {
     event.preventDefault(); if (!user || !uploadCategory || !uploadFile) return;
     const normalizedName = uploadName.trim().replace(/\s+/g, " ");
+    if (uploadCategory === "font") {
+      if (uploadFile.size > MAX_FONT_BYTES) { setMessage("Fonts must be 10 MB or smaller."); return; }
+      if (userFonts.some((font) => font.name.toLocaleLowerCase() === normalizedName.toLocaleLowerCase())) { setMessage("You already have a font with that name."); return; }
+      setUploading(true); setMessage("");
+      try { const created = await uploadUserFont(await user.getIdToken(), uploadFile, normalizedName); setUserFonts((current) => [created, ...current]); uploadDialogRef.current?.close(); await selectUserFont(created); }
+      catch (error) { setMessage(error instanceof Error ? error.message : "Could not upload that font."); }
+      finally { setUploading(false); }
+      return;
+    }
     if (uploadFile.size > MAX_IMAGE_BYTES) { setMessage("Images must be 300 MB or smaller."); return; }
     if (groupedImages[uploadCategory].some((image) => image.name.toLocaleLowerCase() === normalizedName.toLocaleLowerCase())) { setMessage("You already have an image with that name in this category."); return; }
     setUploading(true); setMessage("");
@@ -207,12 +283,22 @@ export default function MakerApp() {
     catch (error) { setMessage(error instanceof Error ? error.message : "Could not delete that image."); }
     finally { setBusyId(""); }
   }
+  async function handleDeleteFont(font: UserFont) {
+    if (!user || !window.confirm("Are you sure you want to permanently delete this font?")) return;
+    setBusyId(font.id); setMessage("");
+    try {
+      await deleteUserFont(await user.getIdToken(), font.id);
+      setUserFonts((current) => current.filter((item) => item.id !== font.id));
+      if (selectedFontId === `user:${font.id}`) selectProvidedFont(providedFonts.find((item) => item.asset_id === "tyrowo") ?? { asset_id: "tyrowo", name: "Tyrowo Inked", size_adjustment: 0 });
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Could not delete that font."); }
+    finally { setBusyId(""); }
+  }
   const displayName = user?.displayName || user?.email || "Signed in";
 
   return <div className="app-shell">
     <header className="topbar"><button className="brand" type="button" onClick={() => { setPage("maker"); setActiveStep(0); }} aria-label="Melee Podium Maker home"><img className="brand__mark" src={`${import.meta.env.BASE_URL}favicon.png`} alt="" /><span>Melee Podium Maker</span></button><div className="topbar__actions"><button className="button button--nav" type="button" onClick={() => setPage(page === "maker" ? "saved" : "maker")}>{page === "maker" ? "Manage Saved Data" : "Image Maker"}</button><button className={`account-button${user ? " account-button--signed-in" : ""}`} type="button" onClick={openAccount} aria-label={user ? `Account: ${displayName}` : "Sign in"}>{user?.photoURL ? <img src={user.photoURL} alt="" /> : <AccountIcon signedIn={Boolean(user)} />}<span className="account-button__dot" /></button></div></header>
-    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select/Upload Images</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(1); }}>Skip for now</button></div><p>You will be able to resize and position your images in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your image library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 1 ? <FormatStep user={user} value={format} backgroundImage={selectedBackgroundImage} onChange={setFormat} onSignIn={openAccount} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} backgroundImage={selectedBackgroundImage} logoImage={selectedLogoImage} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(1); } else if (activeStep === 1 && formatStepComplete) { setActiveStep(2); } }} /></main>}
-    <dialog className="modal account-modal" ref={accountDialogRef} onClose={() => { setAuthMessage(""); setAuthFormKey((current) => current + 1); }} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => accountDialogRef.current?.close()} aria-label="Close">×</button>{user ? <><span className="modal__icon"><AccountIcon signedIn /></span><h2>{displayName}</h2><p>Your private image library is connected.</p><button className="button button--dark" type="button" onClick={handleSignOut}>Sign out</button></> : <><span className="modal__icon"><AccountIcon signedIn={false} /></span><h2>Sign in or create an account</h2><p>Use your email and password, or continue with Google.</p><EmailAuthForm key={authFormKey} disabled={!firebaseAuthAvailable} onComplete={() => accountDialogRef.current?.close()} /><div className="auth-divider"><span>or</span></div><button className="button button--google" type="button" onClick={handleSignIn} disabled={!firebaseAuthAvailable}><span>G</span> Continue with Google</button>{!firebaseAuthAvailable && <p className="modal__warning">Sign-in needs the Firebase Web SDK environment values for this deployment.</p>}</>}{authMessage && <p className="inline-message" role="alert">{authMessage}</p>}</div></dialog>
-    <dialog className="modal" ref={uploadDialogRef} onClick={(event) => { if (event.target === event.currentTarget && !uploading) event.currentTarget.close(); }}><form className="modal__content" onSubmit={handleUpload}><button className="modal__close" type="button" onClick={() => uploadDialogRef.current?.close()} aria-label="Close" disabled={uploading}>×</button><span className="eyebrow">Add to library</span><h2>Upload {uploadCategory ? categoryLabel(uploadCategory).toLowerCase() : "image"}</h2><label className="field">Image name<input maxLength={80} value={uploadName} onChange={(event) => setUploadName(event.target.value)} placeholder="e.g. Summer Weekly" required autoFocus /></label><label className="file-field"><input type="file" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" onChange={(event: ChangeEvent<HTMLInputElement>) => setUploadFile(event.target.files?.[0] ?? null)} required /><span>{uploadFile ? uploadFile.name : "Choose a PNG, JPG, WebP, GIF, or BMP"}</span></label><p className="field-help">Names must be unique within this image category. Maximum file size: 300 MB.</p>{message && <p className="inline-message" role="alert">{message}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => uploadDialogRef.current?.close()} disabled={uploading}>Cancel</button><button className="button button--dark" type="submit" disabled={uploading || !uploadFile || !uploadName.trim()}>{uploading ? "Uploading…" : "Upload image"}</button></div></form></dialog>
+    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select Assets</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(1); }}>Skip optional images</button></div><p>Choose a font, tournament logo, and background. Images remain optional and can be resized in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><ProvidedFontLibrary fonts={providedFonts} selectedId={selectedFontId} onSelect={selectProvidedFont} />{user && !libraryLoading && <UserFontLibrary fonts={userFonts} selectedId={selectedFontId} busyId={busyId} urls={fontUrls} onSelect={selectUserFont} onUpload={() => openUpload("font")} onDelete={handleDeleteFont} />}<BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your asset library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 1 ? <FormatStep user={user} value={format} backgroundImage={selectedBackgroundImage} onChange={setFormat} onSignIn={openAccount} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} backgroundImage={selectedBackgroundImage} logoImage={selectedLogoImage} fontAsset={selectedFontAsset} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(1); } else if (activeStep === 1 && formatStepComplete) { setActiveStep(2); } }} /></main>}
+    <dialog className="modal account-modal" ref={accountDialogRef} onClose={() => { setAuthMessage(""); setAuthFormKey((current) => current + 1); }} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => accountDialogRef.current?.close()} aria-label="Close">×</button>{user ? <><span className="modal__icon"><AccountIcon signedIn /></span><h2>{displayName}</h2><p>Your private asset library is connected.</p><button className="button button--dark" type="button" onClick={handleSignOut}>Sign out</button></> : <><span className="modal__icon"><AccountIcon signedIn={false} /></span><h2>Sign in or create an account</h2><p>Use your email and password, or continue with Google.</p><EmailAuthForm key={authFormKey} disabled={!firebaseAuthAvailable} onComplete={() => accountDialogRef.current?.close()} /><div className="auth-divider"><span>or</span></div><button className="button button--google" type="button" onClick={handleSignIn} disabled={!firebaseAuthAvailable}><span>G</span> Continue with Google</button>{!firebaseAuthAvailable && <p className="modal__warning">Sign-in needs the Firebase Web SDK environment values for this deployment.</p>}</>}{authMessage && <p className="inline-message" role="alert">{authMessage}</p>}</div></dialog>
+    <dialog className="modal" ref={uploadDialogRef} onClick={(event) => { if (event.target === event.currentTarget && !uploading) event.currentTarget.close(); }}><form className="modal__content" onSubmit={handleUpload}><button className="modal__close" type="button" onClick={() => uploadDialogRef.current?.close()} aria-label="Close" disabled={uploading}>×</button><span className="eyebrow">Add to library</span><h2>Upload {uploadCategory === "font" ? "font" : uploadCategory ? categoryLabel(uploadCategory).toLowerCase() : "asset"}</h2><label className="field">Asset name<input maxLength={80} value={uploadName} onChange={(event) => setUploadName(event.target.value)} placeholder={uploadCategory === "font" ? "e.g. Tournament Sans" : "e.g. Summer Weekly"} required autoFocus /></label><label className="file-field"><input type="file" accept={uploadCategory === "font" ? ".ttf,.otf,font/ttf,font/otf" : ".png,.jpg,.jpeg,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp"} onChange={(event: ChangeEvent<HTMLInputElement>) => setUploadFile(event.target.files?.[0] ?? null)} required /><span>{uploadFile ? uploadFile.name : uploadCategory === "font" ? "Choose a TTF or OTF font" : "Choose a PNG, JPG, WebP, GIF, or BMP"}</span></label><p className="field-help">Names must be unique within this asset category. Maximum file size: {uploadCategory === "font" ? "10 MB" : "300 MB"}.</p>{message && <p className="inline-message" role="alert">{message}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => uploadDialogRef.current?.close()} disabled={uploading}>Cancel</button><button className="button button--dark" type="submit" disabled={uploading || !uploadFile || !uploadName.trim()}>{uploading ? "Uploading…" : "Upload asset"}</button></div></form></dialog>
   </div>;
 }

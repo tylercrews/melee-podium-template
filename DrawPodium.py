@@ -7,6 +7,8 @@ Tournament text is accepted and validated now; its eventual drawing belongs in
 """
 
 from collections.abc import Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from enum import Enum
 from functools import partial
@@ -16,6 +18,7 @@ from random import choice
 import re
 
 from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
 from models import Character, DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
@@ -41,6 +44,22 @@ FONT_CONFIG = {
     PodiumFont.IMPACT: ("Impact.ttf", 8),
     PodiumFont.UBUNTU: ("Ubuntu-Regular.ttf", 1),
 }
+
+_RUNTIME_FONT_SIZE_ADJUSTMENT: ContextVar[int] = ContextVar("runtime_font_size_adjustment", default=0)
+_RUNTIME_FONT_BYTES: ContextVar[bytes | None] = ContextVar("runtime_font_bytes", default=None)
+
+
+@contextmanager
+def _temporary_font_settings(size_adjustment: int = 0, font_bytes: bytes | None = None):
+    """Apply request-local font bytes and size calibration during one render."""
+
+    adjustment_token = _RUNTIME_FONT_SIZE_ADJUSTMENT.set(size_adjustment)
+    bytes_token = _RUNTIME_FONT_BYTES.set(font_bytes)
+    try:
+        yield
+    finally:
+        _RUNTIME_FONT_SIZE_ADJUSTMENT.reset(adjustment_token)
+        _RUNTIME_FONT_BYTES.reset(bytes_token)
 
 # Positive values move every portrait's bottom anchor farther down onto the
 # podium. Keep this centralized so the vertical position is easy to tune.
@@ -325,9 +344,12 @@ def _character_with_team_color(character: Character, team_color: str | None) -> 
     return character if team_color is None else replace(character, color=team_color)
 
 
-def _font_settings(font: PodiumFont) -> tuple[Path, int]:
+def _font_settings(font: PodiumFont) -> tuple[Path | BytesIO, int]:
     filename, size_adjustment = FONT_CONFIG[font]
-    return PROJECT_ROOT / "fonts" / filename, size_adjustment
+    runtime_bytes = _RUNTIME_FONT_BYTES.get()
+    source = BytesIO(runtime_bytes) if runtime_bytes is not None else PROJECT_ROOT / "fonts" / filename
+    base_adjustment = 0 if runtime_bytes is not None else size_adjustment
+    return source, base_adjustment + _RUNTIME_FONT_SIZE_ADJUSTMENT.get()
 
 
 def _adjusted_font_size(preferred_size: int, font: PodiumFont) -> int:
@@ -336,15 +358,22 @@ def _adjusted_font_size(preferred_size: int, font: PodiumFont) -> int:
     return max(11, preferred_size + size_adjustment)
 
 
+def _load_truetype(source: Path | BytesIO, size: int) -> ImageFont.FreeTypeFont:
+    # Pillow retains the stream for a loaded font. Give each attempted size an
+    # independent stream so fit-to-width retries cannot consume one another.
+    actual_source = BytesIO(source.getvalue()) if isinstance(source, BytesIO) else source
+    return ImageFont.truetype(actual_source, size)
+
+
 def _font_to_fit(
     text: str, max_width: int, preferred_size: int, font: PodiumFont
 ) -> ImageFont.FreeTypeFont:
     font_path, _ = _font_settings(font)
     for size in range(_adjusted_font_size(preferred_size, font), 10, -1):
-        loaded_font = ImageFont.truetype(font_path, size)
+        loaded_font = _load_truetype(font_path, size)
         if max(loaded_font.getlength(line) for line in text.splitlines()) <= max_width:
             return loaded_font
-    return ImageFont.truetype(font_path, 11)
+    return _load_truetype(font_path, 11)
 
 
 def _wrap_text(
@@ -352,7 +381,7 @@ def _wrap_text(
 ) -> str:
     """Wrap whole words to a podium's available label width."""
     font_path, _ = _font_settings(font)
-    loaded_font = ImageFont.truetype(font_path, _adjusted_font_size(preferred_size, font))
+    loaded_font = _load_truetype(font_path, _adjusted_font_size(preferred_size, font))
     words = text.split()
     if not words:
         return text
@@ -385,7 +414,7 @@ def _wrap_url(
     limit; only a single segment wider than that falls back to character breaks.
     """
     font_path, _ = _font_settings(font)
-    loaded_font = ImageFont.truetype(font_path, _adjusted_font_size(preferred_size, font))
+    loaded_font = _load_truetype(font_path, _adjusted_font_size(preferred_size, font))
     lines: list[str] = []
     line = ""
 

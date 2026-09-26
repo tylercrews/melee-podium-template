@@ -21,7 +21,7 @@
 
 ## Frontend creation workflow
 
-- The image maker uses five ordered steps: Images, Format, Bracket Import, Tournament, and Entrants. Users may return to any completed step but cannot open a later step until every prerequisite step is complete.
+- The image maker uses five ordered steps: Assets, Format, Bracket Import, Tournament, and Entrants. Users may return to any completed step but cannot open a later step until every prerequisite step is complete.
 - On desktop, the creation workflow occupies the left two-thirds of the screen and a live image preview occupies the right third. The primary action sits above the preview and changes with workflow state, including example-entrant previews after formatting and the finalized-image download after all inputs are complete.
 - On the Format step, the preview shows a complete demo image with example entrants rather than separate background and logo cards. Its primary action reads `Continue to Bracket Import` and remains disabled until every required format property is selected.
 - The Format preview rerenders when structural choices change, including Legacy/Customizable, Singles/Doubles, entrant count, and layout variant. Debounce preview requests and retain the prior image while the replacement loads. Cache only bounded exact-setting combinations; future color and metallic customization values must participate in the preview key or use an uncached request.
@@ -36,7 +36,10 @@
 - The global navigation identifies the app as Melee Podium Maker, exposes account state in the top-right account control, and toggles between Image Maker and Manage Saved Data.
 - Label the saved-data navigation `Manage Saved Data`; its management surface has explicit sections for saved images, saved formats, and favorite entrants even while some sections are still scaffolds.
 - Firebase browser authentication supports both Google sign-in and email/password account creation and sign-in. Keep both choices available in the same account dialog and route their resulting ID tokens through the same authenticated Flask API boundary.
-- The Images step optionally selects one tournament logo and one background. Neither image is required; users can skip the step with zero or one image selected and continue to Format. Signed-in users select private Firebase images by their assigned display names; guest image uploads remain disabled until browser-memory behavior has been stress-tested.
+- The Assets step optionally selects one tournament logo and one background and always selects a font, defaulting to Tyrowo. Neither image is required; users can skip the optional images with zero or one selected and continue to Format. Signed-in users select private Firebase images and fonts by their assigned display names; guest uploads remain disabled until browser-memory behavior has been stress-tested.
+- Assets visibly separates provided fonts (Tyrowo Inked, Impact, and Ubuntu) from signed-in users' private TTF/OTF uploads. Show the selected font as a specimen in the right preview panel when space permits. Each user may store at most 10 fonts, names are unique case-insensitively, and permanent deletion requires confirmation.
+- Provided fonts retain their renderer-owned baseline pixel calibration and do not show a user adjustment control. Custom fonts expose a serialized integer font-size adjustment slider from -20px through +20px, and the runtime renderer applies it request-locally without leaking font state between concurrent renders.
+- Header Content includes serialized text settings. `Replace Base URLs With Icons` recognizes start.gg, YouTube, X, Bluesky, parry.gg, Challonge, and Twitch using the bundled `formatting_assets/website_icons/` assets. The metadata selector supports event, date, entrant/team count, tournament link, stream link, VOD link, TO X account, TO Twitch account, and TO Bluesky account, including select-all and deselect-all shortcuts.
 - The background picker includes both user-uploaded images and the built-in assets from `backgrounds/`. Present those as visibly separate collections, never count or delete a built-in as a user upload, and attribute the included stage renders to Malarki_.
 - Each signed-in user may store at most 10 tournament logos and 10 backgrounds. Names must be unique case-insensitively within each category, and permanent deletion requires an explicit confirmation dialog.
 - Legacy Podium preferences preserve the 1672x941 output, portrait scales, character anchors, and fixed label/seed anchors from `DrawPodium.py`. Legacy player-tag vertical anchors are not fixed pixels; retain the rule that derives them from the visible top of each rendered portrait with a 15-pixel upward offset.
@@ -100,8 +103,8 @@
   user's `uid`. Keep client Firestore and Storage rules closed unless direct
   browser access is deliberately designed and protected with tested rules.
 - Store user data as separate Firestore documents under
-  `users/{uid}/layouts/{layoutId}`, `users/{uid}/entrants/{entrantId}`, and
-  `users/{uid}/images/{imageId}`. Do not store a growing user's complete data
+  `users/{uid}/layouts/{layoutId}`, `users/{uid}/entrants/{entrantId}`,
+  `users/{uid}/images/{imageId}`, and `users/{uid}/fonts/{fontId}`. Do not store a growing user's complete data
   set in one document.
 - Saved entrant and layout records use an explicit envelope containing a name,
   schema version, JSON-object data, and server timestamps. Validate their
@@ -115,6 +118,11 @@
   browser-supplied filename or MIME type, enforce byte and pixel limits, and
   accept only explicitly supported formats. Generate short-lived download URLs
   only after verifying ownership.
+- Store private uploaded fonts as bytes in Cloud Storage with their metadata in
+  `users/{uid}/fonts/{fontId}`. Accept only renderable TTF/OTF content validated
+  from its bytes, enforce a 10 MiB limit and 10-font per-user limit, and
+  reference fonts from saved formats by stable `provided:<id>` or
+  `user:<fontId>` IDs rather than signed URLs.
 - `FIREBASE_STORAGE_BUCKET` contains deployment configuration and must remain an
   environment variable. Public examples use placeholders, never the real
   bucket name. Firebase endpoints should fail without exposing credentials or

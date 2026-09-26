@@ -137,5 +137,10 @@ def sample_tournament(
         date=date.today(),
         entrants_count=50,
         link="start.gg/notareallink/tournamentlink",
+        stream_link="twitch.tv/meleepodium",
+        vod_link="youtube.com/watch?v=example",
+        organizer_x_account="x.com/MeleePodium",
+        organizer_twitch_account="twitch.tv/meleepodium",
+        organizer_bluesky_account="bsky.app/profile/meleepodium.example",
         event_format=event_format,
     )

@@ -26,6 +26,24 @@ from podium_colors import PodiumColorConfiguration, PodiumColorInput, PodiumColo
 
 
 EntrantResult = SinglesEntrant | DoublesTeam
+METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"})
+
+
+@dataclass(frozen=True, slots=True)
+class TextSettings:
+    font_size_adjustment: int = 0
+    replace_base_urls_with_icons: bool = False
+    metadata_fields: frozenset[str] = frozenset({"event", "date", "entrants_count", "tournament_link"})
+
+    def __post_init__(self) -> None:
+        if isinstance(self.font_size_adjustment, bool) or not isinstance(self.font_size_adjustment, int) or not -20 <= self.font_size_adjustment <= 20:
+            raise ValueError("font_size_adjustment must be an integer between -20 and 20")
+        if not isinstance(self.replace_base_urls_with_icons, bool):
+            raise TypeError("replace_base_urls_with_icons must be a boolean")
+        fields = frozenset(self.metadata_fields)
+        if not fields <= METADATA_FIELDS:
+            raise ValueError("metadata_fields contains an unknown field")
+        object.__setattr__(self, "metadata_fields", fields)
 
 
 class PreferencesNotReadyError(RuntimeError):
@@ -42,6 +60,7 @@ class CreationRequest:
     tournament: Tournament
     podium_colors: PodiumColorInput | None = None
     header_layout: Mapping[str, str] | None = None
+    text_settings: TextSettings = field(default_factory=TextSettings)
 
     def __post_init__(self) -> None:
         if not isinstance(self.selection, ModeSelection):
@@ -50,6 +69,8 @@ class CreationRequest:
             raise TypeError("background must be a BackgroundRequest")
         if not isinstance(self.tournament, Tournament):
             raise TypeError("tournament must be a Tournament")
+        if not isinstance(self.text_settings, TextSettings):
+            raise TypeError("text_settings must be TextSettings")
         if self.podium_colors is not None and not isinstance(
             self.podium_colors,
             (PodiumColorSelection, PodiumColorConfiguration),
