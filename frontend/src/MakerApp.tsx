@@ -1,15 +1,17 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { BuiltInBackground, FighterOption, UserImage, UserImageCategory, builtInBackgroundUrl, deleteUserImage, getOptions, getStats, getUserImageUrl, listBuiltInBackgrounds, listUserImages, uploadUserImage } from "./api";
+import { BuiltInBackground, FighterOption, UserImage, UserImageCategory, apiUrl, builtInBackgroundUrl, deleteUserImage, getOptions, getStats, getUserImageUrl, listBuiltInBackgrounds, listUserImages, uploadUserImage } from "./api";
 import { User, firebaseAuthAvailable, firebaseAuthErrorMessage, signInWithGoogle, signOutCurrentUser, watchCurrentUser } from "./firebaseAuth";
 import EmailAuthForm from "./EmailAuthForm";
 import FavoritesManagement from "./FavoritesManagement";
+import FormatStep from "./FormatStep";
 import Footer from "./Footer";
 import { FavoritesData, loadFavorites, saveFavorites } from "./favorites";
+import { EMPTY_FORMAT, FormatConfiguration, isFormatComplete } from "./format";
 
 const STEPS = ["Images", "Format", "Bracket Import", "Tournament", "Entrants"] as const;
 const MAX_IMAGES = 10;
 const MAX_IMAGE_BYTES = 300 * 1024 * 1024;
-type Page = "maker" | "favorites";
+type Page = "maker" | "saved";
 interface SelectedImages { tournament_logo: string | null; background: string | null }
 interface PreviewUrls { tournament_logo: string; background: string }
 const EMPTY_SELECTION: SelectedImages = { tournament_logo: null, background: null };
@@ -68,9 +70,10 @@ function BuiltInBackgroundLibrary({ backgrounds, selectedId, onSelect }: { backg
   </section>;
 }
 
-function Preview({ urls, renderCount, onContinue }: { urls: PreviewUrls; renderCount: number | null; onContinue: () => void }) {
+function Preview({ activeStep, urls, format, renderCount, onContinue }: { activeStep: number; urls: PreviewUrls; format: FormatConfiguration; renderCount: number | null; onContinue: () => void }) {
   const hasLogo = Boolean(urls.tournament_logo);
   const hasBackground = Boolean(urls.background);
+  const formatComplete = isFormatComplete(format);
   const action = hasLogo && hasBackground
     ? { label: "Continue to Format", tone: "green" }
     : !hasLogo && !hasBackground
@@ -78,14 +81,21 @@ function Preview({ urls, renderCount, onContinue }: { urls: PreviewUrls; renderC
       : !hasLogo
         ? { label: "Proceed without Logo", tone: "blue" }
         : { label: "Proceed without Background", tone: "blue" };
+  const workflowAction = activeStep === 1
+    ? "Continue to Bracket Import"
+    : activeStep === 2
+      ? "Continue to Tournament"
+      : activeStep === 3
+        ? "Continue to Entrants"
+        : "Download Final Image";
   return <aside className="preview-column">
     <div className="preview-column__content">
-      <button className={`preview-action preview-action--${action.tone}`} type="button" onClick={onContinue}><span>{action.label}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+      <button className={`preview-action preview-action--${activeStep > 0 ? "green" : action.tone}`} type="button" onClick={onContinue} disabled={activeStep > 1 || (activeStep === 1 && !formatComplete)}><span>{activeStep > 0 ? workflowAction : action.label}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
       <div className="preview-heading"><h2>Image Preview</h2></div>
-      <div className="preview-assets">
+      {activeStep > 0 ? <div className="format-preview"><div className="format-preview__frame"><img className="format-preview__demo" src={apiUrl("format-preview")} alt="Demo podium using example tournament and entrant information" />{urls.tournament_logo && <img className="format-preview__logo" src={urls.tournament_logo} alt="Selected tournament logo in demo" />}</div><p><strong>Demo preview</strong> uses example entrants so you can judge the format before importing a bracket.</p>{activeStep === 1 && !formatComplete && <span className="format-preview__waiting">Choose all format properties to continue.</span>}</div> : <div className="preview-assets">
         <figure className="preview-asset"><figcaption>Background</figcaption><div className="preview-asset__frame">{urls.background ? <img src={urls.background} alt="Selected background" /> : <span>No background selected</span>}</div></figure>
         <figure className="preview-asset"><figcaption>Tournament Logo</figcaption><div className="preview-asset__frame preview-asset__frame--transparent">{urls.tournament_logo ? <img src={urls.tournament_logo} alt="Selected tournament logo" /> : <span>No logo selected</span>}</div></figure>
-      </div>
+      </div>}
     </div>
     <Footer renderCount={renderCount} />
   </aside>;
@@ -115,12 +125,14 @@ export default function MakerApp() {
   const [favorites, setFavorites] = useState<FavoritesData>(loadFavorites);
   const [fighters, setFighters] = useState<FighterOption[]>([]);
   const [renderCount, setRenderCount] = useState<number | null>(null);
+  const [format, setFormat] = useState<FormatConfiguration>(EMPTY_FORMAT);
   const uploadDialogRef = useRef<HTMLDialogElement>(null);
   const accountDialogRef = useRef<HTMLDialogElement>(null);
   const groupedImages = useMemo(() => ({ tournament_logo: images.filter((image) => image.category === "tournament_logo"), background: images.filter((image) => image.category === "background") }), [images]);
   const bothImagesSelected = Boolean(selected.tournament_logo && selected.background);
   const imagesStepComplete = bothImagesSelected || imagesSkipped;
-  const maxStep = imagesStepComplete ? 1 : 0;
+  const formatStepComplete = imagesStepComplete && isFormatComplete(format);
+  const maxStep = formatStepComplete ? 2 : imagesStepComplete ? 1 : 0;
 
   useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setImages([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); } }), []);
   useEffect(() => { getOptions().then((options) => setFighters(options.fighters)).catch(() => undefined); }, []);
@@ -181,8 +193,8 @@ export default function MakerApp() {
   const displayName = user?.displayName || user?.email || "Signed in";
 
   return <div className="app-shell">
-    <header className="topbar"><button className="brand" type="button" onClick={() => { setPage("maker"); setActiveStep(0); }} aria-label="Melee Podium Maker home"><img className="brand__mark" src={`${import.meta.env.BASE_URL}favicon.png`} alt="" /><span>Melee Podium Maker</span></button><div className="topbar__actions"><button className="button button--nav" type="button" onClick={() => setPage(page === "maker" ? "favorites" : "maker")}>{page === "maker" ? "Manage Favorite Entrants" : "Image Maker"}</button><button className={`account-button${user ? " account-button--signed-in" : ""}`} type="button" onClick={openAccount} aria-label={user ? `Account: ${displayName}` : "Sign in"}>{user?.photoURL ? <img src={user.photoURL} alt="" /> : <AccountIcon signedIn={Boolean(user)} />}<span className="account-button__dot" /></button></div></header>
-    {page === "favorites" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select/Upload Images</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(1); }}>Skip for now</button></div><p>You will be able to resize and position your images in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your image library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : <StubStep step={STEPS[activeStep]} />}</section><Preview urls={previewUrls} renderCount={renderCount} onContinue={() => { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(1); }} /></main>}
+    <header className="topbar"><button className="brand" type="button" onClick={() => { setPage("maker"); setActiveStep(0); }} aria-label="Melee Podium Maker home"><img className="brand__mark" src={`${import.meta.env.BASE_URL}favicon.png`} alt="" /><span>Melee Podium Maker</span></button><div className="topbar__actions"><button className="button button--nav" type="button" onClick={() => setPage(page === "maker" ? "saved" : "maker")}>{page === "maker" ? "Manage Saved Data" : "Image Maker"}</button><button className={`account-button${user ? " account-button--signed-in" : ""}`} type="button" onClick={openAccount} aria-label={user ? `Account: ${displayName}` : "Sign in"}>{user?.photoURL ? <img src={user.photoURL} alt="" /> : <AccountIcon signedIn={Boolean(user)} />}<span className="account-button__dot" /></button></div></header>
+    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select/Upload Images</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(1); }}>Skip for now</button></div><p>You will be able to resize and position your images in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your image library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 1 ? <FormatStep user={user} value={format} onChange={setFormat} onSignIn={openAccount} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(1); } else if (activeStep === 1 && formatStepComplete) { setActiveStep(2); } }} /></main>}
     <dialog className="modal account-modal" ref={accountDialogRef} onClose={() => { setAuthMessage(""); setAuthFormKey((current) => current + 1); }} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => accountDialogRef.current?.close()} aria-label="Close">×</button>{user ? <><span className="modal__icon"><AccountIcon signedIn /></span><h2>{displayName}</h2><p>Your private image library is connected.</p><button className="button button--dark" type="button" onClick={handleSignOut}>Sign out</button></> : <><span className="modal__icon"><AccountIcon signedIn={false} /></span><h2>Sign in or create an account</h2><p>Use your email and password, or continue with Google.</p><EmailAuthForm key={authFormKey} disabled={!firebaseAuthAvailable} onComplete={() => accountDialogRef.current?.close()} /><div className="auth-divider"><span>or</span></div><button className="button button--google" type="button" onClick={handleSignIn} disabled={!firebaseAuthAvailable}><span>G</span> Continue with Google</button>{!firebaseAuthAvailable && <p className="modal__warning">Sign-in needs the Firebase Web SDK environment values for this deployment.</p>}</>}{authMessage && <p className="inline-message" role="alert">{authMessage}</p>}</div></dialog>
     <dialog className="modal" ref={uploadDialogRef} onClick={(event) => { if (event.target === event.currentTarget && !uploading) event.currentTarget.close(); }}><form className="modal__content" onSubmit={handleUpload}><button className="modal__close" type="button" onClick={() => uploadDialogRef.current?.close()} aria-label="Close" disabled={uploading}>×</button><span className="eyebrow">Add to library</span><h2>Upload {uploadCategory ? categoryLabel(uploadCategory).toLowerCase() : "image"}</h2><label className="field">Image name<input maxLength={80} value={uploadName} onChange={(event) => setUploadName(event.target.value)} placeholder="e.g. Summer Weekly" required autoFocus /></label><label className="file-field"><input type="file" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" onChange={(event: ChangeEvent<HTMLInputElement>) => setUploadFile(event.target.files?.[0] ?? null)} required /><span>{uploadFile ? uploadFile.name : "Choose a PNG, JPG, WebP, GIF, or BMP"}</span></label><p className="field-help">Names must be unique within this image category. Maximum file size: 300 MB.</p>{message && <p className="inline-message" role="alert">{message}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => uploadDialogRef.current?.close()} disabled={uploading}>Cancel</button><button className="button button--dark" type="submit" disabled={uploading || !uploadFile || !uploadName.trim()}>{uploading ? "Uploading…" : "Upload image"}</button></div></form></dialog>
   </div>;

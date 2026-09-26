@@ -187,6 +187,15 @@ export interface BuiltInBackground {
   size: { width: number; height: number };
 }
 
+export interface SavedFormat {
+  id: string;
+  name: string;
+  schemaVersion: number;
+  data: unknown;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export async function listBuiltInBackgrounds(): Promise<BuiltInBackground[]> {
   const response = await request("backgrounds");
   const body = (await response.json()) as { items?: BuiltInBackground[] };
@@ -202,6 +211,30 @@ async function authenticatedRequest(endpoint: string, token: string, init?: Requ
     ...init,
     headers: { Authorization: `Bearer ${token}`, ...init?.headers },
   });
+}
+
+export async function listSavedFormats(token: string): Promise<SavedFormat[]> {
+  const response = await authenticatedRequest("firebase/layouts?limit=100", token);
+  const body = (await response.json()) as { items?: SavedFormat[] };
+  return Array.isArray(body.items) ? body.items : [];
+}
+
+export async function createSavedFormat(token: string, name: string, data: object): Promise<SavedFormat> {
+  const response = await authenticatedRequest("firebase/layouts", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, data }),
+  });
+  return (await response.json()) as SavedFormat;
+}
+
+export async function replaceSavedFormat(token: string, id: string, name: string, data: object): Promise<SavedFormat> {
+  const response = await authenticatedRequest(`firebase/layouts/${encodeURIComponent(id)}`, token, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, data }),
+  });
+  return (await response.json()) as SavedFormat;
 }
 
 export async function listUserImages(token: string): Promise<UserImage[]> {

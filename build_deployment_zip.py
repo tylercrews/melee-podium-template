@@ -17,6 +17,7 @@ FILES = (
     "portrait_pose_labels.py",
     "portrait_scale_adjustment_for_each_mode.py",
     "portrait_scale_adjustment_to_character_relativity.py",
+    "sample_creation_data.py",
     "fonts/Impact.ttf",
     "fonts/Tyrowo-Inked-Regular.ttf",
     "fonts/Ubuntu-Regular.ttf",

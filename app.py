@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from io import BytesIO
+from functools import lru_cache
 import os
 from pathlib import Path
+import random
 import sqlite3
 from typing import Any, Mapping
 import re
@@ -17,6 +19,7 @@ from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetc
 from background_builder import LocalBackgroundAssets
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
+from sample_creation_data import sample_top_8_entrants, sample_tournament
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -269,6 +272,29 @@ def backgrounds() -> Any:
 def background_asset(asset_id: str) -> Any:
     path = BUILTIN_BACKGROUNDS.path(asset_id)
     return send_from_directory(path.parent, path.name)
+
+
+@lru_cache(maxsize=1)
+def _format_preview_png() -> bytes:
+    """Render one stable example for the Format-step live preview."""
+    image = draw_podium(
+        PodiumMode.SINGLES_TOP_8,
+        sample_top_8_entrants(random.Random(2026)),
+        tournament=sample_tournament(TournamentFormat.SINGLES),
+        font=PodiumFont.TYROWO,
+    )
+    output = BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
+
+
+@app.get("/api/format-preview")
+def format_preview() -> Any:
+    return Response(
+        _format_preview_png(),
+        mimetype="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.post("/api/render")
