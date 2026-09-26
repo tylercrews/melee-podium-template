@@ -125,6 +125,23 @@ class FormatPreviewTests(unittest.TestCase):
             customized.crop((0, 0, customized.width, 180)).tobytes(),
         )
 
+    def test_seeding_preference_hides_seed_labels(self) -> None:
+        with_seeding = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            text_settings=TextSettings(include_seeding=True),
+        )
+        without_seeding = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            text_settings=TextSettings(include_seeding=False),
+        )
+        self.assertNotEqual(with_seeding.tobytes(), without_seeding.tobytes())
+
 
 if __name__ == "__main__":
     unittest.main()

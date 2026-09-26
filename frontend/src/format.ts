@@ -25,6 +25,7 @@ export interface FormattingAssetColors {
 export interface TextSettings {
   font_asset_id: string;
   font_size_adjustment: number;
+  include_seeding: boolean;
   replace_base_urls_with_icons: boolean;
   metadata_fields: MetadataField[];
 }
@@ -103,7 +104,8 @@ export const ALL_METADATA_FIELDS: MetadataField[] = ["event", "date", "entrants_
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   font_asset_id: "provided:tyrowo",
   font_size_adjustment: 0,
-  replace_base_urls_with_icons: false,
+  include_seeding: true,
+  replace_base_urls_with_icons: true,
   metadata_fields: ["event", "date", "entrants_count", "tournament_link"],
 };
 
@@ -327,7 +329,7 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
 
 function normalizeTextSettings(value: unknown): TextSettings {
   if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_fields: [...DEFAULT_TEXT_SETTINGS.metadata_fields] };
-  if (!isObject(value) || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || typeof value.replace_base_urls_with_icons !== "boolean" || !Array.isArray(value.metadata_fields)) {
+  if (!isObject(value) || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean") || !Array.isArray(value.metadata_fields)) {
     throw new Error("Format code has invalid text settings.");
   }
   const fields = value.metadata_fields as unknown[];
@@ -338,7 +340,8 @@ function normalizeTextSettings(value: unknown): TextSettings {
   return {
     font_asset_id: fontAssetId,
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
-    replace_base_urls_with_icons: value.replace_base_urls_with_icons,
+    include_seeding: value.include_seeding !== false,
+    replace_base_urls_with_icons: value.replace_base_urls_with_icons !== false,
     metadata_fields: fields as MetadataField[],
   };
 }

@@ -782,13 +782,14 @@ def _draw_lower_entrant_summary(
     anchor: tuple[int, int],
     fill: tuple[int, int, int],
     font: PodiumFont,
+    include_seed: bool = True,
 ) -> None:
     """Draw one lower-place result as a centered two- or three-line block."""
     max_width = LOWER_SUMMARY_MAX_WIDTH
     icon_gap = 5
     icons = [_load_stock_icon(character) for character in entrant.characters]
     draw = ImageDraw.Draw(canvas)
-    seed_text = f"[{entrant.seed}s]" if entrant.seed is not None else ""
+    seed_text = f"[{entrant.seed}s]" if include_seed and entrant.seed is not None else ""
     placement_text = f"{entrant.placement}th"
     placement_font = _font_to_fit(
         placement_text,

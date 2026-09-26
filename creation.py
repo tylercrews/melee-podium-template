@@ -32,7 +32,8 @@ METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link
 @dataclass(frozen=True, slots=True)
 class TextSettings:
     font_size_adjustment: int = 0
-    replace_base_urls_with_icons: bool = False
+    include_seeding: bool = True
+    replace_base_urls_with_icons: bool = True
     metadata_fields: frozenset[str] = frozenset({"event", "date", "entrants_count", "tournament_link"})
 
     def __post_init__(self) -> None:
@@ -40,6 +41,8 @@ class TextSettings:
             raise ValueError("font_size_adjustment must be an integer between -20 and 20")
         if not isinstance(self.replace_base_urls_with_icons, bool):
             raise TypeError("replace_base_urls_with_icons must be a boolean")
+        if not isinstance(self.include_seeding, bool):
+            raise TypeError("include_seeding must be a boolean")
         fields = frozenset(self.metadata_fields)
         if not fields <= METADATA_FIELDS:
             raise ValueError("metadata_fields contains an unknown field")

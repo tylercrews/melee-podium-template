@@ -321,7 +321,11 @@ class LegacyPodiumContentRenderer:
                     fill=placement.color
                     or self._default_text_color(request, placement.entrant_slot),
                     font=self.font,
+                    include_seed=request.text_settings.include_seeding,
                 )
+                continue
+
+            if placement.field == "entrant.seed" and not request.text_settings.include_seeding:
                 continue
 
             text = self._text_value(placement, entrant)

@@ -293,10 +293,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .font-size-slider__marks { display: flex; justify-content: space-between; color: #777f9aff; font-size: .62rem; font-weight: 800; }
 .text-setting-check { display: flex; align-items: start; gap: 11px; padding: 14px; border: 1px solid #303750ff; border-radius: 7px; color: #dfe1eeff; background: #0d101bff; }
 .text-setting-check input, .metadata-selector input { margin-top: 2px; accent-color: #00dc68ff; }
+.text-setting-check input[type="checkbox"] { flex: 0 0 14px; width: 14px; height: 14px; min-width: 14px; min-height: 14px; margin: 1px 0 0; padding: 0; }
 .metadata-selector input[type="checkbox"] { flex: 0 0 14px; width: 14px; height: 14px; min-width: 14px; min-height: 14px; margin: 1px 0 0; padding: 0; }
 .text-setting-check span { display: grid; gap: 4px; }
 .text-setting-check strong { font-size: .78rem; }
 .text-setting-check small { color: #8e95afff; font-size: .68rem; line-height: 1.45; }
+.text-preferences { min-width: 0; margin: 0; padding: 0; border: 0; }
+.text-preferences legend { margin-bottom: 9px; color: #c8cbdaff; font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.text-preferences > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .metadata-selector { min-width: 0; margin: 0; padding: 0; border: 0; }
 .metadata-selector legend { margin-bottom: 10px; }
 .metadata-selector > div:first-of-type { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

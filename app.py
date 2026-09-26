@@ -437,7 +437,8 @@ def customized_format_preview() -> Any:
         raise ValueError("A selected custom font file is required for preview")
     text_settings = TextSettings(
         font_size_adjustment=0 if font_asset_id.startswith("provided:") else raw_text_settings.get("font_size_adjustment", 0),
-        replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", False),
+        include_seeding=raw_text_settings.get("include_seeding", True),
+        replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
         metadata_fields=frozenset(raw_text_settings.get("metadata_fields", ("event", "date", "entrants_count", "tournament_link"))),
     )
     image = render_format_preview(
