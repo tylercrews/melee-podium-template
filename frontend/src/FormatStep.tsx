@@ -143,7 +143,7 @@ export default function FormatStep({ user, value, backgroundImage, onChange, onS
     </section>
 
     <FormatSettings value={value} backgroundImage={backgroundImage} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
-    <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose a podium style and bracket type to continue"}</div>
+    <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose a podium style, bracket type, and entrant layout to continue"}</div>
 
     {message && <p className="inline-message format-message" role="status">{message}</p>}
     <div className="format-actions"><button className="button button--ghost" type="button" onClick={() => { setDialogMessage(""); exportDialog.current?.showModal(); }}>Export Format</button><button className="button button--dark" type="button" disabled={!user || !complete} onClick={() => { setFormatName(savedFormats.find((item) => item.id === selectedId)?.name ?? ""); setDialogMessage(""); saveDialog.current?.showModal(); }}>Save Format</button></div>

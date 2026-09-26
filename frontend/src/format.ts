@@ -36,6 +36,13 @@ export interface FormatSelection {
   };
 }
 
+export interface EntrantCountOption {
+  entrant_count: number;
+  variant: string | null;
+  label: string;
+  detail?: string;
+}
+
 export type HeaderLayout = Record<HeaderPosition, HeaderContent>;
 
 export interface FormatConfiguration {
@@ -81,6 +88,45 @@ const headerContents = new Set<HeaderContent>(["tournament_logo", "tournament_ti
 const sizeMultipliers = new Set<SizeMultiplier>(["1/4x", "1/3x", "1/2x", "1x", "2x", "3x", "4x"]);
 const backgroundSizeOptions = new Set<BackgroundSizeOption>([...sizeMultipliers, "scale_to_width", "scale_to_height"]);
 const rgbaColor = /^#[0-9a-f]{8}$/i;
+
+export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
+  podium: {
+    singles: [
+      { entrant_count: 3, variant: null, label: "Top 3" },
+      { entrant_count: 4, variant: null, label: "Top 4" },
+      { entrant_count: 8, variant: null, label: "Top 8", detail: "Eight podiums" },
+      { entrant_count: 8, variant: "four_podium", label: "Top 8 – 4 Podiums", detail: "Four podiums with lower summaries" },
+    ],
+    doubles: [
+      { entrant_count: 3, variant: null, label: "Top 3" },
+      { entrant_count: 4, variant: null, label: "Top 4" },
+    ],
+  },
+  eyes: {
+    singles: [3, 4, 8, 10, 15, 20, 25, 32].map((entrant_count) => ({ entrant_count, variant: null, label: `Top ${entrant_count}` })),
+    doubles: [3, 4, 8].map((entrant_count) => ({ entrant_count, variant: null, label: `Top ${entrant_count}` })),
+  },
+  squares: {
+    singles: [{ entrant_count: 8, variant: null, label: "Top 8" }],
+    doubles: [
+      { entrant_count: 3, variant: null, label: "Top 3" },
+      { entrant_count: 4, variant: null, label: "Top 4" },
+    ],
+  },
+};
+
+export function entrantCountOptions(selection: FormatSelection): EntrantCountOption[] {
+  return selection.options.event_format
+    ? FORMAT_ENTRANT_OPTIONS[selection.mode][selection.options.event_format]
+    : [];
+}
+
+export function hasValidEntrantCount(selection: FormatSelection): boolean {
+  return entrantCountOptions(selection).some((option) =>
+    option.entrant_count === selection.options.entrant_count
+      && option.variant === selection.options.variant,
+  );
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -229,7 +275,8 @@ export function isFormatComplete(format: FormatConfiguration): boolean {
     const normalized = normalizeFormat(format);
     return normalized.selection.mode === "podium"
       && normalized.selection.options.podium_style !== null
-      && normalized.selection.options.event_format !== null;
+      && normalized.selection.options.event_format !== null
+      && hasValidEntrantCount(normalized.selection);
   } catch {
     return false;
   }

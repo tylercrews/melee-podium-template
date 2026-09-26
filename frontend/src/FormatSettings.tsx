@@ -1,6 +1,7 @@
 import { CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle } from "./format";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
+import EntrantCountSettings from "./EntrantCountSettings";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -29,7 +30,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       selection: {
         ...selection,
         mode,
-        options: { ...selection.options, podium_style: mode === "podium" ? selection.options.podium_style : null },
+        options: { ...selection.options, entrant_count: null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
       },
     });
   }
@@ -39,7 +40,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   }
 
   function updateEventFormat(event_format: EventFormat) {
-    onChange({ ...value, selection: { ...selection, options: { ...selection.options, event_format } } });
+    onChange({ ...value, selection: { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null } } });
   }
 
   function assignHeader(position: HeaderPosition, content: HeaderContent) {
@@ -73,6 +74,8 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
         {(["singles", "doubles"] as const).map((eventFormat) => <label className="format-choice" key={eventFormat}><input type="radio" name="event-format" value={eventFormat} checked={selection.options.event_format === eventFormat} onChange={() => updateEventFormat(eventFormat)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{eventFormat === "singles" ? "Singles" : "Doubles"}</strong><small>{eventFormat === "singles" ? "One player per result" : "Two-player teams"}</small></span></label>)}
       </div></fieldset>
     </section>
+
+    <EntrantCountSettings value={value} onChange={onChange} />
 
     <section className="format-settings-card" aria-labelledby="header-layout-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Header content</span><h2 id="header-layout-heading">Assign the top positions</h2><p>Each item appears exactly once. Choosing an item already assigned elsewhere swaps the two positions.</p></div>
