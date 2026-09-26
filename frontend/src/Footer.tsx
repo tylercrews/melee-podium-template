@@ -17,16 +17,19 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          Version 4.0 published 08/12/2026 by Tyler "Tyro" Crews. Successfully created {count} podium
-          images for the Melee community <span aria-label="love">{"\u{1F495}"}</span>
-        </div>
-        <div>
-          Melee Podium Template is free and{" "}
-          <a href="https://github.com/tylercrews/melee-podium-template" target="_blank" rel="noreferrer">open source</a>.
-        </div>
+          V4.0 9/25/2026 
+          {" "}●{" "}
+          {count} created
+          {" "}●{" "}
+          <a href="https://github.com/tylercrews/melee-podium-template" target="_blank" rel="noreferrer">open source</a>
+          {" "}●{" "}
         <button className="site-footer__shoutouts-button" type="button" onClick={() => setIsShoutoutsOpen(true)}>
-          Thank yous and shoutouts.
+          Thank yous and shoutouts
         </button>
+        {" "}●{" "}
+         <span aria-label="love">{"\u{1F495}"} </span> 
+        -Tyler "Tyro" Crews
+        </div>
       </footer>
 
       {isShoutoutsOpen && (
