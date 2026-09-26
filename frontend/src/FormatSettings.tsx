@@ -1,7 +1,10 @@
 import { CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle } from "./format";
+import { FormatImageInfo } from "./BackgroundPositionDialog";
+import ImageBackgroundSettings from "./ImageBackgroundSettings";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
+  backgroundImage: FormatImageInfo | null;
   onChange: (value: FormatConfiguration) => void;
 }
 
@@ -17,7 +20,7 @@ const headerContents: Array<{ value: HeaderContent; label: string }> = [
   { value: "metadata", label: "Metadata" },
 ];
 
-export default function FormatSettings({ value, onChange }: FormatSettingsProps) {
+export default function FormatSettings({ value, backgroundImage, onChange }: FormatSettingsProps) {
   const { selection } = value;
 
   function updateMode(mode: CreationMode) {
@@ -78,5 +81,6 @@ export default function FormatSettings({ value, onChange }: FormatSettingsProps)
         <div className="format-header-map__stage" aria-hidden="true"><span>Example image content</span></div>
       </div>
     </section>
+    <ImageBackgroundSettings value={value} backgroundImage={backgroundImage} onChange={onChange} />
   </div>;
 }

@@ -3,10 +3,12 @@ import { SavedFormat, createSavedFormat, listSavedFormats, replaceSavedFormat } 
 import { User } from "./firebaseAuth";
 import { FormatConfiguration, formatCode, isFormatComplete, normalizeFormat, parseFormatCode } from "./format";
 import FormatSettings from "./FormatSettings";
+import { FormatImageInfo } from "./BackgroundPositionDialog";
 
 interface FormatStepProps {
   user: User | null;
   value: FormatConfiguration;
+  backgroundImage: FormatImageInfo | null;
   onChange: (value: FormatConfiguration) => void;
   onSignIn: () => void;
 }
@@ -15,7 +17,7 @@ function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
   if (event.target === event.currentTarget) event.currentTarget.close();
 }
 
-export default function FormatStep({ user, value, onChange, onSignIn }: FormatStepProps) {
+export default function FormatStep({ user, value, backgroundImage, onChange, onSignIn }: FormatStepProps) {
   const [savedFormats, setSavedFormats] = useState<SavedFormat[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [formatName, setFormatName] = useState("");
@@ -140,7 +142,7 @@ export default function FormatStep({ user, value, onChange, onSignIn }: FormatSt
       <div className="format-import-prompt"><span>Or import format from code.</span><button className="button button--outline" type="button" onClick={() => { setImportText(""); setDialogMessage(""); importDialog.current?.showModal(); }}>Import format</button></div>
     </section>
 
-    <FormatSettings value={value} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
+    <FormatSettings value={value} backgroundImage={backgroundImage} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
     <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose a podium style and bracket type to continue"}</div>
 
     {message && <p className="inline-message format-message" role="status">{message}</p>}
