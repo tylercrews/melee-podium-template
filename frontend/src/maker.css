@@ -250,6 +250,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .format-actions__help { margin: 8px 0 0; color: #858ca8ff; font-size: .72rem; text-align: right; }
 .format-code-modal { width: min(680px, calc(100% - 32px)); }
 .field textarea { min-height: 240px; resize: vertical; padding: 12px; border: 1px solid #46506fff; border-radius: 6px; color: #dff4ffff; background: #090b14ff; font: .78rem/1.55 "Cascadia Code", Consolas, monospace; tab-size: 2; }
+.format-code-field { position: relative; display: block; }
+.format-code-field textarea { display: block; width: 100%; padding-top: 48px; box-sizing: border-box; }
+.format-copy-button { position: absolute; top: 8px; right: 8px; display: grid; width: 34px; height: 34px; padding: 0; place-items: center; border: 1px solid #46506fff; border-radius: 6px; color: #7fc4ffff; background: #171c2eff; }
+.format-copy-button:hover { border-color: #238fe8ff; color: #ffffffff; background: #1b2b42ff; }
+.format-copy-button svg { width: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .format-preview { display: grid; gap: 12px; }
 .format-preview__frame { position: relative; overflow: hidden; border: 1px solid #444b69ff; border-radius: 7px 2px 7px 2px; background: #090b14ff; box-shadow: 0 20px 45px #00000080; }
 .format-preview__demo { display: block; width: 100%; height: auto; }
