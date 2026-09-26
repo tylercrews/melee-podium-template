@@ -20,7 +20,7 @@ from creation import TextSettings
 from creation_modes import PodiumStyle
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
-from format_preview import render_format_preview, render_format_preview_png
+from format_preview import render_format_preview
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
 from firebase_services.fonts import read_font_upload
 
@@ -294,29 +294,6 @@ def provided_font_asset(asset_id: str) -> Any:
     except KeyError as error:
         raise FileNotFoundError("Unknown provided font") from error
     return send_from_directory(PROJECT_ROOT / "fonts", filename)
-
-
-@app.get("/api/format-preview")
-def format_preview() -> Any:
-    try:
-        style = PodiumStyle(request.args.get("style", "legacy"))
-        event_format = TournamentFormat(request.args.get("event_format", "singles"))
-        entrant_count = int(request.args.get("entrant_count", "8"))
-    except (TypeError, ValueError) as error:
-        raise ValueError("Invalid format preview options") from error
-    variant = request.args.get("variant") or None
-    transparent = request.args.get("transparent", "0").casefold() in {"1", "true"}
-    return Response(
-        render_format_preview_png(
-            style,
-            event_format,
-            entrant_count,
-            variant,
-            transparent=transparent,
-        ),
-        mimetype="image/png",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
 
 
 _RAINBOW_MAIN_COLORS = (

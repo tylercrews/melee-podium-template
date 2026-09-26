@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
-from io import BytesIO
 import random
 from collections.abc import Mapping
 
@@ -112,27 +110,4 @@ def render_format_preview(
     canvas = create_background(background)
     formatted = FormattingAssetRenderer().draw(canvas, preferences, podium_colors)
     return LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes).draw(formatted, request, preferences)
-
-
-@lru_cache(maxsize=len(SUPPORTED_LAYOUTS) * len(PodiumStyle) * 2)
-def render_format_preview_png(
-    style: PodiumStyle,
-    event_format: TournamentFormat,
-    entrant_count: int,
-    variant: str | None = None,
-    *,
-    transparent: bool = False,
-) -> bytes:
-    """Return cached PNG bytes for a supported example render."""
-
-    image = render_format_preview(
-        style,
-        event_format,
-        entrant_count,
-        variant,
-        transparent=transparent,
-    )
-    output = BytesIO()
-    image.save(output, format="PNG")
-    return output.getvalue()
 
