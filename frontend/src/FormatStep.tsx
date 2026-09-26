@@ -2,6 +2,7 @@ import { FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "rea
 import { SavedFormat, createSavedFormat, listSavedFormats, replaceSavedFormat } from "./api";
 import { User } from "./firebaseAuth";
 import { FormatConfiguration, formatCode, isFormatComplete, normalizeFormat, parseFormatCode } from "./format";
+import FormatSettings from "./FormatSettings";
 
 interface FormatStepProps {
   user: User | null;
@@ -139,7 +140,8 @@ export default function FormatStep({ user, value, onChange, onSignIn }: FormatSt
       <div className="format-import-prompt"><span>Or import format from code.</span><button className="button button--outline" type="button" onClick={() => { setImportText(""); setDialogMessage(""); importDialog.current?.showModal(); }}>Import format</button></div>
     </section>
 
-    <section className="format-options-placeholder" aria-labelledby="format-options-heading"><span className="stub-step__number">Next up</span><h2 id="format-options-heading">Format options</h2><p>The mode, layout, entrant count, styling, and placement controls will be added here next. A complete imported or saved format can already unlock the next step.</p><div className={`format-readiness${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All format properties are selected" : "Format properties still need to be selected"}</div></section>
+    <FormatSettings value={value} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
+    <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose a podium style and bracket type to continue"}</div>
 
     {message && <p className="inline-message format-message" role="status">{message}</p>}
     <div className="format-actions"><button className="button button--ghost" type="button" onClick={() => { setDialogMessage(""); exportDialog.current?.showModal(); }}>Export Format</button><button className="button button--dark" type="button" disabled={!user || !complete} onClick={() => { setFormatName(savedFormats.find((item) => item.id === selectedId)?.name ?? ""); setDialogMessage(""); saveDialog.current?.showModal(); }}>Save Format</button></div>
