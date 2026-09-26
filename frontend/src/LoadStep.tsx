@@ -19,6 +19,7 @@ export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepP
   const [selectedId, setSelectedId] = useState("");
   const [importText, setImportText] = useState("");
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const importDialog = useRef<HTMLDialogElement>(null);
@@ -34,7 +35,7 @@ export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepP
     user.getIdToken().then(listSavedFormats).then((items) => {
       if (current) setSavedFormats(items);
     }).catch((error: unknown) => {
-      if (current) setMessage(error instanceof Error ? error.message : "Could not load your saved formats.");
+      if (current) { setMessageIsError(true); setMessage(error instanceof Error ? error.message : "Could not load your saved formats."); }
     }).finally(() => {
       if (current) setLoading(false);
     });
@@ -48,8 +49,10 @@ export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepP
     if (!saved) return;
     try {
       onChange(normalizeFormat(saved.data));
+      setMessageIsError(false);
       setMessage(`Loaded “${saved.name}”. Continue to Assets to review its selections.`);
     } catch (error) {
+      setMessageIsError(true);
       setMessage(error instanceof Error ? error.message : "That saved format could not be loaded.");
     }
   }
@@ -59,6 +62,7 @@ export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepP
     try {
       onChange(parseFormatCode(importText));
       setSelectedId("");
+      setMessageIsError(false);
       setMessage("Format settings imported. Continue to Assets to review its selections.");
       setDialogMessage("");
       importDialog.current?.close();
@@ -74,7 +78,7 @@ export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepP
       {user ? <label className="format-select">Saved formats<select value={selectedId} onChange={(event) => loadSavedFormat(event.target.value)} disabled={loading}><option value="">{loading ? "Loading formats…" : "Choose a saved format"}</option>{savedFormats.map((format) => <option value={format.id} key={format.id}>{format.name}</option>)}</select></label> : <div className="format-signin"><p>Sign in to choose from your saved formats.</p><button className="button button--outline" type="button" onClick={onSignIn}>Sign in</button></div>}
       <div className="format-import-prompt"><span>Or import format from code.</span><button className="button button--outline" type="button" onClick={() => { setImportText(""); setDialogMessage(""); importDialog.current?.showModal(); }}>Import format</button></div>
     </section>
-    {message && <p className="inline-message format-message" role="status">{message}</p>}
+    {message && <p className="inline-message format-message" role={messageIsError ? "alert" : "status"}>{message}</p>}
     <dialog className="modal format-code-modal" ref={importDialog} onClick={closeOnBackdrop}><form className="modal__content" onSubmit={importFormat}><button className="modal__close" type="button" onClick={() => importDialog.current?.close()} aria-label="Close">×</button><span className="eyebrow">Import</span><h2>Import format from code</h2><p>Paste a JSON format code. Valid settings will be loaded before you choose assets.</p><label className="field">Format JSON<textarea value={importText} onChange={(event) => setImportText(event.target.value)} placeholder={'{\n  "schema_version": 1,\n  "selection": { ... }\n}'} required autoFocus /></label>{dialogMessage && <p className="inline-message" role="alert">{dialogMessage}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => importDialog.current?.close()}>Cancel</button><button className="button button--dark" type="submit" disabled={!importText.trim()}>Import settings</button></div></form></dialog>
   </section>;
 }

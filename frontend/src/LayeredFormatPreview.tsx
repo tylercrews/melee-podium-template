@@ -53,7 +53,9 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   const layout = layoutId(format);
   const outputSize = style === "customizable" ? { width: 1920, height: 941 } : { width: 1672, height: 941 };
   const selectedFontId = fontAsset?.id.replace("provided:", "") ?? "tyrowo";
-  const fontId = !fontAsset?.custom && ["tyrowo", "impact", "ubuntu"].includes(selectedFontId) ? selectedFontId : "tyrowo";
+  const fontId = fontAsset?.custom
+    ? "ubuntu"
+    : ["tyrowo", "impact", "ubuntu"].includes(selectedFontId) ? selectedFontId : "tyrowo";
   const logoPosition = (Object.entries(format.header_layout).find(([, content]) => content === "tournament_logo")?.[0] ?? "top_left") as LayerRequest["logoPosition"];
   let podiumUrl = `${layerRoot}/podiums/legacy/${layout}.png`;
   if (style === "customizable") {
