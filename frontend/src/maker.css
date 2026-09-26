@@ -200,7 +200,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .font-row small { color: #838aa4ff; font-size: .6rem; }
 .font-specimen { display: block; color: #f8f7ffff; font-size: clamp(1.05rem, 3vw, 1.65rem); line-height: 1.2; text-align: center; }
 .font-specimen--compact { overflow: hidden; color: #a9cdf0ff; font-size: .84rem; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
-.preview-asset--font .preview-asset__frame { min-height: 84px; }
+.preview-asset--font .preview-asset__frame { min-height: 72px; padding: 10px; }
 .built-in-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; padding: 11px; border: 0; color: #e9eaf3ff; background: #111523ff; text-align: left; }
 .built-in-row:hover { background: #1a2033ff; }
 .built-in-row > span:last-child { display: grid; min-width: 0; gap: 2px; }
@@ -222,12 +222,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .preview-heading .eyebrow { color: #e8a743ff; }
 .preview-heading h2 { margin: 0; color: #fffaf0ff; font-family: Georgia, serif; font-size: 1.45rem; }
 .preview-heading__ratio { padding: 4px 7px; border: 1px solid #82615aff; border-radius: 3px; color: #d3bab0ff; font-size: .65rem; font-weight: 800; }
-.preview-assets { display: grid; gap: 18px; }
+.preview-assets { display: grid; gap: 12px; }
 .preview-asset { display: grid; gap: 8px; margin: 0; }
 .preview-asset figcaption { color: #c9ccdcff; font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .preview-asset__frame { display: grid; min-height: 120px; max-height: 32vh; padding: 12px; place-items: center; overflow: hidden; border: 1px solid #444b69ff; border-radius: 7px 2px 7px 2px; color: #7f869fff; background: #0b0e18ff; font-size: .72rem; }
 .preview-asset__frame--transparent { background-color: #0b0e18ff; background-image: linear-gradient(45deg, #171b2aff 25%, transparent 25%), linear-gradient(-45deg, #171b2aff 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #171b2aff 75%), linear-gradient(-45deg, transparent 75%, #171b2aff 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
 .preview-asset__frame img { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(32vh - 24px); object-fit: contain; }
+.preview-asset--image .preview-asset__frame { min-height: 82px; max-height: 21vh; padding: 8px; }
+.preview-asset--image .preview-asset__frame img { max-height: calc(21vh - 16px); }
 .canvas-preview { position: relative; display: grid; width: 100%; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; border: 1px solid #89675fff; border-radius: 7px 2px 7px 2px; background-color: #2a1d1bff; background-image: linear-gradient(45deg, #382725ff 25%, transparent 25%), linear-gradient(-45deg, #382725ff 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #382725ff 75%), linear-gradient(-45deg, transparent 75%, #382725ff 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; box-shadow: 0 20px 38px #11070666; }
 .canvas-preview__background { position: absolute; width: 100%; height: 100%; object-fit: cover; }
 .canvas-preview__logo { position: relative; z-index: 1; max-width: 45%; max-height: 55%; object-fit: contain; filter: drop-shadow(0 3px 8px #00000080); }
@@ -289,6 +291,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .font-size-slider__marks { display: flex; justify-content: space-between; color: #777f9aff; font-size: .62rem; font-weight: 800; }
 .text-setting-check { display: flex; align-items: start; gap: 11px; padding: 14px; border: 1px solid #303750ff; border-radius: 7px; color: #dfe1eeff; background: #0d101bff; }
 .text-setting-check input, .metadata-selector input { margin-top: 2px; accent-color: #00dc68ff; }
+.metadata-selector input[type="checkbox"] { flex: 0 0 14px; width: 14px; height: 14px; min-width: 14px; min-height: 14px; margin: 1px 0 0; padding: 0; }
 .text-setting-check span { display: grid; gap: 4px; }
 .text-setting-check strong { font-size: .78rem; }
 .text-setting-check small { color: #8e95afff; font-size: .68rem; line-height: 1.45; }
