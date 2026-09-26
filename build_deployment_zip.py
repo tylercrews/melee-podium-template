@@ -11,9 +11,19 @@ FILES = (
     "passenger_wsgi.py",
     "requirements.txt",
     "bracket_import.py",
+    "background_builder.py",
+    "color_values.py",
     "constants.py",
+    "content_renderer.py",
+    "creation.py",
+    "creation_modes.py",
     "DrawPodium.py",
+    "format_preview.py",
+    "formatting_assets.py",
+    "legacy_podium_content_renderer.py",
+    "mode_preferences.py",
     "models.py",
+    "podium_colors.py",
     "portrait_pose_labels.py",
     "portrait_scale_adjustment_for_each_mode.py",
     "portrait_scale_adjustment_to_character_relativity.py",
@@ -25,7 +35,14 @@ FILES = (
     "top_4.png",
     "top_8.png",
 )
-DIRECTORIES = ("backgrounds", "char_assets", "firebase_services", "frontend/dist")
+DIRECTORIES = (
+    "backgrounds",
+    "char_assets",
+    "firebase_services",
+    "formatting_assets",
+    "frontend/dist",
+    "preferences",
+)
 
 with ZipFile(ARCHIVE, "w", compression=ZIP_DEFLATED) as archive:
     for relative_file in FILES:

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from io import BytesIO
-from functools import lru_cache
 import os
 from pathlib import Path
-import random
 import sqlite3
 from typing import Any, Mapping
 import re
@@ -17,9 +15,10 @@ from dotenv import load_dotenv
 from DrawPodium import CHARACTER_FOLDER, PodiumFont, PodiumMode, draw_podium
 from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetch_parrygg, fetch_startgg, identify_bracket_link
 from background_builder import LocalBackgroundAssets
+from creation_modes import PodiumStyle
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
-from sample_creation_data import sample_top_8_entrants, sample_tournament
+from format_preview import render_format_preview_png
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -274,24 +273,24 @@ def background_asset(asset_id: str) -> Any:
     return send_from_directory(path.parent, path.name)
 
 
-@lru_cache(maxsize=1)
-def _format_preview_png() -> bytes:
-    """Render one stable example for the Format-step live preview."""
-    image = draw_podium(
-        PodiumMode.SINGLES_TOP_8,
-        sample_top_8_entrants(random.Random(2026)),
-        tournament=sample_tournament(TournamentFormat.SINGLES),
-        font=PodiumFont.TYROWO,
-    )
-    output = BytesIO()
-    image.save(output, format="PNG")
-    return output.getvalue()
-
-
 @app.get("/api/format-preview")
 def format_preview() -> Any:
+    try:
+        style = PodiumStyle(request.args.get("style", "legacy"))
+        event_format = TournamentFormat(request.args.get("event_format", "singles"))
+        entrant_count = int(request.args.get("entrant_count", "8"))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Invalid format preview options") from error
+    variant = request.args.get("variant") or None
+    transparent = request.args.get("transparent", "0").casefold() in {"1", "true"}
     return Response(
-        _format_preview_png(),
+        render_format_preview_png(
+            style,
+            event_format,
+            entrant_count,
+            variant,
+            transparent=transparent,
+        ),
         mimetype="image/png",
         headers={"Cache-Control": "public, max-age=86400"},
     )

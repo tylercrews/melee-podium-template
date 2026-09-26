@@ -330,10 +330,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .format-preview { display: grid; gap: 12px; }
 .format-preview__frame { position: relative; overflow: hidden; border: 1px solid #444b69ff; border-radius: 7px 2px 7px 2px; background: #090b14ff; box-shadow: 0 20px 45px #00000080; }
 .format-preview__demo { display: block; width: 100%; height: auto; }
+.format-preview__canvas { display: block; width: 100%; height: auto; }
+.format-preview__canvas[hidden], .format-preview__demo[hidden] { display: none; }
 .format-preview__logo { position: absolute; top: 6%; left: 5%; width: 18%; max-height: 22%; object-fit: contain; filter: drop-shadow(0 2px 5px #000000b3); }
+.format-preview__loading { position: absolute; right: 10px; bottom: 10px; padding: 6px 9px; border: 1px solid #46506fff; border-radius: 999px; color: #dff4ffff; background: #090b14e6; font-size: .64rem; font-weight: 900; box-shadow: 0 4px 14px #00000080; }
 .format-preview p { margin: 0; color: #a7adc5ff; font-size: .73rem; line-height: 1.5; }
 .format-preview p strong { color: #ff74d8ff; }
 .format-preview__waiting { padding: 9px 11px; border: 1px solid #303750ff; border-radius: 5px; color: #9da4bdff; background: #111523ff; font-size: .7rem; font-weight: 800; }
+.format-preview__refresh { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; }
+.format-preview__refresh--needed { border-color: #00dc68ff; color: #06170eff; background: #00dc68ff; box-shadow: 0 0 0 1px #00dc6866, 0 0 22px #00dc6859; }
+.format-preview__refresh--needed:hover { border-color: #65eca1ff; color: #06170eff; background: #65eca1ff; }
+.format-preview__refresh-status { padding: 3px 6px; border-radius: 999px; color: #dfffeaff; background: #07331cff; font-size: .56rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
 .saved-data-sections { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
 .saved-data-section { position: relative; min-height: 130px; padding: 20px; border: 1px dashed #46506fff; border-radius: 10px 3px 10px 3px; background: #111523aa; }
 .saved-data-section--active { border-style: solid; border-color: #238fe8ff; background: #111a2aff; }
