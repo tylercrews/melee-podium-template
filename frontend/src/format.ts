@@ -44,6 +44,7 @@ export interface BackgroundPlacement {
 
 export interface ImageSettings {
   background_color: string;
+  logo_asset_id: string | null;
   logo_size: SizeMultiplier;
   background_size: BackgroundSizeOption;
   background_placement: BackgroundPlacement | null;
@@ -85,6 +86,7 @@ export const DEFAULT_HEADER_LAYOUT: HeaderLayout = {
 
 export const DEFAULT_IMAGE_SETTINGS: ImageSettings = {
   background_color: "#00000000",
+  logo_asset_id: null,
   logo_size: 1,
   background_size: 1,
   background_placement: null,
@@ -287,6 +289,7 @@ function normalizeImageSettings(value: unknown): ImageSettings {
   }
   return {
     background_color: value.background_color.toUpperCase(),
+    logo_asset_id: typeof value.logo_asset_id === "string" && value.logo_asset_id.trim() ? value.logo_asset_id.trim() : null,
     logo_size: normalizeSizeMultiplier(value.logo_size, "logo size multiplier"),
     background_size: normalizeBackgroundSizeOption(value.background_size),
     background_placement: normalizeBackgroundPlacement(value.background_placement),

@@ -21,7 +21,9 @@
 
 ## Frontend creation workflow
 
-- The image maker uses five ordered steps: Assets, Format, Bracket Import, Tournament, and Entrants. Users may return to any completed step but cannot open a later step until every prerequisite step is complete.
+- The image maker uses six ordered steps: Load, Assets, Format, Bracket Import, Tournament, and Entrants. Users may return to any completed step but cannot open a later step until every prerequisite step is complete.
+- Load is an optional first step containing the signed-in user's saved-format selector and the JSON format-code importer. Saving and exporting remain at the bottom of Format. Loading happens before Assets so serialized font and background references can be restored and then reviewed in the asset selectors.
+- Keep all six desktop workflow steps on one row using compact horizontal spacing. A loaded format validates private asset references after the user's asset library is available and shows a warning dialog for missing assets. Missing custom fonts fall back to Tyrowo and reset font adjustment to zero; missing backgrounds reset size and placement; missing logos reset logo size. Formats serialize the selected private logo ID so it can be restored and validated.
 - On desktop, the creation workflow occupies the left two-thirds of the screen and a live image preview occupies the right third. The primary action sits above the preview and changes with workflow state, including example-entrant previews after formatting and the finalized-image download after all inputs are complete.
 - On the Format step, the preview shows a complete demo image with example entrants rather than separate background and logo cards. Its primary action reads `Continue to Bracket Import` and remains disabled until every required format property is selected.
 - Clicking the Format preview opens one large, near-full-screen dialog. The image is centered and scales to the largest size that fits inside the dialog while preserving its aspect ratio, without alternate zoom modes or scrolling.

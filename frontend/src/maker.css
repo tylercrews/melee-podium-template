@@ -118,20 +118,20 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
     linear-gradient(145deg, #491713ff, #241313ff 72%);
 }
 
-.step-rail { position: sticky; z-index: 5; top: 76px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; margin-bottom: 28px; padding-top: 14px; background: #090b14f2; backdrop-filter: blur(12px); }
+.step-rail { position: sticky; z-index: 5; top: 76px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; margin-bottom: 28px; padding-top: 14px; background: #090b14f2; backdrop-filter: blur(12px); }
 .step-tab {
   position: relative;
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px 18px;
+  gap: 6px;
+  padding: 0 6px 18px;
   border: 0;
   border-bottom: 2px solid #d9cdc0ff;
   border-radius: 0;
   color: #7b6b64ff;
   background: transparent;
-  font-size: .76rem;
+  font-size: .72rem;
   font-weight: 800;
   text-align: left;
 }
@@ -141,7 +141,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .step-tab:disabled { cursor: not-allowed; opacity: .5; }
 .step-tab--active { border-color: #a83224ff; color: #8b271dff; }
 .step-tab--complete { border-color: #d89b35ff; color: #563b32ff; }
-.step-tab__number { display: grid; flex: 0 0 auto; width: 26px; height: 26px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: .75rem; }
+.step-tab__number { display: grid; flex: 0 0 auto; width: 24px; height: 24px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: .7rem; }
 .step-tab--active .step-tab__number { color: #fffaf0ff; background: #a83224ff; }
 .step-tab--complete .step-tab__number { border-color: #d89b35ff; color: #59371fff; background: #f1be61ff; }
 .step-tab__lock { margin-left: auto; color: #ad9e93ff; font-size: .45rem; }
@@ -408,6 +408,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .modal__warning { padding: 10px; border-left: 3px solid #d89532ff; background: #f9eddaff; }
 .modal__actions { display: flex; justify-content: end; gap: 10px; margin-top: 4px; }
 .account-modal { width: min(520px, calc(100% - 32px)); }
+.asset-warning-modal { width: min(620px, calc(100% - 32px)); }
+.asset-warning-modal ul { display: grid; gap: 10px; margin: 0; padding: 0 0 0 20px; color: #d6d9e8ff; font-size: .8rem; line-height: 1.5; }
+.asset-warning-modal li::marker { color: #ff75dbff; }
 .email-auth { overflow: hidden; border: 1px solid #303750ff; border-radius: 8px; background: #0d101bff; }
 .email-auth__modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid #303750ff; }
 .email-auth__modes button { min-height: 42px; padding: 9px 12px; border: 0; color: #9fa5bdff; background: transparent; font-size: .8rem; font-weight: 850; }

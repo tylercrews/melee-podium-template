@@ -7,10 +7,11 @@ import FormatStep from "./FormatStep";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import FormatPreview, { FormatFontInfo } from "./FormatPreview";
 import Footer from "./Footer";
+import LoadStep from "./LoadStep";
 import { FavoritesData, loadFavorites, saveFavorites } from "./favorites";
 import { EMPTY_FORMAT, FormatConfiguration, isFormatComplete } from "./format";
 
-const STEPS = ["Assets", "Format", "Bracket Import", "Tournament", "Entrants"] as const;
+const STEPS = ["Load", "Assets", "Format", "Bracket Import", "Tournament", "Entrants"] as const;
 const MAX_IMAGES = 10;
 const MAX_IMAGE_BYTES = 300 * 1024 * 1024;
 const MAX_FONT_BYTES = 10 * 1024 * 1024;
@@ -105,18 +106,20 @@ function Preview({ activeStep, urls, format, backgroundImage, logoImage, fontAss
       : !hasLogo
         ? { label: "Proceed without Logo", tone: "blue" }
         : { label: "Proceed without Background", tone: "blue" };
-  const workflowAction = activeStep === 1
-    ? "Continue to Bracket Import"
+  const workflowAction = activeStep === 0
+    ? "Continue to Assets"
     : activeStep === 2
-      ? "Continue to Tournament"
+      ? "Continue to Bracket Import"
       : activeStep === 3
-        ? "Continue to Entrants"
-        : "Download Final Image";
+        ? "Continue to Tournament"
+        : activeStep === 4
+          ? "Continue to Entrants"
+          : "Download Final Image";
   return <aside className="preview-column">
     <div className="preview-column__content">
-      <button className={`preview-action preview-action--${activeStep > 0 ? "green" : action.tone}`} type="button" onClick={onContinue} disabled={activeStep > 1 || (activeStep === 1 && !formatComplete)}><span>{activeStep > 0 ? workflowAction : action.label}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+      <button className={`preview-action preview-action--${activeStep === 1 ? action.tone : "green"}`} type="button" onClick={onContinue} disabled={activeStep > 2 || (activeStep === 2 && !formatComplete)}><span>{activeStep === 1 ? action.label : workflowAction}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
       <div className="preview-heading"><h2>Image Preview</h2></div>
-      {activeStep > 0 ? <><FormatPreview format={format} backgroundImage={backgroundImage} logoImage={logoImage} fontAsset={fontAsset} />{activeStep === 1 && !formatComplete && <span className="format-preview__waiting">Choose all format properties to continue.</span>}</> : <div className="preview-assets">
+      {activeStep !== 1 ? <><FormatPreview format={format} backgroundImage={backgroundImage} logoImage={logoImage} fontAsset={fontAsset} />{activeStep === 2 && !formatComplete && <span className="format-preview__waiting">Choose all format properties to continue.</span>}</> : <div className="preview-assets">
         <figure className="preview-asset preview-asset--image"><figcaption>Background</figcaption><div className="preview-asset__frame">{urls.background ? <img src={urls.background} alt="Selected background" /> : <span>No background selected</span>}</div></figure>
         <figure className="preview-asset preview-asset--image"><figcaption>Tournament Logo</figcaption><div className="preview-asset__frame preview-asset__frame--transparent">{urls.tournament_logo ? <img src={urls.tournament_logo} alt="Selected tournament logo" /> : <span>No logo selected</span>}</div></figure>
         {fontAsset && <figure className="preview-asset preview-asset--font"><figcaption>Font</figcaption><div className="preview-asset__frame"><FontSpecimen font={fontAsset} /></div></figure>}
@@ -140,9 +143,13 @@ export default function MakerApp() {
   const [fontUrls, setFontUrls] = useState<Record<string, string>>({});
   const [builtInBackgrounds, setBuiltInBackgrounds] = useState<BuiltInBackground[]>([]);
   const [selected, setSelected] = useState<SelectedImages>(EMPTY_SELECTION);
+  const [loadStepComplete, setLoadStepComplete] = useState(false);
   const [imagesSkipped, setImagesSkipped] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<PreviewUrls>(EMPTY_URLS);
   const [libraryLoading, setLibraryLoading] = useState(false);
+  const [assetLibraryReady, setAssetLibraryReady] = useState(false);
+  const [pendingAssetValidation, setPendingAssetValidation] = useState(false);
+  const [assetWarnings, setAssetWarnings] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState("");
   const [uploadCategory, setUploadCategory] = useState<UploadKind | null>(null);
@@ -157,6 +164,7 @@ export default function MakerApp() {
   const [format, setFormat] = useState<FormatConfiguration>(EMPTY_FORMAT);
   const uploadDialogRef = useRef<HTMLDialogElement>(null);
   const accountDialogRef = useRef<HTMLDialogElement>(null);
+  const assetWarningDialogRef = useRef<HTMLDialogElement>(null);
   const groupedImages = useMemo(() => ({ tournament_logo: images.filter((image) => image.category === "tournament_logo"), background: images.filter((image) => image.category === "background") }), [images]);
   const selectedBackgroundImage = useMemo<FormatImageInfo | null>(() => {
     if (!selected.background) return null;
@@ -186,10 +194,10 @@ export default function MakerApp() {
   }, [fontUrls, providedFonts, selectedFontId, userFonts]);
   const bothImagesSelected = Boolean(selected.tournament_logo && selected.background);
   const imagesStepComplete = bothImagesSelected || imagesSkipped;
-  const formatStepComplete = imagesStepComplete && isFormatComplete(format);
-  const maxStep = formatStepComplete ? 2 : imagesStepComplete ? 1 : 0;
+  const formatStepComplete = loadStepComplete && imagesStepComplete && isFormatComplete(format);
+  const maxStep = formatStepComplete ? 3 : imagesStepComplete ? 2 : loadStepComplete ? 1 : 0;
 
-  useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setImages([]); setUserFonts([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); setSelectedFontId((current) => { if (current.startsWith("user:")) { setFormat((formatValue) => ({ ...formatValue, text_settings: { ...formatValue.text_settings, font_asset_id: "provided:tyrowo", font_size_adjustment: 0 } })); return "provided:tyrowo"; } return current; }); } }), []);
+  useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setAssetLibraryReady(true); setImages([]); setUserFonts([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); setSelectedFontId((current) => { if (current.startsWith("user:")) { setFormat((formatValue) => ({ ...formatValue, text_settings: { ...formatValue.text_settings, font_asset_id: "provided:tyrowo", font_size_adjustment: 0 } })); return "provided:tyrowo"; } return current; }); } }), []);
   useEffect(() => { getOptions().then((options) => setFighters(options.fighters)).catch(() => undefined); }, []);
   useEffect(() => { getStats().then((stats) => setRenderCount(stats.render_count)).catch(() => undefined); }, []);
   useEffect(() => { listBuiltInBackgrounds().then(setBuiltInBackgrounds).catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Could not load the included backgrounds.")); }, []);
@@ -205,26 +213,90 @@ export default function MakerApp() {
     return () => { current = false; };
   }, [format.text_settings.font_asset_id, user]);
   useEffect(() => {
+    const assetId = format.image_settings.background_placement?.asset_id;
+    if (!assetId || selected.background === assetId) return;
+    if (assetId.startsWith("builtin:")) {
+      const builtInId = assetId.slice("builtin:".length);
+      if (!builtInBackgrounds.some((item) => item.asset_id === builtInId)) return;
+      setSelected((current) => ({ ...current, background: assetId }));
+      setPreviewUrls((current) => ({ ...current, background: builtInBackgroundUrl(builtInId) }));
+      return;
+    }
+    if (!user || !images.some((image) => image.id === assetId && image.category === "background")) return;
+    let current = true;
+    user.getIdToken().then((token) => getUserImageUrl(token, assetId)).then((url) => {
+      if (!current) return;
+      setSelected((selection) => ({ ...selection, background: assetId }));
+      setPreviewUrls((urls) => ({ ...urls, background: url }));
+    }).catch(() => { if (current) setMessage("The saved format's background is not available in this account."); });
+    return () => { current = false; };
+  }, [builtInBackgrounds, format.image_settings.background_placement?.asset_id, images, selected.background, user]);
+  useEffect(() => {
+    const assetId = format.image_settings.logo_asset_id;
+    if (!assetId || selected.tournament_logo === assetId || !user || !images.some((image) => image.id === assetId && image.category === "tournament_logo")) return;
+    let current = true;
+    user.getIdToken().then((token) => getUserImageUrl(token, assetId)).then((url) => {
+      if (!current) return;
+      setSelected((selection) => ({ ...selection, tournament_logo: assetId }));
+      setPreviewUrls((urls) => ({ ...urls, tournament_logo: url }));
+    }).catch(() => { if (current) setMessage("The saved format's tournament logo is not available in this account."); });
+    return () => { current = false; };
+  }, [format.image_settings.logo_asset_id, images, selected.tournament_logo, user]);
+  useEffect(() => {
     if (!user) return;
     let current = true;
+    setAssetLibraryReady(false);
     setLibraryLoading(true);
-    user.getIdToken().then(async (token) => Promise.all([listUserImages(token), listUserFonts(token)])).then(([items, fonts]) => { if (current) { setImages(items); setUserFonts(fonts); setLibraryLoading(false); } }).catch((error: unknown) => { if (current) { setMessage(error instanceof Error ? error.message : "Could not load your asset library."); setLibraryLoading(false); } });
+    user.getIdToken().then(async (token) => Promise.all([listUserImages(token), listUserFonts(token)])).then(([items, fonts]) => { if (current) { setImages(items); setUserFonts(fonts); setLibraryLoading(false); setAssetLibraryReady(true); } }).catch((error: unknown) => { if (current) { setMessage(error instanceof Error ? error.message : "Could not load your asset library."); setLibraryLoading(false); setAssetLibraryReady(true); } });
     return () => { current = false; };
   }, [user]);
 
+  useEffect(() => {
+    if (!pendingAssetValidation || !assetLibraryReady) return;
+    const warnings: string[] = [];
+    let corrected = format;
+    const fontId = corrected.text_settings.font_asset_id;
+    if (fontId.startsWith("user:") && !userFonts.some((font) => `user:${font.id}` === fontId)) {
+      warnings.push("The saved custom font no longer exists. Tyrowo Inked was selected and the font-size adjustment was reset to 0.");
+      corrected = { ...corrected, text_settings: { ...corrected.text_settings, font_asset_id: "provided:tyrowo", font_size_adjustment: 0 } };
+    }
+    const backgroundId = corrected.image_settings.background_placement?.asset_id;
+    if (backgroundId && !backgroundId.startsWith("builtin:") && !images.some((image) => image.id === backgroundId && image.category === "background")) {
+      warnings.push("The saved background no longer exists. Its size and position were reset.");
+      corrected = { ...corrected, image_settings: { ...corrected.image_settings, background_size: 1, background_placement: null } };
+    }
+    const logoId = corrected.image_settings.logo_asset_id;
+    if (logoId && !images.some((image) => image.id === logoId && image.category === "tournament_logo")) {
+      warnings.push("The saved tournament logo no longer exists. Its size was reset.");
+      corrected = { ...corrected, image_settings: { ...corrected.image_settings, logo_asset_id: null, logo_size: 1 } };
+    }
+    setFormat(corrected);
+    setPendingAssetValidation(false);
+    setAssetWarnings(warnings);
+  }, [assetLibraryReady, format, images, pendingAssetValidation, userFonts]);
+
+  useEffect(() => {
+    if (assetWarnings.length) assetWarningDialogRef.current?.showModal();
+  }, [assetWarnings]);
+
+  function handleLoadedFormat(value: FormatConfiguration) {
+    setFormat(value);
+    setPendingAssetValidation(true);
+  }
   function openAccount() { setAuthMessage(""); accountDialogRef.current?.showModal(); }
   async function handleSignIn() { setAuthMessage(""); try { await signInWithGoogle(); accountDialogRef.current?.close(); } catch (error) { setAuthMessage(firebaseAuthErrorMessage(error)); } }
-  async function handleSignOut() { await signOutCurrentUser(); accountDialogRef.current?.close(); setImagesSkipped(false); setActiveStep(0); }
+  async function handleSignOut() { await signOutCurrentUser(); accountDialogRef.current?.close(); setLoadStepComplete(false); setImagesSkipped(false); setActiveStep(0); }
   function openUpload(category: UploadKind) { setUploadCategory(category); setUploadName(""); setUploadFile(null); setMessage(""); uploadDialogRef.current?.showModal(); }
   async function selectImage(image: UserImage) {
     if (!user) return;
     if (selected[image.category] === image.id) {
       setSelected((current) => ({ ...current, [image.category]: null }));
       setPreviewUrls((current) => ({ ...current, [image.category]: "" }));
+      if (image.category === "tournament_logo") setFormat((current) => ({ ...current, image_settings: { ...current.image_settings, logo_asset_id: null } }));
       return;
     }
     setBusyId(image.id); setMessage("");
-    try { const url = await getUserImageUrl(await user.getIdToken(), image.id); setSelected((current) => ({ ...current, [image.category]: image.id })); setPreviewUrls((current) => ({ ...current, [image.category]: url })); }
+    try { const url = await getUserImageUrl(await user.getIdToken(), image.id); setSelected((current) => ({ ...current, [image.category]: image.id })); setPreviewUrls((current) => ({ ...current, [image.category]: url })); if (image.category === "tournament_logo") setFormat((current) => ({ ...current, image_settings: { ...current.image_settings, logo_asset_id: image.id } })); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Could not preview that image."); }
     finally { setBusyId(""); }
   }
@@ -279,7 +351,7 @@ export default function MakerApp() {
   async function handleDelete(image: UserImage) {
     if (!user || !window.confirm("Are you sure you want to permanently delete this image?")) return;
     setBusyId(image.id); setMessage("");
-    try { await deleteUserImage(await user.getIdToken(), image.id); setImages((current) => current.filter((item) => item.id !== image.id)); if (selected[image.category] === image.id) { setSelected((current) => ({ ...current, [image.category]: null })); setPreviewUrls((current) => ({ ...current, [image.category]: "" })); setActiveStep(0); } }
+    try { await deleteUserImage(await user.getIdToken(), image.id); setImages((current) => current.filter((item) => item.id !== image.id)); if (selected[image.category] === image.id) { setSelected((current) => ({ ...current, [image.category]: null })); setPreviewUrls((current) => ({ ...current, [image.category]: "" })); if (image.category === "tournament_logo") setFormat((current) => ({ ...current, image_settings: { ...current.image_settings, logo_asset_id: null, logo_size: 1 } })); setActiveStep(1); } }
     catch (error) { setMessage(error instanceof Error ? error.message : "Could not delete that image."); }
     finally { setBusyId(""); }
   }
@@ -297,7 +369,8 @@ export default function MakerApp() {
 
   return <div className="app-shell">
     <header className="topbar"><button className="brand" type="button" onClick={() => { setPage("maker"); setActiveStep(0); }} aria-label="Melee Podium Maker home"><img className="brand__mark" src={`${import.meta.env.BASE_URL}favicon.png`} alt="" /><span>Melee Podium Maker</span></button><div className="topbar__actions"><button className="button button--nav" type="button" onClick={() => setPage(page === "maker" ? "saved" : "maker")}>{page === "maker" ? "Manage Saved Data" : "Image Maker"}</button><button className={`account-button${user ? " account-button--signed-in" : ""}`} type="button" onClick={openAccount} aria-label={user ? `Account: ${displayName}` : "Sign in"}>{user?.photoURL ? <img src={user.photoURL} alt="" /> : <AccountIcon signedIn={Boolean(user)} />}<span className="account-button__dot" /></button></div></header>
-    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select Assets</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(1); }}>Skip optional images</button></div><p>Choose a font, tournament logo, and background. Images remain optional and can be resized in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><ProvidedFontLibrary fonts={providedFonts} selectedId={selectedFontId} onSelect={selectProvidedFont} />{user && !libraryLoading && <UserFontLibrary fonts={userFonts} selectedId={selectedFontId} busyId={busyId} urls={fontUrls} onSelect={selectUserFont} onUpload={() => openUpload("font")} onDelete={handleDeleteFont} />}<BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your asset library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 1 ? <FormatStep user={user} value={format} backgroundImage={selectedBackgroundImage} onChange={setFormat} onSignIn={openAccount} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} backgroundImage={selectedBackgroundImage} logoImage={selectedLogoImage} fontAsset={selectedFontAsset} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(1); } else if (activeStep === 1 && formatStepComplete) { setActiveStep(2); } }} /></main>}
+    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <LoadStep user={user} onChange={handleLoadedFormat} onSignIn={openAccount} /> : activeStep === 1 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select Assets</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(2); }}>Skip optional images</button></div><p>Choose a font, tournament logo, and background. Images remain optional and can be resized in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><ProvidedFontLibrary fonts={providedFonts} selectedId={selectedFontId} onSelect={selectProvidedFont} />{user && !libraryLoading && <UserFontLibrary fonts={userFonts} selectedId={selectedFontId} busyId={busyId} urls={fontUrls} onSelect={selectUserFont} onUpload={() => openUpload("font")} onDelete={handleDeleteFont} />}<BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your asset library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 2 ? <FormatStep user={user} value={format} backgroundImage={selectedBackgroundImage} onChange={setFormat} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} backgroundImage={selectedBackgroundImage} logoImage={selectedLogoImage} fontAsset={selectedFontAsset} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { setLoadStepComplete(true); setActiveStep(1); } else if (activeStep === 1) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(2); } else if (activeStep === 2 && formatStepComplete) { setActiveStep(3); } }} /></main>}
+    <dialog className="modal asset-warning-modal" ref={assetWarningDialogRef} onClose={() => setAssetWarnings([])} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => assetWarningDialogRef.current?.close()} aria-label="Close">×</button><span className="eyebrow">Missing saved assets</span><h2>Some assets could not be restored</h2><p>The format was loaded, but these account assets are no longer available:</p><ul>{assetWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul><div className="modal__actions"><button className="button button--dark" type="button" onClick={() => assetWarningDialogRef.current?.close()}>Continue</button></div></div></dialog>
     <dialog className="modal account-modal" ref={accountDialogRef} onClose={() => { setAuthMessage(""); setAuthFormKey((current) => current + 1); }} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => accountDialogRef.current?.close()} aria-label="Close">×</button>{user ? <><span className="modal__icon"><AccountIcon signedIn /></span><h2>{displayName}</h2><p>Your private asset library is connected.</p><button className="button button--dark" type="button" onClick={handleSignOut}>Sign out</button></> : <><span className="modal__icon"><AccountIcon signedIn={false} /></span><h2>Sign in or create an account</h2><p>Use your email and password, or continue with Google.</p><EmailAuthForm key={authFormKey} disabled={!firebaseAuthAvailable} onComplete={() => accountDialogRef.current?.close()} /><div className="auth-divider"><span>or</span></div><button className="button button--google" type="button" onClick={handleSignIn} disabled={!firebaseAuthAvailable}><span>G</span> Continue with Google</button>{!firebaseAuthAvailable && <p className="modal__warning">Sign-in needs the Firebase Web SDK environment values for this deployment.</p>}</>}{authMessage && <p className="inline-message" role="alert">{authMessage}</p>}</div></dialog>
     <dialog className="modal" ref={uploadDialogRef} onClick={(event) => { if (event.target === event.currentTarget && !uploading) event.currentTarget.close(); }}><form className="modal__content" onSubmit={handleUpload}><button className="modal__close" type="button" onClick={() => uploadDialogRef.current?.close()} aria-label="Close" disabled={uploading}>×</button><span className="eyebrow">Add to library</span><h2>Upload {uploadCategory === "font" ? "font" : uploadCategory ? categoryLabel(uploadCategory).toLowerCase() : "asset"}</h2><label className="field">Asset name<input maxLength={80} value={uploadName} onChange={(event) => setUploadName(event.target.value)} placeholder={uploadCategory === "font" ? "e.g. Tournament Sans" : "e.g. Summer Weekly"} required autoFocus /></label><label className="file-field"><input type="file" accept={uploadCategory === "font" ? ".ttf,.otf,font/ttf,font/otf" : ".png,.jpg,.jpeg,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp"} onChange={(event: ChangeEvent<HTMLInputElement>) => setUploadFile(event.target.files?.[0] ?? null)} required /><span>{uploadFile ? uploadFile.name : uploadCategory === "font" ? "Choose a TTF or OTF font" : "Choose a PNG, JPG, WebP, GIF, or BMP"}</span></label><p className="field-help">Names must be unique within this asset category. Maximum file size: {uploadCategory === "font" ? "10 MB" : "300 MB"}.</p>{message && <p className="inline-message" role="alert">{message}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => uploadDialogRef.current?.close()} disabled={uploading}>Cancel</button><button className="button button--dark" type="submit" disabled={uploading || !uploadFile || !uploadName.trim()}>{uploading ? "Uploading…" : "Upload asset"}</button></div></form></dialog>
   </div>;

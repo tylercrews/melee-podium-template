@@ -1,7 +1,7 @@
 import { FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SavedFormat, createSavedFormat, listSavedFormats, replaceSavedFormat } from "./api";
 import { User } from "./firebaseAuth";
-import { FormatConfiguration, formatCode, isFormatComplete, normalizeFormat, parseFormatCode } from "./format";
+import { FormatConfiguration, formatCode, isFormatComplete } from "./format";
 import FormatSettings from "./FormatSettings";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 
@@ -10,24 +10,20 @@ interface FormatStepProps {
   value: FormatConfiguration;
   backgroundImage: FormatImageInfo | null;
   onChange: (value: FormatConfiguration) => void;
-  onSignIn: () => void;
 }
 
 function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
   if (event.target === event.currentTarget) event.currentTarget.close();
 }
 
-export default function FormatStep({ user, value, backgroundImage, onChange, onSignIn }: FormatStepProps) {
+export default function FormatStep({ user, value, backgroundImage, onChange }: FormatStepProps) {
   const [savedFormats, setSavedFormats] = useState<SavedFormat[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [formatName, setFormatName] = useState("");
-  const [importText, setImportText] = useState("");
   const [message, setMessage] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [overwriteTarget, setOverwriteTarget] = useState<SavedFormat | null>(null);
-  const importDialog = useRef<HTMLDialogElement>(null);
   const exportDialog = useRef<HTMLDialogElement>(null);
   const saveDialog = useRef<HTMLDialogElement>(null);
   const overwriteDialog = useRef<HTMLDialogElement>(null);
@@ -40,42 +36,13 @@ export default function FormatStep({ user, value, backgroundImage, onChange, onS
       return;
     }
     let current = true;
-    setLoading(true);
     user.getIdToken().then(listSavedFormats).then((items) => {
       if (current) setSavedFormats(items);
     }).catch((error: unknown) => {
       if (current) setMessage(error instanceof Error ? error.message : "Could not load your saved formats.");
-    }).finally(() => {
-      if (current) setLoading(false);
     });
     return () => { current = false; };
   }, [user]);
-
-  function loadSavedFormat(id: string) {
-    setSelectedId(id);
-    if (!id) return;
-    const saved = savedFormats.find((item) => item.id === id);
-    if (!saved) return;
-    try {
-      onChange(normalizeFormat(saved.data));
-      setMessage(`Loaded “${saved.name}”.`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "That saved format could not be loaded.");
-    }
-  }
-
-  function importFormat(event: FormEvent) {
-    event.preventDefault();
-    try {
-      onChange(parseFormatCode(importText));
-      setSelectedId("");
-      setMessage("Format settings imported.");
-      setDialogMessage("");
-      importDialog.current?.close();
-    } catch (error) {
-      setDialogMessage(error instanceof Error ? error.message : "That format code could not be imported.");
-    }
-  }
 
   async function copyExport() {
     try {
@@ -135,12 +102,7 @@ export default function FormatStep({ user, value, backgroundImage, onChange, onS
 
   const complete = isFormatComplete(value);
   return <section className="step-content format-step">
-    <div className="step-intro"><h1>Choose a Format</h1><p>Load a format you already use, or import one shared by another tournament organizer.</p></div>
-    <section className="format-loader" aria-labelledby="load-format-heading">
-      <div><span className="eyebrow">Start from saved settings</span><h2 id="load-format-heading">Load a previous format</h2></div>
-      {user ? <label className="format-select">Saved formats<select value={selectedId} onChange={(event) => loadSavedFormat(event.target.value)} disabled={loading}><option value="">{loading ? "Loading formats…" : "Choose a saved format"}</option>{savedFormats.map((format) => <option value={format.id} key={format.id}>{format.name}</option>)}</select></label> : <div className="format-signin"><p>Sign in to choose from your saved formats.</p><button className="button button--outline" type="button" onClick={onSignIn}>Sign in</button></div>}
-      <div className="format-import-prompt"><span>Or import format from code.</span><button className="button button--outline" type="button" onClick={() => { setImportText(""); setDialogMessage(""); importDialog.current?.showModal(); }}>Import format</button></div>
-    </section>
+    <div className="step-intro"><h1>Choose a Format</h1><p>Configure the image layout, header content, colors, and text settings.</p></div>
 
     <FormatSettings value={value} backgroundImage={backgroundImage} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
     <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose a podium style, bracket type, and entrant layout to continue"}</div>
@@ -148,8 +110,6 @@ export default function FormatStep({ user, value, backgroundImage, onChange, onS
     {message && <p className="inline-message format-message" role="status">{message}</p>}
     <div className="format-actions"><button className="button button--ghost" type="button" onClick={() => { setDialogMessage(""); exportDialog.current?.showModal(); }}>Export Format</button><button className="button button--dark" type="button" disabled={!user || !complete} onClick={() => { setFormatName(savedFormats.find((item) => item.id === selectedId)?.name ?? ""); setDialogMessage(""); saveDialog.current?.showModal(); }}>Save Format</button></div>
     {!user && <p className="format-actions__help">Sign in to save this format. Export remains available without an account.</p>}
-
-    <dialog className="modal format-code-modal" ref={importDialog} onClick={closeOnBackdrop}><form className="modal__content" onSubmit={importFormat}><button className="modal__close" type="button" onClick={() => importDialog.current?.close()} aria-label="Close">×</button><span className="eyebrow">Import</span><h2>Import format from code</h2><p>Paste a JSON format code. Valid settings will replace the current format selections.</p><label className="field">Format JSON<textarea value={importText} onChange={(event) => setImportText(event.target.value)} placeholder={'{\n  "schema_version": 1,\n  "selection": { ... }\n}'} required autoFocus /></label>{dialogMessage && <p className="inline-message" role="alert">{dialogMessage}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => importDialog.current?.close()}>Cancel</button><button className="button button--dark" type="submit" disabled={!importText.trim()}>Import settings</button></div></form></dialog>
 
     <dialog className="modal format-code-modal" ref={exportDialog} onClick={closeOnBackdrop}><div className="modal__content"><button className="modal__close" type="button" onClick={() => exportDialog.current?.close()} aria-label="Close">×</button><span className="eyebrow">Export</span><h2>Export format</h2><p>Copy this code to share it, or download it as a JSON file.</p><label className="field">Format JSON<span className="format-code-field"><textarea value={exportedCode} readOnly /><button className="format-copy-button" type="button" onClick={() => void copyExport()} aria-label="Copy format JSON" title="Copy format JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></span></label>{dialogMessage && <p className="inline-message" role="status">{dialogMessage}</p>}<div className="modal__actions"><button className="button button--dark" type="button" onClick={downloadExport}>Download JSON</button></div></div></dialog>
 
