@@ -52,6 +52,19 @@ from models import DoublesTeam, SinglesEntrant, TournamentFormat
 from podium_colors import podium_color_for_slot
 
 
+def _header_geometry(position: str, width: int) -> tuple[tuple[int, int], str, int, str]:
+    """Return the x anchor, Pillow anchor, width, and alignment for a header slot."""
+
+    max_width = max(1, width // 3 - 30)
+    if position == "top_left":
+        return ((15, 0), "la", max_width, "left")
+    if position == "top_middle":
+        return ((width // 2, 0), "ma", max_width, "center")
+    if position == "top_right":
+        return ((width - 15, 0), "ra", max_width, "right")
+    raise ValueError(f"Unknown header position: {position}")
+
+
 @dataclass(frozen=True, slots=True)
 class LegacyPodiumContentRenderer:
     """Draw podium portraits and text using serialized layout preferences."""
@@ -72,6 +85,7 @@ class LegacyPodiumContentRenderer:
         _validate_placements(request.entrants, selection.options.entrant_count)
         result = canvas.convert("RGBA")
         is_doubles = selection.options.event_format is TournamentFormat.DOUBLES
+        assigned_header = request.header_layout is not None
         center_title, center_subtitle = (
             _centered_header_fields(
                 result,
@@ -79,24 +93,53 @@ class LegacyPodiumContentRenderer:
                 font=self.font,
                 is_doubles=is_doubles,
             )
-            if mode.layout_count != 3
+            if mode.layout_count != 3 and not assigned_header
             else (False, False)
         )
 
-        _draw_tournament_subtitle(
-            result,
-            request.tournament,
-            self.font,
-            mode.layout_count,
-            center_subtitle,
-        )
+        if assigned_header:
+            self._draw_assigned_subtitle(result, request)
+        else:
+            _draw_tournament_subtitle(
+                result,
+                request.tournament,
+                self.font,
+                mode.layout_count,
+                center_subtitle,
+            )
         if is_doubles:
             self._draw_doubles(result, request, preferences, mode)
         else:
             self._draw_singles(result, request, preferences, mode)
         self._draw_preference_text(result, request, preferences, mode)
-        self._draw_tournament_text(result, request, mode, center_title)
+        if assigned_header:
+            self._draw_assigned_tournament_text(result, request, mode)
+        else:
+            self._draw_tournament_text(result, request, mode, center_title)
         return result
+
+    def _draw_assigned_subtitle(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+    ) -> None:
+        if request.tournament.subtitle is None or request.header_layout is None:
+            return
+        position = next(
+            slot for slot, content in request.header_layout.items()
+            if content == "tournament_title"
+        )
+        (x, _), anchor, max_width, align = _header_geometry(position, canvas.width)
+        _draw_text(
+            ImageDraw.Draw(canvas),
+            (x, 110),
+            request.tournament.subtitle,
+            anchor=anchor,
+            max_width=max_width,
+            preferred_size=48,
+            font=self.font,
+            align=align,
+        )
 
     def _draw_singles(
         self,
@@ -287,6 +330,60 @@ class LegacyPodiumContentRenderer:
             return None if entrant.seed is None else f"{entrant.seed}s"
         raise ValueError(f"Unsupported legacy text field: {placement.field}")
 
+    def _draw_assigned_tournament_text(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        mode: PodiumMode,
+    ) -> None:
+        assert request.header_layout is not None
+        draw = ImageDraw.Draw(canvas)
+        draw_text = partial(_draw_text, font=self.font)
+        width = canvas.width
+        title_position = next(
+            slot for slot, content in request.header_layout.items()
+            if content == "tournament_title"
+        )
+        (title_x, _), title_anchor, title_width, title_align = _header_geometry(
+            title_position, width
+        )
+        draw_text(
+            draw,
+            (title_x, 5),
+            request.tournament.title,
+            anchor=title_anchor,
+            max_width=title_width,
+            preferred_size=72,
+            align=title_align,
+        )
+
+        metadata_position = next(
+            slot for slot, content in request.header_layout.items()
+            if content == "metadata"
+        )
+        (metadata_x, _), metadata_anchor, metadata_width, metadata_align = (
+            _header_geometry(metadata_position, width)
+        )
+        is_doubles = request.tournament.event_format is TournamentFormat.DOUBLES
+        for field in _metadata_layout(
+            request.tournament,
+            font=self.font,
+            width=width,
+            is_doubles=is_doubles,
+        ):
+            original_y = field["position"][1]
+            draw_text(
+                draw,
+                (metadata_x, original_y),
+                field["text"],
+                anchor=metadata_anchor,
+                max_width=metadata_width,
+                preferred_size=field["preferred_size"],
+                fill=field.get("fill", "white"),
+                align=metadata_align,
+            )
+        self._draw_attribution(canvas, request, mode)
+
     def _draw_tournament_text(
         self,
         canvas: Image.Image,
@@ -320,18 +417,28 @@ class LegacyPodiumContentRenderer:
             max_width=title_max_width,
             preferred_size=92,
         )
+        self._draw_attribution(canvas, request, mode)
+
+    def _draw_attribution(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        mode: PodiumMode,
+    ) -> None:
+        width = canvas.width
         attribution_position, attribution_anchor = _attribution_layout(
             canvas,
             request.entrants,
             font=self.font,
             mode=mode,
         )
-        draw_text(
-            draw,
+        _draw_text(
+            ImageDraw.Draw(canvas),
             attribution_position,
             ATTRIBUTION_TEXT,
             anchor=attribution_anchor,
             max_width=width - 2 * ATTRIBUTION_SIDE_MARGIN,
             preferred_size=ATTRIBUTION_PREFERRED_SIZE,
+            font=self.font,
             fill="#191919FF",
         )

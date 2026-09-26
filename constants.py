@@ -34,6 +34,7 @@ SEVENTH_PLACE_GRAY_BOX: Final = PodiumBoxColors((141, 141, 141), (48, 44, 57), (
 GOLD_PODIUM: Final = PodiumBoxColors((212, 175, 55), (92, 69, 20), BLACK)
 SILVER_PODIUM: Final = PodiumBoxColors((190, 198, 210), (72, 78, 88), BLACK)
 BRONZE_PODIUM: Final = PodiumBoxColors((184, 115, 51), (82, 48, 24), BLACK)
+MEDAL_GRAY_PODIUM: Final = PodiumBoxColors((112, 112, 112), (40, 37, 48), (16, 13, 19))
 
 # Visual order on the top-8 background. This also corresponds to podium slots
 # in top 3/top 4, so renderers can safely select a box by slot number.

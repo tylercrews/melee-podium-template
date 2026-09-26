@@ -138,7 +138,7 @@ class PodiumColorsTest(unittest.TestCase):
         self.assertTrue(all(medals.color_for_slot(slot).metallic for slot in (1, 2, 3)))
         self.assertEqual(
             {medals.color_for_slot(slot).main_color for slot in range(4, 9)},
-            {"#8D8D8DFF"},
+            {"#707070FF"},
         )
 
     def test_custom_and_alternating_modes_are_serializable(self) -> None:

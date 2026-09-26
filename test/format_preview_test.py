@@ -61,6 +61,34 @@ class FormatPreviewTests(unittest.TestCase):
         )
         self.assertNotEqual(red_preview.tobytes(), green_preview.tobytes())
 
+    def test_header_assignments_change_the_rendered_text_positions(self) -> None:
+        left_title = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            header_layout={
+                "top_left": "tournament_title",
+                "top_middle": "tournament_logo",
+                "top_right": "metadata",
+            },
+        )
+        right_title = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            header_layout={
+                "top_left": "metadata",
+                "top_middle": "tournament_logo",
+                "top_right": "tournament_title",
+            },
+        )
+        self.assertNotEqual(
+            left_title.crop((0, 0, left_title.width, 180)).tobytes(),
+            right_title.crop((0, 0, right_title.width, 180)).tobytes(),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -47,21 +47,21 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-async function loadCustomizedForeground(format: FormatConfiguration, fallbackUrl: string): Promise<HTMLImageElement> {
-  if (format.selection.options.podium_style !== "customizable") return loadImage(fallbackUrl);
+async function loadConfiguredForeground(format: FormatConfiguration): Promise<HTMLImageElement> {
   const response = await fetch(apiUrl("format-preview"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      style: "customizable",
+      style: format.selection.options.podium_style ?? "legacy",
       event_format: format.selection.options.event_format ?? "singles",
       entrant_count: format.selection.options.entrant_count ?? 8,
       variant: format.selection.options.variant,
       transparent: true,
       formatting_asset_colors: format.formatting_asset_colors,
+      header_layout: format.header_layout,
     }),
   });
-  if (!response.ok) throw new Error("Could not render the customized formatting colors.");
+  if (!response.ok) throw new Error("Could not render the configured format preview.");
   const objectUrl = URL.createObjectURL(await response.blob());
   try {
     return await loadImage(objectUrl);
@@ -78,6 +78,9 @@ export default function FormatPreview({ format, backgroundImage, logoImage }: Fo
   const [failed, setFailed] = useState(false);
   const [refreshedSignature, setRefreshedSignature] = useState<string | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const expandedDialog = useRef<HTMLDialogElement>(null);
+  const expandedImage = useRef<HTMLImageElement>(null);
+  const expandedCanvas = useRef<HTMLCanvasElement>(null);
   const previewSignature = JSON.stringify({
     structuralPreview: request.transparentUrl,
     format,
@@ -113,7 +116,7 @@ export default function FormatPreview({ format, backgroundImage, logoImage }: Fo
     setFailed(false);
     try {
       const [foreground, background, logo] = await Promise.all([
-        loadCustomizedForeground(format, request.transparentUrl),
+        loadConfiguredForeground(format),
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);
@@ -169,10 +172,27 @@ export default function FormatPreview({ format, backgroundImage, logoImage }: Fo
     }
   }
 
+  function openExpandedPreview() {
+    if (!expandedImage.current || !expandedCanvas.current) return;
+    if (customPreviewVisible && canvas.current) {
+      expandedCanvas.current.width = canvas.current.width;
+      expandedCanvas.current.height = canvas.current.height;
+      expandedCanvas.current.getContext("2d")?.drawImage(canvas.current, 0, 0);
+      expandedCanvas.current.hidden = false;
+      expandedImage.current.hidden = true;
+    } else {
+      expandedImage.current.src = displayed.url;
+      expandedImage.current.hidden = false;
+      expandedCanvas.current.hidden = true;
+    }
+    expandedDialog.current?.showModal();
+  }
+
   return <div className="format-preview">
-    <div className="format-preview__frame"><img className="format-preview__demo" src={displayed.url} alt={`Cached demo podium: ${displayed.label}`} hidden={customPreviewVisible} /><canvas className="format-preview__canvas" ref={canvas} hidden={!customPreviewVisible} aria-label={`Format preview using your selected images: ${request.label}`} />{loading && <span className="format-preview__loading">Updating layout…</span>}{customPreviewStale && <span className="format-preview__loading">Image changes need refresh</span>}</div>
+    <button className="format-preview__frame" type="button" onClick={openExpandedPreview} aria-label="Open a larger format preview"><img className="format-preview__demo" src={displayed.url} alt={`Cached demo podium: ${displayed.label}`} hidden={customPreviewVisible} /><canvas className="format-preview__canvas" ref={canvas} hidden={!customPreviewVisible} aria-label={`Format preview using your selected images: ${request.label}`} />{loading && <span className="format-preview__loading">Updating layout…</span>}{customPreviewStale && <span className="format-preview__loading">Image changes need refresh</span>}</button>
     <button className={`button button--outline format-preview__refresh${needsRefresh ? " format-preview__refresh--needed" : ""}`} type="button" onClick={() => void refreshWithSelectedImages()} disabled={refreshing} aria-label={needsRefresh ? "Refresh Format Preview; changes are waiting" : "Refresh Format Preview; preview is up to date"}><span>{refreshing ? "Refreshing preview…" : "Refresh Format Preview"}</span>{needsRefresh && !refreshing && <span className="format-preview__refresh-status">Changes waiting</span>}</button>
     <p><strong>{customPreviewVisible ? "Your image preview" : "Cached layout demo"}</strong> · {request.label}</p>
     {failed && <span className="format-preview__waiting" role="alert">The new preview could not be rendered. The previous preview is still shown.</span>}
+    <dialog className="modal format-preview-modal" ref={expandedDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => expandedDialog.current?.close()} aria-label="Close enlarged preview">×</button><img className="format-preview-modal__image" ref={expandedImage} alt={`Enlarged format preview: ${request.label}`} /><canvas className="format-preview-modal__image" ref={expandedCanvas} hidden aria-label={`Enlarged customized format preview: ${request.label}`} /></div></dialog>
   </div>;
 }

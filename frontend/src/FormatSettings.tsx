@@ -82,7 +82,6 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       <div className="format-settings-card__heading"><span className="eyebrow">Header content</span><h2 id="header-layout-heading">Assign the top positions</h2><p>Each item appears exactly once. Choosing an item already assigned elsewhere swaps the two positions.</p></div>
       <div className="format-header-map">
         {headerPositions.map((position) => <label className={`format-header-slot format-header-slot--${position.value}`} key={position.value}><span>{position.label}</span><select value={value.header_layout[position.value]} onChange={(event) => assignHeader(position.value, event.target.value as HeaderContent)}>{headerContents.map((content) => <option value={content.value} key={content.value}>{content.label}</option>)}</select><span className="format-header-slot__preview" aria-hidden="true">{headerContents.find((content) => content.value === value.header_layout[position.value])?.label}</span></label>)}
-        <div className="format-header-map__stage" aria-hidden="true"><span>Example image content</span></div>
       </div>
     </section>
     <ImageBackgroundSettings value={value} backgroundImage={backgroundImage} onChange={onChange} />

@@ -117,8 +117,8 @@ const legacySizeMultipliers: Record<string, number> = {
   "3x": 3,
   "4x": 4,
 };
-const MIN_SIZE_MULTIPLIER = .1;
-const MAX_SIZE_MULTIPLIER = 10;
+const MIN_SIZE_MULTIPLIER = .001;
+const MAX_SIZE_MULTIPLIER = 100;
 const rgbaColor = /^#[0-9a-f]{8}$/i;
 const formattingColorModes = new Set<FormattingColorSelectionMode>(["premade", "pick_1", "pick_2", "pick_all"]);
 const formattingColorPresets = new Set<FormattingColorPreset>(["smash_player_colors", "olympic_medals", "rainbow"]);

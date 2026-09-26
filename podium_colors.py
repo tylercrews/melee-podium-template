@@ -14,6 +14,7 @@ from color_values import format_rgba_hex, normalize_rgba_hex, parse_rgba_hex
 from constants import (
     BRONZE_PODIUM,
     GOLD_PODIUM,
+    MEDAL_GRAY_PODIUM,
     PODIUM_BOX_COLORS_BY_SLOT,
     SEVENTH_PLACE_GRAY_BOX,
     SILVER_PODIUM,
@@ -198,7 +199,7 @@ MEDAL_PRESET_COLORS = (
     _selection_from_box(GOLD_PODIUM, metallic=True),
     _selection_from_box(SILVER_PODIUM, metallic=True),
     _selection_from_box(BRONZE_PODIUM, metallic=True),
-) + tuple(_selection_from_box(SEVENTH_PLACE_GRAY_BOX) for _ in range(5))
+) + tuple(_selection_from_box(MEDAL_GRAY_PODIUM) for _ in range(5))
 PODIUM_COLOR_PRESETS = {
     PodiumColorPreset.LEGACY: LEGACY_PRESET_COLORS,
     PodiumColorPreset.MEDALS: MEDAL_PRESET_COLORS,

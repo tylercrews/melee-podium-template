@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from io import BytesIO
 import random
+from collections.abc import Mapping
 
 from PIL import Image
 
@@ -47,6 +48,7 @@ def render_format_preview(
     *,
     transparent: bool = False,
     podium_colors: PodiumColorConfiguration | None = None,
+    header_layout: Mapping[str, str] | None = None,
 ) -> Image.Image:
     """Return a full example render for one currently supported podium format."""
 
@@ -96,6 +98,7 @@ def render_format_preview(
         entrants=entrants,
         tournament=sample_tournament(event_format),
         podium_colors=podium_colors,
+        header_layout=header_layout,
     )
     # Format previews intentionally use the preview rendering path while these
     # reviewed preference files remain marked ready:false. Production creation

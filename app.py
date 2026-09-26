@@ -397,6 +397,7 @@ def customized_format_preview() -> Any:
         variant,
         transparent=bool(payload.get("transparent", True)),
         podium_colors=colors,
+        header_layout=payload.get("header_layout") if isinstance(payload.get("header_layout"), Mapping) else None,
     )
     output = BytesIO()
     image.save(output, format="PNG")

@@ -41,6 +41,7 @@ class CreationRequest:
     entrants: Sequence[EntrantResult]
     tournament: Tournament
     podium_colors: PodiumColorInput | None = None
+    header_layout: Mapping[str, str] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.selection, ModeSelection):
@@ -57,6 +58,12 @@ class CreationRequest:
                 "podium_colors must be a PodiumColorSelection, "
                 "PodiumColorConfiguration, or null"
             )
+        if self.header_layout is not None:
+            expected_positions = {"top_left", "top_middle", "top_right"}
+            expected_contents = {"tournament_logo", "tournament_title", "metadata"}
+            if set(self.header_layout) != expected_positions or set(self.header_layout.values()) != expected_contents:
+                raise ValueError("header_layout must assign each header item to one unique top position")
+            object.__setattr__(self, "header_layout", dict(self.header_layout))
         entrants = tuple(self.entrants)
         object.__setattr__(self, "entrants", entrants)
         options = self.selection.options
