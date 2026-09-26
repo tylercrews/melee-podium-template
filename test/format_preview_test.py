@@ -142,6 +142,27 @@ class FormatPreviewTests(unittest.TestCase):
         )
         self.assertNotEqual(with_seeding.tobytes(), without_seeding.tobytes())
 
+    def test_icon_link_row_stays_in_its_right_header_third(self) -> None:
+        preview = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            header_layout={
+                "top_left": "tournament_title",
+                "top_middle": "tournament_logo",
+                "top_right": "metadata",
+            },
+            text_settings=TextSettings(
+                replace_base_urls_with_icons=True,
+                metadata_fields=frozenset({"stream_link"}),
+            ),
+        )
+        middle_header = preview.crop((preview.width // 3, 0, preview.width * 2 // 3, 100))
+        right_header = preview.crop((preview.width * 2 // 3, 0, preview.width, 100))
+        self.assertIsNone(middle_header.getbbox())
+        self.assertIsNotNone(right_header.getbbox())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -43,6 +43,7 @@ from DrawPodium import (
     _draw_lower_entrant_summary,
     _draw_text,
     _draw_tournament_subtitle,
+    _font_to_fit,
     _metadata_layout,
     _place_characters,
     _resolve_doubles_tag_collisions,
@@ -422,13 +423,29 @@ class LegacyPodiumContentRenderer:
                 draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align)
             else:
                 icon_path, remainder = icon
-                block_left = metadata_x if metadata_position == "top_left" else metadata_x - metadata_width // 2 if metadata_position == "top_middle" else metadata_x - metadata_width
                 with Image.open(icon_path) as source:
                     website_icon = source.convert("RGBA")
-                    website_icon.thumbnail((22, 22), Image.Resampling.LANCZOS)
-                canvas.alpha_composite(website_icon, (round(block_left), y))
+                    website_icon.thumbnail((32, 32), Image.Resampling.LANCZOS)
+                remainder_width = 0
                 if remainder:
-                    draw_text(draw, (round(block_left) + 29, y), remainder, anchor="la", max_width=metadata_width - 29, preferred_size=preferred_size, align="left")
+                    remainder_font = _font_to_fit(
+                        remainder,
+                        metadata_width - website_icon.width - 7,
+                        preferred_size,
+                        self.font,
+                    )
+                    remainder_width = round(remainder_font.getlength(remainder))
+                row_width = website_icon.width + (7 + remainder_width if remainder else 0)
+                row_left = (
+                    metadata_x
+                    if metadata_position == "top_left"
+                    else metadata_x - row_width / 2
+                    if metadata_position == "top_middle"
+                    else metadata_x - row_width
+                )
+                canvas.alpha_composite(website_icon, (round(row_left), y))
+                if remainder:
+                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=metadata_width - website_icon.width - 7, preferred_size=preferred_size, align="left")
             y += max(27, preferred_size + 7)
         self._draw_attribution(canvas, request, mode)
 
