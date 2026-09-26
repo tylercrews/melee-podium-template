@@ -139,10 +139,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .step-tab:first-child { padding-left: 0; }
 .step-tab:last-child::after { display: none; }
 .step-tab:disabled { cursor: not-allowed; opacity: .5; }
-.step-tab--active { border-color: #a83224ff; color: #8b271dff; }
+.step-tab--current { border-color: #a83224ff; color: #8b271dff; }
+.step-tab--skipped { border-color: #238fe8ff; color: #238fe8ff; }
 .step-tab--complete { border-color: #d89b35ff; color: #563b32ff; }
 .step-tab__number { display: grid; flex: 0 0 auto; width: 24px; height: 24px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: .7rem; }
-.step-tab--active .step-tab__number { color: #fffaf0ff; background: #a83224ff; }
+.step-tab--current .step-tab__number { color: #fffaf0ff; background: #a83224ff; }
+.step-tab--skipped .step-tab__number { color: #ffffffff; background: #238fe8ff; }
 .step-tab--complete .step-tab__number { border-color: #d89b35ff; color: #59371fff; background: #f1be61ff; }
 .step-tab__lock { margin-left: auto; color: #ad9e93ff; font-size: .45rem; }
 
@@ -546,9 +548,14 @@ body {
 
 .step-tab { border-color: var(--theme-border); color: #858ca8ff; }
 .step-tab::after { background: var(--theme-border); }
-.step-tab--active { border-color: var(--theme-pink); color: #ff75dbff; }
+.step-tab--current { border-color: var(--theme-pink); color: #ff75dbff; }
+.step-tab--skipped { border-color: var(--theme-blue); color: #7fc4ffff; }
 .step-tab--complete { border-color: var(--theme-green); color: #82f3b4ff; }
-.step-tab--active .step-tab__number { color: #ffffffff; background: var(--theme-pink); }
+.step-tab--current::after { background: var(--theme-pink); }
+.step-tab--skipped::after { background: var(--theme-blue); }
+.step-tab--complete::after { background: var(--theme-green); }
+.step-tab--current .step-tab__number { color: #ffffffff; background: var(--theme-pink); }
+.step-tab--skipped .step-tab__number { border-color: var(--theme-blue); color: #06111cff; background: var(--theme-blue); }
 .step-tab--complete .step-tab__number { border-color: var(--theme-green); color: #06170eff; background: var(--theme-green); }
 .step-tab__lock { color: #596079ff; }
 

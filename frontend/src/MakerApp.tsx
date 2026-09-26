@@ -17,6 +17,7 @@ const MAX_IMAGE_BYTES = 300 * 1024 * 1024;
 const MAX_FONT_BYTES = 10 * 1024 * 1024;
 type UploadKind = UserImageCategory | "font";
 type Page = "maker" | "saved";
+type StepState = "current" | "complete" | "skipped" | "available" | "locked";
 interface SelectedImages { tournament_logo: string | null; background: string | null }
 interface PreviewUrls { tournament_logo: string; background: string }
 const EMPTY_SELECTION: SelectedImages = { tournament_logo: null, background: null };
@@ -51,12 +52,12 @@ function ImageTypeIcon({ category }: { category: UserImageCategory }) {
 function TrashIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>; }
 function AccountIcon({ signedIn }: { signedIn: boolean }) { return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"/>{!signedIn && <path d="m17.5 4.5 3 3m0-3-3 3"/>}</svg>; }
 
-function StepRail({ activeStep, maxStep, onSelect }: { activeStep: number; maxStep: number; onSelect: (index: number) => void }) {
+function StepRail({ activeStep, states, onSelect }: { activeStep: number; states: StepState[]; onSelect: (index: number) => void }) {
   return <nav className="step-rail" aria-label="Image creation steps">{STEPS.map((step, index) => {
-    const available = index <= maxStep;
-    const complete = index < maxStep;
-    return <button key={step} type="button" className={`step-tab${index === activeStep ? " step-tab--active" : ""}${complete ? " step-tab--complete" : ""}`} disabled={!available} onClick={() => onSelect(index)} aria-current={index === activeStep ? "step" : undefined}>
-      <span className="step-tab__number">{complete ? "✓" : index + 1}</span><span>{step}</span>{!available && <span className="step-tab__lock" aria-label="Locked">●</span>}
+    const state = states[index] ?? "locked";
+    const available = state !== "locked";
+    return <button key={step} type="button" className={`step-tab step-tab--${state}`} disabled={!available} onClick={() => onSelect(index)} aria-current={index === activeStep ? "step" : undefined}>
+      <span className="step-tab__number">{state === "complete" ? "✓" : index + 1}</span><span>{step}</span>{!available && <span className="step-tab__lock" aria-label="Locked">●</span>}
     </button>;
   })}</nav>;
 }
@@ -144,6 +145,7 @@ export default function MakerApp() {
   const [builtInBackgrounds, setBuiltInBackgrounds] = useState<BuiltInBackground[]>([]);
   const [selected, setSelected] = useState<SelectedImages>(EMPTY_SELECTION);
   const [loadStepComplete, setLoadStepComplete] = useState(false);
+  const [loadedFormatChosen, setLoadedFormatChosen] = useState(false);
   const [imagesSkipped, setImagesSkipped] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<PreviewUrls>(EMPTY_URLS);
   const [libraryLoading, setLibraryLoading] = useState(false);
@@ -195,7 +197,15 @@ export default function MakerApp() {
   const bothImagesSelected = Boolean(selected.tournament_logo && selected.background);
   const imagesStepComplete = bothImagesSelected || imagesSkipped;
   const formatStepComplete = loadStepComplete && imagesStepComplete && isFormatComplete(format);
-  const maxStep = formatStepComplete ? 3 : imagesStepComplete ? 2 : loadStepComplete ? 1 : 0;
+  const maxStep = formatStepComplete ? 3 : 2;
+  const stepStates: StepState[] = STEPS.map((_, index) => {
+    if (index === activeStep) return "current";
+    if (index > maxStep) return "locked";
+    if (index === 0 && loadStepComplete) return loadedFormatChosen ? "complete" : "skipped";
+    if (index === 1 && imagesStepComplete) return bothImagesSelected ? "complete" : "skipped";
+    if (index === 2 && formatStepComplete) return "complete";
+    return "available";
+  });
 
   useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setAssetLibraryReady(true); setImages([]); setUserFonts([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); setSelectedFontId((current) => { if (current.startsWith("user:")) { setFormat((formatValue) => ({ ...formatValue, text_settings: { ...formatValue.text_settings, font_asset_id: "provided:tyrowo", font_size_adjustment: 0 } })); return "provided:tyrowo"; } return current; }); } }), []);
   useEffect(() => { getOptions().then((options) => setFighters(options.fighters)).catch(() => undefined); }, []);
@@ -281,11 +291,23 @@ export default function MakerApp() {
 
   function handleLoadedFormat(value: FormatConfiguration) {
     setFormat(value);
+    setLoadedFormatChosen(true);
     setPendingAssetValidation(true);
+  }
+  function skipLoadStep() {
+    setLoadStepComplete(true);
+    setActiveStep(1);
+  }
+  function selectWorkflowStep(index: number) {
+    if (index >= 1 && !loadStepComplete) {
+      setLoadStepComplete(true);
+    }
+    if (index >= 2 && !imagesStepComplete) setImagesSkipped(true);
+    setActiveStep(index);
   }
   function openAccount() { setAuthMessage(""); accountDialogRef.current?.showModal(); }
   async function handleSignIn() { setAuthMessage(""); try { await signInWithGoogle(); accountDialogRef.current?.close(); } catch (error) { setAuthMessage(firebaseAuthErrorMessage(error)); } }
-  async function handleSignOut() { await signOutCurrentUser(); accountDialogRef.current?.close(); setLoadStepComplete(false); setImagesSkipped(false); setActiveStep(0); }
+  async function handleSignOut() { await signOutCurrentUser(); accountDialogRef.current?.close(); setLoadStepComplete(false); setLoadedFormatChosen(false); setImagesSkipped(false); setActiveStep(0); }
   function openUpload(category: UploadKind) { setUploadCategory(category); setUploadName(""); setUploadFile(null); setMessage(""); uploadDialogRef.current?.showModal(); }
   async function selectImage(image: UserImage) {
     if (!user) return;
@@ -369,7 +391,7 @@ export default function MakerApp() {
 
   return <div className="app-shell">
     <header className="topbar"><button className="brand" type="button" onClick={() => { setPage("maker"); setActiveStep(0); }} aria-label="Melee Podium Maker home"><img className="brand__mark" src={`${import.meta.env.BASE_URL}favicon.png`} alt="" /><span>Melee Podium Maker</span></button><div className="topbar__actions"><button className="button button--nav" type="button" onClick={() => setPage(page === "maker" ? "saved" : "maker")}>{page === "maker" ? "Manage Saved Data" : "Image Maker"}</button><button className={`account-button${user ? " account-button--signed-in" : ""}`} type="button" onClick={openAccount} aria-label={user ? `Account: ${displayName}` : "Sign in"}>{user?.photoURL ? <img src={user.photoURL} alt="" /> : <AccountIcon signedIn={Boolean(user)} />}<span className="account-button__dot" /></button></div></header>
-    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} maxStep={maxStep} onSelect={setActiveStep} />{activeStep === 0 ? <LoadStep user={user} onChange={handleLoadedFormat} onSignIn={openAccount} /> : activeStep === 1 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select Assets</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(2); }}>Skip optional images</button></div><p>Choose a font, tournament logo, and background. Images remain optional and can be resized in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><ProvidedFontLibrary fonts={providedFonts} selectedId={selectedFontId} onSelect={selectProvidedFont} />{user && !libraryLoading && <UserFontLibrary fonts={userFonts} selectedId={selectedFontId} busyId={busyId} urls={fontUrls} onSelect={selectUserFont} onUpload={() => openUpload("font")} onDelete={handleDeleteFont} />}<BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your asset library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 2 ? <FormatStep user={user} value={format} backgroundImage={selectedBackgroundImage} onChange={setFormat} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} backgroundImage={selectedBackgroundImage} logoImage={selectedLogoImage} fontAsset={selectedFontAsset} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { setLoadStepComplete(true); setActiveStep(1); } else if (activeStep === 1) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(2); } else if (activeStep === 2 && formatStepComplete) { setActiveStep(3); } }} /></main>}
+    {page === "saved" ? <div className="favorites-redesign"><FavoritesManagement favorites={favorites} fighters={fighters} renderCount={renderCount} onChange={(nextFavorites) => setFavorites(saveFavorites(nextFavorites))} onBack={() => setPage("maker")} /></div> : <main className="maker-layout"><section className="workflow-column"><StepRail activeStep={activeStep} states={stepStates} onSelect={selectWorkflowStep} />{activeStep === 0 ? <LoadStep user={user} onChange={handleLoadedFormat} onSignIn={openAccount} onSkip={skipLoadStep} /> : activeStep === 1 ? <section className="step-content"><div className="step-intro"><div className="step-heading-row"><h1>Select Assets</h1><button className="button button--ghost" type="button" onClick={() => { setImagesSkipped(true); setActiveStep(2); }}>Skip optional images</button></div><p>Choose a font, tournament logo, and background. Images remain optional and can be resized in the next step.</p></div>{!authReady ? <div className="loading-card">Checking your account…</div> : !user ? <SignInNotice onSignIn={openAccount} /> : null}<div className="image-libraries"><ProvidedFontLibrary fonts={providedFonts} selectedId={selectedFontId} onSelect={selectProvidedFont} />{user && !libraryLoading && <UserFontLibrary fonts={userFonts} selectedId={selectedFontId} busyId={busyId} urls={fontUrls} onSelect={selectUserFont} onUpload={() => openUpload("font")} onDelete={handleDeleteFont} />}<BuiltInBackgroundLibrary backgrounds={builtInBackgrounds} selectedId={selected.background} onSelect={selectBuiltInBackground} />{user && !libraryLoading && <><ImageLibrary category="tournament_logo" heading="Your Tournament Logos" images={groupedImages.tournament_logo} selectedId={selected.tournament_logo} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /><ImageLibrary category="background" heading="Your Backgrounds" images={groupedImages.background} selectedId={selected.background} busyId={busyId} onSelect={selectImage} onUpload={openUpload} onDelete={handleDelete} /></>}</div>{user && libraryLoading && <div className="loading-card">Loading your asset library…</div>}{message && <p className="inline-message" role="alert">{message}</p>}{/* Guest uploads stay disabled until browser-memory limits have been stress-tested. */}</section> : activeStep === 2 ? <FormatStep user={user} value={format} backgroundImage={selectedBackgroundImage} onChange={setFormat} /> : <StubStep step={STEPS[activeStep]} />}</section><Preview activeStep={activeStep} urls={previewUrls} format={format} backgroundImage={selectedBackgroundImage} logoImage={selectedLogoImage} fontAsset={selectedFontAsset} renderCount={renderCount} onContinue={() => { if (activeStep === 0) { setLoadStepComplete(true); setActiveStep(1); } else if (activeStep === 1) { if (!bothImagesSelected) setImagesSkipped(true); setActiveStep(2); } else if (activeStep === 2 && formatStepComplete) { setActiveStep(3); } }} /></main>}
     <dialog className="modal asset-warning-modal" ref={assetWarningDialogRef} onClose={() => setAssetWarnings([])} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => assetWarningDialogRef.current?.close()} aria-label="Close">×</button><span className="eyebrow">Missing saved assets</span><h2>Some assets could not be restored</h2><p>The format was loaded, but these account assets are no longer available:</p><ul>{assetWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul><div className="modal__actions"><button className="button button--dark" type="button" onClick={() => assetWarningDialogRef.current?.close()}>Continue</button></div></div></dialog>
     <dialog className="modal account-modal" ref={accountDialogRef} onClose={() => { setAuthMessage(""); setAuthFormKey((current) => current + 1); }} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => accountDialogRef.current?.close()} aria-label="Close">×</button>{user ? <><span className="modal__icon"><AccountIcon signedIn /></span><h2>{displayName}</h2><p>Your private asset library is connected.</p><button className="button button--dark" type="button" onClick={handleSignOut}>Sign out</button></> : <><span className="modal__icon"><AccountIcon signedIn={false} /></span><h2>Sign in or create an account</h2><p>Use your email and password, or continue with Google.</p><EmailAuthForm key={authFormKey} disabled={!firebaseAuthAvailable} onComplete={() => accountDialogRef.current?.close()} /><div className="auth-divider"><span>or</span></div><button className="button button--google" type="button" onClick={handleSignIn} disabled={!firebaseAuthAvailable}><span>G</span> Continue with Google</button>{!firebaseAuthAvailable && <p className="modal__warning">Sign-in needs the Firebase Web SDK environment values for this deployment.</p>}</>}{authMessage && <p className="inline-message" role="alert">{authMessage}</p>}</div></dialog>
     <dialog className="modal" ref={uploadDialogRef} onClick={(event) => { if (event.target === event.currentTarget && !uploading) event.currentTarget.close(); }}><form className="modal__content" onSubmit={handleUpload}><button className="modal__close" type="button" onClick={() => uploadDialogRef.current?.close()} aria-label="Close" disabled={uploading}>×</button><span className="eyebrow">Add to library</span><h2>Upload {uploadCategory === "font" ? "font" : uploadCategory ? categoryLabel(uploadCategory).toLowerCase() : "asset"}</h2><label className="field">Asset name<input maxLength={80} value={uploadName} onChange={(event) => setUploadName(event.target.value)} placeholder={uploadCategory === "font" ? "e.g. Tournament Sans" : "e.g. Summer Weekly"} required autoFocus /></label><label className="file-field"><input type="file" accept={uploadCategory === "font" ? ".ttf,.otf,font/ttf,font/otf" : ".png,.jpg,.jpeg,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp"} onChange={(event: ChangeEvent<HTMLInputElement>) => setUploadFile(event.target.files?.[0] ?? null)} required /><span>{uploadFile ? uploadFile.name : uploadCategory === "font" ? "Choose a TTF or OTF font" : "Choose a PNG, JPG, WebP, GIF, or BMP"}</span></label><p className="field-help">Names must be unique within this asset category. Maximum file size: {uploadCategory === "font" ? "10 MB" : "300 MB"}.</p>{message && <p className="inline-message" role="alert">{message}</p>}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => uploadDialogRef.current?.close()} disabled={uploading}>Cancel</button><button className="button button--dark" type="submit" disabled={uploading || !uploadFile || !uploadName.trim()}>{uploading ? "Uploading…" : "Upload asset"}</button></div></form></dialog>
