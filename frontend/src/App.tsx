@@ -677,14 +677,14 @@ function App() {
   function toggleSinglesFavorite(entrant: SinglesEntrantForm, checked: boolean) {
     const current = favorites.singles.find((favorite) => favorite.tag === entrant.tag);
     if (!checked) return changeFavorites({ ...favorites, singles: favorites.singles.filter((favorite) => favorite.tag !== entrant.tag) });
-    const next = { id: current?.id ?? newFavoriteId(), tag: entrant.tag, characters: entrant.characters.map((character) => ({ ...character })), primary: current?.primary ?? false };
+    const next = { id: current?.id ?? newFavoriteId(), tag: entrant.tag, aliases: current?.aliases ?? [], characters: entrant.characters.map((character) => ({ ...character })), primary: current?.primary ?? false };
     changeFavorites({ ...favorites, singles: current ? favorites.singles.map((favorite) => favorite.id === current.id ? next : favorite) : [...favorites.singles, next] });
   }
 
   function toggleDoublesFavorite(team: DoublesTeamForm, checked: boolean) {
     const current = favorites.doubles.find((favorite) => favorite.team_name === team.team_name);
     if (!checked) return changeFavorites({ ...favorites, doubles: favorites.doubles.filter((favorite) => favorite.team_name !== team.team_name) });
-    const next = { id: current?.id ?? newFavoriteId(), team_name: team.team_name, team_color: team.team_color, entrant_1: { tag: team.entrant_1.tag, characters: team.entrant_1.characters.map((character) => ({ ...character })) }, entrant_2: { tag: team.entrant_2.tag, characters: team.entrant_2.characters.map((character) => ({ ...character })) } };
+    const next = { id: current?.id ?? newFavoriteId(), team_name: team.team_name, team_color: team.team_color, entrant_1: { tag: team.entrant_1.tag, aliases: current?.entrant_1.aliases ?? [], characters: team.entrant_1.characters.map((character) => ({ ...character })) }, entrant_2: { tag: team.entrant_2.tag, aliases: current?.entrant_2.aliases ?? [], characters: team.entrant_2.characters.map((character) => ({ ...character })) } };
     changeFavorites({ ...favorites, doubles: current ? favorites.doubles.map((favorite) => favorite.id === current.id ? next : favorite) : [...favorites.doubles, next] });
   }
   function applyImport(result: unknown, formatOverride?: EventFormat) {

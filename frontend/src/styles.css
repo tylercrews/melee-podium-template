@@ -460,6 +460,9 @@ input::placeholder {
 .favorite-editor p { margin: 0; color: #adafbc; font-size: 0.86rem; }
 .favorite-editor__heading { display: flex; align-items: center; gap: 0.65rem; }
 .favorite-editor__heading button { margin-left: auto; }
+.favorite-alias-field { display: grid; gap: .35rem; color: #e0e1e8; font-size: .82rem; font-weight: 700; }
+.favorite-alias-field input { min-height: 2.5rem; padding: .55rem .65rem; border: 1px solid #4b4e5c; border-radius: .4rem; color: #f4f4f7; background: #0e0f14; }
+.favorite-alias-field small { color: #979aa9; font-size: .72rem; font-weight: 400; line-height: 1.4; }
 .favorite-member-editor { display: grid; gap: 0.65rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 600px) { .inline-actions { display: grid; grid-template-columns: 1fr; width: 100%; } .favorite-choice { grid-template-columns: 1fr auto; } .favorite-choice > span:last-child { grid-column: 1 / -1; } }

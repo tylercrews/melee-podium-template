@@ -8,6 +8,7 @@
 export interface FavoriteSinglesEntrant {
   id: string;
   tag: string;
+  aliases: string[];
   characters: FavoriteCharacter[];
   primary: boolean;
 }
@@ -47,7 +48,10 @@ function asMember(value: unknown): Omit<FavoriteSinglesEntrant, "id" | "primary"
   if (!value || typeof value !== "object") return undefined;
   const member = value as Record<string, unknown>;
   if (typeof member.tag !== "string" || !Array.isArray(member.characters) || !member.characters.every(isCharacter)) return undefined;
-  return { tag: member.tag, characters: member.characters.map(normalizeCharacter) };
+  const aliases = Array.isArray(member.aliases)
+    ? member.aliases.filter((alias): alias is string => typeof alias === "string").map((alias) => alias.trim()).filter(Boolean)
+    : [];
+  return { tag: member.tag, aliases: [...new Set(aliases)], characters: member.characters.map(normalizeCharacter) };
 }
 
 function isPrimary(value: unknown): boolean {
@@ -91,7 +95,25 @@ export function saveFavorites(favorites: FavoritesData): FavoritesData {
 export function newFavoriteId(): string { return newId(); }
 
 export function normalizedFavoriteTag(tag: string): string {
-  return tag.trim().toLowerCase();
+  return entrantIdentity(tag).toLocaleLowerCase().replace(/\s+/g, " ");
+}
+
+export function splitEntrantTag(tag: string): { sponsor: string; identity: string } {
+  const parts = tag.split("|").map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) return { sponsor: "", identity: tag.trim() };
+  return { sponsor: parts.slice(0, -1).join(" | "), identity: parts[parts.length - 1] ?? "" };
+}
+
+export function entrantIdentity(tag: string): string {
+  return splitEntrantTag(tag).identity.normalize("NFKC").trim();
+}
+
+/** Use the favorite's canonical player tag while retaining a sponsor supplied by the bracket. */
+export function resolvedFavoriteTag(bracketTag: string, favoriteTag: string): string {
+  const bracket = splitEntrantTag(bracketTag);
+  const favorite = splitEntrantTag(favoriteTag);
+  const sponsor = bracket.sponsor || favorite.sponsor;
+  return sponsor ? `${sponsor} | ${favorite.identity}` : favorite.identity;
 }
 
 function normalizedFighters(characters: { fighter: string }[]): string[] {
@@ -104,14 +126,17 @@ export function favoriteForImport(
   tag: string,
   importedCharacters: { fighter: string }[],
 ): FavoriteSinglesEntrant | undefined {
-  const tagMatches = favorites.filter((favorite) => normalizedFavoriteTag(favorite.tag) === normalizedFavoriteTag(tag));
+  const importedTag = normalizedFavoriteTag(tag);
+  const tagMatches = favorites.filter((favorite) =>
+    [favorite.tag, ...favorite.aliases].some((candidate) => normalizedFavoriteTag(candidate) === importedTag),
+  );
   const importedFighters = normalizedFighters(importedCharacters);
   if (!importedFighters.length) return tagMatches.find((favorite) => favorite.primary) ?? tagMatches[0];
 
   return tagMatches.find((favorite) => {
     const favoriteFighters = normalizedFighters(favorite.characters);
     return favoriteFighters.length === importedFighters.length && favoriteFighters.every((fighter, index) => fighter === importedFighters[index]);
-  });
+  }) ?? tagMatches.find((favorite) => favorite.primary) ?? tagMatches[0];
 }
 
 export function characterSummary(characters: FavoriteCharacter[]): string {
