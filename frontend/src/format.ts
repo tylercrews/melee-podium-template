@@ -5,6 +5,21 @@ export type HeaderPosition = "top_left" | "top_middle" | "top_right";
 export type HeaderContent = "tournament_logo" | "tournament_title" | "metadata";
 export type SizeMultiplier = number;
 export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to_height";
+export type FormattingColorSelectionMode = "premade" | "pick_1" | "pick_2" | "pick_all";
+export type FormattingColorPreset = "smash_player_colors" | "olympic_medals" | "rainbow";
+
+export interface FormattingAssetColor {
+  main_color: string;
+  face_color: string;
+  base_color: string;
+  metallic: boolean;
+}
+
+export interface FormattingAssetColors {
+  mode: FormattingColorSelectionMode;
+  preset: FormattingColorPreset | null;
+  colors: FormattingAssetColor[];
+}
 
 export interface PixelSize { width: number; height: number }
 export interface PixelRect { left: number; top: number; right: number; bottom: number }
@@ -50,6 +65,7 @@ export interface FormatConfiguration {
   selection: FormatSelection;
   header_layout: HeaderLayout;
   image_settings: ImageSettings;
+  formatting_asset_colors: FormattingAssetColors;
 }
 
 export const DEFAULT_HEADER_LAYOUT: HeaderLayout = {
@@ -65,6 +81,12 @@ export const DEFAULT_IMAGE_SETTINGS: ImageSettings = {
   background_placement: null,
 };
 
+export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
+  mode: "premade",
+  preset: "smash_player_colors",
+  colors: [],
+};
+
 export const EMPTY_FORMAT: FormatConfiguration = {
   schema_version: 1,
   selection: {
@@ -78,6 +100,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
   },
   header_layout: DEFAULT_HEADER_LAYOUT,
   image_settings: DEFAULT_IMAGE_SETTINGS,
+  formatting_asset_colors: DEFAULT_FORMATTING_ASSET_COLORS,
 };
 
 const modes = new Set<CreationMode>(["podium", "eyes", "squares"]);
@@ -97,6 +120,8 @@ const legacySizeMultipliers: Record<string, number> = {
 const MIN_SIZE_MULTIPLIER = .1;
 const MAX_SIZE_MULTIPLIER = 10;
 const rgbaColor = /^#[0-9a-f]{8}$/i;
+const formattingColorModes = new Set<FormattingColorSelectionMode>(["premade", "pick_1", "pick_2", "pick_all"]);
+const formattingColorPresets = new Set<FormattingColorPreset>(["smash_player_colors", "olympic_medals", "rainbow"]);
 
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
   podium: {
@@ -135,6 +160,20 @@ export function hasValidEntrantCount(selection: FormatSelection): boolean {
     option.entrant_count === selection.options.entrant_count
       && option.variant === selection.options.variant,
   );
+}
+
+export function formattingAssetCount(format: FormatConfiguration): number {
+  if (format.selection.mode === "podium" && format.selection.options.variant === "four_podium") return 4;
+  return format.selection.options.entrant_count ?? (format.selection.mode === "podium" ? 3 : 1);
+}
+
+function hasCompleteFormattingAssetColors(format: FormatConfiguration): boolean {
+  if (format.selection.mode === "podium" && format.selection.options.podium_style !== "customizable") return true;
+  const colors = format.formatting_asset_colors;
+  if (colors.mode === "premade") return colors.preset !== null;
+  if (colors.mode === "pick_1") return colors.colors.length === 1;
+  if (colors.mode === "pick_2") return colors.colors.length === 2;
+  return colors.colors.length === formattingAssetCount(format);
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -234,11 +273,40 @@ function normalizeImageSettings(value: unknown): ImageSettings {
   };
 }
 
+function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
+  // Early version-1 formats predate formatting-asset color controls.
+  if (value === undefined) return { ...DEFAULT_FORMATTING_ASSET_COLORS, colors: [] };
+  if (!isObject(value) || !formattingColorModes.has(value.mode as FormattingColorSelectionMode) || !Array.isArray(value.colors)) {
+    throw new Error("Format code has invalid formatting asset colors.");
+  }
+  const mode = value.mode as FormattingColorSelectionMode;
+  const preset = value.preset === null ? null : value.preset as FormattingColorPreset;
+  if (mode === "premade" ? !preset || !formattingColorPresets.has(preset) || value.colors.length !== 0 : preset !== null) {
+    throw new Error("Format code has an invalid formatting color selection.");
+  }
+  const colors = value.colors.map((item) => {
+    if (!isObject(item) || !rgbaColor.test(String(item.main_color)) || !rgbaColor.test(String(item.face_color)) || !rgbaColor.test(String(item.base_color)) || typeof item.metallic !== "boolean") {
+      throw new Error("Every formatting asset color must include valid eight-digit RGBA colors.");
+    }
+    return {
+      main_color: String(item.main_color).toUpperCase(),
+      face_color: String(item.face_color).toUpperCase(),
+      base_color: String(item.base_color).toUpperCase(),
+      metallic: item.metallic,
+    };
+  });
+  const expectedCount = mode === "pick_1" ? 1 : mode === "pick_2" ? 2 : null;
+  if ((expectedCount !== null && colors.length !== expectedCount) || (mode === "pick_all" && colors.length === 0)) {
+    throw new Error("Format code has the wrong number of formatting color selections.");
+  }
+  return { mode, preset, colors };
+}
+
 export function normalizeFormat(value: unknown): FormatConfiguration {
   if (!isObject(value) || value.schema_version !== 1) {
     throw new Error("Format code must be a version 1 format object.");
   }
-  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings) };
+  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors) };
   if (!isObject(value.selection) || !modes.has(value.selection.mode as CreationMode)) {
     throw new Error("Format code has an invalid creation mode.");
   }
@@ -276,6 +344,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     },
     header_layout: normalizeHeaderLayout(value.header_layout),
     image_settings: normalizeImageSettings(value.image_settings),
+    formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
   };
 }
 
@@ -295,7 +364,8 @@ export function isFormatComplete(format: FormatConfiguration): boolean {
     return normalized.selection.mode === "podium"
       && normalized.selection.options.podium_style !== null
       && normalized.selection.options.event_format !== null
-      && hasValidEntrantCount(normalized.selection);
+      && hasValidEntrantCount(normalized.selection)
+      && hasCompleteFormattingAssetColors(normalized);
   } catch {
     return false;
   }

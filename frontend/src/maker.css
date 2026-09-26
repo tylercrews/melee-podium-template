@@ -294,9 +294,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .background-position-control > div { display: grid; gap: 4px; }
 .background-position-control strong { color: #e9eaffff; font-size: .8rem; }
 .background-position-control span { color: #8e95afff; font-size: .7rem; line-height: 1.4; }
-.customizable-podium-stub { border-style: dashed; }
-.customizable-podium-stub h2 { margin: 0; color: #f8f7ffff; font-family: Georgia, "Times New Roman", serif; }
-.customizable-podium-stub p { margin: 8px 0 0; color: #a7adc5ff; font-size: .82rem; }
+.formatting-colors { gap: 20px; }
+.formatting-colors__select { display: grid; max-width: 440px; gap: 8px; color: #dfe1eeff; font-size: .72rem; font-weight: 900; letter-spacing: .05em; }
+.formatting-colors__select select { min-height: 44px; padding: 9px 38px 9px 12px; border: 1px solid #46506fff; border-radius: 6px; color: #f8f7ffff; background: #0d101bff; font-size: .78rem; font-weight: 750; }
+.formatting-color-sets { display: grid; gap: 14px; }
+.formatting-color-set { display: grid; gap: 16px; padding: 16px; border: 1px solid #303750ff; border-radius: 7px; background: #0d101bff; }
+.formatting-color-set__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid #303750ff; }
+.formatting-color-set__heading span { color: #f8f7ffff; font-family: Georgia, "Times New Roman", serif; font-size: 1rem; font-weight: 800; }
+.formatting-color-set__heading small { color: #8e95afff; font-size: .66rem; font-weight: 800; }
+.formatting-color-set__pickers { display: grid; gap: 18px; }
+.formatting-color-set__pickers .rgba-picker + .rgba-picker { padding-top: 16px; border-top: 1px dashed #303750ff; }
+.formatting-colors__note { margin: 0; padding: 12px 14px; border-left: 3px solid #00dc68ff; color: #a7adc5ff; background: #00dc6812; font-size: .74rem; line-height: 1.5; }
 .background-position-modal { width: min(820px, calc(100% - 32px)); }
 .background-position-stage { position: relative; width: 100%; overflow: hidden; border: 1px solid #46506fff; border-radius: 6px; background-color: #090b14ff; background-image: linear-gradient(45deg, #171b2aff 25%, #00000000 25%), linear-gradient(-45deg, #171b2aff 25%, #00000000 25%), linear-gradient(45deg, #00000000 75%, #171b2aff 75%), linear-gradient(-45deg, #00000000 75%, #171b2aff 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; cursor: grab; touch-action: none; user-select: none; }
 .background-position-stage:active { cursor: grabbing; }

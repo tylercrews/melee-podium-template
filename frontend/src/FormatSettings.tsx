@@ -2,6 +2,7 @@ import { CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPo
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
 import EntrantCountSettings from "./EntrantCountSettings";
+import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -85,5 +86,6 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div>
     </section>
     <ImageBackgroundSettings value={value} backgroundImage={backgroundImage} onChange={onChange} />
+    {(selection.mode !== "podium" || selection.options.podium_style === "customizable") && <FormattingAssetColorSettings value={value} onChange={onChange} />}
   </div>;
 }

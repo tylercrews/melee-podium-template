@@ -77,6 +77,5 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
       </div>
       <div className="background-position-control"><div><strong>Background position</strong><span>{!backgroundImage ? "Select a background in the Images step to position it." : !outputSize ? "Choose a podium style before positioning the background." : "Drag the image or crop window to control the final framing."}</span></div>{backgroundImage && outputSize ? <BackgroundPositionDialog image={backgroundImage} outputSize={outputSize} multiplier={settings.background_size} value={settings.background_placement} onChange={(background_placement) => updateSettings({ background_placement })} /> : <button className="button button--outline" type="button" disabled>Choose position</button>}</div>
     </section>
-    {value.selection.options.podium_style === "customizable" && <section className="format-settings-card customizable-podium-stub"><span className="stub-step__number">Coming next</span><h2>Customizable podium settings</h2><p>Podium color modes and metallic styling will be configured here.</p></section>}
   </>;
 }

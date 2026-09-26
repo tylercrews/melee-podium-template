@@ -46,6 +46,7 @@ def render_format_preview(
     variant: str | None = None,
     *,
     transparent: bool = False,
+    podium_colors: PodiumColorConfiguration | None = None,
 ) -> Image.Image:
     """Return a full example render for one currently supported podium format."""
 
@@ -85,7 +86,7 @@ def render_format_preview(
         else sample_top_4_teams(randomizer)[:entrant_count]
     )
     podium_colors = (
-        PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        podium_colors or PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
         if style is PodiumStyle.CUSTOMIZABLE
         else None
     )

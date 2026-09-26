@@ -7,6 +7,7 @@ import unittest
 from creation_modes import PodiumStyle
 from format_preview import render_format_preview
 from models import TournamentFormat
+from podium_colors import PodiumColorConfiguration, PodiumColorSelection
 
 
 class FormatPreviewTests(unittest.TestCase):
@@ -40,6 +41,25 @@ class FormatPreviewTests(unittest.TestCase):
             transparent=True,
         )
         self.assertEqual(preview.getpixel((0, 0))[3], 0)
+
+    def test_customizable_preview_uses_uncached_color_configuration(self) -> None:
+        red = PodiumColorSelection("#FF0000FF", "#880000FF", "#220000FF")
+        green = PodiumColorSelection("#00FF00FF", "#008800FF", "#002200FF")
+        red_preview = render_format_preview(
+            PodiumStyle.CUSTOMIZABLE,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            podium_colors=PodiumColorConfiguration.per_podium(red, red, red),
+        )
+        green_preview = render_format_preview(
+            PodiumStyle.CUSTOMIZABLE,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            podium_colors=PodiumColorConfiguration.per_podium(green, green, green),
+        )
+        self.assertNotEqual(red_preview.tobytes(), green_preview.tobytes())
 
 
 if __name__ == "__main__":

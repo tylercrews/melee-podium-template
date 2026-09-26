@@ -18,7 +18,8 @@ from background_builder import LocalBackgroundAssets
 from creation_modes import PodiumStyle
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
-from format_preview import render_format_preview_png
+from format_preview import render_format_preview, render_format_preview_png
+from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -293,6 +294,116 @@ def format_preview() -> Any:
         ),
         mimetype="image/png",
         headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+_RAINBOW_MAIN_COLORS = (
+    "#F23838FF",
+    "#F28C28FF",
+    "#F2D338FF",
+    "#3BC65AFF",
+    "#32C7CFFF",
+    "#3478F6FF",
+    "#5746C7FF",
+    "#A84BE0FF",
+)
+
+
+def _repeat_podium_colors(
+    colors: tuple[PodiumColorSelection, ...],
+    count: int = 8,
+) -> PodiumColorConfiguration:
+    return PodiumColorConfiguration.per_podium(
+        *(colors[index % len(colors)] for index in range(count))
+    )
+
+
+def _rainbow_preview_colors(asset_count: int) -> PodiumColorConfiguration:
+    if asset_count == 3:
+        indexes = (0, 3, 7)
+    elif asset_count == 4:
+        indexes = (1, 3, 5, 7)
+    elif asset_count == 8:
+        indexes = tuple(range(8))
+    else:
+        indexes = tuple(
+            round(index * 7 / max(1, asset_count - 1))
+            for index in range(asset_count)
+        )
+    return _repeat_podium_colors(
+        tuple(PodiumColorSelection(_RAINBOW_MAIN_COLORS[index]) for index in indexes)
+    )
+
+
+def _custom_preview_colors(
+    value: object,
+    entrant_count: int,
+    variant: str | None,
+) -> PodiumColorConfiguration:
+    if not isinstance(value, Mapping):
+        raise ValueError("Formatting asset colors must be an object")
+    mode = value.get("mode")
+    if mode == "premade":
+        preset = value.get("preset")
+        if preset == "smash_player_colors":
+            return PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        if preset == "olympic_medals":
+            return PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+        if preset == "rainbow":
+            asset_count = 4 if variant == "four_podium" else entrant_count
+            return _rainbow_preview_colors(asset_count)
+        raise ValueError("Unknown formatting color preset")
+    raw_colors = value.get("colors")
+    if not isinstance(raw_colors, list) or not raw_colors:
+        raise ValueError("Custom formatting colors must be a non-empty array")
+    colors = tuple(
+        PodiumColorSelection.from_dict(color)
+        for color in raw_colors
+        if isinstance(color, Mapping)
+    )
+    if len(colors) != len(raw_colors):
+        raise ValueError("Every formatting color must be an object")
+    if mode == "pick_1" and len(colors) == 1:
+        return _repeat_podium_colors(colors)
+    if mode == "pick_2" and len(colors) == 2:
+        return PodiumColorConfiguration.alternating(*colors)
+    if mode == "pick_all":
+        return _repeat_podium_colors(colors)
+    raise ValueError("Invalid formatting color selection")
+
+
+@app.post("/api/format-preview")
+def customized_format_preview() -> Any:
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, Mapping):
+        return jsonify(error="Request body must be a JSON object"), 400
+    try:
+        style = PodiumStyle(payload.get("style", "legacy"))
+        event_format = TournamentFormat(payload.get("event_format", "singles"))
+        entrant_count = int(payload.get("entrant_count", 8))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Invalid format preview options") from error
+    variant_value = payload.get("variant")
+    variant = variant_value if isinstance(variant_value, str) and variant_value else None
+    colors = (
+        _custom_preview_colors(payload.get("formatting_asset_colors"), entrant_count, variant)
+        if style is PodiumStyle.CUSTOMIZABLE
+        else None
+    )
+    image = render_format_preview(
+        style,
+        event_format,
+        entrant_count,
+        variant,
+        transparent=bool(payload.get("transparent", True)),
+        podium_colors=colors,
+    )
+    output = BytesIO()
+    image.save(output, format="PNG")
+    return Response(
+        output.getvalue(),
+        mimetype="image/png",
+        headers={"Cache-Control": "no-store"},
     )
 
 

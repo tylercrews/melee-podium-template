@@ -47,6 +47,29 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
+async function loadCustomizedForeground(format: FormatConfiguration, fallbackUrl: string): Promise<HTMLImageElement> {
+  if (format.selection.options.podium_style !== "customizable") return loadImage(fallbackUrl);
+  const response = await fetch(apiUrl("format-preview"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      style: "customizable",
+      event_format: format.selection.options.event_format ?? "singles",
+      entrant_count: format.selection.options.entrant_count ?? 8,
+      variant: format.selection.options.variant,
+      transparent: true,
+      formatting_asset_colors: format.formatting_asset_colors,
+    }),
+  });
+  if (!response.ok) throw new Error("Could not render the customized formatting colors.");
+  const objectUrl = URL.createObjectURL(await response.blob());
+  try {
+    return await loadImage(objectUrl);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export default function FormatPreview({ format, backgroundImage, logoImage }: FormatPreviewProps) {
   const request = useMemo(() => previewRequest(format), [format]);
   const [displayed, setDisplayed] = useState(request);
@@ -90,7 +113,7 @@ export default function FormatPreview({ format, backgroundImage, logoImage }: Fo
     setFailed(false);
     try {
       const [foreground, background, logo] = await Promise.all([
-        loadImage(request.transparentUrl),
+        loadCustomizedForeground(format, request.transparentUrl),
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);
