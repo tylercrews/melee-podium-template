@@ -195,7 +195,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .built-in-row--selected { background: #171d3dff; box-shadow: inset 3px 0 0 #238fe8ff; }
 .built-in-row--selected .image-row__radio { border: 3px solid #111523ff; background: #238fe8ff; box-shadow: 0 0 0 1px #238fe8ff, 0 0 10px #238fe866; }
 .asset-attribution { margin: 0; padding: 10px 14px 12px; border-top: 1px solid #303750ff; color: #a7adc5ff; background: #151a2aff; font-size: .7rem; }
-.asset-attribution strong { color: #ff75dbff; }
+.asset-attribution a { color: #ff75dbff; font-weight: 800; }
 .loading-card { padding: 30px; border: 1px dashed #cdbeb0ff; border-radius: 8px; color: #7b6a62ff; background: #fffaf3ff; text-align: center; }
 .inline-message { margin: 16px 0 0; padding: 10px 12px; border-left: 3px solid #b13327ff; color: #76251dff; background: #f7dfdaff; font-size: .82rem; }
 .future-note { margin: 24px 0 0; color: #89776fff; font-size: .72rem; line-height: 1.5; }
@@ -237,6 +237,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .favorites-redesign .site-header h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.25rem, 5vw, 4rem); }
 .preview-column .site-footer { flex: 0 0 auto; margin: 6px 0 0; padding: 6px 0 0; border-top: 1px solid #303750ff; color: #9da4bdff; font-size: .58rem; line-height: 1.3; opacity: .75; text-align: center; }
 .preview-column .site-footer a, .preview-column .site-footer__shoutouts-button { color: #7fc4ffff; }
+.site-footer__shoutouts-button { min-height: 0; }
 
 .modal { width: min(460px, calc(100% - 32px)); padding: 0; border: 1px solid #cbbcadff; border-radius: 10px 3px 10px 3px; color: #34231fff; background: #fffaf2ff; box-shadow: 0 28px 80px #2a100dcc; }
 .modal::backdrop { background: #2b1712b3; backdrop-filter: blur(3px); }

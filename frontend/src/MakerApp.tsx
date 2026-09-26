@@ -64,7 +64,7 @@ function BuiltInBackgroundLibrary({ backgrounds, selectedId, onSelect }: { backg
       const selectionId = `builtin:${background.asset_id}`;
       return <button className={`built-in-row${selectedId === selectionId ? " built-in-row--selected" : ""}`} type="button" key={background.asset_id} onClick={() => onSelect(background)} aria-pressed={selectedId === selectionId}><span className="image-row__radio" aria-hidden="true" /><span><strong>{builtInBackgroundName(background.asset_id)}</strong><small>{background.size.width} × {background.size.height}</small></span></button>;
     })}</div>
-    <p className="asset-attribution">Stage background renders by <strong>Malarki_</strong>.</p>
+    <p className="asset-attribution">Stage background renders by <a href="https://x.com/Malarki_" target="_blank" rel="noreferrer">Malarki_</a></p>
   </section>;
 }
 
