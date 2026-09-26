@@ -21,7 +21,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .app-shell { min-height: 100vh; }
 
 .topbar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
   display: flex;
   min-height: 76px;
@@ -102,9 +103,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .workflow-column { min-width: 0; padding: clamp(28px, 4vw, 58px) clamp(24px, 5vw, 72px) 60px; }
 .preview-column {
   position: sticky;
-  top: 0;
+  top: 76px;
   align-self: start;
-  min-height: calc(100vh - 77px);
+  height: calc(100vh - 76px);
+  min-height: 0;
+  overflow-y: auto;
   padding: clamp(26px, 3vw, 44px);
   border-left: 1px solid #5a1814ff;
   color: #fff7eaff;
@@ -270,7 +273,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
   .button--nav { max-width: 190px; font-size: .74rem; }
   .maker-layout { display: flex; flex-direction: column; }
   .workflow-column { padding: 26px 18px 36px; }
-  .preview-column { position: static; order: -1; min-height: 0; padding: 22px 18px 26px; border-left: 0; border-bottom: 1px solid #5a1814ff; }
+  .preview-column { position: static; order: -1; height: auto; min-height: 0; padding: 22px 18px 26px; overflow: visible; border-left: 0; border-bottom: 1px solid #5a1814ff; }
   .preview-action { margin-bottom: 22px; }
   .preview-heading, .canvas-preview, .preview-status, .preview-tip { max-width: 520px; margin-right: auto; margin-left: auto; }
   .step-rail { margin-bottom: 34px; }
