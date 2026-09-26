@@ -42,9 +42,9 @@ and expiry verification always occurs.
 
 ## Browser authentication flow
 
-The React UI uses the Firebase Web SDK with Google sign-in. Copy
+The React UI uses the Firebase Web SDK with Google and email/password sign-in. Copy
 `frontend/.env.example` to `frontend/.env.local` and fill in the public Web app
-configuration from Firebase Console. Enable Google as a provider under
+configuration from Firebase Console. Enable Google and Email/Password as providers under
 Authentication > Sign-in method, and add each deployed hostname to the
 authorized domains list.
 

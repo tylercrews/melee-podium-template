@@ -1,10 +1,12 @@
-import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
+import { FirebaseApp, FirebaseError, getApp, getApps, initializeApp } from "firebase/app";
 import {
   Auth,
   GoogleAuthProvider,
   User,
+  createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
@@ -41,6 +43,33 @@ export function watchCurrentUser(listener: (user: User | null) => void): () => v
 export async function signInWithGoogle(): Promise<User> {
   const result = await signInWithPopup(configuredAuth(), new GoogleAuthProvider());
   return result.user;
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<User> {
+  const result = await signInWithEmailAndPassword(configuredAuth(), email, password);
+  return result.user;
+}
+
+export async function createAccountWithEmail(email: string, password: string): Promise<User> {
+  const result = await createUserWithEmailAndPassword(configuredAuth(), email, password);
+  return result.user;
+}
+
+export function firebaseAuthErrorMessage(error: unknown): string {
+  if (!(error instanceof FirebaseError)) {
+    return error instanceof Error ? error.message : "Authentication failed. Please try again.";
+  }
+  const messages: Record<string, string> = {
+    "auth/email-already-in-use": "An account already exists for that email address.",
+    "auth/invalid-credential": "The email or password is incorrect.",
+    "auth/invalid-email": "Enter a valid email address.",
+    "auth/missing-password": "Enter your password.",
+    "auth/network-request-failed": "The sign-in service could not be reached. Check your connection and try again.",
+    "auth/too-many-requests": "Too many attempts were made. Wait a moment and try again.",
+    "auth/user-disabled": "This account has been disabled.",
+    "auth/weak-password": "Use a stronger password with at least six characters.",
+  };
+  return messages[error.code] ?? "Authentication failed. Please try again.";
 }
 
 export async function signOutCurrentUser(): Promise<void> {

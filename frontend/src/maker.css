@@ -239,6 +239,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .modal__icon svg { width: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
 .modal__warning { padding: 10px; border-left: 3px solid #d89532ff; background: #f9eddaff; }
 .modal__actions { display: flex; justify-content: end; gap: 10px; margin-top: 4px; }
+.account-modal { width: min(520px, calc(100% - 32px)); }
+.email-auth { overflow: hidden; border: 1px solid #303750ff; border-radius: 8px; background: #0d101bff; }
+.email-auth__modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid #303750ff; }
+.email-auth__modes button { min-height: 42px; padding: 9px 12px; border: 0; color: #9fa5bdff; background: transparent; font-size: .8rem; font-weight: 850; }
+.email-auth__modes button + button { border-left: 1px solid #303750ff; }
+.email-auth__modes button.is-active { color: #ffffffff; background: #f044c124; box-shadow: inset 0 -2px 0 #f044c1ff; }
+.email-auth__form { display: grid; gap: 13px; padding: 16px; }
+.email-auth__form .inline-message { margin: 0; }
+.email-auth__form > .button { width: 100%; margin-top: 2px; }
+.auth-divider { display: flex; align-items: center; gap: 12px; color: #858ba4ff; font-size: .7rem; font-weight: 800; text-transform: uppercase; }
+.auth-divider::before, .auth-divider::after { height: 1px; flex: 1; background: #303750ff; content: ""; }
 .field { display: grid; gap: 7px; color: #49342eff; font-size: .8rem; font-weight: 800; }
 .field input { min-height: 44px; padding: 9px 11px; border: 1px solid #cbbcaeff; border-radius: 6px; color: #30211dff; background: #ffffffff; }
 .file-field { position: relative; display: grid; min-height: 90px; padding: 14px; place-items: center; border: 1px dashed #b49f91ff; border-radius: 7px; color: #7d2a21ff; background: #fbf1e5ff; font-size: .8rem; font-weight: 800; text-align: center; }
