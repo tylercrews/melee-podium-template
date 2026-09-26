@@ -4,6 +4,7 @@ export type PodiumStyle = "legacy" | "customizable";
 export type HeaderPosition = "top_left" | "top_middle" | "top_right";
 export type HeaderContent = "tournament_logo" | "tournament_title" | "metadata";
 export type SizeMultiplier = "1/4x" | "1/3x" | "1/2x" | "1x" | "2x" | "3x" | "4x";
+export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to_height";
 
 export interface PixelSize { width: number; height: number }
 export interface PixelRect { left: number; top: number; right: number; bottom: number }
@@ -11,7 +12,8 @@ export interface BackgroundPlacement {
   asset_id: string;
   source_size: PixelSize;
   output_size: PixelSize;
-  size_multiplier: SizeMultiplier;
+  size_option: BackgroundSizeOption;
+  size_multiplier: number;
   alignment: { x: number; y: number };
   source_crop: PixelRect;
   destination: PixelRect;
@@ -20,7 +22,7 @@ export interface BackgroundPlacement {
 export interface ImageSettings {
   background_color: string;
   logo_size: SizeMultiplier;
-  background_size: SizeMultiplier;
+  background_size: BackgroundSizeOption;
   background_placement: BackgroundPlacement | null;
 }
 
@@ -77,6 +79,7 @@ const podiumStyles = new Set<PodiumStyle>(["legacy", "customizable"]);
 const headerPositions: HeaderPosition[] = ["top_left", "top_middle", "top_right"];
 const headerContents = new Set<HeaderContent>(["tournament_logo", "tournament_title", "metadata"]);
 const sizeMultipliers = new Set<SizeMultiplier>(["1/4x", "1/3x", "1/2x", "1x", "2x", "3x", "4x"]);
+const backgroundSizeOptions = new Set<BackgroundSizeOption>([...sizeMultipliers, "scale_to_width", "scale_to_height"]);
 const rgbaColor = /^#[0-9a-f]{8}$/i;
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -122,17 +125,28 @@ function normalizePixelRect(value: unknown, name: string): PixelRect {
 
 function normalizeBackgroundPlacement(value: unknown): BackgroundPlacement | null {
   if (value === null || value === undefined) return null;
-  if (!isObject(value) || typeof value.asset_id !== "string" || !value.asset_id || !isObject(value.alignment) || !sizeMultipliers.has(value.size_multiplier as SizeMultiplier)) {
+  if (!isObject(value) || typeof value.asset_id !== "string" || !value.asset_id || !isObject(value.alignment)) {
     throw new Error("Format code has an invalid background placement.");
   }
+  const sourceSize = normalizePixelSize(value.source_size, "background source size");
+  const outputSize = normalizePixelSize(value.output_size, "background output size");
+  // Early version-1 placements stored the fixed option directly in size_multiplier.
+  const rawOption = value.size_option ?? value.size_multiplier;
+  if (!backgroundSizeOptions.has(rawOption as BackgroundSizeOption)) throw new Error("Format code has an invalid background size option.");
+  const sizeOption = rawOption as BackgroundSizeOption;
+  const resolvedMultiplier = typeof value.size_multiplier === "number"
+    ? finiteNumber(value.size_multiplier, "background size multiplier")
+    : backgroundSizeValue(sizeOption, sourceSize, outputSize);
+  if (resolvedMultiplier <= 0) throw new Error("Format code has an invalid background size multiplier.");
   const x = finiteNumber(value.alignment.x, "background horizontal alignment");
   const y = finiteNumber(value.alignment.y, "background vertical alignment");
   if (x < 0 || x > 1 || y < 0 || y > 1) throw new Error("Background alignment must be between zero and one.");
   return {
     asset_id: value.asset_id,
-    source_size: normalizePixelSize(value.source_size, "background source size"),
-    output_size: normalizePixelSize(value.output_size, "background output size"),
-    size_multiplier: value.size_multiplier as SizeMultiplier,
+    source_size: sourceSize,
+    output_size: outputSize,
+    size_option: sizeOption,
+    size_multiplier: resolvedMultiplier,
     alignment: { x, y },
     source_crop: normalizePixelRect(value.source_crop, "background source crop"),
     destination: normalizePixelRect(value.destination, "background destination"),
@@ -144,13 +158,13 @@ function normalizeImageSettings(value: unknown): ImageSettings {
   if (!isObject(value) || typeof value.background_color !== "string" || !rgbaColor.test(value.background_color)) {
     throw new Error("Format code must include an eight-digit RGBA background color.");
   }
-  if (!sizeMultipliers.has(value.logo_size as SizeMultiplier) || !sizeMultipliers.has(value.background_size as SizeMultiplier)) {
+  if (!sizeMultipliers.has(value.logo_size as SizeMultiplier) || !backgroundSizeOptions.has(value.background_size as BackgroundSizeOption)) {
     throw new Error("Format code has an invalid image size multiplier.");
   }
   return {
     background_color: value.background_color.toUpperCase(),
     logo_size: value.logo_size as SizeMultiplier,
-    background_size: value.background_size as SizeMultiplier,
+    background_size: value.background_size as BackgroundSizeOption,
     background_placement: normalizeBackgroundPlacement(value.background_placement),
   };
 }
@@ -229,6 +243,12 @@ export function sizeMultiplierValue(multiplier: SizeMultiplier): number {
   return ({ "1/4x": 1 / 4, "1/3x": 1 / 3, "1/2x": 1 / 2, "1x": 1, "2x": 2, "3x": 3, "4x": 4 })[multiplier];
 }
 
+export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelSize, output: PixelSize): number {
+  if (option === "scale_to_width") return output.width / source.width;
+  if (option === "scale_to_height") return output.height / source.height;
+  return sizeMultiplierValue(option);
+}
+
 export function formatCanvasSize(format: FormatConfiguration): PixelSize | null {
   if (format.selection.mode !== "podium") return null;
   if (format.selection.options.podium_style === "customizable") return { width: 1920, height: 941 };
@@ -238,8 +258,8 @@ export function formatCanvasSize(format: FormatConfiguration): PixelSize | null 
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
 
-export function buildBackgroundPlacement(assetId: string, source: PixelSize, output: PixelSize, multiplier: SizeMultiplier, alignment = { x: .5, y: .5 }): BackgroundPlacement {
-  const scale = sizeMultiplierValue(multiplier);
+export function buildBackgroundPlacement(assetId: string, source: PixelSize, output: PixelSize, sizeOption: BackgroundSizeOption, alignment = { x: .5, y: .5 }): BackgroundPlacement {
+  const scale = backgroundSizeValue(sizeOption, source, output);
   const x = clamp(alignment.x, 0, 1);
   const y = clamp(alignment.y, 0, 1);
   const scaledWidth = source.width * scale;
@@ -256,7 +276,8 @@ export function buildBackgroundPlacement(assetId: string, source: PixelSize, out
     asset_id: assetId,
     source_size: source,
     output_size: output,
-    size_multiplier: multiplier,
+    size_option: sizeOption,
+    size_multiplier: scale,
     alignment: { x, y },
     source_crop: {
       left: Math.round(sourceLeft),

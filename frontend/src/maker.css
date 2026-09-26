@@ -284,6 +284,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .multiplier-control > div { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); overflow: hidden; border: 1px solid #46506fff; border-radius: 6px; }
 .multiplier-control label { position: relative; min-width: 0; }
 .multiplier-control label + label { border-left: 1px solid #46506fff; }
+.background-size-options .is-fit-width, .background-size-options .is-fit-height { border-top: 1px solid #46506fff; }
+.background-size-options .is-fit-width { grid-column: span 3; border-left: 0; }
+.background-size-options .is-fit-height { grid-column: span 4; }
 .multiplier-control input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .multiplier-control span { display: grid; min-height: 38px; padding: 7px 3px; place-items: center; color: #a7adc5ff; background: #0d101bff; cursor: pointer; font-size: .68rem; font-weight: 850; }
 .multiplier-control input:checked + span { color: #06170eff; background: #00dc68ff; }

@@ -1,5 +1,5 @@
 import { PointerEvent, useMemo, useRef, useState } from "react";
-import { BackgroundPlacement, PixelSize, SizeMultiplier, buildBackgroundPlacement, sizeMultiplierValue } from "./format";
+import { BackgroundPlacement, BackgroundSizeOption, PixelSize, backgroundSizeValue, buildBackgroundPlacement } from "./format";
 
 export interface FormatImageInfo extends PixelSize {
   id: string;
@@ -10,7 +10,7 @@ export interface FormatImageInfo extends PixelSize {
 interface BackgroundPositionDialogProps {
   image: FormatImageInfo;
   outputSize: PixelSize;
-  multiplier: SizeMultiplier;
+  multiplier: BackgroundSizeOption;
   value: BackgroundPlacement | null;
   onChange: (value: BackgroundPlacement) => void;
 }
@@ -20,7 +20,7 @@ const clamp = (value: number) => Math.min(1, Math.max(0, value));
 export default function BackgroundPositionDialog({ image, outputSize, multiplier, value, onChange }: BackgroundPositionDialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [alignment, setAlignment] = useState(value?.alignment ?? { x: .5, y: .5 });
-  const scale = sizeMultiplierValue(multiplier);
+  const scale = backgroundSizeValue(multiplier, image, outputSize);
   const scaled = { width: image.width * scale, height: image.height * scale };
   const fitsInside = scaled.width <= outputSize.width && scaled.height <= outputSize.height;
   const workspace = { width: Math.max(scaled.width, outputSize.width), height: Math.max(scaled.height, outputSize.height) };
@@ -60,7 +60,7 @@ export default function BackgroundPositionDialog({ image, outputSize, multiplier
         <div className="background-position-stage__viewport" style={{ left: percent(geometry.viewportLeft, workspace.width), top: percent(geometry.viewportTop, workspace.height), width: percent(outputSize.width, workspace.width), height: percent(outputSize.height, workspace.height) }}><span>{outputSize.width} × {outputSize.height}</span></div>
       </div>
       <div className="background-position-sliders"><label>Horizontal position <span>{Math.round(alignment.x * 100)}%</span><input type="range" min="0" max="100" value={Math.round(alignment.x * 100)} onChange={(event) => setAlignment((current) => ({ ...current, x: Number(event.target.value) / 100 }))} /></label><label>Vertical position <span>{Math.round(alignment.y * 100)}%</span><input type="range" min="0" max="100" value={Math.round(alignment.y * 100)} onChange={(event) => setAlignment((current) => ({ ...current, y: Number(event.target.value) / 100 }))} /></label></div>
-      <p className="background-position-summary">{image.name} · {image.width} × {image.height} at {multiplier}</p>
+      <p className="background-position-summary">{image.name} · {image.width} × {image.height} · {multiplier === "scale_to_width" ? "scaled to width" : multiplier === "scale_to_height" ? "scaled to height" : `at ${multiplier}`} ({scale.toFixed(3)}×)</p>
       <div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => dialog.current?.close()}>Cancel</button><button className="button button--dark" type="button" onClick={() => { onChange(buildBackgroundPlacement(image.id, image, outputSize, multiplier, alignment)); dialog.current?.close(); }}>Apply position</button></div>
     </div></dialog>
   </>;

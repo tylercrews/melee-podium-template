@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import BackgroundPositionDialog, { FormatImageInfo } from "./BackgroundPositionDialog";
 import RgbaColorPicker from "./RgbaColorPicker";
-import { FormatConfiguration, SizeMultiplier, buildBackgroundPlacement, formatCanvasSize } from "./format";
+import { BackgroundSizeOption, FormatConfiguration, SizeMultiplier, buildBackgroundPlacement, formatCanvasSize } from "./format";
 
 interface ImageBackgroundSettingsProps {
   value: FormatConfiguration;
@@ -19,6 +19,12 @@ const multiplierOptions: Array<{ value: SizeMultiplier; label: string }> = [
   { value: "4x", label: "4×" },
 ];
 
+const backgroundSizeOptions: Array<{ value: BackgroundSizeOption; label: string; className?: string }> = [
+  ...multiplierOptions,
+  { value: "scale_to_width", label: "Scale to width", className: "is-fit-width" },
+  { value: "scale_to_height", label: "Scale to height", className: "is-fit-height" },
+];
+
 export default function ImageBackgroundSettings({ value, backgroundImage, onChange }: ImageBackgroundSettingsProps) {
   const settings = value.image_settings;
   const outputSize = formatCanvasSize(value);
@@ -32,7 +38,7 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
     if (!outputSize) return;
     const sourceChanged = placement?.asset_id !== backgroundImage.id || placement?.source_size.width !== backgroundImage.width || placement?.source_size.height !== backgroundImage.height;
     const outputChanged = placement?.output_size.width !== outputSize.width || placement?.output_size.height !== outputSize.height;
-    if (!placement || sourceChanged || outputChanged || placement.size_multiplier !== settings.background_size) {
+    if (!placement || sourceChanged || outputChanged || placement.size_option !== settings.background_size) {
       onChange({ ...value, image_settings: { ...settings, background_placement: buildBackgroundPlacement(backgroundImage.id, backgroundImage, outputSize, settings.background_size, placement?.alignment) } });
     }
   }, [backgroundImage, onChange, outputSize, settings, value]);
@@ -41,7 +47,7 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
     onChange({ ...value, image_settings: { ...settings, ...update } });
   }
 
-  function updateBackgroundSize(background_size: SizeMultiplier) {
+  function updateBackgroundSize(background_size: BackgroundSizeOption) {
     updateSettings({
       background_size,
       background_placement: backgroundImage && outputSize
@@ -56,7 +62,7 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
       <RgbaColorPicker label="Background Color" value={settings.background_color} onChange={(background_color) => updateSettings({ background_color })} />
       <div className="image-size-settings">
         <fieldset className="multiplier-control"><legend>Tournament logo size</legend><div>{multiplierOptions.map((option) => <label key={option.value}><input type="radio" name="logo-size" value={option.value} checked={settings.logo_size === option.value} onChange={() => updateSettings({ logo_size: option.value })} /><span>{option.label}</span></label>)}</div></fieldset>
-        <fieldset className="multiplier-control"><legend>Background image size</legend><div>{multiplierOptions.map((option) => <label key={option.value}><input type="radio" name="background-size" value={option.value} checked={settings.background_size === option.value} onChange={() => updateBackgroundSize(option.value)} /><span>{option.label}</span></label>)}</div></fieldset>
+        <fieldset className="multiplier-control"><legend>Background image size</legend><div className="background-size-options">{backgroundSizeOptions.map((option) => <label className={option.className} key={option.value}><input type="radio" name="background-size" value={option.value} checked={settings.background_size === option.value} onChange={() => updateBackgroundSize(option.value)} /><span>{option.label}</span></label>)}</div></fieldset>
       </div>
       <div className="background-position-control"><div><strong>Background position</strong><span>{!backgroundImage ? "Select a background in the Images step to position it." : !outputSize ? "Choose a podium style before positioning the background." : "Drag the image or crop window to control the final framing."}</span></div>{backgroundImage && outputSize ? <BackgroundPositionDialog image={backgroundImage} outputSize={outputSize} multiplier={settings.background_size} value={settings.background_placement} onChange={(background_placement) => updateSettings({ background_placement })} /> : <button className="button button--outline" type="button" disabled>Choose position</button>}</div>
     </section>
