@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import BackgroundPositionDialog, { FormatImageInfo } from "./BackgroundPositionDialog";
 import RgbaColorPicker from "./RgbaColorPicker";
-import { BackgroundSizeOption, FormatConfiguration, SizeMultiplier, buildBackgroundPlacement, formatCanvasSize } from "./format";
+import { BackgroundSizeOption, FormatConfiguration, buildBackgroundPlacement, backgroundSizeValue, formatCanvasSize } from "./format";
 
 interface ImageBackgroundSettingsProps {
   value: FormatConfiguration;
@@ -9,21 +9,23 @@ interface ImageBackgroundSettingsProps {
   onChange: (value: FormatConfiguration) => void;
 }
 
-const multiplierOptions: Array<{ value: SizeMultiplier; label: string }> = [
-  { value: "1/4x", label: "¼×" },
-  { value: "1/3x", label: "⅓×" },
-  { value: "1/2x", label: "½×" },
-  { value: "1x", label: "1×" },
-  { value: "2x", label: "2×" },
-  { value: "3x", label: "3×" },
-  { value: "4x", label: "4×" },
-];
+const sliderPosition = (multiplier: number) => Math.round(Math.log10(Math.min(10, Math.max(.1, multiplier))) * 100);
+const sliderMultiplier = (position: number) => Number((10 ** (position / 100)).toFixed(3));
+const multiplierLabel = (multiplier: number) => `${multiplier < 1 ? multiplier.toFixed(2).replace(/0+$/, "").replace(/\.$/, "") : multiplier.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}×`;
 
-const backgroundSizeOptions: Array<{ value: BackgroundSizeOption; label: string; className?: string }> = [
-  ...multiplierOptions,
-  { value: "scale_to_width", label: "Scale to width", className: "is-fit-width" },
-  { value: "scale_to_height", label: "Scale to height", className: "is-fit-height" },
-];
+interface SizeSliderProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}
+
+function SizeSlider({ label, value, onChange }: SizeSliderProps) {
+  return <label className="size-slider">
+    <span className="size-slider__heading"><strong>{label}</strong><output>{multiplierLabel(value)}</output></span>
+    <input type="range" min="-100" max="100" step="1" value={sliderPosition(value)} onChange={(event) => onChange(sliderMultiplier(Number(event.target.value)))} />
+    <span className="size-slider__marks" aria-hidden="true"><span>0.1×</span><span>1×</span><span>10×</span></span>
+  </label>;
+}
 
 export default function ImageBackgroundSettings({ value, backgroundImage, onChange }: ImageBackgroundSettingsProps) {
   const settings = value.image_settings;
@@ -56,13 +58,22 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
     });
   }
 
+  const backgroundMultiplier = typeof settings.background_size === "number"
+    ? settings.background_size
+    : backgroundImage && outputSize
+      ? backgroundSizeValue(settings.background_size, backgroundImage, outputSize)
+      : 1;
+
   return <>
     <section className="format-settings-card" aria-labelledby="image-background-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Canvas assets</span><h2 id="image-background-heading">Image and Background Settings</h2><p>Set the canvas color and scale the logo and background selected in the Images step.</p></div>
       <RgbaColorPicker label="Background Color" value={settings.background_color} onChange={(background_color) => updateSettings({ background_color })} />
       <div className="image-size-settings">
-        <fieldset className="multiplier-control"><legend>Tournament logo size</legend><div>{multiplierOptions.map((option) => <label key={option.value}><input type="radio" name="logo-size" value={option.value} checked={settings.logo_size === option.value} onChange={() => updateSettings({ logo_size: option.value })} /><span>{option.label}</span></label>)}</div></fieldset>
-        <fieldset className="multiplier-control"><legend>Background image size</legend><div className="background-size-options">{backgroundSizeOptions.map((option) => <label className={option.className} key={option.value}><input type="radio" name="background-size" value={option.value} checked={settings.background_size === option.value} onChange={() => updateBackgroundSize(option.value)} /><span>{option.label}</span></label>)}</div></fieldset>
+        <SizeSlider label="Tournament logo size" value={settings.logo_size} onChange={(logo_size) => updateSettings({ logo_size })} />
+        <div className="background-size-control">
+          <SizeSlider label="Background image size" value={backgroundMultiplier} onChange={updateBackgroundSize} />
+          <div className="background-fit-actions"><button className={`button button--outline${settings.background_size === "scale_to_width" ? " is-selected" : ""}`} type="button" onClick={() => updateBackgroundSize("scale_to_width")}>Scale to width</button><button className={`button button--outline${settings.background_size === "scale_to_height" ? " is-selected" : ""}`} type="button" onClick={() => updateBackgroundSize("scale_to_height")}>Scale to height</button></div>
+        </div>
       </div>
       <div className="background-position-control"><div><strong>Background position</strong><span>{!backgroundImage ? "Select a background in the Images step to position it." : !outputSize ? "Choose a podium style before positioning the background." : "Drag the image or crop window to control the final framing."}</span></div>{backgroundImage && outputSize ? <BackgroundPositionDialog image={backgroundImage} outputSize={outputSize} multiplier={settings.background_size} value={settings.background_placement} onChange={(background_placement) => updateSettings({ background_placement })} /> : <button className="button button--outline" type="button" disabled>Choose position</button>}</div>
     </section>

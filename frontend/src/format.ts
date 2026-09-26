@@ -3,7 +3,7 @@ export type EventFormat = "singles" | "doubles";
 export type PodiumStyle = "legacy" | "customizable";
 export type HeaderPosition = "top_left" | "top_middle" | "top_right";
 export type HeaderContent = "tournament_logo" | "tournament_title" | "metadata";
-export type SizeMultiplier = "1/4x" | "1/3x" | "1/2x" | "1x" | "2x" | "3x" | "4x";
+export type SizeMultiplier = number;
 export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to_height";
 
 export interface PixelSize { width: number; height: number }
@@ -60,8 +60,8 @@ export const DEFAULT_HEADER_LAYOUT: HeaderLayout = {
 
 export const DEFAULT_IMAGE_SETTINGS: ImageSettings = {
   background_color: "#00000000",
-  logo_size: "1x",
-  background_size: "1x",
+  logo_size: 1,
+  background_size: 1,
   background_placement: null,
 };
 
@@ -85,8 +85,17 @@ const eventFormats = new Set<EventFormat>(["singles", "doubles"]);
 const podiumStyles = new Set<PodiumStyle>(["legacy", "customizable"]);
 const headerPositions: HeaderPosition[] = ["top_left", "top_middle", "top_right"];
 const headerContents = new Set<HeaderContent>(["tournament_logo", "tournament_title", "metadata"]);
-const sizeMultipliers = new Set<SizeMultiplier>(["1/4x", "1/3x", "1/2x", "1x", "2x", "3x", "4x"]);
-const backgroundSizeOptions = new Set<BackgroundSizeOption>([...sizeMultipliers, "scale_to_width", "scale_to_height"]);
+const legacySizeMultipliers: Record<string, number> = {
+  "1/4x": 1 / 4,
+  "1/3x": 1 / 3,
+  "1/2x": 1 / 2,
+  "1x": 1,
+  "2x": 2,
+  "3x": 3,
+  "4x": 4,
+};
+const MIN_SIZE_MULTIPLIER = .1;
+const MAX_SIZE_MULTIPLIER = 10;
 const rgbaColor = /^#[0-9a-f]{8}$/i;
 
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
@@ -149,6 +158,20 @@ function finiteNumber(value: unknown, name: string): number {
   return value;
 }
 
+function normalizeSizeMultiplier(value: unknown, name: string): SizeMultiplier {
+  const multiplier = typeof value === "string" ? legacySizeMultipliers[value] : value;
+  const normalized = finiteNumber(multiplier, name);
+  if (normalized < MIN_SIZE_MULTIPLIER || normalized > MAX_SIZE_MULTIPLIER) {
+    throw new Error(`Format code has an invalid ${name}.`);
+  }
+  return normalized;
+}
+
+function normalizeBackgroundSizeOption(value: unknown): BackgroundSizeOption {
+  if (value === "scale_to_width" || value === "scale_to_height") return value;
+  return normalizeSizeMultiplier(value, "background size multiplier");
+}
+
 function normalizePixelSize(value: unknown, name: string): PixelSize {
   if (!isObject(value)) throw new Error(`Format code has an invalid ${name}.`);
   const width = finiteNumber(value.width, `${name} width`);
@@ -178,8 +201,7 @@ function normalizeBackgroundPlacement(value: unknown): BackgroundPlacement | nul
   const outputSize = normalizePixelSize(value.output_size, "background output size");
   // Early version-1 placements stored the fixed option directly in size_multiplier.
   const rawOption = value.size_option ?? value.size_multiplier;
-  if (!backgroundSizeOptions.has(rawOption as BackgroundSizeOption)) throw new Error("Format code has an invalid background size option.");
-  const sizeOption = rawOption as BackgroundSizeOption;
+  const sizeOption = normalizeBackgroundSizeOption(rawOption);
   const resolvedMultiplier = typeof value.size_multiplier === "number"
     ? finiteNumber(value.size_multiplier, "background size multiplier")
     : backgroundSizeValue(sizeOption, sourceSize, outputSize);
@@ -204,13 +226,10 @@ function normalizeImageSettings(value: unknown): ImageSettings {
   if (!isObject(value) || typeof value.background_color !== "string" || !rgbaColor.test(value.background_color)) {
     throw new Error("Format code must include an eight-digit RGBA background color.");
   }
-  if (!sizeMultipliers.has(value.logo_size as SizeMultiplier) || !backgroundSizeOptions.has(value.background_size as BackgroundSizeOption)) {
-    throw new Error("Format code has an invalid image size multiplier.");
-  }
   return {
     background_color: value.background_color.toUpperCase(),
-    logo_size: value.logo_size as SizeMultiplier,
-    background_size: value.background_size as BackgroundSizeOption,
+    logo_size: normalizeSizeMultiplier(value.logo_size, "logo size multiplier"),
+    background_size: normalizeBackgroundSizeOption(value.background_size),
     background_placement: normalizeBackgroundPlacement(value.background_placement),
   };
 }
@@ -287,7 +306,7 @@ export function formatCode(format: FormatConfiguration): string {
 }
 
 export function sizeMultiplierValue(multiplier: SizeMultiplier): number {
-  return ({ "1/4x": 1 / 4, "1/3x": 1 / 3, "1/2x": 1 / 2, "1x": 1, "2x": 2, "3x": 3, "4x": 4 })[multiplier];
+  return multiplier;
 }
 
 export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelSize, output: PixelSize): number {
