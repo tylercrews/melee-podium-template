@@ -7,11 +7,11 @@ from unittest.mock import patch
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from parrygg_api import fetch_parrygg_data
+from bracket_import.parrygg_api import fetch_parrygg_data
 
 
 class ParryGGApiTests(unittest.TestCase):
-    @patch("parrygg_api.request_parrygg")
+    @patch("bracket_import.parrygg_api.request_parrygg")
     def test_specific_bracket_uses_its_placements_and_fetches_games(self, request):
         def response(service, method, body):
             if method == "GetTournament":
@@ -40,7 +40,7 @@ class ParryGGApiTests(unittest.TestCase):
         self.assertEqual(payload["placements"], [{"placement": 1}])
         self.assertEqual(payload["brackets"][0]["id"], "b1")
 
-    @patch("parrygg_api.request_parrygg")
+    @patch("bracket_import.parrygg_api.request_parrygg")
     def test_tournament_url_requires_a_choice_between_multiple_melee_events(self, request):
         request.return_value = {"tournament": {"events": [
             {"slug": "singles", "game": {"slug": "super-smash-bros-melee"}},

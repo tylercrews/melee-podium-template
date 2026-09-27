@@ -8,7 +8,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from models import MELEE_FIGHTERS
-from startgg_usb_reporting import (
+from bracket_import.startgg_usb_reporting import (
     USB_COSTUMES_BY_FIGHTER,
     canonical_fighter_name,
     costume_for_usb_score,

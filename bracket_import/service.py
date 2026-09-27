@@ -20,7 +20,7 @@ import re
 
 import requests
 from models import Character, DoublesTeam, Entrant, MELEE_FIGHTERS, SinglesEntrant, Tournament, TournamentFormat
-from startgg_usb_reporting import canonical_fighter_name, costume_for_usb_score
+from .startgg_usb_reporting import canonical_fighter_name, costume_for_usb_score
 
 
 class BracketProvider(StrEnum):
@@ -559,7 +559,7 @@ def fetch_parrygg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
     """Fetch a parry.gg event, including reported per-game character colors."""
     if link.provider is not BracketProvider.PARRY_GG:
         raise ValueError("fetch_parrygg requires a parry.gg link")
-    from parrygg_api import fetch_parrygg_data
+    from .parrygg_api import fetch_parrygg_data
 
     payload = fetch_parrygg_data(
         link.tournament_slug,
@@ -662,7 +662,7 @@ def parse_parrygg(
     *,
     top_entrants: int = 8,
 ) -> BracketImport:
-    """Normalize the combined responses returned by :mod:`parrygg_api`."""
+    """Normalize the combined responses returned by :mod:`bracket_import.parrygg_api`."""
     tournament = payload.get("tournament", payload)
     if not isinstance(tournament, Mapping):
         raise ValueError("parry.gg returned an incomplete tournament response")

@@ -10,7 +10,6 @@ FILES = (
     "app.py",
     "passenger_wsgi.py",
     "requirements.txt",
-    "bracket_import.py",
     "background_builder.py",
     "color_values.py",
     "constants.py",
@@ -31,12 +30,10 @@ FILES = (
     "fonts/Impact.ttf",
     "fonts/Tyrowo-Inked-Regular.ttf",
     "fonts/Ubuntu-Regular.ttf",
-    "top_3.png",
-    "top_4.png",
-    "top_8.png",
 )
 DIRECTORIES = (
     "backgrounds",
+    "bracket_import",
     "char_assets",
     "firebase_services",
     "formatting_assets",

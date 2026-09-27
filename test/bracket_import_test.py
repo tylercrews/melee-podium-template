@@ -9,7 +9,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from DrawPodium import _display_link
-from bracket_import import BracketProvider, ImportedCharacter, _reported_character_usage, fetch_startgg, identify_bracket_link, parse_challonge, parse_parrygg, parse_startgg
+from bracket_import import BracketProvider, ImportedCharacter, fetch_startgg, identify_bracket_link, parse_challonge, parse_parrygg, parse_startgg
+from bracket_import.service import _reported_character_usage
 from models import Character, TournamentFormat
 
 
@@ -80,7 +81,7 @@ class BracketImportTests(unittest.TestCase):
                 }],
             }],
         }}}}
-        with patch("bracket_import._startgg_request", return_value=response):
+        with patch("bracket_import.service._startgg_request", return_value=response):
             usage = _reported_character_usage(1, {"9", "12"}, "token")
 
         self.assertEqual(usage["9"][0]["_startgg_score"], 204)

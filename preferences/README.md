@@ -31,7 +31,7 @@ Their tightly cropped semantic masks live in
   eventual content renderer must merge both lists rather than drawing every
   character before every text label (or vice versa).
 - Legacy podium destination rectangles are half-open visible bounds measured
-  from the old `top_3.png`, `top_4.png`, and `top_8.png` outputs. Their asset IDs
+  from the retired full-composite Top 3, Top 4, and Top 8 outputs. Their asset IDs
   reserve tightly cropped filenames in `formatting_assets/podium/legacy/`.
 - Customizable podiums preserve the matching legacy podium's bottom edge,
   enlarge the body while preserving its aspect ratio, and spread the group
