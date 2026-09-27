@@ -704,11 +704,17 @@ body {
 .entrant-card--maker { border-color: var(--theme-border); border-radius: 10px 3px 10px 3px; background: var(--theme-surface); box-shadow: 0 16px 38px #00000033; }
 .entrant-card--maker > legend { color: #79c4ffff; font-family: Georgia, "Times New Roman", serif; font-size: 1rem; }
 .entrant-card--maker .favorite-picker { margin-bottom: 2px; }
+.entrant-favorite-button { justify-self: start; margin-top: 4px; }
+.favorite-save-modal { width: min(620px, calc(100% - 32px)); }
+.favorite-alternate-field textarea { min-height: 84px; }
+.favorite-alternate-field small { color: var(--theme-muted); font-size: .68rem; font-weight: 500; line-height: 1.45; }
+.favorite-team-alternates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .entrants-step--show-errors input:invalid { border-color: #ff4545ff; background: #2b1118ff; box-shadow: 0 0 0 2px #ff454555; }
 .entrants-step--show-errors input:invalid:focus { outline-color: #ff6b6bff; box-shadow: 0 0 0 3px #ff454577; }
 .entrant-team-fields { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(110px, 1fr)); gap: 12px; }
 .entrant-team-members { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .entrant-member-card { padding: 12px; border-color: #3a425eff; background: #0d101bff; box-shadow: none; }
+@media (max-width: 620px) { .favorite-team-alternates { grid-template-columns: 1fr; } }
 .entrant-member-card > legend { color: #ff83dfff; font-size: .78rem; }
 .entrants-step .choice input { width: 1rem; }
 

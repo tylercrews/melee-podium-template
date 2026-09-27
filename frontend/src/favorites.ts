@@ -94,6 +94,10 @@ export function saveFavorites(favorites: FavoritesData): FavoritesData {
 
 export function newFavoriteId(): string { return newId(); }
 
+export function parseAlternateSpellings(value: string): string[] {
+  return [...new Set(value.split(/[,\n]/).map((spelling) => spelling.trim()).filter(Boolean))];
+}
+
 export function normalizedFavoriteTag(tag: string): string {
   return entrantIdentity(tag).toLocaleLowerCase().replace(/\s+/g, " ");
 }
