@@ -40,6 +40,9 @@ type DeleteTarget =
   | { kind: "format"; item: SavedFormat }
   | { kind: "image"; item: UserImage }
   | { kind: "font"; item: UserFont };
+type FavoriteDraft =
+  | { kind: "singles"; entrant: FavoriteSinglesEntrant }
+  | { kind: "doubles"; team: FavoriteDoublesTeam };
 
 interface SavedDataManagementProps {
   favorites: FavoritesData;
@@ -70,6 +73,46 @@ const copyMember = (
   aliases: [...favorite.aliases],
   characters: favorite.characters.map((character) => ({ ...character })),
 });
+
+function favoriteIdentities(tag: string, aliases: string[]): Set<string> {
+  return new Set(
+    [tag, ...aliases]
+      .map(normalizedFavoriteTag)
+      .filter(Boolean),
+  );
+}
+
+function identitiesOverlap(left: Set<string>, right: Set<string>): boolean {
+  return [...left].some((identity) => right.has(identity));
+}
+
+function duplicateFavoriteDescriptions(
+  draft: FavoriteDraft,
+  favorites: FavoritesData,
+): string[] {
+  const existingEntrants = [
+    ...favorites.singles.map((entrant) => ({
+      description: `Singles entrant “${entrant.tag}”`,
+      identities: favoriteIdentities(entrant.tag, entrant.aliases),
+    })),
+    ...favorites.doubles.flatMap((team) => ([team.entrant_1, team.entrant_2].map((entrant) => ({
+      description: `“${entrant.tag}” on doubles team “${team.team_name}”`,
+      identities: favoriteIdentities(entrant.tag, entrant.aliases),
+    })))),
+  ];
+  const candidates = draft.kind === "singles"
+    ? [{ label: draft.entrant.tag, identities: favoriteIdentities(draft.entrant.tag, draft.entrant.aliases) }]
+    : [draft.team.entrant_1, draft.team.entrant_2].map((entrant) => ({
+        label: entrant.tag,
+        identities: favoriteIdentities(entrant.tag, entrant.aliases),
+      }));
+
+  return [...new Set(candidates.flatMap((candidate) =>
+    existingEntrants
+      .filter((existing) => identitiesOverlap(candidate.identities, existing.identities))
+      .map((existing) => `${candidate.label} matches ${existing.description}`),
+  ))];
+}
 
 function TrashIcon() {
   return (
@@ -104,6 +147,8 @@ export default function SavedDataManagement({
   const formatImportDialog = useRef<HTMLDialogElement>(null);
   const overwriteDialog = useRef<HTMLDialogElement>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
+  const addFavoriteDialog = useRef<HTMLDialogElement>(null);
+  const duplicateFavoriteDialog = useRef<HTMLDialogElement>(null);
   const [message, setMessage] = useState("");
   const [favoriteQuery, setFavoriteQuery] = useState("");
   const [favoriteMenuOpen, setFavoriteMenuOpen] = useState(false);
@@ -121,6 +166,9 @@ export default function SavedDataManagement({
   const [working, setWorking] = useState(false);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
   const [fontPreviewUrls, setFontPreviewUrls] = useState<Record<string, string>>({});
+  const [favoriteDraft, setFavoriteDraft] = useState<FavoriteDraft | null>(null);
+  const [favoriteAliasInputs, setFavoriteAliasInputs] = useState<[string, string]>(["", ""]);
+  const [duplicateFavorites, setDuplicateFavorites] = useState<string[]>([]);
 
   const changeSingles = (singles: FavoriteSinglesEntrant[]) =>
     onChange({ ...favorites, singles });
@@ -210,23 +258,88 @@ export default function SavedDataManagement({
   const backgrounds = images.filter((image) => image.category === "background");
 
   function addSingles() {
-    changeSingles([
-      ...favorites.singles,
-      { id: newFavoriteId(), ...emptyMember(), primary: false },
-    ]);
+    setFavoriteDraft({
+      kind: "singles",
+      entrant: { id: newFavoriteId(), ...emptyMember(), primary: false },
+    });
+    setFavoriteAliasInputs(["", ""]);
+    setDuplicateFavorites([]);
+    addFavoriteDialog.current?.showModal();
   }
 
   function addDoubles() {
-    changeDoubles([
-      ...favorites.doubles,
-      {
+    setFavoriteDraft({
+      kind: "doubles",
+      team: {
         id: newFavoriteId(),
         team_name: "",
         team_color: "random",
         entrant_1: emptyMember(),
         entrant_2: emptyMember(),
       },
-    ]);
+    });
+    setFavoriteAliasInputs(["", ""]);
+    setDuplicateFavorites([]);
+    addFavoriteDialog.current?.showModal();
+  }
+
+  function commitFavoriteDraft(draft = favoriteDraft) {
+    if (!draft) return;
+    if (draft.kind === "singles") {
+      const entrant = {
+        ...draft.entrant,
+        tag: draft.entrant.tag.trim(),
+      };
+      changeSingles([
+        ...favorites.singles.map((favorite) =>
+          entrant.primary && normalizedFavoriteTag(favorite.tag) === normalizedFavoriteTag(entrant.tag)
+            ? { ...favorite, primary: false }
+            : favorite,
+        ),
+        entrant,
+      ]);
+    } else {
+      changeDoubles([
+        ...favorites.doubles,
+        {
+          ...draft.team,
+          team_name: draft.team.team_name.trim(),
+          entrant_1: { ...draft.team.entrant_1, tag: draft.team.entrant_1.tag.trim() },
+          entrant_2: { ...draft.team.entrant_2, tag: draft.team.entrant_2.tag.trim() },
+        },
+      ]);
+    }
+    duplicateFavoriteDialog.current?.close();
+    addFavoriteDialog.current?.close();
+    setFavoriteDraft(null);
+    setDuplicateFavorites([]);
+    setMessage("Favorite saved.");
+  }
+
+  function requestFavoriteSave(event: FormEvent) {
+    event.preventDefault();
+    if (!favoriteDraft) return;
+    const preparedDraft: FavoriteDraft = favoriteDraft.kind === "singles"
+      ? {
+          ...favoriteDraft,
+          entrant: { ...favoriteDraft.entrant, aliases: parseAlternateSpellings(favoriteAliasInputs[0]) },
+        }
+      : {
+          ...favoriteDraft,
+          team: {
+            ...favoriteDraft.team,
+            entrant_1: { ...favoriteDraft.team.entrant_1, aliases: parseAlternateSpellings(favoriteAliasInputs[0]) },
+            entrant_2: { ...favoriteDraft.team.entrant_2, aliases: parseAlternateSpellings(favoriteAliasInputs[1]) },
+          },
+        };
+    const duplicates = duplicateFavoriteDescriptions(preparedDraft, favorites);
+    if (duplicates.length) {
+      setFavoriteDraft(preparedDraft);
+      setDuplicateFavorites(duplicates);
+      duplicateFavoriteDialog.current?.showModal();
+      return;
+    }
+    commitFavoriteDraft(preparedDraft);
   }
 
   function setPrimary(id: string, primary: boolean) {
@@ -528,6 +641,95 @@ export default function SavedDataManagement({
       </section>
 
       <Footer renderCount={renderCount} />
+
+      <dialog className="modal add-favorite-modal" ref={addFavoriteDialog} onClose={() => {
+        setFavoriteDraft(null);
+        setDuplicateFavorites([]);
+      }} onClick={(event) => {
+        if (event.target === event.currentTarget) event.currentTarget.close();
+      }}>
+        {favoriteDraft && (
+          <form className="modal__content" onSubmit={requestFavoriteSave}>
+            <button className="modal__close" type="button" onClick={() => addFavoriteDialog.current?.close()} aria-label="Close">×</button>
+            <span className="eyebrow">Favorite entrants</span>
+            <h2>{favoriteDraft.kind === "singles" ? "Add singles entrant" : "Add doubles team"}</h2>
+            <p>Fill out the reusable entrant information before adding it to your saved list.</p>
+            {favoriteDraft.kind === "singles" ? (
+              <>
+                <EntrantCharacterEditor
+                  tag={favoriteDraft.entrant.tag}
+                  characters={favoriteDraft.entrant.characters}
+                  fighters={fighters}
+                  onTagChange={(tag) => setFavoriteDraft((current) => current?.kind === "singles" ? { ...current, entrant: { ...current.entrant, tag } } : current)}
+                  onChange={(characters) => setFavoriteDraft((current) => current?.kind === "singles" ? { ...current, entrant: { ...current.entrant, characters } } : current)}
+                />
+                <label className="field favorite-alternate-field">
+                  Alternate spellings
+                  <textarea value={favoriteAliasInputs[0]} onChange={(event) => setFavoriteAliasInputs([event.target.value, favoriteAliasInputs[1]])} placeholder="BUSTA, BU$TA" />
+                  <small>Comma-separated spellings that should match this entrant. Sponsors and capitalization are ignored.</small>
+                </label>
+                <label className="choice"><input type="checkbox" checked={favoriteDraft.entrant.primary} onChange={(event) => setFavoriteDraft((current) => current?.kind === "singles" ? { ...current, entrant: { ...current.entrant, primary: event.target.checked } } : current)} /> Use this as the primary favorite when multiple saved versions match</label>
+              </>
+            ) : (
+              <>
+                <div className="row-fields">
+                  <label className="field">Team name<input value={favoriteDraft.team.team_name} onChange={(event) => setFavoriteDraft((current) => current?.kind === "doubles" ? { ...current, team: { ...current.team, team_name: event.target.value } } : current)} required autoFocus /></label>
+                  <label className="field">Team color<select value={favoriteDraft.team.team_color} onChange={(event) => setFavoriteDraft((current) => current?.kind === "doubles" ? { ...current, team: { ...current.team, team_color: event.target.value } } : current)}><option value="random">Random</option><option value="red">Red</option><option value="green">Green</option><option value="blue">Blue</option></select></label>
+                </div>
+                {(["entrant_1", "entrant_2"] as const).map((member, index) => (
+                  <fieldset className="add-favorite-member" key={member}>
+                    <legend>Entrant {index + 1}</legend>
+                    <SinglesFavoritePicker
+                      favorites={favorites.singles}
+                      label={`Use favorited entrant for entrant ${index + 1}`}
+                      onChoose={(favorite) => {
+                        setFavoriteDraft((current) => current?.kind === "doubles" ? { ...current, team: { ...current.team, [member]: copyMember(favorite) } } : current);
+                        setFavoriteAliasInputs((current) => index === 0 ? [favorite.aliases.join(", "), current[1]] : [current[0], favorite.aliases.join(", ")]);
+                      }}
+                    />
+                    <EntrantCharacterEditor
+                      tag={favoriteDraft.team[member].tag}
+                      tagLabel={`Entrant ${index + 1} tag`}
+                      characters={favoriteDraft.team[member].characters}
+                      fighters={fighters}
+                      onTagChange={(tag) => setFavoriteDraft((current) => current?.kind === "doubles" ? { ...current, team: { ...current.team, [member]: { ...current.team[member], tag } } } : current)}
+                      onChange={(characters) => setFavoriteDraft((current) => current?.kind === "doubles" ? { ...current, team: { ...current.team, [member]: { ...current.team[member], characters } } } : current)}
+                    />
+                    <label className="field favorite-alternate-field">
+                      Alternate spellings
+                      <textarea value={favoriteAliasInputs[index]} onChange={(event) => setFavoriteAliasInputs(index === 0 ? [event.target.value, favoriteAliasInputs[1]] : [favoriteAliasInputs[0], event.target.value])} placeholder="BUSTA, BU$TA" />
+                      <small>Comma-separated spellings for entrant {index + 1}.</small>
+                    </label>
+                  </fieldset>
+                ))}
+              </>
+            )}
+            <div className="modal__actions">
+              <button className="button button--ghost" type="button" onClick={() => addFavoriteDialog.current?.close()}>Cancel</button>
+              <button className="button button--dark" type="submit">Save favorite</button>
+            </div>
+          </form>
+        )}
+      </dialog>
+
+      <dialog className="modal" ref={duplicateFavoriteDialog} onClick={(event) => {
+        if (event.target === event.currentTarget) event.currentTarget.close();
+      }}>
+        <div className="modal__content">
+          <button className="modal__close" type="button" onClick={() => duplicateFavoriteDialog.current?.close()} aria-label="Close">×</button>
+          <span className="eyebrow">Possible duplicate</span>
+          <h2>Save another favorite?</h2>
+          <p>One or more tags or alternate spellings match entrant information you already saved:</p>
+          <ul className="duplicate-favorite-list">
+            {duplicateFavorites.map((duplicate) => <li key={duplicate}>{duplicate}</li>)}
+          </ul>
+          <p>You can return to edit the new favorite, or confirm that you want to keep another saved version.</p>
+          <div className="modal__actions">
+            <button className="button button--ghost" type="button" onClick={() => duplicateFavoriteDialog.current?.close()}>Back to edit</button>
+            <button className="button button--dark" type="button" onClick={() => commitFavoriteDraft()}>Save another</button>
+          </div>
+        </div>
+      </dialog>
 
       <dialog className="modal format-code-modal" ref={formatImportDialog} onClick={(event) => {
         if (event.target === event.currentTarget && !working) event.currentTarget.close();

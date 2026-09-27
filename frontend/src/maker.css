@@ -745,6 +745,15 @@ body {
 .entrant-card--maker .favorite-picker { margin-bottom: 2px; }
 .entrant-favorite-button { justify-self: start; margin-top: 4px; }
 .favorite-save-modal { width: min(620px, calc(100% - 32px)); }
+.add-favorite-modal { width: min(880px, calc(100% - 32px)); color: var(--theme-text); background: var(--theme-surface); }
+.add-favorite-modal .modal__content { max-height: calc(100vh - 48px); overflow-y: auto; }
+.add-favorite-modal .modal__close { color: var(--theme-muted); }
+.add-favorite-modal .modal__content p { color: var(--theme-muted); }
+.add-favorite-modal .field, .add-favorite-modal label, .add-favorite-modal .choice { color: var(--theme-text); }
+.add-favorite-modal .field input, .add-favorite-modal .field select, .add-favorite-modal textarea { border-color: var(--theme-border-strong); color: var(--theme-text); background: #0d101bff; }
+.add-favorite-member { display: grid; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--theme-border); border-radius: 7px; }
+.add-favorite-member > legend { padding: 0 6px; color: #ff83dfff; font-weight: 850; }
+.duplicate-favorite-list { display: grid; gap: 8px; margin: 0; padding-left: 22px; color: #5f342dff; font-size: .82rem; line-height: 1.45; }
 .favorite-alternate-field textarea { min-height: 84px; }
 .favorite-alternate-field small { color: var(--theme-muted); font-size: .68rem; font-weight: 500; line-height: 1.45; }
 .favorite-team-alternates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
