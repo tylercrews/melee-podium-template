@@ -26,7 +26,7 @@ from podium_colors import PodiumColorConfiguration, PodiumColorInput, PodiumColo
 
 
 EntrantResult = SinglesEntrant | DoublesTeam
-METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"})
+METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"})
 
 
 @dataclass(frozen=True, slots=True)

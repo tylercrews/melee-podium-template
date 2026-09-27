@@ -459,6 +459,7 @@ class LegacyPodiumContentRenderer:
             "date": (str(tournament.date), 28),
             "entrants_count": (f"{tournament.entrants_count} {count_label}", 24),
             "tournament_link": (tournament.link, 18),
+            "tournament_location": (tournament.location, 18),
             "stream_link": (tournament.stream_link, 18),
             "vod_link": (tournament.vod_link, 18),
             "to_x_account": (tournament.organizer_x_account, 18),

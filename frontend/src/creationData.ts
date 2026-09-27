@@ -74,6 +74,9 @@ export function mergeImportedTournament(current: TournamentDetails, review: Brac
     entrantsCount: imported.entrants_count ? String(imported.entrants_count) : current.entrantsCount,
     tournamentLink: imported.link || current.tournamentLink,
     location: imported.location || current.location,
+    streamLink: imported.stream_link || current.streamLink,
+    toXAccount: imported.to_x_account || current.toXAccount,
+    toTwitchAccount: imported.to_twitch_account || current.toTwitchAccount,
   };
 }
 
@@ -82,6 +85,7 @@ export const METADATA_FIELD_DETAILS: Record<MetadataField, { label: string; key:
   date: { label: "Date", key: "date", type: "date", placeholder: "" },
   entrants_count: { label: "Entrant count", key: "entrantsCount", type: "number", placeholder: "64" },
   tournament_link: { label: "Tournament link", key: "tournamentLink", type: "url", placeholder: "https://start.gg/…" },
+  tournament_location: { label: "Tournament location", key: "location", placeholder: "Venue, city, state/country" },
   stream_link: { label: "Stream link", key: "streamLink", type: "url", placeholder: "https://twitch.tv/…" },
   vod_link: { label: "VOD link", key: "vodLink", type: "url", placeholder: "https://youtube.com/…" },
   to_x_account: { label: "TO X account", key: "toXAccount", placeholder: "@tournament" },

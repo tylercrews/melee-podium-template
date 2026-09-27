@@ -38,12 +38,18 @@ class BracketResponseTests(unittest.TestCase):
                 members=(ImportedMember("Player", x_handle="@player", country="US"),),
             ),),
             event_format=TournamentFormat.SINGLES,
+            stream_link="https://twitch.tv/weekly",
+            organizer_x_account="WeeklyMelee",
+            organizer_twitch_account="https://twitch.tv/weekly",
             extra={"source": "reported"},
         )
 
         response = _import_response(imported)
 
         self.assertEqual(response["tournament"]["location"], "Philadelphia")
+        self.assertEqual(response["tournament"]["stream_link"], "https://twitch.tv/weekly")
+        self.assertEqual(response["tournament"]["to_x_account"], "WeeklyMelee")
+        self.assertEqual(response["tournament"]["to_twitch_account"], "https://twitch.tv/weekly")
         self.assertEqual(response["bracket"]["phase_group_id"], "123")
         self.assertEqual(response["provider_data"], {"source": "reported"})
         self.assertEqual(response["entrants"][0]["provider_id"], "entrant-1")

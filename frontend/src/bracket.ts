@@ -35,6 +35,9 @@ export interface ImportedBracketTournament {
   link: string;
   event_format: string;
   location: string;
+  stream_link: string;
+  to_x_account: string;
+  to_twitch_account: string;
 }
 
 export interface BracketImportResponse {
@@ -134,6 +137,9 @@ export function normalizeBracketImport(value: unknown): BracketImportResponse {
       link: text(tournament.link),
       event_format: text(tournament.event_format || tournament.format),
       location: text(tournament.location),
+      stream_link: text(tournament.stream_link),
+      to_x_account: text(tournament.to_x_account),
+      to_twitch_account: text(tournament.to_twitch_account),
     },
     entrants,
     bracket: isRecord(value.bracket) ? { ...value.bracket } : {},

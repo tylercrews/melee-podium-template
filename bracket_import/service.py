@@ -43,6 +43,8 @@ class ProviderCapabilities:
     date: bool = False
     location: bool = False
     entrant_count: bool = True
+    stream_link: bool = False
+    organizer_accounts: bool = False
     placements: bool = True
     seeds: bool = False
     player_handles: bool = False
@@ -53,7 +55,7 @@ class ProviderCapabilities:
 
 CAPABILITIES: dict[BracketProvider, ProviderCapabilities] = {
     BracketProvider.START_GG: ProviderCapabilities(
-        date=True, location=True, seeds=True, player_handles=True, characters=True, costumes=True,
+        date=True, location=True, stream_link=True, organizer_accounts=True, seeds=True, player_handles=True, characters=True, costumes=True,
         notes="Game selections report characters. Replay Reporter USB scores can also carry verified costume indices.",
     ),
     BracketProvider.CHALLONGE: ProviderCapabilities(
@@ -120,6 +122,9 @@ class BracketImport:
     entrants_count: int | None
     players: tuple[ImportedPlayer, ...]
     event_format: TournamentFormat = TournamentFormat.UNKNOWN
+    stream_link: str | None = None
+    organizer_x_account: str | None = None
+    organizer_twitch_account: str | None = None
     extra: Mapping[str, Any] = field(default_factory=dict)
 
     def to_tournament(self) -> Tournament:
@@ -132,8 +137,12 @@ class BracketImport:
             event=self.event_name,
             date=self.date.date() if self.date else "Date unavailable",
             entrants_count=self.entrants_count,
-            subtitle=subtitle or self.location,
+            subtitle=subtitle,
             link=self.link.url,
+            location=self.location,
+            stream_link=self.stream_link,
+            organizer_x_account=self.organizer_x_account,
+            organizer_twitch_account=self.organizer_twitch_account,
             event_format=self.event_format,
         )
 
@@ -248,7 +257,11 @@ query MeleePodiumImport($slug: String!) {
   event(slug: $slug) {
     id name numEntrants startAt entrantSizeMin
     videogame { id name }
-    tournament { name city countryCode slug }
+    tournament {
+      name slug venueName venueAddress city addrState countryCode
+      streams { enabled streamId streamName streamSource }
+      owner { authorizations(types: [TWITTER, TWITCH]) { type externalUsername url } }
+    }
     standings(query: {page: 1, perPage: 64, sortBy: "standing"}) {
       nodes { placement entrant { id name initialSeedNum participants { gamerTag user { authorizations(types: TWITTER) { externalUsername } } } } }
     }
@@ -382,6 +395,52 @@ def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
     except (KeyError, TypeError) as error:
         raise ValueError("Start.gg returned an incomplete event response") from error
 
+def _startgg_location(tournament: Mapping[str, Any]) -> str | None:
+    place = ", ".join(
+        str(value).strip()
+        for value in (
+            tournament.get("venueName"),
+            tournament.get("city"),
+            tournament.get("addrState"),
+            tournament.get("countryCode"),
+        )
+        if value and str(value).strip()
+    )
+    return place or tournament.get("venueAddress") or None
+
+
+def _startgg_stream_link(tournament: Mapping[str, Any]) -> str | None:
+    streams = tournament.get("streams")
+    for stream in streams if isinstance(streams, list) else []:
+        if not isinstance(stream, Mapping) or stream.get("enabled") is False:
+            continue
+        identity = str(stream.get("streamId") or stream.get("streamName") or "").strip()
+        if not identity:
+            continue
+        if identity.startswith(("https://", "http://")):
+            return identity
+        source = str(stream.get("streamSource") or "").casefold()
+        if source == "twitch":
+            return f"https://twitch.tv/{identity}"
+        if source == "youtube":
+            return f"https://youtube.com/{identity.lstrip('/')}"
+    return None
+
+
+def _startgg_organizer_accounts(tournament: Mapping[str, Any]) -> tuple[str | None, str | None]:
+    owner = tournament.get("owner")
+    authorizations = owner.get("authorizations", []) if isinstance(owner, Mapping) else []
+    accounts: dict[str, str] = {}
+    for authorization in authorizations if isinstance(authorizations, list) else []:
+        if not isinstance(authorization, Mapping):
+            continue
+        account_type = str(authorization.get("type") or "").casefold()
+        value = authorization.get("url") or authorization.get("externalUsername")
+        if account_type and value:
+            accounts[account_type] = str(value)
+    return accounts.get("twitter"), accounts.get("twitch")
+
+
 def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_names: Mapping[int | str, str] | None = None, character_usage: Mapping[str, list[Mapping[str, Any]]] | None = None) -> BracketImport:
     event = payload["data"]["event"]
     tournament = event["tournament"]
@@ -408,7 +467,21 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_na
         players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members))
     entrant_size = event.get("entrantSizeMin")
     event_format = _event_format(entrant_size)
-    return BracketImport(link, tournament["name"], event.get("name"), _unix_time(event.get("startAt")), tournament.get("city") or tournament.get("countryCode"), event.get("numEntrants"), tuple(sorted(players, key=lambda player: player.placement or 999999)), event_format, {"game": event.get("videogame"), "entrant_size_min": entrant_size})
+    organizer_x_account, organizer_twitch_account = _startgg_organizer_accounts(tournament)
+    return BracketImport(
+        link,
+        tournament["name"],
+        event.get("name"),
+        _unix_time(event.get("startAt")),
+        _startgg_location(tournament),
+        event.get("numEntrants"),
+        tuple(sorted(players, key=lambda player: player.placement or 999999)),
+        event_format,
+        stream_link=_startgg_stream_link(tournament),
+        organizer_x_account=organizer_x_account,
+        organizer_twitch_account=organizer_twitch_account,
+        extra={"game": event.get("videogame"), "entrant_size_min": entrant_size},
+    )
 
 
 def fetch_challonge(link: BracketLink) -> BracketImport:
@@ -543,7 +616,7 @@ def parse_challonge(payload: Mapping[str, Any], link: BracketLink) -> BracketImp
         )
         for p in participants
     )
-    return BracketImport(link, tournament["name"], None, _iso_time(tournament.get("completed_at") or tournament.get("started_at")), None, len(players), tuple(sorted(players, key=lambda player: player.placement or 999999)), TournamentFormat.UNKNOWN, {"bracket_type": tournament.get("tournament_type")})
+    return BracketImport(link, tournament["name"], None, _iso_time(tournament.get("completed_at") or tournament.get("started_at") or tournament.get("start_at")), None, len(players), tuple(sorted(players, key=lambda player: player.placement or 999999)), TournamentFormat.UNKNOWN, extra={"bracket_type": tournament.get("tournament_type")})
 
 
 def parse_tonamel(payload: Mapping[str, Any], link: BracketLink) -> BracketImport:
@@ -716,7 +789,7 @@ def parse_parrygg(
         event.get("entrantCount") or event.get("entrant_count") or len(sorted_players) or tournament.get("numAttendees") or tournament.get("num_attendees"),
         sorted_players,
         event_format,
-        {
+        extra={
             "game": event.get("game"),
             "reported_character_players": sum(bool(player.characters) for player in sorted_players[:top_entrants]),
         },

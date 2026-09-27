@@ -28,6 +28,7 @@ const metadataLabels: Record<MetadataField, string> = {
   date: "Date",
   entrants_count: "Entrant or team count",
   tournament_link: "Tournament link",
+  tournament_location: "Tournament location",
   stream_link: "Stream link",
   vod_link: "VOD link",
   to_x_account: "TO X account",

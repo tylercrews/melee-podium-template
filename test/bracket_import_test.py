@@ -46,6 +46,36 @@ class BracketImportTests(unittest.TestCase):
         self.assertIsNone(result.players[0].characters[0].costume)
         self.assertEqual(result.players[0].x_handle, "@player")
 
+    def test_startgg_imports_location_stream_and_organizer_accounts(self):
+        link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
+        data = {"data": {"event": {
+            "name": "Melee Singles",
+            "numEntrants": 10,
+            "tournament": {
+                "name": "Shine",
+                "venueName": "Convention Center",
+                "city": "Boston",
+                "addrState": "MA",
+                "countryCode": "US",
+                "streams": [{"enabled": True, "streamId": "shine_series", "streamSource": "TWITCH"}],
+                "owner": {"authorizations": [
+                    {"type": "TWITTER", "externalUsername": "ShineSeries"},
+                    {"type": "TWITCH", "url": "https://twitch.tv/shine_series"},
+                ]},
+            },
+            "standings": {"nodes": []},
+        }}}
+
+        result = parse_startgg(data, link)
+
+        self.assertEqual(result.location, "Convention Center, Boston, MA, US")
+        self.assertEqual(result.stream_link, "https://twitch.tv/shine_series")
+        self.assertEqual(result.organizer_x_account, "ShineSeries")
+        self.assertEqual(result.organizer_twitch_account, "https://twitch.tv/shine_series")
+        tournament = result.to_tournament()
+        self.assertEqual(tournament.location, result.location)
+        self.assertEqual(tournament.stream_link, result.stream_link)
+
     def test_startgg_uses_direct_character_names_and_deduplicates_them(self):
         link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
         data = {"data": {"event": {"name": "Melee Singles", "numEntrants": 10, "startAt": 0, "videogame": {"id": 1, "name": "Melee"}, "tournament": {"name": "Shine", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "Player", "initialSeedNum": 2, "participants": []}}]}}}}
@@ -90,6 +120,16 @@ class BracketImportTests(unittest.TestCase):
         link = identify_bracket_link("https://challonge.com/melee")
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Second", "seed": 3, "final_rank": 2}}, {"participant": {"id": 2, "display_name": "First", "seed": 1, "final_rank": 1}}]}}, link)
         self.assertEqual([player.tag for player in result.players], ["First", "Second"])
+
+    def test_challonge_uses_scheduled_start_date_when_not_started(self):
+        link = identify_bracket_link("https://challonge.com/melee")
+        result = parse_challonge({"tournament": {
+            "name": "Upcoming Weekly",
+            "start_at": "2026-10-02T19:00:00-04:00",
+            "participants": [{"participant": {"id": 1, "name": "Registered Player"}}],
+        }}, link)
+
+        self.assertEqual(result.date.isoformat(), "2026-10-02T19:00:00-04:00")
 
     def test_challonge_derives_ranks_while_results_await_review(self):
         link = identify_bracket_link("https://challonge.com/5q3o6uxz")

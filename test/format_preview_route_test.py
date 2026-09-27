@@ -113,6 +113,7 @@ class FormatPreviewRouteTests(unittest.TestCase):
                         "date": "2026-09-26",
                         "entrants_count": 48,
                         "link": "start.gg/my-local",
+                        "location": "Local Venue, Philadelphia, PA",
                         "stream_link": "twitch.tv/my-local",
                     },
                     "entrants": [
@@ -135,6 +136,7 @@ class FormatPreviewRouteTests(unittest.TestCase):
         entrants = render_preview.call_args.kwargs["entrants"]
         self.assertEqual(tournament.title, "My Local")
         self.assertEqual(tournament.stream_link, "twitch.tv/my-local")
+        self.assertEqual(tournament.location, "Local Venue, Philadelphia, PA")
         self.assertEqual([entrant.tag for entrant in entrants], ["Alpha", "Bravo", "Charlie"])
 
 

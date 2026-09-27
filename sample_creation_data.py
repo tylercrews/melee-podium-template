@@ -137,6 +137,7 @@ def sample_tournament(
         date=date.today(),
         entrants_count=50,
         link="start.gg/notareallink/tournamentlink",
+        location="Test Venue, Philadelphia, PA",
         stream_link="twitch.tv/meleepodium",
         vod_link="youtube.com/watch?v=example",
         organizer_x_account="x.com/MeleePodium",

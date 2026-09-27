@@ -7,7 +7,7 @@ export type SizeMultiplier = number;
 export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to_height";
 export type FormattingColorSelectionMode = "premade" | "pick_1" | "pick_2" | "pick_all";
 export type FormattingColorPreset = "smash_player_colors" | "olympic_medals" | "rainbow";
-export type MetadataField = "event" | "date" | "entrants_count" | "tournament_link" | "stream_link" | "vod_link" | "to_x_account" | "to_twitch_account" | "to_bluesky_account";
+export type MetadataField = "event" | "date" | "entrants_count" | "tournament_link" | "tournament_location" | "stream_link" | "vod_link" | "to_x_account" | "to_twitch_account" | "to_bluesky_account";
 
 export interface FormattingAssetColor {
   main_color: string;
@@ -99,7 +99,7 @@ export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
   colors: [],
 };
 
-export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
+export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   font_asset_id: "provided:tyrowo",

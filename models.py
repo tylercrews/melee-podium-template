@@ -68,6 +68,7 @@ class Tournament:
     subtitle: str | None = None
     event: str | None = None
     link: str | None = None
+    location: str | None = None
     stream_link: str | None = None
     vod_link: str | None = None
     organizer_x_account: str | None = None
@@ -83,7 +84,7 @@ class Tournament:
             _validate_text(self.event, "Tournament event")
         if self.link is not None:
             _validate_text(self.link, "Tournament link")
-        for field_name in ("stream_link", "vod_link", "organizer_x_account", "organizer_twitch_account", "organizer_bluesky_account"):
+        for field_name in ("location", "stream_link", "vod_link", "organizer_x_account", "organizer_twitch_account", "organizer_bluesky_account"):
             value = getattr(self, field_name)
             if value is not None:
                 _validate_text(value, field_name.replace("_", " ").title())

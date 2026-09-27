@@ -164,6 +164,12 @@ def _tournament(data: Any) -> Tournament:
         subtitle=_optional_text(source, "subtitle"),
         event=_optional_text(source, "event"),
         link=_optional_text(source, "link"),
+        location=_optional_text(source, "location"),
+        stream_link=_optional_text(source, "stream_link"),
+        vod_link=_optional_text(source, "vod_link"),
+        organizer_x_account=_optional_text(source, "organizer_x_account"),
+        organizer_twitch_account=_optional_text(source, "organizer_twitch_account"),
+        organizer_bluesky_account=_optional_text(source, "organizer_bluesky_account"),
         event_format=format_value,
     )
 
@@ -399,6 +405,7 @@ def _preview_tournament(value: Any, event_format: TournamentFormat) -> Tournamen
         date=text_or("date", str(fallback.date)) or str(fallback.date),
         entrants_count=entrants_count or fallback.entrants_count,
         link=text_or("link", fallback.link),
+        location=text_or("location", fallback.location),
         stream_link=text_or("stream_link", fallback.stream_link),
         vod_link=text_or("vod_link", fallback.vod_link),
         organizer_x_account=text_or("organizer_x_account", fallback.organizer_x_account),
@@ -547,6 +554,9 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
             "link": tournament.link,
             "event_format": tournament.event_format.value,
             "location": imported.location,
+            "stream_link": imported.stream_link,
+            "to_x_account": imported.organizer_x_account,
+            "to_twitch_account": imported.organizer_twitch_account,
         },
         "entrants": [
             {

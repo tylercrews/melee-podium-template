@@ -125,6 +125,7 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
       date: tournament.date || null,
       entrants_count: Number(tournament.entrantsCount) || null,
       link: tournament.tournamentLink.trim() || null,
+      location: tournament.location.trim() || null,
       stream_link: tournament.streamLink.trim() || null,
       vod_link: tournament.vodLink.trim() || null,
       organizer_x_account: tournament.toXAccount.trim() || null,
