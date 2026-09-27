@@ -10,7 +10,8 @@ from PIL import Image
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from DrawPodium import PodiumFont, _centered_header_fields, _wrap_url
+from DrawPodium import PodiumFont, _centered_header_fields, _font_to_fit, _wrap_url
+from legacy_podium_content_renderer import _wrap_website_remainder
 from models import Tournament
 
 
@@ -79,6 +80,22 @@ class HeaderLayoutTests(unittest.TestCase):
         self.assertTrue(
             all(loaded_font.getlength(line) <= 300 for line in wrapped.splitlines())
         )
+
+    def test_icon_link_remainder_wraps_at_slashes_instead_of_shrinking(self) -> None:
+        remainder = (
+            "tournament/moon-dog-melee-11-med1cinal-s-birthday-bash/"
+            "events/melee-singles-secondaries-only/brackets/2343959/3386903/overview"
+        )
+        wrapped = _wrap_website_remainder(
+            remainder,
+            480,
+            18,
+            PodiumFont.TYROWO,
+        )
+
+        self.assertGreater(len(wrapped.splitlines()), 1)
+        self.assertTrue(all(line.endswith("/") for line in wrapped.splitlines()[:-1]))
+        self.assertEqual(_font_to_fit(wrapped, 480, 18, PodiumFont.TYROWO).size, 18)
 
 
 if __name__ == "__main__":

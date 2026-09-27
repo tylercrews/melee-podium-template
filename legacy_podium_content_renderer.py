@@ -50,6 +50,7 @@ from DrawPodium import (
     _tag_anchor,
     _temporary_font_settings,
     _validate_placements,
+    _wrap_url,
 )
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
@@ -97,6 +98,17 @@ def _website_icon_and_remainder(value: str) -> tuple[Path, str] | None:
     if parsed.query:
         remainder = f"{remainder}?{parsed.query}" if remainder else f"?{parsed.query}"
     return WEBSITE_ICON_FOLDER / filename, remainder
+
+
+def _wrap_website_remainder(
+    remainder: str,
+    max_width: int,
+    preferred_size: int,
+    font: PodiumFont,
+) -> str:
+    """Wrap an icon link's path without shrinking the whole URL to one line."""
+
+    return _wrap_url(remainder, max_width, max_width, preferred_size, font)
 
 
 @dataclass(frozen=True, slots=True)
@@ -447,14 +459,31 @@ class LegacyPodiumContentRenderer:
                     website_icon = source.convert("RGBA")
                     website_icon.thumbnail((32, 32), Image.Resampling.LANCZOS)
                 remainder_width = 0
+                row_height = website_icon.height
                 if remainder:
-                    remainder_font = _font_to_fit(
+                    remainder_max_width = metadata_width - website_icon.width - 7
+                    remainder = _wrap_website_remainder(
                         remainder,
-                        metadata_width - website_icon.width - 7,
+                        remainder_max_width,
                         preferred_size,
                         self.font,
                     )
-                    remainder_width = round(remainder_font.getlength(remainder))
+                    remainder_font = _font_to_fit(
+                        remainder,
+                        remainder_max_width,
+                        preferred_size,
+                        self.font,
+                    )
+                    remainder_width = round(max(
+                        remainder_font.getlength(line)
+                        for line in remainder.splitlines()
+                    ))
+                    line_bounds = remainder_font.getbbox("Ag")
+                    line_height = line_bounds[3] - line_bounds[1] + 4
+                    row_height = max(
+                        row_height,
+                        line_height * len(remainder.splitlines()),
+                    )
                 row_width = website_icon.width + (7 + remainder_width if remainder else 0)
                 row_left = (
                     metadata_x
@@ -465,7 +494,9 @@ class LegacyPodiumContentRenderer:
                 )
                 canvas.alpha_composite(website_icon, (round(row_left), y))
                 if remainder:
-                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=metadata_width - website_icon.width - 7, preferred_size=preferred_size, align="left", fill=request.text_settings.heading_color, metallic=request.text_settings.heading_metallic)
+                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=remainder_max_width, preferred_size=preferred_size, align="left", fill=request.text_settings.heading_color, metallic=request.text_settings.heading_metallic)
+                y += max(27, row_height + 7)
+                continue
             y += max(27, preferred_size + 7)
         self._draw_attribution(canvas, request, mode)
 
