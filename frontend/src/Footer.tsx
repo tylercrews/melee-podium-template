@@ -53,7 +53,8 @@ function Footer({ renderCount }: FooterProps) {
               <li><a href="https://smashboards.com/threads/character-stock-icon-dump.390494/" target="_blank" rel="noreferrer">CeLL on this old Smashboards thread</a> for posting a dump of all the character stock icons.</li>
               <li><a href="https://www.spriters-resource.com/gamecube/ssbm/asset/46039/" target="_blank" rel="noreferrer">Mr. C</a> for the Sheik stock icons.</li>
               <li>Also shoutout to <a href="https://smashboards.com/" target="_blank" rel="noreferrer">SmashBoards</a> in general—what an amazing site still.</li>
-              <li>Big thank you to Brooke Bustamove for the positivity and feedback and for actually using this thing when I thought nobody was.</li>
+              <li>Big thank you to Shenal and Brooke Bustamove for the positivity and feedback and for actually using this thing when I thought nobody was.</li>
+              <li>Shouts out to Shenfest, only reason I'm back in the game. Drunk house tournaments and karaoke are what Melee is all about.</li>
               <li>North Carolina Melee!! Love y'all.</li>
             </ul>
           </div>
