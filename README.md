@@ -56,18 +56,18 @@ npm run build
 
 - [Malarki_](https://x.com/Malarki_), who I commissioned to expand the pool of character poses and did an amazing job.
 - [Top8er](https://www.top8er.com/), an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being [open source](https://github.com/ShonTitor/Top8er) (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.
+- Nicolet I would like to thank in particular for sending me the repo for the startgg USB reporting, and DevDogg for connecting me with them
 - AeonSSB, Cjag01, radzo73, and caha1an, who created the [Melee-CSProject](https://github.com/AeonSSB/Melee-CSProject) that I got the original poses from.
 - [CeLL on this old Smashboards thread](https://smashboards.com/threads/character-stock-icon-dump.390494/) for posting a dump of all the character stock icons.
 - [Mr. C](https://www.spriters-resource.com/gamecube/ssbm/asset/46039/) for the Sheik stock icons.
 - Also shoutout to [SmashBoards](https://smashboards.com/) in general - what an amazing site still.
+- Big thank you to Brooke Bustamove for the positivity and feedback and for actually using this thing when I thought nobody was.
 - North Carolina Melee!! Love y'all.
 
 
 TODO LIST:
-* Put tournament location in the tournament metadata section, see if it can be collected from the bracket import apis
 * in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
 * preset color selection should provide a transparency slider for fun
-* update shoutout page to shoutout Nicolet specifically, and Brooke
 * make it so when you select a new color for a character it doesn't reset the pose you already picked
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
