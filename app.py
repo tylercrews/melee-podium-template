@@ -359,15 +359,34 @@ def _custom_preview_colors(
         raise ValueError("Formatting asset colors must be an object")
     mode = value.get("mode")
     if mode == "premade":
+        transparency = value.get("preset_transparency", 0)
+        if isinstance(transparency, bool) or not isinstance(transparency, int) or not 0 <= transparency <= 100:
+            raise ValueError("Preset transparency must be an integer from 0 through 100")
         preset = value.get("preset")
         if preset == "smash_player_colors":
-            return PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
-        if preset == "olympic_medals":
-            return PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
-        if preset == "rainbow":
+            colors = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        elif preset == "olympic_medals":
+            colors = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+        elif preset == "rainbow":
             asset_count = 4 if variant == "four_podium" else entrant_count
-            return _rainbow_preview_colors(asset_count)
-        raise ValueError("Unknown formatting color preset")
+            colors = _rainbow_preview_colors(asset_count)
+        else:
+            raise ValueError("Unknown formatting color preset")
+        if transparency == 0:
+            return colors
+        alpha = round(255 * (100 - transparency) / 100)
+        def with_alpha(color: str | None) -> str | None:
+            return None if color is None else f"{color[:7]}{alpha:02X}"
+        return _repeat_podium_colors(tuple(
+            PodiumColorSelection(
+                with_alpha(selection.main_color),
+                with_alpha(selection.face_color),
+                with_alpha(selection.base_color),
+                selection.metallic,
+                with_alpha(selection.text_color),
+            )
+            for selection in (colors.color_for_slot(slot) for slot in range(1, 9))
+        ))
     raw_colors = value.get("colors")
     if not isinstance(raw_colors, list) or not raw_colors:
         raise ValueError("Custom formatting colors must be a non-empty array")

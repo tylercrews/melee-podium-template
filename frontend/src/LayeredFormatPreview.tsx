@@ -240,7 +240,10 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         const context = target.getContext("2d");
         if (!context) throw new Error("Canvas preview is unavailable.");
         drawBackground(context, format, request.outputSize, background, backgroundImage);
+        context.save();
+        if (format.formatting_asset_colors.mode === "premade") context.globalAlpha = 1 - format.formatting_asset_colors.preset_transparency / 100;
         context.drawImage(podiums, 0, 0, request.outputSize.width, request.outputSize.height);
+        context.restore();
         const headerLayer = logo ? headerWithoutPlaceholder(header, request.logoPosition) : header;
         context.drawImage(headerLayer, 0, 0, request.outputSize.width, request.outputSize.height);
         drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition);

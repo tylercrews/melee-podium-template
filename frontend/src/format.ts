@@ -19,6 +19,7 @@ export interface FormattingAssetColor {
 export interface FormattingAssetColors {
   mode: FormattingColorSelectionMode;
   preset: FormattingColorPreset | null;
+  preset_transparency: number;
   colors: FormattingAssetColor[];
 }
 
@@ -96,6 +97,7 @@ export const DEFAULT_IMAGE_SETTINGS: ImageSettings = {
 export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
   mode: "premade",
   preset: "smash_player_colors",
+  preset_transparency: 0,
   colors: [],
 };
 
@@ -306,6 +308,12 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
   }
   const mode = value.mode as FormattingColorSelectionMode;
   const preset = value.preset === null ? null : value.preset as FormattingColorPreset;
+  const presetTransparency = value.preset_transparency === undefined
+    ? 0
+    : finiteNumber(value.preset_transparency, "preset transparency");
+  if (!Number.isInteger(presetTransparency) || presetTransparency < 0 || presetTransparency > 100) {
+    throw new Error("Format code has an invalid preset transparency.");
+  }
   if (mode === "premade" ? !preset || !formattingColorPresets.has(preset) || value.colors.length !== 0 : preset !== null) {
     throw new Error("Format code has an invalid formatting color selection.");
   }
@@ -324,7 +332,7 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
   if ((expectedCount !== null && colors.length !== expectedCount) || (mode === "pick_all" && colors.length === 0)) {
     throw new Error("Format code has the wrong number of formatting color selections.");
   }
-  return { mode, preset, colors };
+  return { mode, preset, preset_transparency: mode === "premade" ? presetTransparency : 0, colors };
 }
 
 function normalizeTextSettings(value: unknown): TextSettings {

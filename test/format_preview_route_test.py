@@ -29,6 +29,7 @@ class FormatPreviewRouteTests(unittest.TestCase):
                 "formatting_asset_colors": {
                     "mode": "premade",
                     "preset": "rainbow",
+                    "preset_transparency": 40,
                     "colors": [],
                 },
             },
@@ -60,6 +61,30 @@ class FormatPreviewRouteTests(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_applies_transparency_to_premade_palette_colors(self) -> None:
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
+            response = self.client.post(
+                "/api/format-preview",
+                json={
+                    "style": "customizable",
+                    "event_format": "singles",
+                    "entrant_count": 3,
+                    "formatting_asset_colors": {
+                        "mode": "premade",
+                        "preset": "smash_player_colors",
+                        "preset_transparency": 50,
+                        "colors": [],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        colors = render_preview.call_args.kwargs["podium_colors"]
+        first = colors.color_for_slot(1)
+        self.assertEqual(first.main_color[-2:], "80")
+        self.assertEqual(first.face_color[-2:], "80")
+        self.assertEqual(first.base_color[-2:], "80")
 
     def test_lists_provided_fonts_and_renders_uploaded_font_bytes(self) -> None:
         fonts_response = self.client.get("/api/fonts")

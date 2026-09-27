@@ -66,12 +66,11 @@ npm run build
 
 
 TODO LIST:
-* preset color selection should provide a transparency slider for fun
 * make it so when you select a new color for a character it doesn't reset the pose you already picked
-* split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
 * when you import a character they should default to Default color not random. - Brooke
 
+* split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
 * fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center

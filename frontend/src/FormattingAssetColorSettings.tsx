@@ -52,11 +52,11 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
 
   function selectMode(mode: FormattingColorSelectionMode) {
     if (mode === "premade") {
-      setConfiguration({ mode, preset: configuration.preset ?? "smash_player_colors", colors: [] });
+      setConfiguration({ mode, preset: configuration.preset ?? "smash_player_colors", preset_transparency: configuration.preset_transparency, colors: [] });
       return;
     }
     const count = mode === "pick_1" ? 1 : mode === "pick_2" ? 2 : assetCount;
-    setConfiguration({ mode, preset: null, colors: resizeColors(configuration.colors, count) });
+    setConfiguration({ mode, preset: null, preset_transparency: 0, colors: resizeColors(configuration.colors, count) });
   }
 
   function updateColor(index: number, field: "main_color" | "face_color" | "base_color", color: string) {
@@ -68,7 +68,7 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
   return <section className="format-settings-card formatting-colors" aria-labelledby="formatting-colors-heading">
     <div className="format-settings-card__heading"><span className="eyebrow">Formatting assets</span><h2 id="formatting-colors-heading">Color customization</h2><p>Choose a ready-made palette or set the colors used by each formatting asset.</p></div>
     <label className="formatting-colors__select">How do you want to pick colors?<select value={configuration.mode} onChange={(event) => selectMode(event.target.value as FormattingColorSelectionMode)}>{choices.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</select></label>
-    {configuration.mode === "premade" ? <label className="formatting-colors__select">Premade palette<select value={configuration.preset ?? "smash_player_colors"} onChange={(event) => setConfiguration({ mode: "premade", preset: event.target.value as FormattingColorPreset, colors: [] })}>{presets.map((preset) => <option value={preset.value} key={preset.value}>{preset.label}</option>)}</select></label> : <div className="formatting-color-sets">
+    {configuration.mode === "premade" ? <div className="formatting-colors__preset"><label className="formatting-colors__select">Premade palette<select value={configuration.preset ?? "smash_player_colors"} onChange={(event) => setConfiguration({ ...configuration, mode: "premade", preset: event.target.value as FormattingColorPreset, colors: [] })}>{presets.map((preset) => <option value={preset.value} key={preset.value}>{preset.label}</option>)}</select></label><label className="formatting-colors__transparency">Transparency <output>{configuration.preset_transparency}%</output><input type="range" min="0" max="100" value={configuration.preset_transparency} onChange={(event) => setConfiguration({ ...configuration, preset_transparency: Number(event.target.value) })} /></label></div> : <div className="formatting-color-sets">
       {resizeColors(configuration.colors, requiredCount).map((colors, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{configuration.mode === "pick_all" ? `Podium ${index + 1}` : `Color set ${index + 1}`}</span><small>{configuration.mode === "pick_2" ? (index === 0 ? "Odd podiums" : "Even podiums") : configuration.mode === "pick_1" ? "Applied to every podium" : `Formatting asset ${index + 1}`}</small></div><div className="formatting-color-set__pickers"><RgbaColorPicker label="Main Color" value={colors.main_color} onChange={(color) => updateColor(index, "main_color", color)} /><RgbaColorPicker label="Face Color" value={colors.face_color} onChange={(color) => updateColor(index, "face_color", color)} /><RgbaColorPicker label="Sides Color" value={colors.base_color} onChange={(color) => updateColor(index, "base_color", color)} /></div></section>)}
     </div>}
     {configuration.mode === "premade" && configuration.preset === "rainbow" && <p className="formatting-colors__note">Rainbow adapts to the layout: three podiums use red, green, and violet; four podiums use orange, green, blue, and violet.</p>}
