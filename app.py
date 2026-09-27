@@ -283,6 +283,15 @@ def background_asset(asset_id: str) -> Any:
     return send_from_directory(path.parent, path.name)
 
 
+@app.get("/api/background-thumbnails/<asset_id>")
+def background_thumbnail(asset_id: str) -> Any:
+    source_path = BUILTIN_BACKGROUNDS.path(asset_id)
+    thumbnail_path = source_path.parent / "thumbnails" / f"{source_path.stem}.webp"
+    if not thumbnail_path.is_file():
+        raise FileNotFoundError(f"Background thumbnail does not exist: {asset_id}")
+    return send_from_directory(thumbnail_path.parent, thumbnail_path.name)
+
+
 @app.get("/api/fonts")
 def provided_fonts() -> Any:
     return jsonify(items=[{"asset_id": key, "name": value["name"], "size_adjustment": value["size_adjustment"]} for key, value in PROVIDED_FONTS.items()])

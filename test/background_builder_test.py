@@ -1,6 +1,7 @@
 """Focused tests for the independent background compositor."""
 
 import unittest
+from pathlib import Path
 
 from PIL import Image
 
@@ -158,6 +159,16 @@ class BackgroundBuilderTest(unittest.TestCase):
         }
 
         self.assertEqual(set(BUILTIN_BACKGROUND_SIZES), actual_assets)
+
+    def test_every_builtin_has_a_tiny_picker_thumbnail(self) -> None:
+        thumbnail_folder = Path(__file__).resolve().parents[1] / "backgrounds" / "thumbnails"
+        for asset_id in BUILTIN_BACKGROUND_SIZES:
+            thumbnail_path = thumbnail_folder / f"{Path(asset_id).stem}.webp"
+            self.assertTrue(thumbnail_path.is_file(), asset_id)
+            self.assertLess(thumbnail_path.stat().st_size, 25_000, asset_id)
+            with Image.open(thumbnail_path) as thumbnail:
+                self.assertLessEqual(thumbnail.width, 160)
+                self.assertLessEqual(thumbnail.height, 160)
 
     def test_default_images_are_centered_except_final_destination_space(self) -> None:
         self.assertEqual(set(DEFAULT_IMAGE_ALIGNMENTS), set(BUILTIN_BACKGROUND_SIZES))

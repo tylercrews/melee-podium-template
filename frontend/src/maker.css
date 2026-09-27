@@ -210,6 +210,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .built-in-row small { color: #8e95afff; font-size: .64rem; }
 .built-in-row--selected { background: #171d3dff; box-shadow: inset 3px 0 0 #238fe8ff; }
 .built-in-row--selected .image-row__radio { border: 3px solid #111523ff; background: #238fe8ff; box-shadow: 0 0 0 1px #238fe8ff, 0 0 10px #238fe866; }
+.built-in-background-row { grid-template-columns: auto 58px minmax(0, 1fr); }
+.built-in-background-row__thumbnail { display: block; width: 58px; height: 46px; object-fit: cover; border: 1px solid #3d4560ff; border-radius: 4px; background: #090b14ff; }
 .asset-attribution { margin: 0; padding: 10px 14px 12px; border-top: 1px solid #303750ff; color: #a7adc5ff; background: #151a2aff; font-size: .7rem; }
 .asset-attribution a { color: #ff75dbff; font-weight: 800; }
 .loading-card { padding: 30px; border: 1px dashed #cdbeb0ff; border-radius: 8px; color: #7b6a62ff; background: #fffaf3ff; text-align: center; }

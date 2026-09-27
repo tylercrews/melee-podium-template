@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { BuiltInBackground, FighterOption, ProvidedFont, UserFont, UserImage, UserImageCategory, builtInBackgroundUrl, deleteUserFont, deleteUserImage, getOptions, getStats, getUserFontUrl, getUserImageUrl, listBuiltInBackgrounds, listProvidedFonts, listUserFonts, listUserImages, providedFontUrl, uploadUserFont, uploadUserImage } from "./api";
+import { BuiltInBackground, FighterOption, ProvidedFont, UserFont, UserImage, UserImageCategory, builtInBackgroundThumbnailUrl, builtInBackgroundUrl, deleteUserFont, deleteUserImage, getOptions, getStats, getUserFontUrl, getUserImageUrl, listBuiltInBackgrounds, listProvidedFonts, listUserFonts, listUserImages, providedFontUrl, uploadUserFont, uploadUserImage } from "./api";
 import { User, firebaseAuthAvailable, firebaseAuthErrorMessage, signInWithGoogle, signOutCurrentUser, watchCurrentUser } from "./firebaseAuth";
 import EmailAuthForm from "./EmailAuthForm";
 import SavedDataManagement from "./SavedDataManagement";
@@ -95,7 +95,7 @@ function BuiltInBackgroundLibrary({ backgrounds, selectedId, onSelect }: { backg
     <div className="image-library__header"><span className="image-library__type-icon"><ImageTypeIcon category="background" /></span><div><h3 id="built-in-backgrounds-heading">Included Backgrounds</h3><p>Provided collection · {backgrounds.length} available</p></div></div>
     <div className="built-in-list">{backgrounds.map((background) => {
       const selectionId = `builtin:${background.asset_id}`;
-      return <button className={`built-in-row${selectedId === selectionId ? " built-in-row--selected" : ""}`} type="button" key={background.asset_id} onClick={() => onSelect(background)} aria-pressed={selectedId === selectionId}><span className="image-row__radio" aria-hidden="true" /><span><strong>{builtInBackgroundName(background.asset_id)}</strong><small>{background.size.width} × {background.size.height}</small></span></button>;
+      return <button className={`built-in-row built-in-background-row${selectedId === selectionId ? " built-in-row--selected" : ""}`} type="button" key={background.asset_id} onClick={() => onSelect(background)} aria-pressed={selectedId === selectionId}><span className="image-row__radio" aria-hidden="true" /><img className="built-in-background-row__thumbnail" src={builtInBackgroundThumbnailUrl(background.asset_id)} alt="" loading="lazy" /><span><strong>{builtInBackgroundName(background.asset_id)}</strong><small>{background.size.width} × {background.size.height}</small></span></button>;
     })}</div>
     <p className="asset-attribution">Stage background renders by <a href="https://x.com/Malarki_" target="_blank" rel="noreferrer">Malarki_</a></p>
   </section>;

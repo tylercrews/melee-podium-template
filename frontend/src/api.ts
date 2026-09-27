@@ -220,6 +220,10 @@ export function builtInBackgroundUrl(assetId: string): string {
   return apiUrl(`backgrounds/${encodeURIComponent(assetId)}`);
 }
 
+export function builtInBackgroundThumbnailUrl(assetId: string): string {
+  return apiUrl(`background-thumbnails/${encodeURIComponent(assetId)}`);
+}
+
 export async function listProvidedFonts(): Promise<ProvidedFont[]> {
   const response = await request("fonts");
   const body = (await response.json()) as { items?: ProvidedFont[] };
