@@ -67,7 +67,6 @@ npm run build
 
 
 TODO LIST:
-* thank shen for shenfest and for being another primary user
 * text color options: Need text selector for headings because some of the backgrounds are light and the white doesn't look good. There should be a checkbox for whether or not you want the text to match the podium colors or if you want to select it yourself (should have the same options of pick 1, pick 2, or pick all)
 * tooltip - the background position choose position button is disabled until primary settings are chosen because until then you don't know how large the image will be. But I forgot and got confused, so there should be a tooltip about that
 * add metallic option when choosing podium main color
