@@ -66,7 +66,6 @@ npm run build
 
 
 TODO LIST:
-* make it so when you select a new color for a character it doesn't reset the pose you already picked
 * if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
 * when you import a character they should default to Default color not random. - Brooke
 

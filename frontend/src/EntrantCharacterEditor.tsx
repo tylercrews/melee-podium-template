@@ -29,7 +29,7 @@ export default function EntrantCharacterEditor({ tag, tagLabel = "Player tag", t
         return { fighter: value, color: option?.color ?? "", pose: "", mirrorHorizontally: character.mirrorHorizontally === true };
       }
       if (field === "color") {
-        return { ...character, color: value, pose: "" };
+        return { ...character, color: value };
       }
       return { ...character, pose: value };
     }));
