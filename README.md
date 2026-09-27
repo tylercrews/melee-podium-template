@@ -66,6 +66,7 @@ npm run build
 
 
 TODO LIST:
+* the logic to split tournament links on slashes seems to have broken. It just shrinks now to the point of being unreadable.
 * when you import a character they should default to Default color not random. - Brooke
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
@@ -75,8 +76,6 @@ TODO LIST:
 * when someone has a ton of characters used it looks a little cluttered, would be nice to be able to convert some of the lower-use characters to stock icons instead. 
 * bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
 * the text under the podiums, namely the character names in singles, should be vertically aligned. Instead of row 1, row 2 always. So like right now chars with 
-
-!! * remember to do the cpanel configuration files requirements.txt to run pip install and get the new dependencies for the next release
 
 Maybes/Eventuallies:
 * v5.0 - see if decompiled melee can be used to generate melee assets - would need to be a separate repo. But would be amazing to programmatically create claps, victory screens, and tech roll animations. on top of other things.
