@@ -68,7 +68,7 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     setImporting(true);
     setMessage("");
     try {
-      const response = normalizeBracketImport(await importBracket(url.trim(), entrantCount as 3 | 4 | 8), entrantCount);
+      const response = normalizeBracketImport(await importBracket(url.trim(), 8));
       const nextReview = buildBracketReview(response, favorites, eventFormat);
       onReviewChange(nextReview);
       setMessageIsError(false);
@@ -91,6 +91,8 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     });
   }
 
+  const reviewedEntrants = review?.source.entrants.slice(0, Math.max(8, entrantCount)) ?? [];
+
   return <section className="step-content bracket-step">
     <div className="step-intro"><div className="step-heading-row"><h1>Import a Bracket</h1><button className="button button--ghost" type="button" onClick={onSkip}>Skip bracket import</button></div><p>Import tournament data and placements automatically, or skip this optional step and enter them yourself.</p></div>
     <form className="bracket-import-card" onSubmit={handleImport}>
@@ -102,9 +104,9 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     {message && <p className="inline-message format-message" role={messageIsError ? "alert" : "status"}>{message}</p>}
 
     {review && <section className="bracket-review" aria-labelledby="bracket-review-heading">
-      <div className="bracket-review__heading"><div><span className="eyebrow">Imported results</span><h2 id="bracket-review-heading">{review.source.tournament.title || "Imported bracket"}</h2><p>{providerName(review.source.provider)}{review.source.tournament.event ? ` · ${review.source.tournament.event}` : ""} · {review.source.entrants.length} shown</p></div><span className="bracket-review__count">{acceptedCorrections} favorite {acceptedCorrections === 1 ? "match" : "matches"} active</span></div>
+      <div className="bracket-review__heading"><div><span className="eyebrow">Imported results</span><h2 id="bracket-review-heading">{review.source.tournament.title || "Imported bracket"}</h2><p>{providerName(review.source.provider)}{review.source.tournament.event ? ` · ${review.source.tournament.event}` : ""} · {review.source.entrants.length} entrants retained</p></div><span className="bracket-review__count">{acceptedCorrections} favorite {acceptedCorrections === 1 ? "match" : "matches"} active</span></div>
       <p className="bracket-review__explanation">Saved entrant matches are accepted automatically. Review each suggestion and use the bracket entrant when a match is not the one you want.</p>
-      <div className="bracket-result-list">{review.source.entrants.map((entrant, entrantIndex) => {
+      <div className="bracket-result-list">{reviewedEntrants.map((entrant, entrantIndex) => {
         const entrantCorrection = review.corrections.find((item) => item.entrantIndex === entrantIndex && item.memberIndex === null);
         return <article className="bracket-result" key={`${entrant.placement ?? entrantIndex}-${entrant.tag}`}>
           <div className="bracket-result__place"><span>{entrant.placement ? `#${entrant.placement}` : `#${entrantIndex + 1}`}</span>{eventFormat === "doubles" && <strong>{entrant.tag}</strong>}{entrant.seed && <small>Seed {entrant.seed}</small>}</div>

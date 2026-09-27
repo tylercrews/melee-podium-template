@@ -459,6 +459,15 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
     tournament = imported.to_tournament()
     return {
         "provider": imported.link.provider.value,
+        "bracket": {
+            "url": imported.link.url,
+            "tournament_slug": imported.link.tournament_slug,
+            "event_slug": imported.link.event_slug,
+            "phase_group_id": imported.link.phase_group_id,
+            "phase_slug": imported.link.phase_slug,
+            "bracket_slug": imported.link.bracket_slug,
+        },
+        "provider_data": dict(imported.extra),
         "tournament": {
             "title": tournament.title,
             "date": str(tournament.date),
@@ -467,12 +476,16 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
             "event": tournament.event,
             "link": tournament.link,
             "event_format": tournament.event_format.value,
+            "location": imported.location,
         },
         "entrants": [
             {
                 "tag": player.tag,
                 "seed": player.seed,
                 "placement": player.placement,
+                "x_handle": player.x_handle,
+                "country": player.country,
+                "provider_id": player.provider_id,
                 "characters": [
                     {"fighter": character.name, "color": character.costume, "pose": None}
                     for character in player.characters
@@ -480,6 +493,8 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                 "members": [
                     {
                         "tag": member.tag,
+                        "x_handle": member.x_handle,
+                        "country": member.country,
                         "characters": [
                             {"fighter": character.name, "color": character.costume, "pose": None}
                             for character in member.characters

@@ -11,6 +11,8 @@ export interface ImportedBracketCharacter {
 export interface ImportedBracketMember {
   tag: string;
   characters: ImportedBracketCharacter[];
+  x_handle: string;
+  country: string;
 }
 
 export interface ImportedBracketEntrant {
@@ -19,6 +21,9 @@ export interface ImportedBracketEntrant {
   placement: number | null;
   characters: ImportedBracketCharacter[];
   members: ImportedBracketMember[];
+  x_handle: string;
+  country: string;
+  provider_id: string;
 }
 
 export interface ImportedBracketTournament {
@@ -29,12 +34,15 @@ export interface ImportedBracketTournament {
   event: string;
   link: string;
   event_format: string;
+  location: string;
 }
 
 export interface BracketImportResponse {
   provider: string;
   tournament: ImportedBracketTournament;
   entrants: ImportedBracketEntrant[];
+  bracket: Record<string, unknown>;
+  provider_data: Record<string, unknown>;
 }
 
 export interface FavoriteImportCorrection {
@@ -86,15 +94,15 @@ function member(value: unknown): ImportedBracketMember | null {
   if (!isRecord(value)) return null;
   const tag = text(value.tag || value.name || value.player_tag).trim();
   if (!tag) return null;
-  return { tag, characters: characters(value.characters) };
+  return { tag, characters: characters(value.characters), x_handle: text(value.x_handle), country: text(value.country) };
 }
 
-export function normalizeBracketImport(value: unknown, entrantLimit: number): BracketImportResponse {
+export function normalizeBracketImport(value: unknown): BracketImportResponse {
   if (!isRecord(value) || !isRecord(value.tournament) || !Array.isArray(value.entrants)) {
     throw new Error("The bracket response was not in the expected format.");
   }
   const tournament = value.tournament;
-  const entrants = value.entrants.slice(0, entrantLimit).flatMap((item): ImportedBracketEntrant[] => {
+  const entrants = value.entrants.flatMap((item): ImportedBracketEntrant[] => {
     if (!isRecord(item)) return [];
     const tag = text(item.tag || item.name || item.player_tag).trim();
     if (!tag) return [];
@@ -104,6 +112,9 @@ export function normalizeBracketImport(value: unknown, entrantLimit: number): Br
       placement: optionalNumber(item.placement),
       characters: characters(item.characters),
       members: Array.isArray(item.members) ? item.members.map(member).filter((entry): entry is ImportedBracketMember => entry !== null) : [],
+      x_handle: text(item.x_handle),
+      country: text(item.country),
+      provider_id: text(item.provider_id),
     }];
   });
   if (!entrants.length) throw new Error("The bracket did not return any placed entrants.");
@@ -117,8 +128,11 @@ export function normalizeBracketImport(value: unknown, entrantLimit: number): Br
       event: text(tournament.event),
       link: text(tournament.link),
       event_format: text(tournament.event_format || tournament.format),
+      location: text(tournament.location),
     },
     entrants,
+    bracket: isRecord(value.bracket) ? { ...value.bracket } : {},
+    provider_data: isRecord(value.provider_data) ? { ...value.provider_data } : {},
   };
 }
 
@@ -175,6 +189,6 @@ export function resolvedBracketImport(review: BracketImportReview): BracketImpor
     target.tag = correction.resolvedTag;
     target.characters = correction.favoriteCharacters.map((item) => ({ ...item }));
   });
-  return { ...review.source, tournament: { ...review.source.tournament }, entrants };
+  return { ...review.source, tournament: { ...review.source.tournament }, bracket: { ...review.source.bracket }, provider_data: { ...review.source.provider_data }, entrants };
 }
 
