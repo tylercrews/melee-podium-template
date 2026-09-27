@@ -73,6 +73,18 @@ WEBSITE_HOST_ICONS = {
     "twitch.com": "twitch.png",
 }
 
+UNDER_PODIUM_FIELDS = frozenset(
+    {"entrant.primary_character_name", "entrant.team_name"}
+)
+
+
+def _under_podium_vertical_center_lines(field: str, mode: PodiumMode) -> int | None:
+    """Return the reserved label rows, excluding the calibrated four-podium layout."""
+
+    if mode is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
+        return None
+    return 2 if field in UNDER_PODIUM_FIELDS else None
+
 
 def _header_geometry(position: str, width: int) -> tuple[tuple[int, int], str, int, str]:
     """Return the x anchor, Pillow anchor, width, and alignment for a header slot."""
@@ -372,6 +384,9 @@ class LegacyPodiumContentRenderer:
                     else None
                 ),
                 metallic=False if placement.color else default_metallic,
+                vertical_center_lines=_under_podium_vertical_center_lines(
+                    placement.field, mode
+                ),
             )
 
     @staticmethod

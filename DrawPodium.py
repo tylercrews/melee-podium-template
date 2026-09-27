@@ -460,12 +460,22 @@ def _draw_text(
     glow_fill: tuple[int, int, int] | None = None,
     align: str = "center",
     metallic: bool = False,
+    vertical_center_lines: int | None = None,
 ) -> None:
     if wrap:
         text = _wrap_text(text, max_width, preferred_size, font)
     loaded_font = _font_to_fit(text, max_width, preferred_size, font)
 
     stroke_width = (1.33 if font is PodiumFont.TYROWO else 0.69 if font is PodiumFont.UBUNTU else 0)
+    position = _position_centered_in_line_slot(
+        draw,
+        position,
+        text,
+        loaded_font,
+        align=align,
+        stroke_width=stroke_width,
+        reserved_lines=vertical_center_lines,
+    )
     rendered_fill = glow_fill or fill
     if metallic:
         target = getattr(draw, "_image", None)
@@ -516,6 +526,49 @@ def _draw_text(
     )
 
 
+def _position_centered_in_line_slot(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[int, int],
+    text: str,
+    loaded_font: ImageFont.FreeTypeFont,
+    *,
+    align: str,
+    stroke_width: float,
+    reserved_lines: int | None,
+) -> tuple[int, int]:
+    """Center a short label in the rows reserved for wrapped text.
+
+    Podium label anchors historically identify the first of two possible text
+    rows.  Preserve that position for two-line labels and move a one-line label
+    down by half a line advance so both occupy the same vertical region.
+    """
+
+    line_count = text.count("\n") + 1
+    if reserved_lines is None or reserved_lines <= line_count:
+        return position
+
+    sample = "Ag"
+    one_line = draw.multiline_textbbox(
+        (0, 0),
+        sample,
+        font=loaded_font,
+        anchor="la",
+        align=align,
+        stroke_width=stroke_width,
+    )
+    two_lines = draw.multiline_textbbox(
+        (0, 0),
+        f"{sample}\n{sample}",
+        font=loaded_font,
+        anchor="la",
+        align=align,
+        stroke_width=stroke_width,
+    )
+    line_advance = two_lines[3] - one_line[3]
+    missing_lines = reserved_lines - line_count
+    return position[0], round(position[1] + missing_lines * line_advance / 2)
+
+
 def _text_bounds(
     draw: ImageDraw.ImageDraw,
     position: tuple[int, int],
@@ -526,9 +579,20 @@ def _text_bounds(
     preferred_size: int,
     font: PodiumFont,
     align: str = "center",
+    vertical_center_lines: int | None = None,
 ) -> tuple[int, int, int, int]:
     """Return the same bounds that ``_draw_text`` will occupy."""
     loaded_font = _font_to_fit(text, max_width, preferred_size, font)
+    stroke_width = (1.33 if font is PodiumFont.TYROWO else 0.69 if font is PodiumFont.UBUNTU else 0)
+    position = _position_centered_in_line_slot(
+        draw,
+        position,
+        text,
+        loaded_font,
+        align=align,
+        stroke_width=stroke_width,
+        reserved_lines=vertical_center_lines,
+    )
     bounds = draw.multiline_textbbox(
         position,
         text,
@@ -1077,6 +1141,7 @@ def _footer_text_bounds(
                     max_width=max_width,
                     preferred_size=42,
                     font=font,
+                    vertical_center_lines=2,
                 )
             )
         elif mode is not PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
@@ -1102,6 +1167,7 @@ def _footer_text_bounds(
                     max_width=max_width,
                     preferred_size=preferred_size,
                     font=font,
+                    vertical_center_lines=2,
                 )
             )
 
@@ -1295,6 +1361,7 @@ def _draw_text_fields(
                 preferred_size=42,
                 wrap=True,
                 glow_fill=glow_fill,
+                vertical_center_lines=2,
             )
         elif mode is not PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
             label_y_offset = (
@@ -1314,6 +1381,7 @@ def _draw_text_fields(
                 preferred_size=28 if placement_count == 8 else 34,
                 wrap=True,
                 glow_fill=glow_fill,
+                vertical_center_lines=2,
             )
         if entrant.seed is not None:
             draw_text(
