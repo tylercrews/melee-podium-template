@@ -28,6 +28,15 @@ class BracketImportTests(unittest.TestCase):
         self.assertEqual(parry_bracket.bracket_slug, "bracket")
         self.assertIsNone(identify_bracket_link("https://parry.gg/tournament").event_slug)
 
+    def test_identifies_supported_links_without_a_scheme(self):
+        startgg = identify_bracket_link("start.gg/tournament/shine/event/melee-singles")
+        challonge = identify_bracket_link("challonge.com/my-bracket")
+        parry = identify_bracket_link("parry.gg/tournament/event/_standings")
+
+        self.assertEqual(startgg.url, "https://start.gg/tournament/shine/event/melee-singles")
+        self.assertEqual(challonge.provider, BracketProvider.CHALLONGE)
+        self.assertEqual(parry.provider, BracketProvider.PARRY_GG)
+
     def test_startgg_keeps_reported_character_but_not_an_unproven_costume(self):
         link = identify_bracket_link("https://start.gg/tournament/shine/event/melee-singles")
         data = {"data": {"event": {"name": "Melee Singles", "numEntrants": 10, "startAt": 0, "videogame": {"id": 1, "name": "Melee"}, "tournament": {"name": "Shine", "city": "Boston", "countryCode": "US", "slug": "shine"}, "standings": {"nodes": [{"placement": 1, "entrant": {"id": 9, "name": "Player", "initialSeedNum": 2, "participants": [{"gamerTag": "Player", "user": {"authorizations": [{"externalUsername": "player"}]}}]}}]}}}}

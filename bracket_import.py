@@ -193,6 +193,9 @@ def split_tournament_name(name: str) -> tuple[str, str | None]:
 
 def identify_bracket_link(url: str) -> BracketLink:
     """Validate a public bracket URL and retain its provider slugs."""
+    url = url.strip()
+    if not re.match(r"^[a-z][a-z0-9+.-]*://", url, flags=re.IGNORECASE):
+        url = f"https://{url.lstrip('/')}"
     parsed = urlparse(url)
     host = parsed.netloc.casefold().removeprefix("www.")
     parts = [part for part in parsed.path.split("/") if part]

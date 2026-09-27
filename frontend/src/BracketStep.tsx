@@ -5,6 +5,7 @@ import {
   FavoriteImportCorrection,
   ImportedBracketCharacter,
   buildBracketReview,
+  normalizeBracketUrl,
   normalizeBracketImport,
 } from "./bracket";
 import { CharacterStockIcons } from "./FavoritePicker";
@@ -68,7 +69,9 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     setImporting(true);
     setMessage("");
     try {
-      const response = normalizeBracketImport(await importBracket(url.trim(), 8));
+      const normalizedUrl = normalizeBracketUrl(url);
+      onUrlChange(normalizedUrl);
+      const response = normalizeBracketImport(await importBracket(normalizedUrl, 8));
       const nextReview = buildBracketReview(response, favorites, eventFormat);
       onReviewChange(nextReview);
       setMessageIsError(false);
@@ -97,7 +100,7 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     <div className="step-intro"><div className="step-heading-row"><h1>Import a Bracket</h1><button className="button button--ghost" type="button" onClick={onSkip}>Skip bracket import</button></div><p>Import tournament data and placements automatically, or skip this optional step and enter them yourself.</p></div>
     <form className="bracket-import-card" onSubmit={handleImport}>
       <div className="bracket-import-card__heading"><span className="eyebrow">Public bracket link</span><h2>Bring in bracket results</h2><p>Supports Start.gg, Start.gg USB Reporting character data, Challonge.com, and Parry.gg brackets.</p></div>
-      <label className="field bracket-url-field">Bracket URL<input type="url" value={url} onChange={(event) => onUrlChange(event.target.value)} placeholder="https://start.gg/tournament/.../event/..." required /></label>
+      <label className="field bracket-url-field">Bracket URL<input type="text" inputMode="url" value={url} onChange={(event) => onUrlChange(event.target.value)} placeholder="start.gg/tournament/.../event/..." required /></label>
       <div className="bracket-provider-list" aria-label="Supported bracket providers"><span>start.gg</span><span>USB Reporting</span><span>challonge.com</span><span>parry.gg</span></div>
       <button className="button button--dark bracket-import-button" type="submit" disabled={importing || !url.trim()}>{importing ? "Importing bracket…" : review ? "Import bracket again" : "Import bracket"}</button>
     </form>

@@ -61,6 +61,11 @@ export interface BracketImportReview {
   corrections: FavoriteImportCorrection[];
 }
 
+export function normalizeBracketUrl(value: string): string {
+  const trimmed = value.trim();
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
