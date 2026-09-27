@@ -1,5 +1,57 @@
 # melee-podium-template
 
+## Local development
+
+Run the Flask API and Vite frontend in separate PowerShell terminals. All commands below start from the repository root.
+
+### One-time setup
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r .\requirements.txt
+cd .\frontend
+npm ci
+cd ..
+```
+
+If you need bracket imports or Firebase features, copy `.env.example` to `.env` and replace only the relevant placeholders with your local credentials. Do not commit `.env` or service-account JSON files.
+
+### Start the backend
+
+In the first terminal:
+
+```powershell
+.\.venv\Scripts\python.exe -m flask --app app run --debug --port 5000
+```
+
+The API will be available at `http://127.0.0.1:5000`.
+
+### Start the frontend
+
+In the second terminal:
+
+```powershell
+cd .\frontend
+npm run dev
+```
+
+Open `http://127.0.0.1:5173/melee-podium-template/`. Vite proxies API and character-asset requests to the Flask server on port 5000.
+
+### Local checks
+
+Run the Python test suite from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s .\test -p "*_test.py"
+```
+
+Type-check and build the frontend:
+
+```powershell
+cd .\frontend
+npm run build
+```
+
 ## Thanks To
 
 - [Malarki_](https://x.com/Malarki_), who I commissioned to expand the pool of character poses and did an amazing job.
@@ -148,14 +200,6 @@ LocalStorage and LocalStorage Management page.
 way down the road:
 player profiles - have auto selections for frequently used people, maybe by some kind of profile system so you can log in and have people you know.
 
-
-# testing locally
-(backend)
-flask --app app run --port 5000
-
-(frontend)
-cd .\frontend
-npm run dev
 
 ## Firebase backend
 
