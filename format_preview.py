@@ -22,7 +22,7 @@ from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository
-from models import TournamentFormat
+from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 from sample_creation_data import sample_top_4_teams, sample_top_8_entrants, sample_tournament
 
@@ -52,6 +52,8 @@ def render_format_preview(
     font: PodiumFont = PodiumFont.TYROWO,
     custom_font_bytes: bytes | None = None,
     text_settings: TextSettings | None = None,
+    entrants: list[SinglesEntrant] | list[DoublesTeam] | None = None,
+    tournament: Tournament | None = None,
 ) -> Image.Image:
     """Return a full example render for one currently supported podium format."""
 
@@ -85,11 +87,17 @@ def render_format_preview(
             ),
         )
     randomizer = random.Random(2026)
-    entrants = (
-        sample_top_8_entrants(randomizer)[:entrant_count]
-        if event_format is TournamentFormat.SINGLES
-        else sample_top_4_teams(randomizer)[:entrant_count]
-    )
+    if entrants is None:
+        entrants = (
+            sample_top_8_entrants(randomizer)[:entrant_count]
+            if event_format is TournamentFormat.SINGLES
+            else sample_top_4_teams(randomizer)[:entrant_count]
+        )
+    else:
+        expected_type = SinglesEntrant if event_format is TournamentFormat.SINGLES else DoublesTeam
+        if len(entrants) < entrant_count or any(not isinstance(entrant, expected_type) for entrant in entrants[:entrant_count]):
+            raise ValueError("Preview entrants do not match the selected layout")
+        entrants = entrants[:entrant_count]
     podium_colors = (
         podium_colors or PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
         if style is PodiumStyle.CUSTOMIZABLE
@@ -99,7 +107,7 @@ def render_format_preview(
         selection=selection,
         background=background,
         entrants=entrants,
-        tournament=sample_tournament(event_format),
+        tournament=tournament or sample_tournament(event_format),
         podium_colors=podium_colors,
         header_layout=header_layout,
         text_settings=text_settings or TextSettings(),

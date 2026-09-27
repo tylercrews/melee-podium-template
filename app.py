@@ -22,6 +22,7 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, 
 from portrait_pose_labels import POSE_LABELS
 from format_preview import render_format_preview
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
+from sample_creation_data import sample_tournament
 from firebase_services.fonts import read_font_upload
 
 
@@ -371,6 +372,64 @@ def _custom_preview_colors(
     raise ValueError("Invalid formatting color selection")
 
 
+def _preview_tournament(value: Any, event_format: TournamentFormat) -> Tournament | None:
+    if value is None:
+        return None
+    source = _json_object(value, "preview tournament")
+    fallback = sample_tournament(event_format)
+
+    def text_or(name: str, default: str | None) -> str | None:
+        return _optional_text(source, name) if source.get(name) not in (None, "") else default
+
+    raw_count = source.get("entrants_count")
+    entrants_count = _optional_positive_int(source, "entrants_count") if raw_count not in (None, "") else fallback.entrants_count
+    return Tournament(
+        title=text_or("title", fallback.title) or fallback.title,
+        subtitle=text_or("subtitle", fallback.subtitle),
+        event=text_or("event", fallback.event),
+        date=text_or("date", str(fallback.date)) or str(fallback.date),
+        entrants_count=entrants_count or fallback.entrants_count,
+        link=text_or("link", fallback.link),
+        stream_link=text_or("stream_link", fallback.stream_link),
+        vod_link=text_or("vod_link", fallback.vod_link),
+        organizer_x_account=text_or("organizer_x_account", fallback.organizer_x_account),
+        organizer_twitch_account=text_or("organizer_twitch_account", fallback.organizer_twitch_account),
+        organizer_bluesky_account=text_or("organizer_bluesky_account", fallback.organizer_bluesky_account),
+        event_format=event_format,
+    )
+
+
+def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[SinglesEntrant] | list[DoublesTeam] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise ValueError("preview entrants must be an array")
+    if event_format is TournamentFormat.DOUBLES:
+        teams: list[DoublesTeam] = []
+        for item in value:
+            source = _json_object(item, "preview doubles team")
+            teams.append(DoublesTeam(
+                team_name=_required_text(source, "team_name"),
+                seed=_optional_positive_int(source, "seed"),
+                placement=_optional_positive_int(source, "placement") or 0,
+                team_color=_optional_text(source, "team_color"),
+                entrant_1=_entrant(source.get("entrant_1")),
+                entrant_2=_entrant(source.get("entrant_2")),
+            ))
+        return teams
+    entrants: list[SinglesEntrant] = []
+    for item in value:
+        source = _json_object(item, "preview singles entrant")
+        entrant = _entrant(source)
+        entrants.append(SinglesEntrant(
+            tag=entrant.tag,
+            characters=entrant.characters,
+            seed=_optional_positive_int(source, "seed"),
+            placement=_optional_positive_int(source, "placement") or 0,
+        ))
+    return entrants
+
+
 @app.post("/api/format-preview")
 def customized_format_preview() -> Any:
     custom_font_bytes = None
@@ -429,6 +488,8 @@ def customized_format_preview() -> Any:
         font=font,
         custom_font_bytes=custom_font_bytes,
         text_settings=text_settings,
+        entrants=_preview_entrants(payload.get("entrants"), event_format),
+        tournament=_preview_tournament(payload.get("tournament"), event_format),
     )
     output = BytesIO()
     image.save(output, format="PNG")

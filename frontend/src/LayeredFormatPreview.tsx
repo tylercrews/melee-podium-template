@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "./api";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
+import { EntrantDraft, TournamentDetails } from "./creationData";
+import { FavoriteCharacter } from "./favorites";
 import { FormatConfiguration, PixelSize, buildBackgroundPlacement, sizeMultiplierValue } from "./format";
 
 interface FormatPreviewProps {
@@ -8,6 +10,10 @@ interface FormatPreviewProps {
   backgroundImage: FormatImageInfo | null;
   logoImage: FormatImageInfo | null;
   fontAsset: FormatFontInfo | null;
+  tournament: TournamentDetails;
+  entrants: EntrantDraft[];
+  tournamentComplete: boolean;
+  entrantsComplete: boolean;
 }
 
 export interface FormatFontInfo { id: string; name: string; url: string; custom: boolean }
@@ -75,16 +81,56 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   };
 }
 
-async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null): Promise<HTMLImageElement> {
+function previewCharacter(character: FavoriteCharacter) {
+  return {
+    melee_fighter_name: character.fighter,
+    color: character.color || null,
+    pose: character.pose || null,
+    mirror_horizontally: character.mirrorHorizontally,
+  };
+}
+
+function previewEntrants(entrants: EntrantDraft[], entrantCount: number, includeSeeding: boolean) {
+  return entrants.slice(0, entrantCount).map((entrant) => entrant.kind === "singles" ? {
+    tag: entrant.tag.trim(),
+    seed: includeSeeding && entrant.seed ? Number(entrant.seed) : null,
+    placement: entrant.placement,
+    characters: entrant.characters.map(previewCharacter),
+  } : {
+    team_name: entrant.teamName.trim(),
+    seed: includeSeeding && entrant.seed ? Number(entrant.seed) : null,
+    placement: entrant.placement,
+    team_color: entrant.teamColor || null,
+    entrant_1: { tag: entrant.entrant1.tag.trim(), characters: entrant.entrant1.characters.map(previewCharacter) },
+    entrant_2: { tag: entrant.entrant2.tag.trim(), characters: entrant.entrant2.characters.map(previewCharacter) },
+  });
+}
+
+async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean): Promise<HTMLImageElement> {
+  const entrantCount = format.selection.options.entrant_count ?? 8;
   const config = {
     style: format.selection.options.podium_style ?? "legacy",
     event_format: format.selection.options.event_format ?? "singles",
-    entrant_count: format.selection.options.entrant_count ?? 8,
+    entrant_count: entrantCount,
     variant: format.selection.options.variant,
     transparent: true,
     formatting_asset_colors: format.formatting_asset_colors,
     header_layout: format.header_layout,
     text_settings: format.text_settings,
+    tournament: tournamentComplete ? {
+      title: tournament.title.trim(),
+      subtitle: tournament.subtitle.trim() || null,
+      event: tournament.event.trim() || null,
+      date: tournament.date || null,
+      entrants_count: Number(tournament.entrantsCount) || null,
+      link: tournament.tournamentLink.trim() || null,
+      stream_link: tournament.streamLink.trim() || null,
+      vod_link: tournament.vodLink.trim() || null,
+      organizer_x_account: tournament.toXAccount.trim() || null,
+      organizer_twitch_account: tournament.toTwitchAccount.trim() || null,
+      organizer_bluesky_account: tournament.toBlueskyAccount.trim() || null,
+    } : undefined,
+    entrants: entrantsComplete ? previewEntrants(entrants, entrantCount, format.text_settings.include_seeding) : undefined,
   };
   let init: RequestInit;
   if (fontAsset?.custom) {
@@ -148,7 +194,7 @@ function headerWithoutPlaceholder(header: HTMLImageElement, logoPosition: LayerR
   return layer;
 }
 
-export default function LayeredFormatPreview({ format, backgroundImage, logoImage, fontAsset }: FormatPreviewProps) {
+export default function LayeredFormatPreview({ format, backgroundImage, logoImage, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete }: FormatPreviewProps) {
   const request = useMemo(() => layerRequest(format, fontAsset), [format, fontAsset]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -158,7 +204,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   const canvas = useRef<HTMLCanvasElement>(null);
   const expandedDialog = useRef<HTMLDialogElement>(null);
   const expandedCanvas = useRef<HTMLCanvasElement>(null);
-  const previewSignature = JSON.stringify({ format, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null, fontId: fontAsset?.id ?? null });
+  const previewSignature = JSON.stringify({ format, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null, fontId: fontAsset?.id ?? null, tournament: tournamentComplete ? tournament : null, entrants: entrantsComplete ? entrants.slice(0, format.selection.options.entrant_count ?? 0) : null });
   const needsRefresh = refreshedSignature !== previewSignature;
 
   useEffect(() => {
@@ -201,7 +247,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     setFailed(false);
     try {
       const [foreground, background, logo] = await Promise.all([
-        loadConfiguredForeground(format, fontAsset),
+        loadConfiguredForeground(format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete),
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);
