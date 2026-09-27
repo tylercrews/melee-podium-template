@@ -261,6 +261,10 @@ export async function replaceSavedFormat(token: string, id: string, name: string
   return (await response.json()) as SavedFormat;
 }
 
+export async function deleteSavedFormat(token: string, id: string): Promise<void> {
+  await authenticatedRequest(`firebase/layouts/${encodeURIComponent(id)}`, token, { method: "DELETE" });
+}
+
 export async function listUserImages(token: string): Promise<UserImage[]> {
   const response = await authenticatedRequest("firebase/images?limit=100", token);
   const body = (await response.json()) as { items?: UserImage[] };
