@@ -154,6 +154,7 @@ class LegacyPodiumContentRenderer:
                 mode.layout_count,
                 center_subtitle,
                 request.text_settings.heading_color,
+                request.text_settings.heading_metallic,
             )
         if is_doubles:
             self._draw_doubles(result, request, preferences, mode)
@@ -188,6 +189,7 @@ class LegacyPodiumContentRenderer:
             font=self.font,
             align=align,
             fill=request.text_settings.heading_color,
+            metallic=request.text_settings.heading_metallic,
         )
 
     def _draw_singles(
@@ -225,10 +227,11 @@ class LegacyPodiumContentRenderer:
                 placement.scale,
                 multi_character_x_offsets=offsets,
             )
+            text_color, text_metallic = self._default_text_style(request, placement.entrant_slot)
             tag = CharacterTag(
                 _tag_anchor(x, y, portrait, center_x=anchor[0]),
                 entrant.tag,
-                self._default_text_color(request, placement.entrant_slot),
+                text_color,
                 tag_max_width,
                 FOUR_PODIUM_TAG_PREFERRED_SIZE
                 if four_podium_top_8
@@ -236,6 +239,7 @@ class LegacyPodiumContentRenderer:
                 FOUR_PODIUM_SPONSOR_PREFERRED_SIZE
                 if four_podium_top_8
                 else SPONSOR_PREFERRED_SIZE,
+                text_metallic,
             )
             _draw_character_tag(draw, tag, self.font)
 
@@ -282,12 +286,14 @@ class LegacyPodiumContentRenderer:
                     placement.scale,
                     multi_character_x_offsets=MULTI_CHARACTER_X_OFFSETS_NARROW,
                 )
+                text_color, text_metallic = self._default_text_style(request, entrant_slot)
                 tags.append(
                     CharacterTag(
                         _tag_anchor(x, y, portrait, center_x=anchor[0]),
                         member.tag,
-                        self._default_text_color(request, entrant_slot),
+                        text_color,
                         DOUBLES_TAG_WIDTHS[mode.layout_count],
+                        metallic=text_metallic,
                     )
                 )
             for tag in _resolve_doubles_tag_collisions(
@@ -317,14 +323,15 @@ class LegacyPodiumContentRenderer:
             )
             if placement.field == "entrant.summary":
                 assert isinstance(entrant, SinglesEntrant)
+                text_color, text_metallic = self._default_text_style(request, placement.entrant_slot)
                 _draw_lower_entrant_summary(
                     canvas,
                     entrant,
                     anchor=(placement.anchor.x, placement.anchor.y),
-                    fill=placement.color
-                    or self._default_text_color(request, placement.entrant_slot),
+                    fill=placement.color or text_color,
                     font=self.font,
                     include_seed=request.text_settings.include_seeding,
+                    metallic=False if placement.color else text_metallic,
                 )
                 continue
 
@@ -334,9 +341,8 @@ class LegacyPodiumContentRenderer:
             text = self._text_value(placement, entrant)
             if text is None:
                 continue
-            color = placement.color or self._default_text_color(
-                request, placement.entrant_slot or 1
-            )
+            default_color, default_metallic = self._default_text_style(request, placement.entrant_slot or 1)
+            color = placement.color or default_color
             _draw_text(
                 draw,
                 (placement.anchor.x, placement.anchor.y),
@@ -353,26 +359,29 @@ class LegacyPodiumContentRenderer:
                     in {"entrant.primary_character_name", "entrant.team_name"}
                     else None
                 ),
+                metallic=False if placement.color else default_metallic,
             )
 
     @staticmethod
-    def _default_text_color(
+    def _default_text_style(
         request: CreationRequest,
         entrant_slot: int,
-    ) -> tuple[int, int, int] | str:
+    ) -> tuple[tuple[int, int, int] | str, bool]:
         settings = request.text_settings
         if settings.entrant_text_color_mode == "pick_1":
-            return settings.entrant_text_colors[0]
+            return settings.entrant_text_colors[0], settings.entrant_text_metallic[0]
         if settings.entrant_text_color_mode == "pick_2":
-            return settings.entrant_text_colors[(entrant_slot - 1) % 2]
+            index = (entrant_slot - 1) % 2
+            return settings.entrant_text_colors[index], settings.entrant_text_metallic[index]
         if settings.entrant_text_color_mode == "pick_all":
-            return settings.entrant_text_colors[entrant_slot - 1]
+            return settings.entrant_text_colors[entrant_slot - 1], settings.entrant_text_metallic[entrant_slot - 1]
         if request.selection.options.podium_style is PodiumStyle.LEGACY:
-            return PODIUM_BOX_COLORS_BY_SLOT[entrant_slot - 1].exterior_line
+            return PODIUM_BOX_COLORS_BY_SLOT[entrant_slot - 1].exterior_line, False
         assert request.podium_colors is not None
-        return podium_color_for_slot(
+        podium_color = podium_color_for_slot(
             request.podium_colors, entrant_slot
-        ).resolve().text_color
+        ).resolve()
+        return podium_color.text_color, podium_color.metallic
 
     @staticmethod
     def _text_value(
@@ -416,6 +425,7 @@ class LegacyPodiumContentRenderer:
             preferred_size=72,
             align=title_align,
             fill=request.text_settings.heading_color,
+            metallic=request.text_settings.heading_metallic,
         )
 
         metadata_position = next(
@@ -430,7 +440,7 @@ class LegacyPodiumContentRenderer:
         for text, preferred_size in metadata_items:
             icon = _website_icon_and_remainder(text) if request.text_settings.replace_base_urls_with_icons else None
             if icon is None:
-                draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align, fill=request.text_settings.heading_color)
+                draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align, fill=request.text_settings.heading_color, metallic=request.text_settings.heading_metallic)
             else:
                 icon_path, remainder = icon
                 with Image.open(icon_path) as source:
@@ -455,7 +465,7 @@ class LegacyPodiumContentRenderer:
                 )
                 canvas.alpha_composite(website_icon, (round(row_left), y))
                 if remainder:
-                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=metadata_width - website_icon.width - 7, preferred_size=preferred_size, align="left", fill=request.text_settings.heading_color)
+                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=metadata_width - website_icon.width - 7, preferred_size=preferred_size, align="left", fill=request.text_settings.heading_color, metallic=request.text_settings.heading_metallic)
             y += max(27, preferred_size + 7)
         self._draw_attribution(canvas, request, mode)
 
@@ -497,6 +507,7 @@ class LegacyPodiumContentRenderer:
             is_doubles=is_doubles,
         ):
             field["fill"] = request.text_settings.heading_color
+            field["metallic"] = request.text_settings.heading_metallic
             draw_text(draw, **field)
 
         title_right_aligned = mode.layout_count != 3 and not center_title
@@ -512,6 +523,7 @@ class LegacyPodiumContentRenderer:
             max_width=title_max_width,
             preferred_size=92,
             fill=request.text_settings.heading_color,
+            metallic=request.text_settings.heading_metallic,
         )
         self._draw_attribution(canvas, request, mode)
 

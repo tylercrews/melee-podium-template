@@ -407,9 +407,9 @@ def _custom_preview_colors(
     raise ValueError("Invalid formatting color selection")
 
 
-def _entrant_text_colors(value: object) -> tuple[str, tuple[str, ...]]:
+def _entrant_text_colors(value: object) -> tuple[str, tuple[str, ...], tuple[bool, ...]]:
     if value is None:
-        return "match_podium", ()
+        return "match_podium", (), ()
     if not isinstance(value, Mapping):
         raise ValueError("Entrant text colors must be an object")
     mode = value.get("mode")
@@ -417,10 +417,13 @@ def _entrant_text_colors(value: object) -> tuple[str, tuple[str, ...]]:
     if mode not in {"match_podium", "pick_1", "pick_2", "pick_all"} or not isinstance(raw_colors, list):
         raise ValueError("Invalid entrant text color selection")
     colors = tuple(normalize_rgba_hex(color, field_name="entrant text color") for color in raw_colors)
+    raw_metallic = value.get("metallic", [False] * len(colors))
+    if not isinstance(raw_metallic, list) or len(raw_metallic) != len(colors) or any(not isinstance(item, bool) for item in raw_metallic):
+        raise ValueError("Entrant text Metallic settings must contain one boolean per color")
     expected = {"match_podium": 0, "pick_1": 1, "pick_2": 2}.get(mode)
     if (expected is not None and len(colors) != expected) or (mode == "pick_all" and not colors):
         raise ValueError("Entrant text color selection has the wrong number of colors")
-    return mode, colors
+    return mode, colors, tuple(raw_metallic)
 
 
 def _preview_tournament(value: Any, event_format: TournamentFormat) -> Tournament | None:
@@ -523,11 +526,13 @@ def customized_format_preview() -> Any:
         font = PodiumFont.TYROWO
     else:
         raise ValueError("A selected custom font file is required for preview")
-    entrant_text_color_mode, entrant_text_colors = _entrant_text_colors(payload.get("entrant_text_colors"))
+    entrant_text_color_mode, entrant_text_colors, entrant_text_metallic = _entrant_text_colors(payload.get("entrant_text_colors"))
     text_settings = TextSettings(
         heading_color=raw_text_settings.get("heading_color", "#FFFFFFFF"),
+        heading_metallic=raw_text_settings.get("heading_metallic", False),
         entrant_text_color_mode=entrant_text_color_mode,
         entrant_text_colors=entrant_text_colors,
+        entrant_text_metallic=entrant_text_metallic,
         font_size_adjustment=0 if font_asset_id.startswith("provided:") else raw_text_settings.get("font_size_adjustment", 0),
         include_seeding=raw_text_settings.get("include_seeding", True),
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),

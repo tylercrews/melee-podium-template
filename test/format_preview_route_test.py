@@ -172,10 +172,11 @@ class FormatPreviewRouteTests(unittest.TestCase):
                     "style": "legacy",
                     "event_format": "singles",
                     "entrant_count": 3,
-                    "text_settings": {"heading_color": "#10203080"},
+                    "text_settings": {"heading_color": "#10203080", "heading_metallic": True},
                     "entrant_text_colors": {
                         "mode": "pick_2",
                         "colors": ["#FF0000FF", "#00FF00AA"],
+                        "metallic": [True, False],
                     },
                 },
             )
@@ -183,8 +184,10 @@ class FormatPreviewRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         settings = render_preview.call_args.kwargs["text_settings"]
         self.assertEqual(settings.heading_color, "#10203080")
+        self.assertTrue(settings.heading_metallic)
         self.assertEqual(settings.entrant_text_color_mode, "pick_2")
         self.assertEqual(settings.entrant_text_colors, ("#FF0000FF", "#00FF00AA"))
+        self.assertEqual(settings.entrant_text_metallic, (True, False))
 
 
 if __name__ == "__main__":

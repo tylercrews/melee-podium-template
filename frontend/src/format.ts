@@ -27,10 +27,12 @@ export interface FormattingAssetColors {
 export interface EntrantTextColors {
   mode: EntrantTextColorSelectionMode;
   colors: string[];
+  metallic: boolean[];
 }
 
 export interface TextSettings {
   heading_color: string;
+  heading_metallic: boolean;
   font_asset_id: string;
   font_size_adjustment: number;
   include_seeding: boolean;
@@ -112,12 +114,14 @@ export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
 export const DEFAULT_ENTRANT_TEXT_COLORS: EntrantTextColors = {
   mode: "match_podium",
   colors: [],
+  metallic: [],
 };
 
 export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   heading_color: "#FFFFFFFF",
+  heading_metallic: false,
   font_asset_id: "provided:tyrowo",
   font_size_adjustment: 0,
   include_seeding: true,
@@ -370,16 +374,20 @@ function normalizeEntrantTextColors(value: unknown): EntrantTextColors {
     if (typeof color !== "string" || !rgbaColor.test(color)) throw new Error("Every entrant text color must be an eight-digit RGBA color.");
     return color.toUpperCase();
   });
+  const rawMetallic = value.metallic === undefined ? colors.map(() => false) : value.metallic;
+  if (!Array.isArray(rawMetallic) || rawMetallic.length !== colors.length || rawMetallic.some((item) => typeof item !== "boolean")) {
+    throw new Error("Every entrant text color must include a valid Metallic setting.");
+  }
   const expectedCount = mode === "match_podium" ? 0 : mode === "pick_1" ? 1 : mode === "pick_2" ? 2 : null;
   if ((expectedCount !== null && colors.length !== expectedCount) || (mode === "pick_all" && colors.length === 0)) {
     throw new Error("Format code has the wrong number of entrant text colors.");
   }
-  return { mode, colors };
+  return { mode, colors, metallic: rawMetallic as boolean[] };
 }
 
 function normalizeTextSettings(value: unknown): TextSettings {
   if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_fields: [...DEFAULT_TEXT_SETTINGS.metadata_fields] };
-  if (!isObject(value) || (value.heading_color !== undefined && (typeof value.heading_color !== "string" || !rgbaColor.test(value.heading_color))) || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean") || !Array.isArray(value.metadata_fields)) {
+  if (!isObject(value) || (value.heading_color !== undefined && (typeof value.heading_color !== "string" || !rgbaColor.test(value.heading_color))) || (value.heading_metallic !== undefined && typeof value.heading_metallic !== "boolean") || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean") || !Array.isArray(value.metadata_fields)) {
     throw new Error("Format code has invalid text settings.");
   }
   const fields = value.metadata_fields as unknown[];
@@ -389,6 +397,7 @@ function normalizeTextSettings(value: unknown): TextSettings {
   const fontAssetId = value.font_asset_id.trim();
   return {
     heading_color: typeof value.heading_color === "string" ? value.heading_color.toUpperCase() : DEFAULT_TEXT_SETTINGS.heading_color,
+    heading_metallic: value.heading_metallic === true,
     font_asset_id: fontAssetId,
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
     include_seeding: value.include_seeding !== false,

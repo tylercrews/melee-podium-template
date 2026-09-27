@@ -17,7 +17,7 @@ from pathlib import Path
 from random import choice
 import re
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageColor, ImageDraw, ImageFont
 from io import BytesIO
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
@@ -108,6 +108,7 @@ class CharacterTag:
     max_width: int
     preferred_size: int = TAG_PREFERRED_SIZE
     sponsor_preferred_size: int = SPONSOR_PREFERRED_SIZE
+    metallic: bool = False
 
 
 class PodiumMode(str, Enum):
@@ -458,23 +459,57 @@ def _draw_text(
     fill: tuple[int, int, int] | str = "white",
     glow_fill: tuple[int, int, int] | None = None,
     align: str = "center",
+    metallic: bool = False,
 ) -> None:
     if wrap:
         text = _wrap_text(text, max_width, preferred_size, font)
     loaded_font = _font_to_fit(text, max_width, preferred_size, font)
 
+    stroke_width = (1.33 if font is PodiumFont.TYROWO else 0.69 if font is PodiumFont.UBUNTU else 0)
+    rendered_fill = glow_fill or fill
+    if metallic:
+        target = getattr(draw, "_image", None)
+        if isinstance(target, Image.Image) and target.mode == "RGBA":
+            mask = Image.new("L", target.size)
+            mask_draw = ImageDraw.Draw(mask)
+            mask_draw.multiline_text(
+                position,
+                text,
+                font=loaded_font,
+                fill=255,
+                stroke_width=stroke_width,
+                stroke_fill=255,
+                anchor=anchor,
+                align=align,
+            )
+            bounds = mask.getbbox()
+            if bounds is not None:
+                red, green, blue, alpha = ImageColor.getcolor(rendered_fill, "RGBA") if isinstance(rendered_fill, str) else (*rendered_fill[:3], 255)
+                cropped_mask = mask.crop(bounds)
+                width, height = cropped_mask.size
+                pixels = []
+                for pixel_index, mask_alpha in enumerate(cropped_mask.getdata()):
+                    x = pixel_index % width
+                    y = pixel_index // width
+                    diagonal = x / max(1, width - 1) + 0.3 * y / max(1, height - 1)
+                    highlight = max(0.0, 1.0 - abs(diagonal - 0.62) / 0.13) * 0.32
+                    metallic_rgb = tuple(round(channel + (255 - channel) * highlight) for channel in (red, green, blue))
+                    pixels.append((*metallic_rgb, round(mask_alpha * alpha / 255)))
+                layer = Image.new("RGBA", cropped_mask.size)
+                layer.putdata(pixels)
+                target.alpha_composite(layer, (bounds[0], bounds[1]))
+            return
+
     draw.multiline_text(
         position,
         text,
         font=loaded_font,
-        fill=glow_fill or fill,
+        fill=rendered_fill,
         # Pillow has no numeric font-weight control for this font file. A
         # same-color stroke gives Tyrowo its intended bold (700-like) weight
         # without desynchronizing wrapped text lines.
-        stroke_width=(1.33 if font is PodiumFont.TYROWO 
-                        else 0.69 if font is PodiumFont.UBUNTU 
-                        else 0),
-        stroke_fill=glow_fill or fill,
+        stroke_width=stroke_width,
+        stroke_fill=rendered_fill,
         anchor=anchor,
         align=align,
 
@@ -540,6 +575,7 @@ def _draw_character_tag(
             preferred_size=preferred_size,
             font=font,
             glow_fill=glow_fill,
+            metallic=character_tag.metallic,
         )
         return
 
@@ -554,6 +590,7 @@ def _draw_character_tag(
         preferred_size=preferred_size,
         font=font,
         glow_fill=glow_fill,
+        metallic=character_tag.metallic,
     )
 
     player_font = _font_to_fit(player_tag, max_width, preferred_size, font)
@@ -569,6 +606,7 @@ def _draw_character_tag(
         preferred_size=sponsor_preferred_size,
         font=font,
         glow_fill=glow_fill,
+        metallic=character_tag.metallic,
     )
 
 
@@ -780,9 +818,10 @@ def _draw_lower_entrant_summary(
     entrant: SinglesEntrant,
     *,
     anchor: tuple[int, int],
-    fill: tuple[int, int, int],
+    fill: tuple[int, int, int] | str,
     font: PodiumFont,
     include_seed: bool = True,
+    metallic: bool = False,
 ) -> None:
     """Draw one lower-place result as a centered two- or three-line block."""
     max_width = LOWER_SUMMARY_MAX_WIDTH
@@ -820,14 +859,16 @@ def _draw_lower_entrant_summary(
     row_width = fixed_width + icons_width
     x = round(anchor[0] - row_width / 2)
     first_line_y = anchor[1] - 11
-    draw.text(
+    _draw_text(
+        draw,
         (x, first_line_y),
         placement_text,
-        font=placement_font,
-        fill=fill,
-        stroke_width=1 if font is PodiumFont.TYROWO else 0,
-        stroke_fill=fill,
         anchor="lm",
+        max_width=max_width,
+        preferred_size=LOWER_SUMMARY_PLACEMENT_SIZE,
+        font=font,
+        fill=fill,
+        metallic=metallic,
     )
     icons_center_x = x + placement_width + icon_side_gap + icons_width / 2
     _draw_stock_icons(
@@ -840,12 +881,16 @@ def _draw_lower_entrant_summary(
     if seed_text:
         seed_x = x + placement_width + icon_side_gap + icons_width + icon_side_gap
         seed_bottom = first_line_y + icon_size // 2
-        draw.text(
+        _draw_text(
+            draw,
             (seed_x, seed_bottom),
             seed_text,
-            font=seed_font,
-            fill=fill,
             anchor="lb",
+            max_width=max_width,
+            preferred_size=LOWER_SUMMARY_SEED_SIZE,
+            font=font,
+            fill=fill,
+            metallic=metallic,
         )
     for position, text, preferred_size in _lower_summary_identity_fields(
         entrant, anchor=anchor
@@ -860,6 +905,7 @@ def _draw_lower_entrant_summary(
             font=font,
             fill=fill,
             glow_fill=fill,
+            metallic=metallic,
         )
 
 def _validate_placements(
@@ -889,6 +935,7 @@ def _draw_tournament_subtitle(
     placement_count: int,
     centered: bool,
     fill: tuple[int, int, int] | str = "white",
+    metallic: bool = False,
 ) -> None:
     """Draw the subtitle below portraits and player tags in the layer stack."""
     if tournament.subtitle is None:
@@ -909,6 +956,7 @@ def _draw_tournament_subtitle(
         preferred_size=48,
         font=font,
         fill=fill,
+        metallic=metallic,
     )
 
 

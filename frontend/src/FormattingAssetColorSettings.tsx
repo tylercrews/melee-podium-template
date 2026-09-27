@@ -57,7 +57,7 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
       onChange({
         ...value,
         formatting_asset_colors: resizeAssets ? { ...configuration, colors: resizeColors(configuration.colors, requiredCount) } : configuration,
-        entrant_text_colors: resizeEntrants ? { ...entrantConfiguration, colors: resizeTextColors(entrantConfiguration.colors, entrantColorCount) } : entrantConfiguration,
+        entrant_text_colors: resizeEntrants ? { ...entrantConfiguration, colors: resizeTextColors(entrantConfiguration.colors, entrantColorCount), metallic: resizeMetallic(entrantConfiguration.metallic, entrantColorCount) } : entrantConfiguration,
       });
     }
   }, [configuration, entrantColorCount, entrantConfiguration, onChange, requiredCount, value]);
@@ -81,9 +81,15 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
     setConfiguration({ ...configuration, colors });
   }
 
+  function updatePodiumMetallic(index: number, metallic: boolean) {
+    const colors = resizeColors(configuration.colors, requiredCount);
+    colors[index] = { ...colors[index], metallic };
+    setConfiguration({ ...configuration, colors });
+  }
+
   function selectEntrantTextMode(mode: EntrantTextColorSelectionMode) {
     const count = mode === "match_podium" ? 0 : mode === "pick_1" ? 1 : mode === "pick_2" ? 2 : entrantCount;
-    onChange({ ...value, entrant_text_colors: { mode, colors: resizeTextColors(entrantConfiguration.colors, count) } });
+    onChange({ ...value, entrant_text_colors: { mode, colors: resizeTextColors(entrantConfiguration.colors, count), metallic: resizeMetallic(entrantConfiguration.metallic, count) } });
   }
 
   function updateEntrantTextColor(index: number, color: string) {
@@ -92,19 +98,29 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
     onChange({ ...value, entrant_text_colors: { ...entrantConfiguration, colors } });
   }
 
+  function updateEntrantTextMetallic(index: number, metallic: boolean) {
+    const values = resizeMetallic(entrantConfiguration.metallic, entrantColorCount);
+    values[index] = metallic;
+    onChange({ ...value, entrant_text_colors: { ...entrantConfiguration, metallic: values } });
+  }
+
   return <section className="format-settings-card formatting-colors" aria-labelledby="formatting-colors-heading">
     <div className="format-settings-card__heading"><span className="eyebrow">Podiums and entrants</span><h2 id="formatting-colors-heading">Color customization</h2><p>Choose podium colors and how entrant text should relate to them.</p></div>
     {value.selection.mode !== "podium" || value.selection.options.podium_style === "customizable" ? <><label className="formatting-colors__select">How do you want to pick colors?<select value={configuration.mode} onChange={(event) => selectMode(event.target.value as FormattingColorSelectionMode)}>{choices.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</select></label>
     {configuration.mode === "premade" ? <div className="formatting-colors__preset"><label className="formatting-colors__select">Premade palette<select value={configuration.preset ?? "smash_player_colors"} onChange={(event) => setConfiguration({ ...configuration, mode: "premade", preset: event.target.value as FormattingColorPreset, colors: [] })}>{presets.map((preset) => <option value={preset.value} key={preset.value}>{preset.label}</option>)}</select></label><label className="formatting-colors__transparency">Transparency <output>{configuration.preset_transparency}%</output><input type="range" min="0" max="100" value={configuration.preset_transparency} onChange={(event) => setConfiguration({ ...configuration, preset_transparency: Number(event.target.value) })} /></label></div> : <div className="formatting-color-sets">
-      {resizeColors(configuration.colors, requiredCount).map((colors, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{configuration.mode === "pick_all" ? `Podium ${index + 1}` : `Color set ${index + 1}`}</span><small>{configuration.mode === "pick_2" ? (index === 0 ? "Odd podiums" : "Even podiums") : configuration.mode === "pick_1" ? "Applied to every podium" : `Formatting asset ${index + 1}`}</small></div><div className="formatting-color-set__pickers"><RgbaColorPicker label="Main Color" value={colors.main_color} onChange={(color) => updateColor(index, "main_color", color)} /><RgbaColorPicker label="Face Color" value={colors.face_color} onChange={(color) => updateColor(index, "face_color", color)} /><RgbaColorPicker label="Sides Color" value={colors.base_color} onChange={(color) => updateColor(index, "base_color", color)} /></div></section>)}
+      {resizeColors(configuration.colors, requiredCount).map((colors, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{configuration.mode === "pick_all" ? `Podium ${index + 1}` : `Color set ${index + 1}`}</span><small>{configuration.mode === "pick_2" ? (index === 0 ? "Odd podiums" : "Even podiums") : configuration.mode === "pick_1" ? "Applied to every podium" : `Formatting asset ${index + 1}`}</small></div><div className="formatting-color-set__pickers"><RgbaColorPicker label="Main Color" value={colors.main_color} onChange={(color) => updateColor(index, "main_color", color)} metallic={colors.metallic} onMetallicChange={(metallic) => updatePodiumMetallic(index, metallic)} /><RgbaColorPicker label="Face Color" value={colors.face_color} onChange={(color) => updateColor(index, "face_color", color)} /><RgbaColorPicker label="Sides Color" value={colors.base_color} onChange={(color) => updateColor(index, "base_color", color)} /></div></section>)}
     </div>}
     {configuration.mode === "premade" && configuration.preset === "rainbow" && <p className="formatting-colors__note">Rainbow adapts to the layout: three podiums use red, green, and violet; four podiums use orange, green, blue, and violet.</p>}</> : <p className="formatting-colors__note">Legacy podium artwork uses its built-in podium colors.</p>}
     <div className="entrant-text-colors"><label className="formatting-colors__select">Entrant Text Color<select value={entrantConfiguration.mode} onChange={(event) => selectEntrantTextMode(event.target.value as EntrantTextColorSelectionMode)}>{entrantTextChoices.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}</select></label>
-      {resizeTextColors(entrantConfiguration.colors, entrantColorCount).map((color, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{entrantConfiguration.mode === "pick_all" ? `Entrant ${index + 1}` : `Text color ${index + 1}`}</span><small>{entrantConfiguration.mode === "pick_2" ? (index === 0 ? "Odd placements" : "Even placements") : entrantConfiguration.mode === "pick_1" ? "Applied to every entrant" : `Placement ${index + 1}`}</small></div><RgbaColorPicker label="Entrant Text Color" value={color} onChange={(nextColor) => updateEntrantTextColor(index, nextColor)} /></section>)}
+      {resizeTextColors(entrantConfiguration.colors, entrantColorCount).map((color, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{entrantConfiguration.mode === "pick_all" ? `Entrant ${index + 1}` : `Text color ${index + 1}`}</span><small>{entrantConfiguration.mode === "pick_2" ? (index === 0 ? "Odd placements" : "Even placements") : entrantConfiguration.mode === "pick_1" ? "Applied to every entrant" : `Placement ${index + 1}`}</small></div><RgbaColorPicker label="Entrant Text Color" value={color} onChange={(nextColor) => updateEntrantTextColor(index, nextColor)} metallic={resizeMetallic(entrantConfiguration.metallic, entrantColorCount)[index]} onMetallicChange={(metallic) => updateEntrantTextMetallic(index, metallic)} /></section>)}
     </div>
   </section>;
 }
 
 function resizeTextColors(colors: string[], count: number): string[] {
   return Array.from({ length: count }, (_, index) => colors[index] ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length].main_color);
+}
+
+function resizeMetallic(values: boolean[], count: number): boolean[] {
+  return Array.from({ length: count }, (_, index) => values[index] ?? false);
 }

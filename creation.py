@@ -33,8 +33,10 @@ METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link
 @dataclass(frozen=True, slots=True)
 class TextSettings:
     heading_color: str = "#FFFFFFFF"
+    heading_metallic: bool = False
     entrant_text_color_mode: str = "match_podium"
     entrant_text_colors: tuple[str, ...] = ()
+    entrant_text_metallic: tuple[bool, ...] = ()
     font_size_adjustment: int = 0
     include_seeding: bool = True
     replace_base_urls_with_icons: bool = True
@@ -42,6 +44,8 @@ class TextSettings:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "heading_color", normalize_rgba_hex(self.heading_color, field_name="heading color"))
+        if not isinstance(self.heading_metallic, bool):
+            raise TypeError("heading_metallic must be a boolean")
         if self.entrant_text_color_mode not in {"match_podium", "pick_1", "pick_2", "pick_all"}:
             raise ValueError("Unknown entrant text color mode")
         colors = tuple(normalize_rgba_hex(color, field_name="entrant text color") for color in self.entrant_text_colors)
@@ -49,6 +53,12 @@ class TextSettings:
         if (expected is not None and len(colors) != expected) or (self.entrant_text_color_mode == "pick_all" and not colors):
             raise ValueError("Entrant text color mode has the wrong number of colors")
         object.__setattr__(self, "entrant_text_colors", colors)
+        metallic = tuple(self.entrant_text_metallic)
+        if not metallic and colors:
+            metallic = (False,) * len(colors)
+        if len(metallic) != len(colors) or any(not isinstance(value, bool) for value in metallic):
+            raise ValueError("entrant_text_metallic must contain one boolean per entrant text color")
+        object.__setattr__(self, "entrant_text_metallic", metallic)
         if isinstance(self.font_size_adjustment, bool) or not isinstance(self.font_size_adjustment, int) or not -20 <= self.font_size_adjustment <= 20:
             raise ValueError("font_size_adjustment must be an integer between -20 and 20")
         if not isinstance(self.replace_base_urls_with_icons, bool):

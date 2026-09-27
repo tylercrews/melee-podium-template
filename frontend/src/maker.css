@@ -322,7 +322,10 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .metadata-selector__actions { display: flex; gap: 12px; margin-top: 10px; }
 .metadata-selector__actions button { padding: 0; border: 0; color: #7fc4ffff; background: transparent; font-size: .66rem; font-weight: 850; }
 .rgba-picker { display: grid; gap: 10px; }
+.rgba-picker__heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .rgba-picker__label, .size-slider__heading strong { color: #dfe1eeff; font-size: .72rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.rgba-picker__metallic { display: inline-flex; align-items: center; gap: 7px; color: #c7cbe0ff; font-size: .7rem; font-weight: 850; cursor: pointer; }
+.rgba-picker__metallic input { width: 16px; height: 16px; margin: 0; accent-color: #238fe8ff; }
 .rgba-picker__controls { display: grid; grid-template-columns: auto minmax(150px, .7fr) minmax(180px, 1fr); align-items: end; gap: 12px; }
 .rgba-picker__swatch { position: relative; display: grid; width: 48px; height: 44px; place-items: center; overflow: hidden; border: 1px solid #46506fff; border-radius: 6px; background-color: #0b0e18ff; background-image: linear-gradient(45deg, #22283bff 25%, #00000000 25%), linear-gradient(-45deg, #22283bff 25%, #00000000 25%), linear-gradient(45deg, #00000000 75%, #22283bff 75%), linear-gradient(-45deg, #00000000 75%, #22283bff 75%); background-position: 0 0, 0 6px, 6px -6px, -6px 0; background-size: 12px 12px; cursor: pointer; }
 .rgba-picker__swatch input { position: absolute; width: 1px; height: 1px; opacity: 0; }

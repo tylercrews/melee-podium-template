@@ -196,7 +196,7 @@ function headerWithoutPlaceholder(header: HTMLImageElement, logoPosition: LayerR
   return layer;
 }
 
-function tintedHeader(header: CanvasImageSource, width: number, height: number, color: string): HTMLCanvasElement {
+function tintedHeader(header: CanvasImageSource, width: number, height: number, color: string, metallic: boolean): HTMLCanvasElement {
   const layer = document.createElement("canvas");
   layer.width = width;
   layer.height = height;
@@ -204,7 +204,22 @@ function tintedHeader(header: CanvasImageSource, width: number, height: number, 
   if (!context) return layer;
   context.drawImage(header, 0, 0, width, height);
   context.globalCompositeOperation = "source-in";
-  context.fillStyle = color;
+  if (metallic) {
+    const red = Number.parseInt(color.slice(1, 3), 16);
+    const green = Number.parseInt(color.slice(3, 5), 16);
+    const blue = Number.parseInt(color.slice(5, 7), 16);
+    const alpha = Number.parseInt(color.slice(7, 9), 16) / 255;
+    const highlight = `rgba(${Math.round(red + (255 - red) * .32)}, ${Math.round(green + (255 - green) * .32)}, ${Math.round(blue + (255 - blue) * .32)}, ${alpha})`;
+    const gradient = context.createLinearGradient(0, height, width, 0);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(.43, color);
+    gradient.addColorStop(.52, highlight);
+    gradient.addColorStop(.61, color);
+    gradient.addColorStop(1, color);
+    context.fillStyle = gradient;
+  } else {
+    context.fillStyle = color;
+  }
   context.fillRect(0, 0, width, height);
   return layer;
 }
@@ -258,7 +273,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         context.drawImage(podiums, 0, 0, request.outputSize.width, request.outputSize.height);
         context.restore();
         const headerLayer = logo ? headerWithoutPlaceholder(header, request.logoPosition) : header;
-        context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color), 0, 0);
+        context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
         drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition);
         setLoading(false);
       } catch {

@@ -165,15 +165,26 @@ class CreationPipelineTest(unittest.TestCase):
     def test_text_settings_validate_heading_and_entrant_rgba_colors(self) -> None:
         settings = TextSettings(
             heading_color="#12345678",
+            heading_metallic=True,
             entrant_text_color_mode="pick_2",
             entrant_text_colors=("#ABCDEF01", "#102030FF"),
+            entrant_text_metallic=(True, False),
         )
 
         self.assertEqual(settings.heading_color, "#12345678")
+        self.assertTrue(settings.heading_metallic)
         self.assertEqual(settings.entrant_text_colors, ("#ABCDEF01", "#102030FF"))
+        self.assertEqual(settings.entrant_text_metallic, (True, False))
 
         with self.assertRaisesRegex(ValueError, "wrong number"):
             TextSettings(entrant_text_color_mode="pick_2", entrant_text_colors=("#FFFFFFFF",))
+
+        with self.assertRaisesRegex(ValueError, "one boolean per entrant text color"):
+            TextSettings(
+                entrant_text_color_mode="pick_2",
+                entrant_text_colors=("#FFFFFFFF", "#000000FF"),
+                entrant_text_metallic=(True,),
+            )
 
     def test_pick_all_requires_one_entrant_text_color_per_result(self) -> None:
         with self.assertRaisesRegex(ValueError, "one color per entrant"):
