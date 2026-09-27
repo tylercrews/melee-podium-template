@@ -128,7 +128,7 @@ function Preview({ activeStep, urls, format, backgroundImage, logoImage, fontAss
         ? "Continue to Tournament"
         : activeStep === 4
           ? "Continue to Entrants"
-          : entrantsComplete ? "Generate Full Resolution Image" : "Finish filling out entrant information.";
+          : entrantsComplete ? "Download Full Resolution Image" : "Finish filling out entrant information.";
   return <aside className="preview-column">
     <div className="preview-column__content">
       <button className={`preview-action preview-action--${activeStep === 1 ? action.tone : activeStep === 5 && !entrantsComplete ? "pink" : "green"}`} type="button" onClick={activeStep === 5 ? () => window.dispatchEvent(new Event("entrants:finish")) : onContinue} disabled={(activeStep === 2 && !formatComplete) || (activeStep === 4 && !tournamentComplete)}><span>{activeStep === 1 ? action.label : workflowAction}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
@@ -242,6 +242,11 @@ export default function MakerApp() {
   useEffect(() => watchCurrentUser((nextUser) => { setUser(nextUser); setAuthReady(true); if (!nextUser) { setAssetLibraryReady(true); setImages([]); setUserFonts([]); setSelected(EMPTY_SELECTION); setPreviewUrls(EMPTY_URLS); setSelectedFontId((current) => { if (current.startsWith("user:")) { setFormat((formatValue) => ({ ...formatValue, text_settings: { ...formatValue.text_settings, font_asset_id: "provided:tyrowo", font_size_adjustment: 0 } })); return "provided:tyrowo"; } return current; }); } }), []);
   useEffect(() => { getOptions().then((options) => setFighters(options.fighters)).catch(() => undefined); }, []);
   useEffect(() => { getStats().then((stats) => setRenderCount(stats.render_count)).catch(() => undefined); }, []);
+  useEffect(() => {
+    const updateRenderCount = (event: Event) => setRenderCount((event as CustomEvent<number>).detail);
+    window.addEventListener("render-count:updated", updateRenderCount);
+    return () => window.removeEventListener("render-count:updated", updateRenderCount);
+  }, []);
   useEffect(() => { listBuiltInBackgrounds().then(setBuiltInBackgrounds).catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Could not load the included backgrounds.")); }, []);
   useEffect(() => { listProvidedFonts().then(setProvidedFonts).catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Could not load the provided fonts.")); }, []);
   useEffect(() => {

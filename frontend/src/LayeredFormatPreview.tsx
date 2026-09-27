@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiUrl } from "./api";
+import { apiUrl, recordDownload } from "./api";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
@@ -34,6 +34,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   if (cached) return cached;
   const loading = new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => { imageCache.delete(url); reject(new Error("Could not load a preview asset.")); };
     image.src = url;
@@ -194,6 +195,15 @@ function headerWithoutPlaceholder(header: HTMLImageElement, logoPosition: LayerR
   return layer;
 }
 
+function canvasPng(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not create the full-resolution PNG.")), "image/png"));
+}
+
+function downloadName(title: string): string {
+  const safeTitle = title.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
+  return `${safeTitle || "melee-podium"}.png`;
+}
+
 export default function LayeredFormatPreview({ format, backgroundImage, logoImage, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete }: FormatPreviewProps) {
   const request = useMemo(() => layerRequest(format, fontAsset), [format, fontAsset]);
   const [loading, setLoading] = useState(false);
@@ -201,6 +211,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   const [failed, setFailed] = useState(false);
   const [exactPreview, setExactPreview] = useState(false);
   const [refreshedSignature, setRefreshedSignature] = useState<string | null>(null);
+  const renderInFlight = useRef(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const expandedDialog = useRef<HTMLDialogElement>(null);
   const expandedCanvas = useRef<HTMLCanvasElement>(null);
@@ -240,9 +251,11 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     return () => { cancelled = true; window.clearTimeout(timeout); };
   }, [backgroundImage, format, logoImage, request]);
 
-  async function refreshWithSelectedImages() {
+  async function refreshWithSelectedImages(download = false) {
+    if (renderInFlight.current) return;
     const target = canvas.current;
     if (!target) return;
+    renderInFlight.current = true;
     setRefreshing(true);
     setFailed(false);
     try {
@@ -260,9 +273,21 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
       drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition);
       setExactPreview(true);
       setRefreshedSignature(previewSignature);
+      if (download) {
+        const blob = await canvasPng(target);
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = downloadName(tournament.title);
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1_000);
+        const stats = await recordDownload();
+        window.dispatchEvent(new CustomEvent<number>("render-count:updated", { detail: stats.render_count }));
+      }
     } catch {
       setFailed(true);
     } finally {
+      renderInFlight.current = false;
       setRefreshing(false);
     }
   }
@@ -271,6 +296,12 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     const handleRefreshRequest = () => void refreshWithSelectedImages();
     window.addEventListener("format-preview:refresh", handleRefreshRequest);
     return () => window.removeEventListener("format-preview:refresh", handleRefreshRequest);
+  });
+
+  useEffect(() => {
+    const handleDownloadRequest = () => void refreshWithSelectedImages(true);
+    window.addEventListener("format-preview:download", handleDownloadRequest);
+    return () => window.removeEventListener("format-preview:download", handleDownloadRequest);
   });
 
   function openExpandedPreview() {

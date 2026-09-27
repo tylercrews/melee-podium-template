@@ -86,7 +86,7 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
 
   function validateOrGenerate() {
     if (complete) {
-      window.dispatchEvent(new Event("format-preview:refresh"));
+      window.dispatchEvent(new Event("format-preview:download"));
       onProceed();
       return;
     }
@@ -105,7 +105,7 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
   });
 
   return <section className={`step-content entrants-step${showErrors ? " entrants-step--show-errors" : ""}`} ref={sectionRef}>
-    <div className="step-intro"><div className="step-heading-row"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><button className="button button--ghost" type="button" onClick={validateOrGenerate}>{complete ? "Generate Full Resolution Image" : "Finish filling out entrant information."}</button></div><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><button className="button button--ghost" type="button" onClick={validateOrGenerate}>{complete ? "Download Full Resolution Image" : "Finish filling out entrant information."}</button></div><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
     <div className="entrant-grid entrant-grid--maker">{displayed.map((entrant, index) => <fieldset className="entrant-card entrant-card--maker" key={`${entrant.kind}-${index}`}>
       <legend>{ordinal(entrant.placement)}</legend>
       {entrant.kind === "singles" ? <>
