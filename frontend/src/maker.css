@@ -345,6 +345,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .background-position-control > div { display: grid; gap: 4px; }
 .background-position-control strong { color: #e9eaffff; font-size: .8rem; }
 .background-position-control span { color: #8e95afff; font-size: .7rem; line-height: 1.4; }
+.disabled-button-tooltip { position: relative; display: inline-flex; }
+.disabled-button-tooltip::after { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 20; width: max-content; max-width: 270px; padding: 7px 9px; border: 1px solid #46506fff; border-radius: 5px; color: #e9eaffff; background: #090b14f5; box-shadow: 0 8px 20px #00000080; content: attr(data-tooltip); font-size: .68rem; font-weight: 700; line-height: 1.35; opacity: 0; pointer-events: none; transform: translateY(3px); transition: opacity .12s ease, transform .12s ease; }
+.disabled-button-tooltip:hover::after, .disabled-button-tooltip:focus-visible::after { opacity: 1; transform: translateY(0); }
 .formatting-colors { gap: 20px; }
 .formatting-colors__select { display: grid; max-width: 440px; gap: 8px; color: #dfe1eeff; font-size: .72rem; font-weight: 900; letter-spacing: .05em; }
 .formatting-colors__select select { min-height: 44px; padding: 9px 38px 9px 12px; border: 1px solid #46506fff; border-radius: 6px; color: #f8f7ffff; background: #0d101bff; font-size: .78rem; font-weight: 750; }

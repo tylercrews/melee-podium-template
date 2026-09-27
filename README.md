@@ -67,7 +67,6 @@ npm run build
 
 
 TODO LIST:
-* tooltip - the background position choose position button is disabled until primary settings are chosen because until then you don't know how large the image will be. But I forgot and got confused, so there should be a tooltip about that
 * add metallic option when choosing podium main color
 * the logic to split tournament links on slashes seems to have broken. It just shrinks now to the point of being unreadable.
 * when you import a character they should default to Default color not random. - Brooke

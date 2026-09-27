@@ -63,6 +63,11 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
     : backgroundImage && outputSize
       ? backgroundSizeValue(settings.background_size, backgroundImage, outputSize)
       : 1;
+  const disabledPositionReason = !backgroundImage
+    ? "Select a background image first."
+    : !outputSize
+      ? "Choose the primary format settings first so the finished image size can be calculated."
+      : null;
 
   return <>
     <section className="format-settings-card" aria-labelledby="image-background-heading">
@@ -75,7 +80,7 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
           <div className="background-fit-actions"><button className={`button button--outline${settings.background_size === "scale_to_width" ? " is-selected" : ""}`} type="button" onClick={() => updateBackgroundSize("scale_to_width")}>Scale to width</button><button className={`button button--outline${settings.background_size === "scale_to_height" ? " is-selected" : ""}`} type="button" onClick={() => updateBackgroundSize("scale_to_height")}>Scale to height</button></div>
         </div>
       </div>
-      <div className="background-position-control"><div><strong>Background position</strong><span>{!backgroundImage ? "Select a background in the Images step to position it." : !outputSize ? "Choose a podium style before positioning the background." : "Drag the image or crop window to control the final framing."}</span></div>{backgroundImage && outputSize ? <BackgroundPositionDialog image={backgroundImage} outputSize={outputSize} multiplier={settings.background_size} value={settings.background_placement} onChange={(background_placement) => updateSettings({ background_placement })} /> : <button className="button button--outline" type="button" disabled>Choose position</button>}</div>
+      <div className="background-position-control"><div><strong>Background position</strong><span>{!backgroundImage ? "Select a background in the Images step to position it." : !outputSize ? "Choose a podium style before positioning the background." : "Drag the image or crop window to control the final framing."}</span></div>{backgroundImage && outputSize ? <BackgroundPositionDialog image={backgroundImage} outputSize={outputSize} multiplier={settings.background_size} value={settings.background_placement} onChange={(background_placement) => updateSettings({ background_placement })} /> : <span className="disabled-button-tooltip" data-tooltip={disabledPositionReason ?? undefined} tabIndex={0} aria-label={disabledPositionReason ?? undefined}><button className="button button--outline" type="button" disabled>Choose position</button></span>}</div>
     </section>
   </>;
 }
