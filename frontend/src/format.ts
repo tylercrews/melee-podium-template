@@ -6,6 +6,7 @@ export type HeaderContent = "tournament_logo" | "tournament_title" | "metadata";
 export type SizeMultiplier = number;
 export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to_height";
 export type FormattingColorSelectionMode = "premade" | "pick_1" | "pick_2" | "pick_all";
+export type EntrantTextColorSelectionMode = "match_podium" | "pick_1" | "pick_2" | "pick_all";
 export type FormattingColorPreset = "smash_player_colors" | "olympic_medals" | "rainbow";
 export type MetadataField = "event" | "date" | "entrants_count" | "tournament_link" | "tournament_location" | "stream_link" | "vod_link" | "to_x_account" | "to_twitch_account" | "to_bluesky_account";
 
@@ -23,7 +24,13 @@ export interface FormattingAssetColors {
   colors: FormattingAssetColor[];
 }
 
+export interface EntrantTextColors {
+  mode: EntrantTextColorSelectionMode;
+  colors: string[];
+}
+
 export interface TextSettings {
+  heading_color: string;
   font_asset_id: string;
   font_size_adjustment: number;
   include_seeding: boolean;
@@ -77,6 +84,7 @@ export interface FormatConfiguration {
   header_layout: HeaderLayout;
   image_settings: ImageSettings;
   formatting_asset_colors: FormattingAssetColors;
+  entrant_text_colors: EntrantTextColors;
   text_settings: TextSettings;
 }
 
@@ -101,9 +109,15 @@ export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
   colors: [],
 };
 
+export const DEFAULT_ENTRANT_TEXT_COLORS: EntrantTextColors = {
+  mode: "match_podium",
+  colors: [],
+};
+
 export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
+  heading_color: "#FFFFFFFF",
   font_asset_id: "provided:tyrowo",
   font_size_adjustment: 0,
   include_seeding: true,
@@ -125,6 +139,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
   header_layout: DEFAULT_HEADER_LAYOUT,
   image_settings: DEFAULT_IMAGE_SETTINGS,
   formatting_asset_colors: DEFAULT_FORMATTING_ASSET_COLORS,
+  entrant_text_colors: DEFAULT_ENTRANT_TEXT_COLORS,
   text_settings: DEFAULT_TEXT_SETTINGS,
 };
 
@@ -147,6 +162,7 @@ const MAX_SIZE_MULTIPLIER = 100;
 const rgbaColor = /^#[0-9a-f]{8}$/i;
 const formattingColorModes = new Set<FormattingColorSelectionMode>(["premade", "pick_1", "pick_2", "pick_all"]);
 const formattingColorPresets = new Set<FormattingColorPreset>(["smash_player_colors", "olympic_medals", "rainbow"]);
+const entrantTextColorModes = new Set<EntrantTextColorSelectionMode>(["match_podium", "pick_1", "pick_2", "pick_all"]);
 const metadataFields = new Set<MetadataField>(ALL_METADATA_FIELDS);
 
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
@@ -200,6 +216,14 @@ function hasCompleteFormattingAssetColors(format: FormatConfiguration): boolean 
   if (colors.mode === "pick_1") return colors.colors.length === 1;
   if (colors.mode === "pick_2") return colors.colors.length === 2;
   return colors.colors.length === formattingAssetCount(format);
+}
+
+function hasCompleteEntrantTextColors(format: FormatConfiguration): boolean {
+  const selection = format.entrant_text_colors;
+  if (selection.mode === "match_podium") return selection.colors.length === 0;
+  if (selection.mode === "pick_1") return selection.colors.length === 1;
+  if (selection.mode === "pick_2") return selection.colors.length === 2;
+  return selection.colors.length === format.selection.options.entrant_count;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -335,9 +359,27 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
   return { mode, preset, preset_transparency: mode === "premade" ? presetTransparency : 0, colors };
 }
 
+function normalizeEntrantTextColors(value: unknown): EntrantTextColors {
+  // Early version-1 formats used the podium palette for entrant text implicitly.
+  if (value === undefined) return { ...DEFAULT_ENTRANT_TEXT_COLORS, colors: [] };
+  if (!isObject(value) || !entrantTextColorModes.has(value.mode as EntrantTextColorSelectionMode) || !Array.isArray(value.colors)) {
+    throw new Error("Format code has invalid entrant text colors.");
+  }
+  const mode = value.mode as EntrantTextColorSelectionMode;
+  const colors = value.colors.map((color) => {
+    if (typeof color !== "string" || !rgbaColor.test(color)) throw new Error("Every entrant text color must be an eight-digit RGBA color.");
+    return color.toUpperCase();
+  });
+  const expectedCount = mode === "match_podium" ? 0 : mode === "pick_1" ? 1 : mode === "pick_2" ? 2 : null;
+  if ((expectedCount !== null && colors.length !== expectedCount) || (mode === "pick_all" && colors.length === 0)) {
+    throw new Error("Format code has the wrong number of entrant text colors.");
+  }
+  return { mode, colors };
+}
+
 function normalizeTextSettings(value: unknown): TextSettings {
   if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_fields: [...DEFAULT_TEXT_SETTINGS.metadata_fields] };
-  if (!isObject(value) || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean") || !Array.isArray(value.metadata_fields)) {
+  if (!isObject(value) || (value.heading_color !== undefined && (typeof value.heading_color !== "string" || !rgbaColor.test(value.heading_color))) || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean") || !Array.isArray(value.metadata_fields)) {
     throw new Error("Format code has invalid text settings.");
   }
   const fields = value.metadata_fields as unknown[];
@@ -346,6 +388,7 @@ function normalizeTextSettings(value: unknown): TextSettings {
   }
   const fontAssetId = value.font_asset_id.trim();
   return {
+    heading_color: typeof value.heading_color === "string" ? value.heading_color.toUpperCase() : DEFAULT_TEXT_SETTINGS.heading_color,
     font_asset_id: fontAssetId,
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
     include_seeding: value.include_seeding !== false,
@@ -358,7 +401,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
   if (!isObject(value) || value.schema_version !== 1) {
     throw new Error("Format code must be a version 1 format object.");
   }
-  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors), text_settings: normalizeTextSettings(value.text_settings) };
+  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors), entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors), text_settings: normalizeTextSettings(value.text_settings) };
   if (!isObject(value.selection) || !modes.has(value.selection.mode as CreationMode)) {
     throw new Error("Format code has an invalid creation mode.");
   }
@@ -397,6 +440,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     header_layout: normalizeHeaderLayout(value.header_layout),
     image_settings: normalizeImageSettings(value.image_settings),
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
+    entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors),
     text_settings: normalizeTextSettings(value.text_settings),
   };
 }
@@ -418,7 +462,8 @@ export function isFormatComplete(format: FormatConfiguration): boolean {
       && normalized.selection.options.podium_style !== null
       && normalized.selection.options.event_format !== null
       && hasValidEntrantCount(normalized.selection)
-      && hasCompleteFormattingAssetColors(normalized);
+      && hasCompleteFormattingAssetColors(normalized)
+      && hasCompleteEntrantTextColors(normalized);
   } catch {
     return false;
   }

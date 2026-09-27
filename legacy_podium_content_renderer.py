@@ -153,6 +153,7 @@ class LegacyPodiumContentRenderer:
                 self.font,
                 mode.layout_count,
                 center_subtitle,
+                request.text_settings.heading_color,
             )
         if is_doubles:
             self._draw_doubles(result, request, preferences, mode)
@@ -186,6 +187,7 @@ class LegacyPodiumContentRenderer:
             preferred_size=48,
             font=self.font,
             align=align,
+            fill=request.text_settings.heading_color,
         )
 
     def _draw_singles(
@@ -358,6 +360,13 @@ class LegacyPodiumContentRenderer:
         request: CreationRequest,
         entrant_slot: int,
     ) -> tuple[int, int, int] | str:
+        settings = request.text_settings
+        if settings.entrant_text_color_mode == "pick_1":
+            return settings.entrant_text_colors[0]
+        if settings.entrant_text_color_mode == "pick_2":
+            return settings.entrant_text_colors[(entrant_slot - 1) % 2]
+        if settings.entrant_text_color_mode == "pick_all":
+            return settings.entrant_text_colors[entrant_slot - 1]
         if request.selection.options.podium_style is PodiumStyle.LEGACY:
             return PODIUM_BOX_COLORS_BY_SLOT[entrant_slot - 1].exterior_line
         assert request.podium_colors is not None
@@ -406,6 +415,7 @@ class LegacyPodiumContentRenderer:
             max_width=title_width,
             preferred_size=72,
             align=title_align,
+            fill=request.text_settings.heading_color,
         )
 
         metadata_position = next(
@@ -420,7 +430,7 @@ class LegacyPodiumContentRenderer:
         for text, preferred_size in metadata_items:
             icon = _website_icon_and_remainder(text) if request.text_settings.replace_base_urls_with_icons else None
             if icon is None:
-                draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align)
+                draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align, fill=request.text_settings.heading_color)
             else:
                 icon_path, remainder = icon
                 with Image.open(icon_path) as source:
@@ -445,7 +455,7 @@ class LegacyPodiumContentRenderer:
                 )
                 canvas.alpha_composite(website_icon, (round(row_left), y))
                 if remainder:
-                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=metadata_width - website_icon.width - 7, preferred_size=preferred_size, align="left")
+                    draw_text(draw, (round(row_left) + website_icon.width + 7, y), remainder, anchor="la", max_width=metadata_width - website_icon.width - 7, preferred_size=preferred_size, align="left", fill=request.text_settings.heading_color)
             y += max(27, preferred_size + 7)
         self._draw_attribution(canvas, request, mode)
 
@@ -486,6 +496,7 @@ class LegacyPodiumContentRenderer:
             width=width,
             is_doubles=is_doubles,
         ):
+            field["fill"] = request.text_settings.heading_color
             draw_text(draw, **field)
 
         title_right_aligned = mode.layout_count != 3 and not center_title
@@ -500,6 +511,7 @@ class LegacyPodiumContentRenderer:
             else ("ma" if mode.layout_count != 3 else "la"),
             max_width=title_max_width,
             preferred_size=92,
+            fill=request.text_settings.heading_color,
         )
         self._draw_attribution(canvas, request, mode)
 

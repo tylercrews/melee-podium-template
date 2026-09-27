@@ -164,6 +164,28 @@ class FormatPreviewRouteTests(unittest.TestCase):
         self.assertEqual(tournament.location, "Local Venue, Philadelphia, PA")
         self.assertEqual([entrant.tag for entrant in entrants], ["Alpha", "Bravo", "Charlie"])
 
+    def test_passes_heading_and_entrant_text_colors_to_preview_renderer(self) -> None:
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
+            response = self.client.post(
+                "/api/format-preview",
+                json={
+                    "style": "legacy",
+                    "event_format": "singles",
+                    "entrant_count": 3,
+                    "text_settings": {"heading_color": "#10203080"},
+                    "entrant_text_colors": {
+                        "mode": "pick_2",
+                        "colors": ["#FF0000FF", "#00FF00AA"],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        settings = render_preview.call_args.kwargs["text_settings"]
+        self.assertEqual(settings.heading_color, "#10203080")
+        self.assertEqual(settings.entrant_text_color_mode, "pick_2")
+        self.assertEqual(settings.entrant_text_colors, ("#FF0000FF", "#00FF00AA"))
+
 
 if __name__ == "__main__":
     unittest.main()

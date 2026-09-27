@@ -858,6 +858,7 @@ def _draw_lower_entrant_summary(
             max_width=max_width,
             preferred_size=preferred_size,
             font=font,
+            fill=fill,
             glow_fill=fill,
         )
 
@@ -887,6 +888,7 @@ def _draw_tournament_subtitle(
     font: PodiumFont,
     placement_count: int,
     centered: bool,
+    fill: tuple[int, int, int] | str = "white",
 ) -> None:
     """Draw the subtitle below portraits and player tags in the layer stack."""
     if tournament.subtitle is None:
@@ -906,6 +908,7 @@ def _draw_tournament_subtitle(
         max_width=width // 2,
         preferred_size=48,
         font=font,
+        fill=fill,
     )
 
 

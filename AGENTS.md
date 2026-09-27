@@ -88,6 +88,7 @@
 - In semantic podium masks, main replaces red, face replaces cyan, and base replaces blue. Combine the selected alpha with the mask pixel's existing alpha so antialiased edges stay intact.
 - Recolor shaded semantic-mask variants as well as exact red/cyan/blue class pixels so no source-mask blue or cyan leaks into the finished asset. A metallic selection adds a directional highlight to the main-color region.
 - Text placements may supply an explicit eight-digit RGBA color. When omitted for a customizable podium, entrant tags, labels, names, summaries, and seeds use that podium slot's resolved text color, which defaults to its main color.
+- Header title, subtitle, and metadata share a serialized eight-digit RGBA heading color, defaulting to `#FFFFFFFF`. Entrant text color remains part of podium color customization and supports matching the podium palette, one shared color, alternating odd/even colors, or one color per included entrant.
 - In the four-podium Top 8 variant, lower summaries for fifth through eighth use color slots five through eight even though they are positioned beneath podium bodies one through four.
 
 ## Background rendering decisions

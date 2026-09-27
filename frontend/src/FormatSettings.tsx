@@ -4,6 +4,7 @@ import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
 import EntrantCountSettings from "./EntrantCountSettings";
 import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
+import RgbaColorPicker from "./RgbaColorPicker";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -126,6 +127,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       <div className="format-header-map">
         {headerPositions.map((position) => <label className={`format-header-slot format-header-slot--${position.value}`} key={position.value}><span>{position.label}</span><select value={value.header_layout[position.value]} onChange={(event) => assignHeader(position.value, event.target.value as HeaderContent)}>{headerContents.map((content) => <option value={content.value} key={content.value}>{content.label}</option>)}</select><span className="format-header-slot__preview" aria-hidden="true">{headerContents.find((content) => content.value === value.header_layout[position.value])?.label}</span></label>)}
       </div>
+      <RgbaColorPicker label="Heading Text Color" value={value.text_settings.heading_color} onChange={(heading_color) => onChange({ ...value, text_settings: { ...value.text_settings, heading_color } })} />
       <div className="text-settings">
         {value.text_settings.font_asset_id.startsWith("user:") && <label className="font-size-slider"><span><strong>Custom font size adjustment</strong><output>{value.text_settings.font_size_adjustment > 0 ? "+" : ""}{value.text_settings.font_size_adjustment}px</output></span><input type="range" min="-20" max="20" step="1" value={value.text_settings.font_size_adjustment} onChange={(event) => onChange({ ...value, text_settings: { ...value.text_settings, font_size_adjustment: Number(event.target.value) } })} /><span className="font-size-slider__marks" aria-hidden="true"><span>−20px</span><span>0</span><span>+20px</span></span></label>}
         <fieldset className="text-preferences"><legend>Preferences</legend><div>
@@ -136,6 +138,6 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div>
     </section>
     <ImageBackgroundSettings value={value} backgroundImage={backgroundImage} onChange={onChange} />
-    {(selection.mode !== "podium" || selection.options.podium_style === "customizable") && <FormattingAssetColorSettings value={value} onChange={onChange} />}
+    <FormattingAssetColorSettings value={value} onChange={onChange} />
   </div>;
 }

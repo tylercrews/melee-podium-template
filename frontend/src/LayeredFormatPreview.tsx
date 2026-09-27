@@ -196,6 +196,19 @@ function headerWithoutPlaceholder(header: HTMLImageElement, logoPosition: LayerR
   return layer;
 }
 
+function tintedHeader(header: CanvasImageSource, width: number, height: number, color: string): HTMLCanvasElement {
+  const layer = document.createElement("canvas");
+  layer.width = width;
+  layer.height = height;
+  const context = layer.getContext("2d");
+  if (!context) return layer;
+  context.drawImage(header, 0, 0, width, height);
+  context.globalCompositeOperation = "source-in";
+  context.fillStyle = color;
+  context.fillRect(0, 0, width, height);
+  return layer;
+}
+
 function canvasPng(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not create the full-resolution PNG.")), "image/png"));
 }
@@ -245,7 +258,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         context.drawImage(podiums, 0, 0, request.outputSize.width, request.outputSize.height);
         context.restore();
         const headerLayer = logo ? headerWithoutPlaceholder(header, request.logoPosition) : header;
-        context.drawImage(headerLayer, 0, 0, request.outputSize.width, request.outputSize.height);
+        context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color), 0, 0);
         drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition);
         setLoading(false);
       } catch {

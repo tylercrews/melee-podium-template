@@ -13,6 +13,7 @@ from background_builder import (
     BackgroundRequest,
     create_background,
 )
+from color_values import normalize_rgba_hex
 from content_renderer import ContentRenderer
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer, FormattingRenderer
@@ -31,12 +32,23 @@ METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link
 
 @dataclass(frozen=True, slots=True)
 class TextSettings:
+    heading_color: str = "#FFFFFFFF"
+    entrant_text_color_mode: str = "match_podium"
+    entrant_text_colors: tuple[str, ...] = ()
     font_size_adjustment: int = 0
     include_seeding: bool = True
     replace_base_urls_with_icons: bool = True
     metadata_fields: tuple[str, ...] = ("tournament_link", "event", "date", "entrants_count")
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "heading_color", normalize_rgba_hex(self.heading_color, field_name="heading color"))
+        if self.entrant_text_color_mode not in {"match_podium", "pick_1", "pick_2", "pick_all"}:
+            raise ValueError("Unknown entrant text color mode")
+        colors = tuple(normalize_rgba_hex(color, field_name="entrant text color") for color in self.entrant_text_colors)
+        expected = {"match_podium": 0, "pick_1": 1, "pick_2": 2}.get(self.entrant_text_color_mode)
+        if (expected is not None and len(colors) != expected) or (self.entrant_text_color_mode == "pick_all" and not colors):
+            raise ValueError("Entrant text color mode has the wrong number of colors")
+        object.__setattr__(self, "entrant_text_colors", colors)
         if isinstance(self.font_size_adjustment, bool) or not isinstance(self.font_size_adjustment, int) or not -20 <= self.font_size_adjustment <= 20:
             raise ValueError("font_size_adjustment must be an integer between -20 and 20")
         if not isinstance(self.replace_base_urls_with_icons, bool):
@@ -95,6 +107,8 @@ class CreationRequest:
             raise ValueError(
                 f"Expected {options.entrant_count} included entrants, got {len(entrants)}"
             )
+        if self.text_settings.entrant_text_color_mode == "pick_all" and len(self.text_settings.entrant_text_colors) != options.entrant_count:
+            raise ValueError("Pick-all entrant text colors must include one color per entrant")
         if self.tournament.event_format is not options.event_format:
             raise ValueError("Tournament format must match the selected mode options")
         expected_type = (
