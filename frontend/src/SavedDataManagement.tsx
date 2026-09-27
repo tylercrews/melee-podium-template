@@ -14,6 +14,8 @@ import {
   UserImage,
   createSavedFormat,
   deleteSavedFormat,
+  getUserFontUrl,
+  getUserImageUrl,
   listSavedFormats,
   replaceSavedFormat,
 } from "./api";
@@ -117,6 +119,8 @@ export default function SavedDataManagement({
   const [overwriteTarget, setOverwriteTarget] = useState<SavedFormat | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [working, setWorking] = useState(false);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
+  const [fontPreviewUrls, setFontPreviewUrls] = useState<Record<string, string>>({});
 
   const changeSingles = (singles: FavoriteSinglesEntrant[]) =>
     onChange({ ...favorites, singles });
@@ -148,6 +152,29 @@ export default function SavedDataManagement({
       current = false;
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setImagePreviewUrls({});
+      setFontPreviewUrls({});
+      return;
+    }
+    let current = true;
+    user.getIdToken().then(async (token) => {
+      const [imageEntries, fontEntries] = await Promise.all([
+        Promise.all(images.map(async (image) => [image.id, await getUserImageUrl(token, image.id)] as const)),
+        Promise.all(fonts.map(async (font) => [font.id, await getUserFontUrl(token, font.id)] as const)),
+      ]);
+      if (!current) return;
+      setImagePreviewUrls(Object.fromEntries(imageEntries));
+      setFontPreviewUrls(Object.fromEntries(fontEntries));
+    }).catch(() => {
+      if (current) setMessage("Some saved asset previews could not be loaded.");
+    });
+    return () => {
+      current = false;
+    };
+  }, [fonts, images, user]);
 
   const favoriteOptions = useMemo(
     () => [
@@ -397,17 +424,17 @@ export default function SavedDataManagement({
           <div className="saved-asset-groups">
             <SavedAssetGroup title="Tournament Logos" count={logos.length} onUpload={() => onUpload("tournament_logo")}>
               {logos.map((image) => (
-                <SavedAssetRow key={image.id} name={image.name} detail={`${image.width} × ${image.height}`} busy={busyId === image.id} onDelete={() => requestDelete({ kind: "image", item: image })} />
+                <SavedAssetRow key={image.id} name={image.name} detail={`${image.width} × ${image.height}`} busy={busyId === image.id} preview={<AssetImagePreview url={imagePreviewUrls[image.id]} name={image.name} transparent />} onDelete={() => requestDelete({ kind: "image", item: image })} />
               ))}
             </SavedAssetGroup>
             <SavedAssetGroup title="Backgrounds" count={backgrounds.length} onUpload={() => onUpload("background")}>
               {backgrounds.map((image) => (
-                <SavedAssetRow key={image.id} name={image.name} detail={`${image.width} × ${image.height}`} busy={busyId === image.id} onDelete={() => requestDelete({ kind: "image", item: image })} />
+                <SavedAssetRow key={image.id} name={image.name} detail={`${image.width} × ${image.height}`} busy={busyId === image.id} preview={<AssetImagePreview url={imagePreviewUrls[image.id]} name={image.name} />} onDelete={() => requestDelete({ kind: "image", item: image })} />
               ))}
             </SavedAssetGroup>
             <SavedAssetGroup title="Custom Fonts" count={fonts.length} onUpload={() => onUpload("font")}>
               {fonts.map((font) => (
-                <SavedAssetRow key={font.id} name={font.name} detail={`${Math.ceil(font.sizeBytes / 1024)} KB`} busy={busyId === font.id} onDelete={() => requestDelete({ kind: "font", item: font })} />
+                <SavedAssetRow key={font.id} name={font.name} detail={`${Math.ceil(font.sizeBytes / 1024)} KB`} busy={busyId === font.id} preview={<SavedFontPreview id={font.id} url={fontPreviewUrls[font.id]} />} onDelete={() => requestDelete({ kind: "font", item: font })} />
               ))}
             </SavedAssetGroup>
           </div>
@@ -566,13 +593,38 @@ function SavedAssetGroup({ title, count, onUpload, children }: { title: string; 
   );
 }
 
-function SavedAssetRow({ name, detail, busy, onDelete }: { name: string; detail: string; busy: boolean; onDelete: () => void }) {
+function SavedAssetRow({ name, detail, busy, preview, onDelete }: { name: string; detail: string; busy: boolean; preview: ReactNode; onDelete: () => void }) {
   return (
     <article className="saved-asset-row">
+      {preview}
       <div><strong>{name}</strong><small>{detail}</small></div>
       <button className="icon-button icon-button--danger" type="button" onClick={onDelete} disabled={busy} aria-label={`Delete ${name}`} title={`Delete ${name}`}><TrashIcon /></button>
     </article>
   );
+}
+
+function AssetImagePreview({ url, name, transparent = false }: { url?: string; name: string; transparent?: boolean }) {
+  return <span className={`saved-asset-preview saved-asset-preview--image${transparent ? " saved-asset-preview--transparent" : ""}`}>{url ? <img src={url} alt={`${name} preview`} /> : <span aria-label="Loading preview">…</span>}</span>;
+}
+
+function SavedFontPreview({ id, url }: { id: string; url?: string }) {
+  const [family, setFamily] = useState("");
+  useEffect(() => {
+    if (!url) { setFamily(""); return; }
+    const fontFamily = `saved-font-${id.replace(/[^a-z0-9]/gi, "-")}`;
+    const face = new FontFace(fontFamily, `url(${JSON.stringify(url)})`);
+    let current = true;
+    face.load().then((loaded) => {
+      if (!current) return;
+      document.fonts.add(loaded);
+      setFamily(fontFamily);
+    }).catch(() => { if (current) setFamily(""); });
+    return () => {
+      current = false;
+      document.fonts.delete(face);
+    };
+  }, [id, url]);
+  return <span className="saved-asset-preview saved-asset-preview--font" style={family ? { fontFamily: family } : undefined}>Aa</span>;
 }
 
 function FavoriteSinglesSection({ favorites, visible, fighters, onAdd, onChange, onSetPrimary, selected }: { favorites: FavoritesData; visible: FavoriteSinglesEntrant[]; fighters: FighterOption[]; onAdd: () => void; onChange: (favorites: FavoriteSinglesEntrant[]) => void; onSetPrimary: (id: string, primary: boolean) => void; selected: boolean }) {
