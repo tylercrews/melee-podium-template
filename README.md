@@ -63,6 +63,70 @@ npm run build
 - North Carolina Melee!! Love y'all.
 
 
+TODO LIST:
+* Frontend UI - Image Uploader, Load Format, Create/Edit Format, Bracket Import Tool, Current Tournament + Entrants
+* Stress-test browser memory limits for guest image uploads, then implement safe in-memory tournament-logo and background selection for users who are not signed in.
+* Format needs image editing - resizing the image and positioning it
+* how to handle format saving. Like give them a chance to overwrite?
+* Add alternative spellings to Entrant tag configurations. For example when an entrant in a bracket is named 'busta' or 'bu$ta' they should both be identified as the favorited entrant 'BU$TA' (capitalization is already ignored)
+* different podium color options:
+    1. come up with another preset (we have gold silver bronze gray and controller colors) - Rainbow (what to do for top 4?), Tyro colors
+    3. custom 1 - pick all
+    4. custom 2 - pick 1 color
+    5. custom 3 - pick 2 colors and they alternate
+* ui for podium color picker and background color picker rgba
+* layout should include "Vods At" and "Streamed At" options with Twitch + Youtube icon shortening so people know where to watch matches
+* layout could also have the twitter/bluesky of the TO
+* turn start.gg, parry.gg, and challonge urls etc into their icons for links
+* update shoutout page to shoutout Nicolet specifically, and Brooke
+* seems like when you use a favorited entrant, then uncheck the box to save changes, and then render, it DELETES the favorited entrant. that's no good
+* make it so when you select a new color for a character it doesn't reset the pose you already picked
+* if the bottom left has too much text and the bottom right has too much text, also check the bottom center to see if that has less overlap for the watermark
+* split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
+* in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
+* in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
+* "Test template with example entrants" button. Use the gods as entrants, and lets them see if they like what they've done with their template before moving on to filling stuff out or saving.
+* format steps: 
+   1. choose format and subformat and singles/doubles
+   2. color picker - RGBA for background color. 
+   3. image picker for background. Should give pixel count of the uploaded pic and say how big the image is. Then let them use a multiplier to scale up or down the image, then position it in a frame to select what section the bacground should be.
+   4. podium colors / square / eyes background colors. Choose between presets or what kind you want to choose. Presets should still have a transparency slider on presets.
+* Defaulting to Top 4 seems to be confusing users - should have a popup or something. Need to try the url brooke was using to make sure that the upload didn't have some other error, but I think what she was talking about was it just nudging her to do a top 4.
+* fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
+* need an option for Random. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament
+* when you import a character they should default to Default color not random. - Brooke
+* when someone has a ton of characters used it looks a little cluttered, would be nice to be able to convert some of the lower-use characters to stock icons instead. 
+* bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
+* README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
+* the text under the podiums, namely the character names in singles, should be vertically aligned. Instead of row 1, row 2 always. So like right now chars with 
+* add support for people to use their own backgrounds?? - maybe cut the podiums out and add a transparent layer behind
+* full layout customizability saving and loading - pick where you want your emblem, title, and metadata to go, the podium colors, your preferred background, etc. You should be able to import a save file and/or paste some code to import/export these layout settings. 
+
+!! * remember to do the cpanel configuration files requirements.txt to run pip install and get the new dependencies for the next release
+
+Maybes/Eventuallies:
+* v5.0 - see if decompiled melee can be used to generate melee assets - would need to be a separate repo. But would be amazing to programmatically create claps, victory screens, and tech roll animations. on top of other things.
+* if you implement profiles and logins you could make it so that you can have multiple saved tournament preferences attached to your account - like med could pick his TYM layout or his moondog layout and have it already be ready. Profiles would also be able to save custom assets like backgrounds and emblems
+    * Need to do some research on costs of login systems, image/blob storage pricing, and see if I would need to limit access to a certain extent before asking for money.
+* get a dedicated domain name? meleepodium.meme ? meleepodium.free? meleepodium.photo? meleepodium.pics ? just need to be sure if I want to keep calling it meleepodium or if we're gonna change the name when we have all the functionality done
+* formatting positioners - if you want the title centered or to the side, if you want the metadata on the right (default) or swapped with the title
+* add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
+* Fit in tournament location?
+* support for twitter and bluesky handles - need to come up with some place to put them.
+
+* What if you had a tournament graphic input, and you could slot it in to the left of the title+subtitle, or to the left of the tourney info (but below where the title is, kind of in the middle) - inspired by like GOML, it would be nice if big big tournaments had the ability to use the graphics they've paid for. They'd need a scale slider to adjust the size, similar to the char portraits
+* similar to the tournament graphic, what if the user could upload a font, then you give them the ability to adjust the size and thickness the same way that I've adjusted my fonts.
+
+Different Layout Styles One Day:
+* once we have placement numbers rendered instead of static assets, create an alternate counting mode where it puts 1-8 (5th 6th 7th 8th instead of 5th 5th 7th 7th) so that people can use it for PRs as well. Or maybe a top 10 pr mode.
+* flying v with first place centered
+* top 8er / waddle wednesday layout
+* long rectangles just showing the eyes of the characters
+* long portraits like the character select screen
+* long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
+* top8.gg has a really cool type of layout where they have title bar, podium-arranged top 3, then 5 on the bottom. But they do all squares. What if I had a half-and-half layout where the top 3 get their characters on short podiums, then the subsequent players get their characters in boxes underneath.
+* instead of straight up boxes what if you maximized space by having / vs style diagonal split portraits
+
 ## Current roadmap
 
 The six-step Podium workflow is implemented. The remaining known product and
@@ -155,10 +219,15 @@ must not be treated as a final standing. The user should finish/review the
 bracket in Challonge or manually correct and verify every podium field before
 rendering.
 
-Favorite entrants currently use browser-local storage and can be imported,
-exported, added, edited, filtered, and removed from Manage Saved Data. They do
-not yet sync through the signed-in user's Firestore account, so clearing browser
-storage or switching devices will not retain them.
+LocalStorage and LocalStorage Management page.
+* should be able to store 300-350 entrants per MB, and localstorage can have up to 5MB, but I don't really want to push it.
+* should be able to specify whether or not you want to save entrants when creating them
+* should be able to import+export
+* should be able to add/remove from the management screen
+* also warn people that if they clear storage or use another device they'll disappear
+
+way down the road:
+player profiles - have auto selections for frequently used people, maybe by some kind of profile system so you can log in and have people you know.
 
 
 ## Firebase backend
