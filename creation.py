@@ -34,7 +34,7 @@ class TextSettings:
     font_size_adjustment: int = 0
     include_seeding: bool = True
     replace_base_urls_with_icons: bool = True
-    metadata_fields: frozenset[str] = frozenset({"event", "date", "entrants_count", "tournament_link"})
+    metadata_fields: tuple[str, ...] = ("tournament_link", "event", "date", "entrants_count")
 
     def __post_init__(self) -> None:
         if isinstance(self.font_size_adjustment, bool) or not isinstance(self.font_size_adjustment, int) or not -20 <= self.font_size_adjustment <= 20:
@@ -43,8 +43,8 @@ class TextSettings:
             raise TypeError("replace_base_urls_with_icons must be a boolean")
         if not isinstance(self.include_seeding, bool):
             raise TypeError("include_seeding must be a boolean")
-        fields = frozenset(self.metadata_fields)
-        if not fields <= METADATA_FIELDS:
+        fields = tuple(self.metadata_fields)
+        if len(set(fields)) != len(fields) or not set(fields) <= METADATA_FIELDS:
             raise ValueError("metadata_fields contains an unknown field")
         object.__setattr__(self, "metadata_fields", fields)
 

@@ -105,7 +105,7 @@ class FormatPreviewTests(unittest.TestCase):
             3,
             transparent=True,
             header_layout=header_layout,
-            text_settings=TextSettings(metadata_fields=frozenset({"stream_link"})),
+            text_settings=TextSettings(metadata_fields=("stream_link",)),
         )
         customized = render_format_preview(
             PodiumStyle.LEGACY,
@@ -117,7 +117,7 @@ class FormatPreviewTests(unittest.TestCase):
             text_settings=TextSettings(
                 font_size_adjustment=5,
                 replace_base_urls_with_icons=True,
-                metadata_fields=frozenset({"stream_link"}),
+                metadata_fields=("stream_link",),
             ),
         )
         self.assertNotEqual(
@@ -155,13 +155,40 @@ class FormatPreviewTests(unittest.TestCase):
             },
             text_settings=TextSettings(
                 replace_base_urls_with_icons=True,
-                metadata_fields=frozenset({"stream_link"}),
+                metadata_fields=("stream_link",),
             ),
         )
         middle_header = preview.crop((preview.width // 3, 0, preview.width * 2 // 3, 100))
         right_header = preview.crop((preview.width * 2 // 3, 0, preview.width, 100))
         self.assertIsNone(middle_header.getbbox())
         self.assertIsNotNone(right_header.getbbox())
+
+    def test_metadata_fields_render_in_the_selected_order(self) -> None:
+        header_layout = {
+            "top_left": "metadata",
+            "top_middle": "tournament_logo",
+            "top_right": "tournament_title",
+        }
+        link_first = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            header_layout=header_layout,
+            text_settings=TextSettings(metadata_fields=("tournament_link", "event")),
+        )
+        event_first = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            3,
+            transparent=True,
+            header_layout=header_layout,
+            text_settings=TextSettings(metadata_fields=("event", "tournament_link")),
+        )
+        self.assertNotEqual(
+            link_first.crop((0, 0, link_first.width // 3, 100)).tobytes(),
+            event_first.crop((0, 0, event_first.width // 3, 100)).tobytes(),
+        )
 
 
 if __name__ == "__main__":

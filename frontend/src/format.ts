@@ -99,14 +99,14 @@ export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
   colors: [],
 };
 
-export const ALL_METADATA_FIELDS: MetadataField[] = ["event", "date", "entrants_count", "tournament_link", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
+export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   font_asset_id: "provided:tyrowo",
   font_size_adjustment: 0,
   include_seeding: true,
   replace_base_urls_with_icons: true,
-  metadata_fields: ["event", "date", "entrants_count", "tournament_link"],
+  metadata_fields: ["tournament_link", "event", "date", "entrants_count"],
 };
 
 export const EMPTY_FORMAT: FormatConfiguration = {

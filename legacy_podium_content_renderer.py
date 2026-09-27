@@ -465,8 +465,7 @@ class LegacyPodiumContentRenderer:
             "to_twitch_account": (tournament.organizer_twitch_account, 18),
             "to_bluesky_account": (tournament.organizer_bluesky_account, 18),
         }
-        order = ("event", "date", "entrants_count", "tournament_link", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account")
-        return [(str(values[field][0]), values[field][1]) for field in order if field in selected and values[field][0] is not None]
+        return [(str(values[field][0]), values[field][1]) for field in selected if values[field][0] is not None]
 
     def _draw_tournament_text(
         self,

@@ -475,7 +475,7 @@ def customized_format_preview() -> Any:
         font_size_adjustment=0 if font_asset_id.startswith("provided:") else raw_text_settings.get("font_size_adjustment", 0),
         include_seeding=raw_text_settings.get("include_seeding", True),
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
-        metadata_fields=frozenset(raw_text_settings.get("metadata_fields", ("event", "date", "entrants_count", "tournament_link"))),
+        metadata_fields=tuple(raw_text_settings.get("metadata_fields", ("tournament_link", "event", "date", "entrants_count"))),
     )
     image = render_format_preview(
         style,
