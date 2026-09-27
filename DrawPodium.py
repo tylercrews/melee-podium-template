@@ -1082,35 +1082,45 @@ def _attribution_layout(
     font: PodiumFont,
     mode: PodiumMode,
 ) -> tuple[tuple[int, int], str]:
-    """Choose the footer side with the least overlap from podium labels."""
+    """Choose the least-obstructed position across the full footer row."""
     draw = ImageDraw.Draw(canvas)
     y = canvas.height - ATTRIBUTION_BOTTOM_MARGIN
     max_width = canvas.width - 2 * ATTRIBUTION_SIDE_MARGIN
-    candidates = (
-        ((ATTRIBUTION_SIDE_MARGIN, y), "la"),
-        ((canvas.width - ATTRIBUTION_SIDE_MARGIN, y), "ra"),
+    measured_bounds = _text_bounds(
+        draw,
+        (0, y),
+        ATTRIBUTION_TEXT,
+        anchor="la",
+        max_width=max_width,
+        preferred_size=ATTRIBUTION_PREFERRED_SIZE,
+        font=font,
     )
+    right_edge = canvas.width - ATTRIBUTION_SIDE_MARGIN
+    leftmost_x = ATTRIBUTION_SIDE_MARGIN - measured_bounds[0]
+    rightmost_x = max(leftmost_x, right_edge - measured_bounds[2])
     obstacles = _footer_text_bounds(draw, entrants, font=font, mode=mode)
 
-    def overlap_score(candidate: tuple[tuple[int, int], str]) -> int:
-        position, anchor = candidate
-        attribution_bounds = _text_bounds(
-            draw,
-            position,
-            ATTRIBUTION_TEXT,
-            anchor=anchor,
-            max_width=max_width,
-            preferred_size=ATTRIBUTION_PREFERRED_SIZE,
-            font=font,
+    def overlap_score(x: int) -> int:
+        attribution_bounds = (
+            measured_bounds[0] + x,
+            measured_bounds[1],
+            measured_bounds[2] + x,
+            measured_bounds[3],
         )
         return sum(
             _box_intersection_area(attribution_bounds, obstacle)
             for obstacle in obstacles
         )
 
-    left, right = candidates
-    # Preserve the original right-side placement when both sides are equally clear.
-    return left if overlap_score(left) < overlap_score(right) else right
+    # Search from right to left so an equally good span retains the original
+    # bottom-right placement while allowing any clearer gap along the row.
+    best_x = min(
+        range(rightmost_x, leftmost_x - 1, -1),
+        key=overlap_score,
+    )
+    if best_x == rightmost_x:
+        return (right_edge, y), "ra"
+    return (best_x, y), "la"
 
 
 def _centered_header_fields(

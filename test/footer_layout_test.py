@@ -66,15 +66,14 @@ class FooterLayoutTests(unittest.TestCase):
             for index, name in enumerate(names, start=1)
         ]
 
-        self.assertEqual(
-            _attribution_layout(
-                self.canvas,
-                entrants,
-                font=PodiumFont.IMPACT,
-                mode=PodiumMode.DOUBLES_TOP_4,
-            ),
-            ((10, 911), "la"),
+        position, anchor = _attribution_layout(
+            self.canvas,
+            entrants,
+            font=PodiumFont.IMPACT,
+            mode=PodiumMode.DOUBLES_TOP_4,
         )
+        self.assertEqual(anchor, "la")
+        self.assertLess(position[0], self.canvas.width // 2)
 
     def test_attribution_moves_away_from_a_low_right_entrant_tag(self) -> None:
         tags = ["Short"] * 7 + [
@@ -84,15 +83,37 @@ class FooterLayoutTests(unittest.TestCase):
             self.singles_entrant(index, tag) for index, tag in enumerate(tags)
         ]
 
-        self.assertEqual(
-            _attribution_layout(
-                self.canvas,
-                entrants,
-                font=PodiumFont.IMPACT,
-                mode=PodiumMode.SINGLES_TOP_8_FOUR_PODIUM,
-            ),
-            ((10, 911), "la"),
+        position, anchor = _attribution_layout(
+            self.canvas,
+            entrants,
+            font=PodiumFont.IMPACT,
+            mode=PodiumMode.SINGLES_TOP_8_FOUR_PODIUM,
         )
+        self.assertEqual(anchor, "la")
+        self.assertLess(position[0], self.canvas.width // 2)
+
+    def test_attribution_can_use_middle_when_both_corners_have_text(self) -> None:
+        names = [
+            "one two three four five six seven eight nine ten eleven twelve",
+            "Short",
+            "Short",
+            "one two three four five six seven eight nine ten eleven twelve",
+        ]
+        entrants = [
+            self.doubles_team(index, name)
+            for index, name in enumerate(names, start=1)
+        ]
+
+        position, anchor = _attribution_layout(
+            self.canvas,
+            entrants,
+            font=PodiumFont.IMPACT,
+            mode=PodiumMode.DOUBLES_TOP_4,
+        )
+
+        self.assertEqual(anchor, "la")
+        self.assertGreater(position[0], 10)
+        self.assertLess(position[0], self.canvas.width // 2)
 
 
 if __name__ == "__main__":
