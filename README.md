@@ -66,6 +66,7 @@ npm run build
 
 
 TODO LIST:
+* add metallic option when choosing podium main color
 * the logic to split tournament links on slashes seems to have broken. It just shrinks now to the point of being unreadable.
 * when you import a character they should default to Default color not random. - Brooke
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
