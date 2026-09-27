@@ -128,10 +128,10 @@ function Preview({ activeStep, urls, format, backgroundImage, logoImage, fontAss
         ? "Continue to Tournament"
         : activeStep === 4
           ? "Continue to Entrants"
-          : entrantsComplete ? "Entrant Settings Complete" : "Complete Entrant Settings";
+          : entrantsComplete ? "Generate Full Resolution Image" : "Finish filling out entrant information.";
   return <aside className="preview-column">
     <div className="preview-column__content">
-      <button className={`preview-action preview-action--${activeStep === 1 ? action.tone : "green"}`} type="button" onClick={onContinue} disabled={activeStep > 4 || (activeStep === 2 && !formatComplete) || (activeStep === 4 && !tournamentComplete)}><span>{activeStep === 1 ? action.label : workflowAction}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+      <button className={`preview-action preview-action--${activeStep === 1 ? action.tone : activeStep === 5 && !entrantsComplete ? "pink" : "green"}`} type="button" onClick={activeStep === 5 ? () => window.dispatchEvent(new Event("entrants:finish")) : onContinue} disabled={(activeStep === 2 && !formatComplete) || (activeStep === 4 && !tournamentComplete)}><span>{activeStep === 1 ? action.label : workflowAction}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
       <div className="preview-heading"><h2>Image Preview</h2></div>
       {activeStep !== 1 ? <><FormatPreview format={format} backgroundImage={backgroundImage} logoImage={logoImage} fontAsset={fontAsset} tournament={tournament} entrants={entrants} tournamentComplete={tournamentComplete} entrantsComplete={entrantsComplete} />{activeStep === 2 && !formatComplete && <span className="format-preview__waiting">Choose all format properties to continue.</span>}</> : <div className="preview-assets">
         <figure className="preview-asset preview-asset--image"><figcaption>Background</figcaption><div className="preview-asset__frame">{urls.background ? <img src={urls.background} alt="Selected background" /> : <span>No background selected</span>}</div></figure>
@@ -223,6 +223,7 @@ export default function MakerApp() {
   const entrantsStepComplete = Boolean(tournamentStepComplete && selectedEventFormat && selectedEntrantCount && areEntrantsComplete(entrants, selectedEntrantCount, selectedEventFormat, format.text_settings.include_seeding));
   const maxStep = tournamentStepComplete ? 5 : formatStepComplete ? 4 : 2;
   const stepStates: StepState[] = STEPS.map((_, index) => {
+    if (index === 5 && entrantsStepComplete) return "complete";
     if (index === activeStep) return "current";
     if (index > maxStep) return "locked";
     if (index === 0 && loadStepComplete) return loadedFormatChosen ? "complete" : "skipped";
@@ -230,7 +231,6 @@ export default function MakerApp() {
     if (index === 2 && formatStepComplete) return "complete";
     if (index === 3 && bracketStepComplete) return bracketReview ? "complete" : "skipped";
     if (index === 4 && tournamentStepComplete) return "complete";
-    if (index === 5 && entrantsStepComplete) return "complete";
     return "available";
   });
 

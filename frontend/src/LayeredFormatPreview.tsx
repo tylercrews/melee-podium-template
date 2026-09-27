@@ -267,6 +267,12 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     }
   }
 
+  useEffect(() => {
+    const handleRefreshRequest = () => void refreshWithSelectedImages();
+    window.addEventListener("format-preview:refresh", handleRefreshRequest);
+    return () => window.removeEventListener("format-preview:refresh", handleRefreshRequest);
+  });
+
   function openExpandedPreview() {
     if (!expandedCanvas.current || !canvas.current) return;
     expandedCanvas.current.width = canvas.current.width;

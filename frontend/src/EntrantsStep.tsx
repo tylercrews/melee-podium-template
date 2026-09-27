@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { FighterOption } from "./api";
 import { DoublesEntrantDraft, EntrantDraft, EntrantMemberDraft, SinglesEntrantDraft } from "./creationData";
 import EntrantCharacterEditor from "./EntrantCharacterEditor";
@@ -28,6 +29,8 @@ function favoriteMember(favorite: FavoriteSinglesEntrant): EntrantMemberDraft {
 }
 
 export default function EntrantsStep({ value, count, eventFormat, includeSeeding, complete, fighters, favorites, onChange, onFavoritesChange, onProceed }: EntrantsStepProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [showErrors, setShowErrors] = useState(false);
   const displayed = value.slice(0, count);
   const update = (index: number, entrant: EntrantDraft) => onChange(value.map((item, current) => current === index ? entrant : item));
 
@@ -81,18 +84,38 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
     onFavoritesChange({ ...favorites, doubles: existing ? favorites.doubles.map((favorite) => favorite.id === existing.id ? next : favorite) : [...favorites.doubles, next] });
   }
 
-  return <section className="step-content entrants-step">
-    <div className="step-intro"><div className="step-heading-row"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><button className="button button--ghost" type="button" disabled={!complete} onClick={onProceed}>{complete ? "Proceed to Preview" : "Cannot Skip"}</button></div><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
+  function validateOrGenerate() {
+    if (complete) {
+      window.dispatchEvent(new Event("format-preview:refresh"));
+      onProceed();
+      return;
+    }
+    setShowErrors(true);
+    window.requestAnimationFrame(() => {
+      const firstMissing = sectionRef.current?.querySelector<HTMLInputElement>("input:invalid");
+      firstMissing?.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstMissing?.focus({ preventScroll: true });
+    });
+  }
+
+  useEffect(() => {
+    const handleFinishRequest = () => validateOrGenerate();
+    window.addEventListener("entrants:finish", handleFinishRequest);
+    return () => window.removeEventListener("entrants:finish", handleFinishRequest);
+  });
+
+  return <section className={`step-content entrants-step${showErrors ? " entrants-step--show-errors" : ""}`} ref={sectionRef}>
+    <div className="step-intro"><div className="step-heading-row"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><button className="button button--ghost" type="button" onClick={validateOrGenerate}>{complete ? "Generate Full Resolution Image" : "Finish filling out entrant information."}</button></div><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
     <div className="entrant-grid entrant-grid--maker">{displayed.map((entrant, index) => <fieldset className="entrant-card entrant-card--maker" key={`${entrant.kind}-${index}`}>
       <legend>{ordinal(entrant.placement)}</legend>
       {entrant.kind === "singles" ? <>
         <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applySinglesFavorite(index, favorite)} />
-        {includeSeeding && <label>Seed<input type="number" min="1" value={entrant.seed} onChange={(event) => update(index, { ...entrant, seed: event.target.value })} /></label>}
+        {includeSeeding && <label>Seed<input type="number" min="1" value={entrant.seed} onChange={(event) => update(index, { ...entrant, seed: event.target.value })} required /></label>}
         <EntrantCharacterEditor tag={entrant.tag} tagPlaceholder={`Player ${index + 1}`} characters={entrant.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, tag })} onChange={(characters) => update(index, { ...entrant, characters })} />
         <label className="choice"><input type="checkbox" checked={favorites.singles.some((favorite) => normalizedFavoriteTag(favorite.tag) === normalizedFavoriteTag(entrant.tag))} onChange={(event) => toggleSinglesFavorite(entrant, event.target.checked)} /> Save or update favorite entrant</label>
       </> : <>
         <DoublesFavoritePicker favorites={favorites.doubles} onChoose={(favorite) => applyTeamFavorite(index, favorite)} />
-        <div className="entrant-team-fields"><label>Team name<input value={entrant.teamName} onChange={(event) => update(index, { ...entrant, teamName: event.target.value })} placeholder={`Team ${index + 1}`} required /></label>{includeSeeding && <label>Seed<input type="number" min="1" value={entrant.seed} onChange={(event) => update(index, { ...entrant, seed: event.target.value })} /></label>}<label>Team color<select value={entrant.teamColor} onChange={(event) => update(index, { ...entrant, teamColor: event.target.value })}><option value="random">Random</option><option value="red">Red</option><option value="green">Green</option><option value="blue">Blue</option></select></label></div>
+        <div className="entrant-team-fields"><label>Team name<input value={entrant.teamName} onChange={(event) => update(index, { ...entrant, teamName: event.target.value })} placeholder={`Team ${index + 1}`} required /></label>{includeSeeding && <label>Seed<input type="number" min="1" value={entrant.seed} onChange={(event) => update(index, { ...entrant, seed: event.target.value })} required /></label>}<label>Team color<select value={entrant.teamColor} onChange={(event) => update(index, { ...entrant, teamColor: event.target.value })}><option value="random">Random</option><option value="red">Red</option><option value="green">Green</option><option value="blue">Blue</option></select></label></div>
         <div className="entrant-team-members"><fieldset className="entrant-card entrant-member-card"><legend>Entrant 1</legend><SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyMemberFavorite(index, "entrant1", favorite)} /><EntrantCharacterEditor tag={entrant.entrant1.tag} tagLabel="Entrant 1 tag" tagPlaceholder={`Player 1 · Team ${index + 1}`} characters={entrant.entrant1.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, tag } })} onChange={(characters) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, characters } })} /></fieldset><fieldset className="entrant-card entrant-member-card"><legend>Entrant 2</legend><SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyMemberFavorite(index, "entrant2", favorite)} /><EntrantCharacterEditor tag={entrant.entrant2.tag} tagLabel="Entrant 2 tag" tagPlaceholder={`Player 2 · Team ${index + 1}`} characters={entrant.entrant2.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, tag } })} onChange={(characters) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, characters } })} /></fieldset></div>
         <label className="choice"><input type="checkbox" checked={favorites.doubles.some((favorite) => favorite.team_name.trim().toLocaleLowerCase() === entrant.teamName.trim().toLocaleLowerCase())} onChange={(event) => toggleDoublesFavorite(entrant, event.target.checked)} /> Save or update favorite doubles team</label>
       </>}
