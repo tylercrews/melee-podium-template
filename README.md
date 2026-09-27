@@ -66,7 +66,6 @@ npm run build
 
 
 TODO LIST:
-* in Manage Favorites when adding a new favorite it should be in a popup dialog that's easy to cancel out of, instead of appearing at the bottom of the list
 * preset color selection should provide a transparency slider for fun
 * make it so when you select a new color for a character it doesn't reset the pose you already picked
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
