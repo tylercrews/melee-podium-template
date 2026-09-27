@@ -295,3 +295,103 @@ contain `podium_stats.sqlite3`.
 
 After deployment, visit `/api/stats` to verify the counter is still present.
 Each click on the high-resolution image download increments this SQLite-backed value.
+
+TODO Refactor Plan:
+
+The folder audit found that bracket importing and Firebase already have useful
+package boundaries, but most image-generation code still lives as a connected
+set of modules in the repository root. Those modules should be moved in stages,
+because their imports, asset paths, tests, and deployment packaging are closely
+related. `DrawPodium.py` is still an active compatibility dependency and cannot
+be treated as dead code yet. `app.py` is also still responsible for several
+unrelated API areas, while the frontend's `MakerApp.tsx` remains the main state
+and workflow coordinator.
+
+Suggested end-state grouping:
+
+```text
+bracket_import/          # Already completed: provider clients and normalization
+firebase_services/       # Already grouped: authenticated cloud operations
+rendering/
+  creation.py            # Overall composition coordinator
+  background_builder.py
+  content_renderer.py
+  formatting_assets.py
+  format_preview.py
+  preview_layers.py
+  podium_colors.py
+  legacy/
+    DrawPodium.py
+    legacy_podium_content_renderer.py
+    constants.py
+    portrait_pose_labels.py
+    portrait_scale_adjustment_for_each_mode.py
+    portrait_scale_adjustment_to_character_relativity.py
+domain/
+  models.py
+  creation_modes.py
+  mode_preferences.py
+scripts/
+  build_deployment_zip.py
+  generate_background_thumbnails.py
+  generate_preview_layers.py
+assets/                  # Optional final pass because these paths are widely used
+  backgrounds/
+  characters/
+  fonts/
+  formatting/
+frontend/src/
+  features/workflow/
+  features/saved-data/
+  components/
+  lib/
+```
+
+Recommended order if this refactor is approved later:
+
+1. Record a clean baseline by running the complete Python suite and frontend
+   production build. Make one focused commit per phase so moves can be reviewed
+   and reverted independently.
+2. Move the three generation/deployment utilities into `scripts/`. Update their
+   project-root discovery rather than relying on the current working directory,
+   then update README commands and deployment tests. This is the lowest-risk
+   folder move.
+3. Create `rendering/` and move the modern rendering modules together. Keep
+   `creation.py` as the composition coordinator, use package-relative imports,
+   and avoid mixing Flask request handling into this package. Move tests or
+   update imports in the same commit.
+4. Put the active compatibility renderer under `rendering/legacy/`. Do not
+   delete or substantially rewrite `DrawPodium.py` during the move. First give
+   it a stable package boundary; then migrate its responsibilities into modern
+   modules through later, separately tested changes.
+5. Create `domain/` for serializable models, mode selection, and preference
+   schemas. Do this after `rendering/` so dependency direction can consistently
+   flow from API/UI adapters to domain models to rendering, without circular
+   imports.
+6. Split `app.py` into focused Flask blueprints for bracket importing, format
+   rendering/previews, built-in assets, and statistics. Keep a small root
+   `app.py` application entry point and keep `passenger_wsgi.py` at the root for
+   cPanel compatibility.
+7. Reorganize the React source by feature. Extract workflow state and actions
+   from `MakerApp.tsx` into focused hooks/components only after the backend
+   paths are stable. Keep shared API/authentication utilities under `lib/` and
+   avoid changing behavior and folder structure in the same commit.
+8. Consider consolidating static files under `assets/` last. Background,
+   character, font, formatting, preview-layer, test, and deployment paths all
+   depend on their current locations, making this the highest-risk move. Use a
+   single project-root asset resolver rather than adding new relative paths in
+   each renderer.
+9. Update `build_deployment_zip.py` after every phase and verify the archive
+   contains every imported Python package, the built frontend, preferences, and
+   runtime assets while continuing to exclude credentials, caches, the local
+   SQLite counter, and generated archives.
+10. After each phase, run all Python tests, build the frontend, import the Flask
+    application, and manually verify one legacy and one customizable full-image
+    download. Do not combine removal of old code with a folder move until the
+    moved version has passed those checks.
+
+Items that should remain in place unless their behavior is deliberately being
+changed include `preferences/`, the reviewed visual test outputs, archived
+design documentation, and `podium_stats.sqlite3`. Generated deployment ZIPs,
+Python caches, frontend build output, and temporary render files should remain
+ignored rather than committed.

@@ -148,7 +148,7 @@
 
 ## Maintenance
 
-- The README planning sections beginning with `TODO LIST:`, `Maybes/Eventuallies:`, `Different Layout Styles One Day:`, `LocalStorage and LocalStorage Management page.`, and `way down the road:` are the user's personal notes. Never delete, rewrite, reorder, mark complete, or otherwise modify those sections unless the user explicitly asks to change the TODO list itself. Repository cleanup and documentation refreshes must preserve them verbatim.
+- The README planning sections beginning with `TODO LIST:`, `Maybes/Eventuallies:`, `Different Layout Styles One Day:`, `LocalStorage and LocalStorage Management page.`, `way down the road:`, and `TODO Refactor Plan:` are the user's personal notes. Never delete, rewrite, reorder, mark complete, or otherwise modify those sections unless the user explicitly asks to change the TODO list itself. Repository cleanup and documentation refreshes must preserve them verbatim.
 - Update this file when the user establishes a durable design or architecture decision.
 - Add focused tests with new rendering modules, including serialization and image-boundary behavior.
 - Keep reusable sample entrants and complete sample tournament metadata together in `sample_creation_data.py`; generation scripts and tests should import from that single fixture module.
