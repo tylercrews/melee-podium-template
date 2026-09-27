@@ -10,13 +10,14 @@ interface FormatStepProps {
   value: FormatConfiguration;
   backgroundImage: FormatImageInfo | null;
   onChange: (value: FormatConfiguration) => void;
+  onProceed: () => void;
 }
 
 function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
   if (event.target === event.currentTarget) event.currentTarget.close();
 }
 
-export default function FormatStep({ user, value, backgroundImage, onChange }: FormatStepProps) {
+export default function FormatStep({ user, value, backgroundImage, onChange, onProceed }: FormatStepProps) {
   const [savedFormats, setSavedFormats] = useState<SavedFormat[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [formatName, setFormatName] = useState("");
@@ -109,7 +110,7 @@ export default function FormatStep({ user, value, backgroundImage, onChange }: F
 
   const complete = isFormatComplete(value);
   return <section className="step-content format-step">
-    <div className="step-intro"><h1>Choose a Format</h1><p>Configure the image layout, header content, colors, and text settings.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>Choose a Format</h1><button className="button button--ghost" type="button" disabled={!complete} onClick={onProceed}>{complete ? "Proceed to Bracket Import" : "Cannot Skip"}</button></div><p>Configure the image layout, header content, colors, and text settings.</p></div>
 
     <FormatSettings value={value} backgroundImage={backgroundImage} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
     <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose a podium style, bracket type, and entrant layout to continue"}</div>

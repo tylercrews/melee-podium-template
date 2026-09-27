@@ -10,10 +10,12 @@ interface EntrantsStepProps {
   count: number;
   eventFormat: EventFormat;
   includeSeeding: boolean;
+  complete: boolean;
   fighters: FighterOption[];
   favorites: FavoritesData;
   onChange: (value: EntrantDraft[]) => void;
   onFavoritesChange: (value: FavoritesData) => void;
+  onProceed: () => void;
 }
 
 function ordinal(value: number): string {
@@ -25,7 +27,7 @@ function favoriteMember(favorite: FavoriteSinglesEntrant): EntrantMemberDraft {
   return { tag: favorite.tag, characters: favorite.characters.map((character) => ({ ...character })), xHandle: "", country: "" };
 }
 
-export default function EntrantsStep({ value, count, eventFormat, includeSeeding, fighters, favorites, onChange, onFavoritesChange }: EntrantsStepProps) {
+export default function EntrantsStep({ value, count, eventFormat, includeSeeding, complete, fighters, favorites, onChange, onFavoritesChange, onProceed }: EntrantsStepProps) {
   const displayed = value.slice(0, count);
   const update = (index: number, entrant: EntrantDraft) => onChange(value.map((item, current) => current === index ? entrant : item));
 
@@ -80,7 +82,7 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
   }
 
   return <section className="step-content entrants-step">
-    <div className="step-intro"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><button className="button button--ghost" type="button" disabled={!complete} onClick={onProceed}>{complete ? "Proceed to Preview" : "Cannot Skip"}</button></div><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
     <div className="entrant-grid entrant-grid--maker">{displayed.map((entrant, index) => <fieldset className="entrant-card entrant-card--maker" key={`${entrant.kind}-${index}`}>
       <legend>{ordinal(entrant.placement)}</legend>
       {entrant.kind === "singles" ? <>

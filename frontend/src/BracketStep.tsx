@@ -97,7 +97,7 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
   const reviewedEntrants = review?.source.entrants.slice(0, Math.max(8, entrantCount)) ?? [];
 
   return <section className="step-content bracket-step">
-    <div className="step-intro"><div className="step-heading-row"><h1>Import a Bracket</h1><button className="button button--ghost" type="button" onClick={onSkip}>Skip bracket import</button></div><p>Import tournament data and placements automatically, or skip this optional step and enter them yourself.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>Import a Bracket</h1><button className="button button--ghost" type="button" onClick={onSkip}>{review ? "Proceed to Tournament" : "Skip bracket import"}</button></div><p>Import tournament data and placements automatically, or skip this optional step and enter them yourself.</p></div>
     <form className="bracket-import-card" onSubmit={handleImport}>
       <div className="bracket-import-card__heading"><span className="eyebrow">Public bracket link</span><h2>Bring in bracket results</h2><p>Supports Start.gg, Start.gg USB Reporting character data, Challonge.com, and Parry.gg brackets.</p></div>
       <label className="field bracket-url-field">Bracket URL<input type="text" inputMode="url" value={url} onChange={(event) => onUrlChange(event.target.value)} placeholder="start.gg/tournament/.../event/..." required /></label>

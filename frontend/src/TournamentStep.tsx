@@ -4,16 +4,18 @@ import { MetadataField } from "./format";
 interface TournamentStepProps {
   value: TournamentDetails;
   selectedFields: MetadataField[];
+  complete: boolean;
   onChange: (value: TournamentDetails) => void;
+  onProceed: () => void;
 }
 
-export default function TournamentStep({ value, selectedFields, onChange }: TournamentStepProps) {
+export default function TournamentStep({ value, selectedFields, complete, onChange, onProceed }: TournamentStepProps) {
   function update(key: keyof TournamentDetails, nextValue: string) {
     onChange({ ...value, [key]: nextValue });
   }
 
   return <section className="step-content tournament-step">
-    <div className="step-intro"><h1>Tournament Details</h1><p>Review the tournament title and fill in the metadata selected in your format.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>Tournament Details</h1><button className="button button--ghost" type="button" disabled={!complete} onClick={onProceed}>{complete ? "Proceed to Entrants" : "Cannot Skip"}</button></div><p>Review the tournament title and fill in the metadata selected in your format.</p></div>
     <section className="tournament-settings-card" aria-labelledby="tournament-content-heading">
       <div className="tournament-settings-card__heading"><span className="eyebrow">Title content</span><h2 id="tournament-content-heading">Tournament name</h2><p>The title is always used by the header. The subtitle remains optional.</p></div>
       <div className="tournament-field-grid">

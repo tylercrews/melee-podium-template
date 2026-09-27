@@ -5,6 +5,7 @@ import { FormatConfiguration, normalizeFormat, parseFormatCode } from "./format"
 
 interface LoadStepProps {
   user: User | null;
+  hasLoadedFormat: boolean;
   onChange: (value: FormatConfiguration) => void;
   onSignIn: () => void;
   onSkip: () => void;
@@ -14,7 +15,7 @@ function closeOnBackdrop(event: MouseEvent<HTMLDialogElement>) {
   if (event.target === event.currentTarget) event.currentTarget.close();
 }
 
-export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepProps) {
+export default function LoadStep({ user, hasLoadedFormat, onChange, onSignIn, onSkip }: LoadStepProps) {
   const [savedFormats, setSavedFormats] = useState<SavedFormat[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [importText, setImportText] = useState("");
@@ -72,7 +73,7 @@ export default function LoadStep({ user, onChange, onSignIn, onSkip }: LoadStepP
   }
 
   return <section className="step-content load-step">
-    <div className="step-intro"><div className="step-heading-row"><h1>Load a Format</h1><button className="button button--ghost" type="button" onClick={onSkip}>Skip loading</button></div><p>Start with saved settings, import a shared format code, or continue without loading one.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>Load a Format</h1><button className="button button--ghost" type="button" onClick={onSkip}>{hasLoadedFormat ? "Proceed to Assets" : "Skip loading"}</button></div><p>Start with saved settings, import a shared format code, or continue without loading one.</p></div>
     <section className="format-loader" aria-labelledby="load-format-heading">
       <div><span className="eyebrow">Optional starting point</span><h2 id="load-format-heading">Load a previous format</h2></div>
       {user ? <label className="format-select">Saved formats<select value={selectedId} onChange={(event) => loadSavedFormat(event.target.value)} disabled={loading}><option value="">{loading ? "Loading formats…" : "Choose a saved format"}</option>{savedFormats.map((format) => <option value={format.id} key={format.id}>{format.name}</option>)}</select></label> : <div className="format-signin"><p>Sign in to choose from your saved formats.</p><button className="button button--outline" type="button" onClick={onSignIn}>Sign in</button></div>}
