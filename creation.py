@@ -113,13 +113,19 @@ class CreationRequest:
             raise TypeError("formatting_colors must be GeometricFormattingColors or null")
         if self.header_layout is not None:
             expected_contents = {"tournament_logo", "tournament_title", "metadata"}
-            expected_positions = {
-                CreationMode.PODIUM: {"top_left", "top_middle", "top_right"},
-                CreationMode.EYES: {"top", "middle", "bottom"},
-                CreationMode.SQUARES: {"top_left", "top_middle", "top_right"},
-            }[self.selection.mode]
-            values = tuple(self.header_layout.values())
-            if set(self.header_layout) != expected_positions:
+            normalized_layout = dict(self.header_layout)
+            if (
+                self.selection.mode is CreationMode.EYES
+                and set(normalized_layout) == {"top", "middle", "bottom"}
+            ):
+                normalized_layout = {
+                    "top_left": normalized_layout["top"],
+                    "top_middle": normalized_layout["middle"],
+                    "top_right": normalized_layout["bottom"],
+                }
+            expected_positions = {"top_left", "top_middle", "top_right"}
+            values = tuple(normalized_layout.values())
+            if set(normalized_layout) != expected_positions:
                 raise ValueError(
                     f"header_layout has invalid positions for {self.selection.mode.value}"
                 )
@@ -127,7 +133,7 @@ class CreationRequest:
                 raise ValueError(
                     "header_layout must assign each header item to one unique position"
                 )
-            object.__setattr__(self, "header_layout", dict(self.header_layout))
+            object.__setattr__(self, "header_layout", normalized_layout)
         entrants = tuple(self.entrants)
         object.__setattr__(self, "entrants", entrants)
         options = self.selection.options

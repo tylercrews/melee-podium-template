@@ -187,7 +187,12 @@ class ModePreferencesTest(unittest.TestCase):
                 item.selection.mode is CreationMode.EYES
                 and item.selection.options.entrant_count in {10, 15, 16, 20, 25}
             ):
-                self.assertEqual(item.canvas_size.width, 1920)
+                self.assertEqual(
+                    item.canvas_size.width,
+                    2400
+                    if item.selection.options.entrant_count in {16, 25}
+                    else 1920,
+                )
                 self.assertLess(item.canvas_size.height, 5000)
                 continue
             expected_canvas = {

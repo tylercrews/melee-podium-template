@@ -3,7 +3,7 @@ import { apiUrl, recordDownload } from "./api";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
-import { FormatConfiguration, PixelSize, buildBackgroundPlacement, sizeMultiplierValue } from "./format";
+import { FormatConfiguration, PixelSize, buildBackgroundPlacement, formatCanvasSize, sizeMultiplierValue } from "./format";
 
 interface FormatPreviewProps {
   format: FormatConfiguration;
@@ -46,7 +46,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
 function layoutId(format: FormatConfiguration): string {
   if (format.selection.options.variant === "four_podium") return "top_8_four_podiums";
-  const entrantCount = format.selection.options.entrant_count;
+  const entrantCount = format.selection.options.entrant_count
+    ?? (format.selection.options.event_format === "doubles" ? 3 : 8);
   return entrantCount === 3 ? "top_3" : entrantCount === 4 ? "top_4" : "top_8";
 }
 
@@ -56,6 +57,30 @@ function headerPermutationId(format: FormatConfiguration): string {
 }
 
 function headerBox(format: FormatConfiguration, outputSize: PixelSize, position: LayerRequest["logoPosition"]): LayerRequest["logoBox"] {
+  if (format.selection.mode === "eyes") {
+    const index = position === "top_left" ? 0 : position === "top_middle" ? 1 : 2;
+    if (outputSize.width === 1080) {
+      const top = 20;
+      const sectionHeight = Math.floor((1900 - top) / 3);
+      return {
+        left: 858,
+        top: top + index * sectionHeight + 8,
+        right: 1052,
+        bottom: top + (index + 1) * sectionHeight - 8,
+      };
+    }
+    const left = 40;
+    const right = outputSize.width - 40;
+    const gap = 24;
+    const sectionWidth = Math.floor((right - left - gap * 2) / 3);
+    const sectionLeft = left + index * (sectionWidth + gap);
+    return {
+      left: sectionLeft,
+      top: 30,
+      right: index === 2 ? right : sectionLeft + sectionWidth,
+      bottom: 225,
+    };
+  }
   if (format.selection.mode !== "squares") {
     const third = outputSize.width / 3;
     const index = position === "top_left" ? 0 : position === "top_middle" ? 1 : 2;
@@ -80,9 +105,9 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   const style = format.selection.options.podium_style ?? "legacy";
   const eventFormat = format.selection.options.event_format ?? "singles";
   const layout = layoutId(format);
-  const outputSize = mode === "squares"
-    ? { width: 1920, height: 1080 }
-    : style === "customizable" ? { width: 1920, height: 941 } : { width: 1672, height: 941 };
+  const outputSize = formatCanvasSize(format) ?? (
+    style === "customizable" ? { width: 1920, height: 941 } : { width: 1672, height: 941 }
+  );
   const selectedFontId = fontAsset?.id.replace("provided:", "") ?? "tyrowo";
   const fontId = fontAsset?.custom
     ? "ubuntu"
@@ -91,7 +116,14 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   const colors = format.formatting_asset_colors;
   let foregroundLayers: LayerRequest["foregroundLayers"];
   let headerUrl: string;
-  if (mode === "squares") {
+  if (mode === "eyes") {
+    const eyeEntrantCount = format.selection.options.entrant_count
+      ?? (eventFormat === "doubles" ? 3 : 8);
+    const eyeLayout = `${eventFormat}_top_${eyeEntrantCount}`;
+    const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
+    foregroundLayers = [{ url: `${layerRoot}/eyes/${eyeLayout}/${colorId}.png` }];
+    headerUrl = `${layerRoot}/eye_headers/${fontId}/${eyeLayout}/${headerPermutationId(format)}.png`;
+  } else if (mode === "squares") {
     const squareLayout = `${eventFormat}_${layout}`;
     const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
     foregroundLayers = [{ url: `${layerRoot}/squares/${squareLayout}/${colorId}.png` }];
@@ -104,9 +136,11 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     foregroundLayers = [{ url: `${layerRoot}/podiums/legacy/${layout}.png` }];
     headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
   }
-  const styleLabel = mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
+  const styleLabel = mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
-  const layoutLabel = layout === "top_8_four_podiums" ? "Top 8 – 4 Podiums" : layout.replace("top_", "Top ");
+  const layoutLabel = format.selection.options.variant === "four_podium"
+    ? "Top 8 – 4 Podiums"
+    : `Top ${format.selection.options.entrant_count ?? 8}`;
   return {
     foregroundLayers,
     headerUrl,
@@ -216,7 +250,13 @@ function drawLogo(context: CanvasRenderingContext2D, format: FormatConfiguration
   const scale = sizeMultiplierValue(format.image_settings.logo_size);
   const width = logoImage.width * scale;
   const height = logoImage.height * scale;
-  if (format.selection.mode === "squares") {
+  if (format.selection.mode === "eyes" && outputSize.width === 1080) {
+    context.save();
+    context.translate((box.left + box.right) / 2, (box.top + box.bottom) / 2);
+    context.rotate(Math.PI / 2);
+    context.drawImage(logo, -width / 2, -height / 2, width, height);
+    context.restore();
+  } else if (format.selection.mode === "squares" || format.selection.mode === "eyes") {
     context.drawImage(logo, box.left + (box.right - box.left - width) / 2, box.top + (box.bottom - box.top - height) / 2, width, height);
   } else {
     const left = position === "top_middle" ? (outputSize.width - width) / 2 : position === "top_right" ? outputSize.width - width - 20 : 20;

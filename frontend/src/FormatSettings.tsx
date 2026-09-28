@@ -97,15 +97,26 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
     onChange({ ...value, text_settings: { ...value.text_settings, metadata_fields: fields } });
   }
 
+  function headerPositionLabel(position: HeaderPosition, fallback: string) {
+    const verticalEyes = selection.mode === "eyes"
+      && (selection.options.event_format === "doubles" || selection.options.entrant_count === 8);
+    if (!verticalEyes) return fallback;
+    return {
+      top_left: "Top",
+      top_middle: "Middle",
+      top_right: "Bottom",
+    }[position];
+  }
+
   return <div className="format-settings">
     <section className="format-settings-card" aria-labelledby="image-format-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Format settings</span><h2 id="image-format-heading">Image format</h2><p>Choose the kind of results image, its visual style, and the bracket type.</p></div>
       <fieldset className="format-choice-group"><legend>Image type</legend><div className="format-choice-grid format-choice-grid--three">
         {([
-          { value: "podium" as const, label: "Podiums", detail: "Entrants arranged across placement podiums", disabled: false },
-          { value: "eyes" as const, label: "Eyes", detail: "Coming later", disabled: true },
-          { value: "squares" as const, label: "Squares", detail: "Portrait cards with customizable borders and backgrounds", disabled: false },
-        ]).map((option) => <label className={`format-choice${option.disabled ? " format-choice--disabled" : ""}`} key={option.value}><input type="radio" name="image-format" value={option.value} checked={selection.mode === option.value} onChange={() => updateMode(option.value)} disabled={option.disabled} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{option.label}</strong><small>{option.detail}</small></span></label>)}
+          { value: "podium" as const, label: "Podiums", detail: "Entrants arranged across placement podiums", disabled: false, thumbnail: "podium.webp" },
+          { value: "eyes" as const, label: "Eyes", detail: "Close-up portrait strips with placement numbers", disabled: false, thumbnail: "eyes.webp" },
+          { value: "squares" as const, label: "Squares", detail: "Portrait cards with customizable borders and backgrounds", disabled: false, thumbnail: "squares.webp" },
+        ]).map((option) => <label className={`format-choice format-choice--with-thumbnail${option.disabled ? " format-choice--disabled" : ""}`} key={option.value}><input type="radio" name="image-format" value={option.value} checked={selection.mode === option.value} onChange={() => updateMode(option.value)} disabled={option.disabled} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{option.label}</strong><small>{option.detail}</small></span><img className="format-choice__thumbnail" src={`${import.meta.env.BASE_URL}format_mode_thumbnails/${option.thumbnail}`} alt={`${option.label} example`} /></label>)}
       </div></fieldset>
 
       {selection.mode === "podium" && <fieldset className="format-choice-group"><legend>Podium style</legend><div className="format-choice-grid">
@@ -125,7 +136,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
     <section className="format-settings-card" aria-labelledby="header-layout-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Text and header</span><h2 id="header-layout-heading">Content Selections</h2><p>Assign the header positions and choose which supporting details appear in the image.</p></div>
       <div className="format-header-map">
-        {headerPositions.map((position) => <label className={`format-header-slot format-header-slot--${position.value}`} key={position.value}><span>{position.label}</span><select value={value.header_layout[position.value]} onChange={(event) => assignHeader(position.value, event.target.value as HeaderContent)}>{headerContents.map((content) => <option value={content.value} key={content.value}>{content.label}</option>)}</select><span className="format-header-slot__preview" aria-hidden="true">{headerContents.find((content) => content.value === value.header_layout[position.value])?.label}</span></label>)}
+        {headerPositions.map((position) => <label className={`format-header-slot format-header-slot--${position.value}`} key={position.value}><span>{headerPositionLabel(position.value, position.label)}</span><select value={value.header_layout[position.value]} onChange={(event) => assignHeader(position.value, event.target.value as HeaderContent)}>{headerContents.map((content) => <option value={content.value} key={content.value}>{content.label}</option>)}</select><span className="format-header-slot__preview" aria-hidden="true">{headerContents.find((content) => content.value === value.header_layout[position.value])?.label}</span></label>)}
       </div>
       <RgbaColorPicker label="Heading Text Color" value={value.text_settings.heading_color} onChange={(heading_color) => onChange({ ...value, text_settings: { ...value.text_settings, heading_color } })} metallic={value.text_settings.heading_metallic} onMetallicChange={(heading_metallic) => onChange({ ...value, text_settings: { ...value.text_settings, heading_metallic } })} />
       <div className="text-settings">

@@ -128,18 +128,30 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
         canvas_size = (1080, 1920)
         header_rectangle = (850, 20, 1060, 1900)
     elif event_format == "singles" and count in {10, 15, 16, 20, 25}:
-        canvas_width = 1920
+        columns = 4 if count in {16, 25} else 3
+        canvas_width = 2400 if columns == 4 else 1920
         side_margin = 40
         column_gap = 28
-        column_width = (canvas_width - side_margin * 2 - column_gap * 2) // 3
+        column_width = (
+            canvas_width - side_margin * 2 - column_gap * (columns - 1)
+        ) // columns
         first_rectangle = (side_margin, 260, canvas_width - side_margin, 590)
         grid_top = 630
         row_height = 260
         row_gap = 26
         remaining = count - 1
         rectangles = [first_rectangle]
-        for row in range(math.ceil(remaining / 3)):
-            items_in_row = min(3, remaining - row * 3)
+        row_sizes = (
+            [3, 4, 4, 4]
+            if count == 16
+            else [4, 4, 4, 4, 4, 4]
+            if count == 25
+            else [
+                min(columns, remaining - row * columns)
+                for row in range(math.ceil(remaining / columns))
+            ]
+        )
+        for row, items_in_row in enumerate(row_sizes):
             row_width = items_in_row * column_width + (items_in_row - 1) * column_gap
             row_left = (canvas_width - row_width) // 2
             top = grid_top + row * (row_height + row_gap)

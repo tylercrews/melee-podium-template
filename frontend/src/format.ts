@@ -495,8 +495,8 @@ export function parseFormatCode(code: string): FormatConfiguration {
 export function isFormatComplete(format: FormatConfiguration): boolean {
   try {
     const normalized = normalizeFormat(format);
-    const supportedMode = normalized.selection.mode === "squares"
-      || (normalized.selection.mode === "podium" && normalized.selection.options.podium_style !== null);
+    const supportedMode = normalized.selection.mode !== "podium"
+      || normalized.selection.options.podium_style !== null;
     return supportedMode
       && normalized.selection.options.event_format !== null
       && hasValidEntrantCount(normalized.selection)
@@ -523,6 +523,16 @@ export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelS
 
 export function formatCanvasSize(format: FormatConfiguration): PixelSize | null {
   if (format.selection.mode === "squares") return { width: 1920, height: 1080 };
+  if (format.selection.mode === "eyes") {
+    const count = format.selection.options.entrant_count;
+    if (format.selection.options.event_format === "doubles" || count === 8) return { width: 1080, height: 1920 };
+    if (count === 10) return { width: 1920, height: 1542 };
+    if (count === 15) return { width: 1920, height: 2114 };
+    if (count === 16) return { width: 2400, height: 1828 };
+    if (count === 20) return { width: 1920, height: 2686 };
+    if (count === 25) return { width: 2400, height: 2400 };
+    return null;
+  }
   if (format.selection.mode !== "podium") return null;
   if (format.selection.options.podium_style === "customizable") return { width: 1920, height: 941 };
   if (format.selection.options.podium_style === "legacy") return { width: 1672, height: 941 };

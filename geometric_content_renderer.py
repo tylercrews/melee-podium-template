@@ -109,6 +109,50 @@ def _card_rectangles(preferences: ModePreferences) -> dict[int, PixelRect]:
     return cards
 
 
+def _eyes_header_boxes(
+    preferences: ModePreferences,
+) -> dict[str, tuple[PixelRect, str]]:
+    """Return Eyes header regions using the shared Podium assignment keys."""
+
+    bar = next(
+        item.destination
+        for item in preferences.formatting_assets
+        if item.asset_id == "eyes_header_bar"
+    )
+    positions = ("top_left", "top_middle", "top_right")
+    if bar.width > bar.height:
+        gap = 24
+        section_width = (bar.width - gap * 2) // 3
+        anchors = ("la", "ma", "ra")
+        return {
+            position: (
+                PixelRect(
+                    bar.left + index * (section_width + gap),
+                    bar.top,
+                    bar.right
+                    if index == 2
+                    else bar.left + index * (section_width + gap) + section_width,
+                    bar.bottom,
+                ),
+                anchors[index],
+            )
+            for index, position in enumerate(positions)
+        }
+    section_height = bar.height // 3
+    return {
+        position: (
+            PixelRect(
+                bar.left + 8,
+                bar.top + index * section_height + 8,
+                bar.right - 8,
+                bar.top + (index + 1) * section_height - 8,
+            ),
+            "ma",
+        )
+        for index, position in enumerate(positions)
+    }
+
+
 def _text_value(
     placement: TextPlacement,
     result: SinglesEntrant | DoublesTeam,
@@ -451,42 +495,42 @@ class EyesContentRenderer:
             if item.asset_id == "eyes_header_bar"
         )
         layout = request.header_layout or {
-            "top": "tournament_logo",
-            "middle": "tournament_title",
-            "bottom": "metadata",
+            "top_left": "tournament_logo",
+            "top_middle": "tournament_title",
+            "top_right": "metadata",
         }
         logo = _open_logo(self.tournament_logo)
+        boxes = _eyes_header_boxes(preferences)
         if bar.width > bar.height:
-            gap = 24
-            section_width = (bar.width - gap * 2) // 3
-            for index, position in enumerate(("top", "middle", "bottom")):
-                content = layout.get(position)
+            for position, legacy_position in zip(
+                ("top_left", "top_middle", "top_right"),
+                ("top", "middle", "bottom"),
+                strict=True,
+            ):
+                content = layout.get(position, layout.get(legacy_position))
                 if content is None:
                     continue
-                left = bar.left + index * (section_width + gap)
-                right = bar.right if index == 2 else left + section_width
+                box, anchor = boxes[position]
                 _draw_horizontal_header_item(
                     canvas,
                     request,
                     content,
-                    PixelRect(left, bar.top, right, bar.bottom),
+                    box,
                     self.font,
                     logo,
-                    ("la", "ma", "ra")[index],
+                    anchor,
                     title_preferred_size=64,
                 )
             return
-        section_height = bar.height // 3
-        for index, position in enumerate(("top", "middle", "bottom")):
-            content = layout[position]
+        for position, legacy_position in zip(
+            ("top_left", "top_middle", "top_right"),
+            ("top", "middle", "bottom"),
+            strict=True,
+        ):
+            content = layout.get(position, layout.get(legacy_position))
             if content is None:
                 continue
-            box = PixelRect(
-                bar.left + 8,
-                bar.top + index * section_height + 8,
-                bar.right - 8,
-                bar.top + (index + 1) * section_height - 8,
-            )
+            box, _anchor = boxes[position]
             layer = _render_rotated_header_item(
                 request,
                 content,

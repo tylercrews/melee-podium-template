@@ -12,13 +12,23 @@ from creation import CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont, PodiumMode
 from formatting_assets import FormattingAssetRenderer
-from geometric_content_renderer import SquaresContentRenderer, _squares_header_boxes
+from geometric_content_renderer import (
+    EyesContentRenderer,
+    SquaresContentRenderer,
+    _eyes_header_boxes,
+    _squares_header_boxes,
+)
 from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository
 from models import TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
-from sample_creation_data import sample_top_4_teams, sample_top_8_entrants, sample_tournament
+from sample_creation_data import (
+    sample_singles_entrants,
+    sample_top_4_teams,
+    sample_top_8_entrants,
+    sample_tournament,
+)
 
 
 LAYER_CANVAS_SIZE = PixelSize(1920, 941)
@@ -38,6 +48,14 @@ SQUARE_LAYOUTS = {
 SQUARE_HEADER_LAYOUTS = {
     "singles": (TournamentFormat.SINGLES, 8),
     "doubles": (TournamentFormat.DOUBLES, 4),
+}
+EYE_LAYOUTS = {
+    **{
+        f"singles_top_{count}": (TournamentFormat.SINGLES, count)
+        for count in (8, 10, 15, 16, 20, 25)
+    },
+    "doubles_top_3": (TournamentFormat.DOUBLES, 3),
+    "doubles_top_4": (TournamentFormat.DOUBLES, 4),
 }
 COLOR_LAYER_IDS = ("smash_player_colors", "olympic_medals", "rainbow", "pick_all")
 RAINBOW_MAIN_COLORS = (
@@ -156,26 +174,85 @@ def render_square_header_layer(
     return canvas
 
 
+def render_eye_header_layer(
+    font: PodiumFont,
+    layout_id: str,
+    header_layout: dict[str, str],
+) -> Image.Image:
+    event_format, entrant_count = EYE_LAYOUTS[layout_id]
+    selection = ModeSelection(
+        CreationMode.EYES,
+        ModeOptions(event_format=event_format, entrant_count=entrant_count),
+    )
+    preferences = ModePreferenceRepository().load(selection)
+    canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
+    entrants = (
+        sample_singles_entrants(entrant_count)
+        if event_format is TournamentFormat.SINGLES
+        else sample_top_4_teams()[:entrant_count]
+    )
+    request = CreationRequest(
+        selection=selection,
+        background=BackgroundRequest(size=preferences.canvas_size),
+        entrants=entrants,
+        tournament=sample_tournament(event_format),
+        formatting_colors=GeometricFormattingColors.one("#E53935FF"),
+        header_layout=header_layout,
+        text_settings=TextSettings(),
+    )
+    EyesContentRenderer(font=font)._draw_header(canvas, request, preferences)
+    logo_position = next(
+        position
+        for position, content in header_layout.items()
+        if content == "tournament_logo"
+    )
+    logo_box = _eyes_header_boxes(preferences)[logo_position][0]
+    _boxed_logo_placeholder(canvas, logo_box.as_tuple())
+    return canvas
+
+
 def _repeat_colors(colors: tuple[PodiumColorSelection, ...], count: int = 8) -> PodiumColorConfiguration:
     return PodiumColorConfiguration.per_podium(*(colors[index % len(colors)] for index in range(count)))
 
 
 def _rainbow_colors(asset_count: int) -> PodiumColorConfiguration:
-    indexes = (0, 3, 7) if asset_count == 3 else (1, 3, 5, 7) if asset_count == 4 else tuple(range(8))
-    return _repeat_colors(tuple(PodiumColorSelection(RAINBOW_MAIN_COLORS[index]) for index in indexes))
+    indexes = (
+        (0, 3, 7)
+        if asset_count == 3
+        else (1, 3, 5, 7)
+        if asset_count == 4
+        else tuple(range(8))
+        if asset_count == 8
+        else tuple(
+            round(index * 7 / max(1, asset_count - 1))
+            for index in range(asset_count)
+        )
+    )
+    return _repeat_colors(
+        tuple(PodiumColorSelection(RAINBOW_MAIN_COLORS[index]) for index in indexes),
+        asset_count,
+    )
 
 
 def _customizable_colors(layer_id: str, asset_count: int) -> PodiumColorConfiguration:
     if layer_id == "smash_player_colors":
-        return PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        preset = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        return _repeat_colors(
+            tuple(preset.color_for_slot(slot) for slot in range(1, 9)),
+            asset_count,
+        )
     if layer_id == "olympic_medals":
-        return PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+        preset = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+        return _repeat_colors(
+            tuple(preset.color_for_slot(slot) for slot in range(1, 9)),
+            asset_count,
+        )
     if layer_id == "rainbow":
         return _rainbow_colors(asset_count)
     if layer_id == "custom_red":
-        return _repeat_colors((CUSTOM_RED,))
+        return _repeat_colors((CUSTOM_RED,), asset_count)
     if layer_id == "pick_all":
-        return _repeat_colors(PICK_ALL_COLORS)
+        return _repeat_colors(PICK_ALL_COLORS, asset_count)
     raise ValueError(f"Unknown customizable preview layer: {layer_id}")
 
 
@@ -231,6 +308,64 @@ def render_square_layer(layout_id: str, color_id: str) -> Image.Image:
     )
     canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     return FormattingAssetRenderer().draw(canvas, preferences, colors)
+
+
+def render_eye_layer(layout_id: str, color_id: str) -> Image.Image:
+    event_format, entrant_count = EYE_LAYOUTS[layout_id]
+    selection = ModeSelection(
+        CreationMode.EYES,
+        ModeOptions(event_format=event_format, entrant_count=entrant_count),
+    )
+    preferences = ModePreferenceRepository().load(selection)
+    source_colors = _customizable_colors(color_id, entrant_count)
+    colors = GeometricFormattingColors(
+        tuple(
+            GeometricFormattingColor(resolved.main_color)
+            for resolved in (
+                source_colors.color_for_slot(slot).resolve()
+                for slot in range(1, entrant_count + 1)
+            )
+        )
+    )
+    canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
+    return FormattingAssetRenderer().draw(canvas, preferences, colors)
+
+
+def generate_eye_preview_layers(output_root: Path) -> list[Path]:
+    """Generate Eyes header permutations and combined preset-rectangle layers."""
+
+    outputs: list[Path] = []
+    for font in PodiumFont:
+        for contents in permutations(HEADER_CONTENTS):
+            layout = dict(zip(HEADER_POSITIONS, contents, strict=True))
+            for layout_id in EYE_LAYOUTS:
+                path = (
+                    output_root
+                    / "eye_headers"
+                    / font.value
+                    / layout_id
+                    / f"{header_permutation_id(layout)}.png"
+                )
+                path.parent.mkdir(parents=True, exist_ok=True)
+                render_eye_header_layer(font, layout_id, layout).save(
+                    path,
+                    format="PNG",
+                    optimize=True,
+                )
+                outputs.append(path)
+
+    eye_root = output_root / "eyes"
+    for layout_id in EYE_LAYOUTS:
+        for color_id in COLOR_LAYER_IDS:
+            path = eye_root / layout_id / f"{color_id}.png"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            render_eye_layer(layout_id, color_id).save(
+                path,
+                format="PNG",
+                optimize=True,
+            )
+            outputs.append(path)
+    return outputs
 
 
 def generate_square_preview_layers(output_root: Path) -> list[Path]:
@@ -293,4 +428,5 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
             render_podium_layer(PodiumStyle.CUSTOMIZABLE, layout_id, color_id).save(path, format="PNG", optimize=True)
             outputs.append(path)
     outputs.extend(generate_square_preview_layers(output_root))
+    outputs.extend(generate_eye_preview_layers(output_root))
     return outputs

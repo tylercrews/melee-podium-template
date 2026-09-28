@@ -335,7 +335,10 @@ def _repeat_podium_colors(
     )
 
 
-def _rainbow_preview_colors(asset_count: int) -> PodiumColorConfiguration:
+def _rainbow_preview_colors(
+    asset_count: int,
+    output_count: int = 8,
+) -> PodiumColorConfiguration:
     if asset_count == 3:
         indexes = (0, 3, 7)
     elif asset_count == 4:
@@ -348,7 +351,8 @@ def _rainbow_preview_colors(asset_count: int) -> PodiumColorConfiguration:
             for index in range(asset_count)
         )
     return _repeat_podium_colors(
-        tuple(PodiumColorSelection(_RAINBOW_MAIN_COLORS[index]) for index in indexes)
+        tuple(PodiumColorSelection(_RAINBOW_MAIN_COLORS[index]) for index in indexes),
+        output_count,
     )
 
 
@@ -356,6 +360,8 @@ def _custom_preview_colors(
     value: object,
     entrant_count: int,
     variant: str | None,
+    *,
+    color_count: int = 8,
 ) -> PodiumColorConfiguration:
     if not isinstance(value, Mapping):
         raise ValueError("Formatting asset colors must be an object")
@@ -382,12 +388,20 @@ def _custom_preview_colors(
             raise ValueError("Preset transparencies must be integers from 0 through 100")
         preset = value.get("preset")
         if preset == "smash_player_colors":
-            colors = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+            source = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+            colors = _repeat_podium_colors(
+                tuple(source.color_for_slot(slot) for slot in range(1, 9)),
+                color_count,
+            )
         elif preset == "olympic_medals":
-            colors = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+            source = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
+            colors = _repeat_podium_colors(
+                tuple(source.color_for_slot(slot) for slot in range(1, 9)),
+                color_count,
+            )
         elif preset == "rainbow":
             asset_count = 4 if variant == "four_podium" else entrant_count
-            colors = _rainbow_preview_colors(asset_count)
+            colors = _rainbow_preview_colors(asset_count, color_count)
         else:
             raise ValueError("Unknown formatting color preset")
         if not any(transparency.values()):
@@ -407,9 +421,12 @@ def _custom_preview_colors(
             )
             for selection, resolved in (
                 (selection, selection.resolve())
-                for selection in (colors.color_for_slot(slot) for slot in range(1, 9))
+                for selection in (
+                    colors.color_for_slot(slot)
+                    for slot in range(1, color_count + 1)
+                )
             )
-        ))
+        ), color_count)
     raw_colors = value.get("colors")
     if not isinstance(raw_colors, list) or not raw_colors:
         raise ValueError("Custom formatting colors must be a non-empty array")
@@ -421,11 +438,11 @@ def _custom_preview_colors(
     if len(colors) != len(raw_colors):
         raise ValueError("Every formatting color must be an object")
     if mode == "pick_1" and len(colors) == 1:
-        return _repeat_podium_colors(colors)
+        return _repeat_podium_colors(colors, color_count)
     if mode == "pick_2" and len(colors) == 2:
         return PodiumColorConfiguration.alternating(*colors)
     if mode == "pick_all":
-        return _repeat_podium_colors(colors)
+        return _repeat_podium_colors(colors, color_count)
     raise ValueError("Invalid formatting color selection")
 
 
@@ -433,15 +450,25 @@ def _geometric_preview_colors(
     value: object,
     entrant_count: int,
     variant: str | None,
+    creation_mode: CreationMode,
 ) -> GeometricFormattingColors:
-    """Map shared UI fields to Squares: main=border and sides=background."""
+    """Map shared UI colors to the selected geometric renderer."""
 
-    podium_colors = _custom_preview_colors(value, entrant_count, variant)
+    podium_colors = _custom_preview_colors(
+        value,
+        entrant_count,
+        variant,
+        color_count=entrant_count,
+    )
     return GeometricFormattingColors(
         tuple(
             GeometricFormattingColor(
-                selection.resolve().base_color,
-                selection.resolve().main_color,
+                selection.resolve().main_color
+                if creation_mode is CreationMode.EYES
+                else selection.resolve().base_color,
+                None
+                if creation_mode is CreationMode.EYES
+                else selection.resolve().main_color,
             )
             for selection in (
                 podium_colors.color_for_slot(slot)
@@ -559,7 +586,12 @@ def customized_format_preview() -> Any:
         else None
     )
     formatting_colors = (
-        _geometric_preview_colors(payload.get("formatting_asset_colors"), entrant_count, variant)
+        _geometric_preview_colors(
+            payload.get("formatting_asset_colors"),
+            entrant_count,
+            variant,
+            creation_mode,
+        )
         if creation_mode in {CreationMode.EYES, CreationMode.SQUARES}
         else None
     )

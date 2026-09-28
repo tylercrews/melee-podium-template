@@ -145,6 +145,37 @@ class FormatPreviewRouteTests(unittest.TestCase):
         self.assertEqual(colors.for_slot(1).trim_color, "#AABBCCDD")
         self.assertEqual(colors.for_slot(1).background_color, "#20304080")
 
+    def test_eyes_maps_main_to_rectangle_background(self) -> None:
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
+            response = self.client.post(
+                "/api/format-preview",
+                json={
+                    "mode": "eyes",
+                    "event_format": "singles",
+                    "entrant_count": 8,
+                    "formatting_asset_colors": {
+                        "mode": "pick_1",
+                        "preset": None,
+                        "preset_transparency": {
+                            "main_color": 0,
+                            "face_color": 0,
+                            "base_color": 0,
+                        },
+                        "colors": [{
+                            "main_color": "#AABBCCDD",
+                            "face_color": "#11223344",
+                            "base_color": "#20304080",
+                            "metallic": False,
+                        }],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        colors = render_preview.call_args.kwargs["formatting_colors"]
+        self.assertEqual(colors.for_slot(1).background_color, "#AABBCCDD")
+        self.assertIsNone(colors.for_slot(1).trim_color)
+
     def test_lists_provided_fonts_and_renders_uploaded_font_bytes(self) -> None:
         fonts_response = self.client.get("/api/fonts")
         self.assertEqual(fonts_response.status_code, 200)

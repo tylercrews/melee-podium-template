@@ -90,7 +90,7 @@ class GeometricModesTest(unittest.TestCase):
                     ],
                 )
 
-    def test_extended_eyes_layouts_use_full_width_first_and_three_column_grid(self) -> None:
+    def test_extended_eyes_layouts_use_full_width_first_and_reviewed_grids(self) -> None:
         repository = ModePreferenceRepository()
         expected_placements = {
             10: list(range(1, 11)),
@@ -116,7 +116,11 @@ class GeometricModesTest(unittest.TestCase):
                 for item in preferences.formatting_assets
                 if item.asset_id == "eyes_header_bar"
             )
-            self.assertEqual(preferences.canvas_size.width, 1920)
+            expected_columns = 4 if count in {16, 25} else 3
+            self.assertEqual(
+                preferences.canvas_size.width,
+                2400 if expected_columns == 4 else 1920,
+            )
             self.assertLess(preferences.canvas_size.height, 5000)
             self.assertGreater(header.width, header.height)
             self.assertEqual(len(cards), count)
@@ -124,7 +128,11 @@ class GeometricModesTest(unittest.TestCase):
             rows: dict[int, int] = {}
             for card in cards[1:]:
                 rows[card.top] = rows.get(card.top, 0) + 1
-            self.assertLessEqual(max(rows.values()), 3)
+            self.assertLessEqual(max(rows.values()), expected_columns)
+            if count == 16:
+                self.assertEqual(list(rows.values()), [3, 4, 4, 4])
+            elif count == 25:
+                self.assertEqual(list(rows.values()), [4, 4, 4, 4, 4, 4])
             self.assertEqual(
                 [int(item.asset_id[:2]) for item in preferences.placement_tags],
                 placements,

@@ -281,6 +281,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .format-choice > span:last-child { display: grid; min-width: 0; gap: 3px; }
 .format-choice strong { font-size: .82rem; }
 .format-choice small { color: #8e95afff; font-size: .67rem; line-height: 1.35; }
+.format-choice__thumbnail { grid-column: 1 / -1; width: 100%; height: 92px; margin-top: 3px; border: 1px solid #303750ff; border-radius: 5px; background: #080b14ff; object-fit: contain; }
 .format-choice--disabled { color: #777f9aff; background: #0b0e18ff; cursor: not-allowed; opacity: .62; }
 .format-choice--disabled:hover { border-color: #3a425fff; background: #0b0e18ff; }
 .format-dependent-message { padding: 18px; border: 1px dashed #46506fff; border-radius: 7px; color: #8e95afff; background: #0d101bff; font-size: .78rem; text-align: center; }
