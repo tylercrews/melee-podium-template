@@ -56,7 +56,7 @@ npm run build
 
 - [Malarki_](https://x.com/Malarki_), who I commissioned to expand the pool of character poses and did an amazing job.
 - [Top8er](https://www.top8er.com/), an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being [open source](https://github.com/ShonTitor/Top8er) (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.
-- Elenrique3 for creating the original Top8er 2023 design, which was already almost perfect, and Malarki_ again for coming up with the eyes template.
+- Elenrique3 for creating the original Top8er 2023 design. It's truly a nearly perfect design other than the lack of doubles support. And Malarki_ again for coming up with the eyes template.
 - Nicolet I would like to thank in particular for sending me the repo for the startgg USB reporting, and DevDogg for connecting me with them
 - AeonSSB, Cjag01, radzo73, and caha1an, who created the [Melee-CSProject](https://github.com/AeonSSB/Melee-CSProject) that I got the original poses from.
 - [CeLL on this old Smashboards thread](https://smashboards.com/threads/character-stock-icon-dump.390494/) for posting a dump of all the character stock icons.
@@ -68,6 +68,8 @@ npm run build
 
 
 TODO LIST:
+* ASAP - need to think of a solution for what to do when someone selects a lot of metadata options. They're going to run out of space VERY Quickly. Maybe we can rearrange to have some properties be side by side
+
 * whenever you implement the new image template styles (eyes + squares) the image preview is going to generate of course, but we should also make it so that there's a little preview thumbnail the same way that I added one for the background images
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
