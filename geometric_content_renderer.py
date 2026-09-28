@@ -13,6 +13,7 @@ from background_builder import PixelRect
 from creation import CreationRequest
 from creation_modes import CreationMode
 from DrawPodium import (
+    ATTRIBUTION_TEXT,
     PodiumFont,
     _draw_text,
     _font_to_fit,
@@ -389,7 +390,6 @@ class EyesContentRenderer:
                 ),
             )
 
-
 @dataclass(frozen=True, slots=True)
 class SquaresContentRenderer:
     font: PodiumFont = PodiumFont.TYROWO
@@ -417,6 +417,7 @@ class SquaresContentRenderer:
                 self._draw_character(result, request, preferences, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
             self._draw_header(result, request, preferences)
+            self._draw_attribution(result, request)
         return result
 
     @staticmethod
@@ -502,6 +503,22 @@ class SquaresContentRenderer:
                 ),
             )
 
+    def _draw_attribution(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+    ) -> None:
+        _draw_text(
+            ImageDraw.Draw(canvas),
+            (canvas.width - 40, 8),
+            ATTRIBUTION_TEXT,
+            anchor="ra",
+            max_width=canvas.width // 2,
+            preferred_size=20,
+            font=self.font,
+            fill=request.text_settings.heading_color,
+        )
+
 
 def _squares_header_boxes(
     canvas: Image.Image,
@@ -515,7 +532,7 @@ def _squares_header_boxes(
     left = min(card.left for card in cards.values())
     top = max(card.bottom for card in cards.values()) + 18
     right = max(card.right for card in cards.values())
-    bottom = canvas.height - 25
+    bottom = canvas.height - 10
     gap = 24
     available_width = right - left - gap * 2
     if preferences.selection.options.event_format is TournamentFormat.DOUBLES:

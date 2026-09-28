@@ -143,7 +143,19 @@ class GeometricModesTest(unittest.TestCase):
             min(box.top for box, _anchor in boxes.values()),
             max(card.bottom for card in cards),
         )
-        self.assertEqual(min(card.top for card in cards), 25)
+        self.assertEqual(min(card.top for card in cards), 50)
+
+    def test_squares_reserves_the_top_right_strip_for_attribution(self) -> None:
+        image = draw_squares_singles_top_8(
+            sample_top_8_entrants(random.Random(31)),
+            tournament=sample_tournament(TournamentFormat.SINGLES),
+        )
+        top_strip = image.crop((0, 0, image.width, 50))
+
+        self.assertIsNone(top_strip.crop((0, 0, image.width // 2, 50)).getbbox())
+        self.assertIsNotNone(
+            top_strip.crop((image.width // 2, 0, image.width, 50)).getbbox()
+        )
 
     def test_squares_doubles_first_place_has_the_same_effective_scale(self) -> None:
         repository = ModePreferenceRepository()

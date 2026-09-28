@@ -20,9 +20,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 40,
-        "top": 25,
+        "top": 50,
         "right": 630,
-        "bottom": 845
+        "bottom": 870
       },
       "z_index": 0
     },
@@ -31,9 +31,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 680,
-        "top": 25,
+        "top": 50,
         "right": 1060,
-        "bottom": 445
+        "bottom": 470
       },
       "z_index": 0
     },
@@ -42,9 +42,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 1090,
-        "top": 25,
+        "top": 50,
         "right": 1470,
-        "bottom": 445
+        "bottom": 470
       },
       "z_index": 0
     },
@@ -53,9 +53,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 1500,
-        "top": 25,
+        "top": 50,
         "right": 1880,
-        "bottom": 445
+        "bottom": 470
       },
       "z_index": 0
     },
@@ -64,9 +64,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 680,
-        "top": 465,
+        "top": 490,
         "right": 960,
-        "bottom": 845
+        "bottom": 870
       },
       "z_index": 0
     },
@@ -75,9 +75,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 980,
-        "top": 465,
+        "top": 490,
         "right": 1260,
-        "bottom": 845
+        "bottom": 870
       },
       "z_index": 0
     },
@@ -86,9 +86,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 1280,
-        "top": 465,
+        "top": 490,
         "right": 1560,
-        "bottom": 845
+        "bottom": 870
       },
       "z_index": 0
     },
@@ -97,9 +97,9 @@
       "asset_id": "square_card",
       "destination": {
         "left": 1580,
-        "top": 465,
+        "top": 490,
         "right": 1860,
-        "bottom": 845
+        "bottom": 870
       },
       "z_index": 0
     }
@@ -110,7 +110,7 @@
       "asset_id": "01st.png",
       "anchor": {
         "x": 135,
-        "y": 126
+        "y": 151
       },
       "max_size": {
         "width": 155,
@@ -123,7 +123,7 @@
       "asset_id": "02nd.png",
       "anchor": {
         "x": 744,
-        "y": 83
+        "y": 108
       },
       "max_size": {
         "width": 92,
@@ -136,7 +136,7 @@
       "asset_id": "03rd.png",
       "anchor": {
         "x": 1154,
-        "y": 83
+        "y": 108
       },
       "max_size": {
         "width": 92,
@@ -149,7 +149,7 @@
       "asset_id": "04th.png",
       "anchor": {
         "x": 1564,
-        "y": 83
+        "y": 108
       },
       "max_size": {
         "width": 92,
@@ -162,7 +162,7 @@
       "asset_id": "05th.png",
       "anchor": {
         "x": 744,
-        "y": 523
+        "y": 548
       },
       "max_size": {
         "width": 92,
@@ -175,7 +175,7 @@
       "asset_id": "05th.png",
       "anchor": {
         "x": 1044,
-        "y": 523
+        "y": 548
       },
       "max_size": {
         "width": 92,
@@ -188,7 +188,7 @@
       "asset_id": "07th.png",
       "anchor": {
         "x": 1344,
-        "y": 523
+        "y": 548
       },
       "max_size": {
         "width": 92,
@@ -201,7 +201,7 @@
       "asset_id": "07th.png",
       "anchor": {
         "x": 1644,
-        "y": 523
+        "y": 548
       },
       "max_size": {
         "width": 92,
@@ -217,7 +217,7 @@
       "member_slot": null,
       "anchor": {
         "x": 335,
-        "y": 706
+        "y": 731
       },
       "scale": 1.7,
       "z_index": 11
@@ -228,7 +228,7 @@
       "member_slot": null,
       "anchor": {
         "x": 870,
-        "y": 374
+        "y": 399
       },
       "scale": 1.05,
       "z_index": 12
@@ -239,7 +239,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1280,
-        "y": 374
+        "y": 399
       },
       "scale": 1.05,
       "z_index": 13
@@ -250,7 +250,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1690,
-        "y": 374
+        "y": 399
       },
       "scale": 1.05,
       "z_index": 14
@@ -261,7 +261,7 @@
       "member_slot": null,
       "anchor": {
         "x": 820,
-        "y": 780
+        "y": 805
       },
       "scale": 0.88,
       "z_index": 15
@@ -272,7 +272,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1120,
-        "y": 780
+        "y": 805
       },
       "scale": 0.88,
       "z_index": 16
@@ -283,7 +283,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1420,
-        "y": 780
+        "y": 805
       },
       "scale": 0.88,
       "z_index": 17
@@ -294,7 +294,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1720,
-        "y": 780
+        "y": 805
       },
       "scale": 0.88,
       "z_index": 18
@@ -308,7 +308,7 @@
       "member_slot": null,
       "anchor": {
         "x": 335,
-        "y": 776
+        "y": 801
       },
       "max_width": 556,
       "pillow_anchor": "mm",
@@ -324,7 +324,7 @@
       "member_slot": null,
       "anchor": {
         "x": 608,
-        "y": 43
+        "y": 68
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -340,7 +340,7 @@
       "member_slot": null,
       "anchor": {
         "x": 870,
-        "y": 410
+        "y": 435
       },
       "max_width": 346,
       "pillow_anchor": "mm",
@@ -356,7 +356,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1038,
-        "y": 43
+        "y": 68
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -372,7 +372,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1280,
-        "y": 410
+        "y": 435
       },
       "max_width": 346,
       "pillow_anchor": "mm",
@@ -388,7 +388,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1448,
-        "y": 43
+        "y": 68
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -404,7 +404,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1690,
-        "y": 410
+        "y": 435
       },
       "max_width": 346,
       "pillow_anchor": "mm",
@@ -420,7 +420,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1858,
-        "y": 43
+        "y": 68
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -436,7 +436,7 @@
       "member_slot": null,
       "anchor": {
         "x": 820,
-        "y": 813
+        "y": 838
       },
       "max_width": 246,
       "pillow_anchor": "mm",
@@ -452,7 +452,7 @@
       "member_slot": null,
       "anchor": {
         "x": 938,
-        "y": 483
+        "y": 508
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -468,7 +468,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1120,
-        "y": 813
+        "y": 838
       },
       "max_width": 246,
       "pillow_anchor": "mm",
@@ -484,7 +484,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1238,
-        "y": 483
+        "y": 508
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -500,7 +500,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1420,
-        "y": 813
+        "y": 838
       },
       "max_width": 246,
       "pillow_anchor": "mm",
@@ -516,7 +516,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1538,
-        "y": 483
+        "y": 508
       },
       "max_width": 100,
       "pillow_anchor": "ra",
@@ -532,7 +532,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1720,
-        "y": 813
+        "y": 838
       },
       "max_width": 246,
       "pillow_anchor": "mm",
@@ -548,7 +548,7 @@
       "member_slot": null,
       "anchor": {
         "x": 1838,
-        "y": 483
+        "y": 508
       },
       "max_width": 100,
       "pillow_anchor": "ra",

@@ -191,29 +191,29 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
 def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
     if event_format == "singles" and count == 8:
         rectangles = [
-            (40, 25, 630, 845),
-            (680, 25, 1060, 445),
-            (1090, 25, 1470, 445),
-            (1500, 25, 1880, 445),
-            (680, 465, 960, 845),
-            (980, 465, 1260, 845),
-            (1280, 465, 1560, 845),
-            (1580, 465, 1860, 845),
+            (40, 50, 630, 870),
+            (680, 50, 1060, 470),
+            (1090, 50, 1470, 470),
+            (1500, 50, 1880, 470),
+            (680, 490, 960, 870),
+            (980, 490, 1260, 870),
+            (1280, 490, 1560, 870),
+            (1580, 490, 1860, 870),
         ]
         scales = (1.70, 1.05, 1.05, 1.05, 0.88, 0.88, 0.88, 0.88)
     elif event_format == "doubles" and count == 3:
         rectangles = [
-            (40, 25, 1220, 845),
-            (1260, 25, 1880, 420),
-            (1260, 450, 1880, 845),
+            (40, 50, 1220, 870),
+            (1260, 50, 1880, 445),
+            (1260, 475, 1880, 870),
         ]
         scales = (1.45, 0.90, 0.90)
     elif event_format == "doubles" and count == 4:
         rectangles = [
-            (40, 25, 1220, 845),
-            (1260, 25, 1880, 285),
-            (1260, 305, 1880, 565),
-            (1260, 585, 1880, 845),
+            (40, 50, 1220, 870),
+            (1260, 50, 1880, 310),
+            (1260, 330, 1880, 590),
+            (1260, 610, 1880, 870),
         ]
         # Top 4 has a smaller mode-wide portrait multiplier than Top 3.  The
         # first-place card has identical geometry, so compensate this slot to
