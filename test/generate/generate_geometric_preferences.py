@@ -203,19 +203,22 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
         scales = (1.70, 1.05, 1.05, 1.05, 0.88, 0.88, 0.88, 0.88)
     elif event_format == "doubles" and count == 3:
         rectangles = [
-            (40, 25, 1300, 845),
-            (1340, 25, 1880, 420),
-            (1340, 450, 1880, 845),
+            (40, 25, 1220, 845),
+            (1260, 25, 1880, 420),
+            (1260, 450, 1880, 845),
         ]
-        scales = (1.25, 0.90, 0.90)
+        scales = (1.45, 0.90, 0.90)
     elif event_format == "doubles" and count == 4:
         rectangles = [
-            (40, 25, 1300, 845),
-            (1340, 25, 1880, 285),
-            (1340, 305, 1880, 565),
-            (1340, 585, 1880, 845),
+            (40, 25, 1220, 845),
+            (1260, 25, 1880, 285),
+            (1260, 305, 1880, 565),
+            (1260, 585, 1880, 845),
         ]
-        scales = (1.25, 0.86, 0.86, 0.86)
+        # Top 4 has a smaller mode-wide portrait multiplier than Top 3.  The
+        # first-place card has identical geometry, so compensate this slot to
+        # keep its rendered characters the same size in both layouts.
+        scales = (1.45 * 0.38 / 0.34, 0.86, 0.86, 0.86)
     else:
         raise ValueError("Unsupported reviewed Squares layout")
 

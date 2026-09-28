@@ -18,6 +18,7 @@ from geometric_content_renderer import _squares_header_boxes
 from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository, ModePreferences
 from models import TournamentFormat
+from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from sample_creation_data import (
     sample_top_4_teams,
     sample_top_8_entrants,
@@ -119,6 +120,27 @@ class GeometricModesTest(unittest.TestCase):
                 boxes["top_left"][0].left,
                 boxes["bottom_right"][0].left,
             )
+
+    def test_squares_doubles_first_place_has_the_same_effective_scale(self) -> None:
+        repository = ModePreferenceRepository()
+        effective_scales = []
+        for count in (3, 4):
+            preferences = repository.load(
+                ModeSelection(
+                    CreationMode.SQUARES,
+                    ModeOptions(TournamentFormat.DOUBLES, count),
+                )
+            )
+            first_member = next(
+                item
+                for item in preferences.character_slots
+                if item.entrant_slot == 1 and item.member_slot == 1
+            )
+            effective_scales.append(
+                first_member.scale
+                * get_mode_portrait_scale(f"squares_doubles_top_{count}")
+            )
+        self.assertAlmostEqual(effective_scales[0], effective_scales[1])
 
     def test_public_singles_renderers_use_reviewed_canvas_sizes(self) -> None:
         entrants = sample_top_8_entrants(random.Random(11))
