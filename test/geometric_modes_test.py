@@ -14,7 +14,12 @@ from DrawSquares import draw_doubles_top_3 as draw_squares_doubles_top_3
 from DrawSquares import draw_doubles_top_4 as draw_squares_doubles_top_4
 from DrawSquares import draw_singles_top_8 as draw_squares_singles_top_8
 from formatting_assets import FormattingAssetRenderer
-from geometric_content_renderer import _squares_header_boxes
+from geometric_content_renderer import (
+    WATERMARK_BLACK,
+    WATERMARK_WHITE,
+    _squares_header_boxes,
+    _watermark_color,
+)
 from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository, ModePreferences
 from models import TournamentFormat
@@ -155,6 +160,31 @@ class GeometricModesTest(unittest.TestCase):
         self.assertIsNone(top_strip.crop((0, 0, image.width // 2, 50)).getbbox())
         self.assertIsNotNone(
             top_strip.crop((image.width // 2, 0, image.width, 50)).getbbox()
+        )
+
+    def test_watermark_color_uses_local_background_brightness(self) -> None:
+        sample_box = PixelRect(10, 10, 90, 40)
+
+        self.assertEqual(
+            _watermark_color(Image.new("RGBA", (100, 50), "#FFFFFFFF"), sample_box),
+            WATERMARK_BLACK,
+        )
+        self.assertEqual(
+            _watermark_color(Image.new("RGBA", (100, 50), "#000000FF"), sample_box),
+            WATERMARK_WHITE,
+        )
+        self.assertEqual(WATERMARK_BLACK[-2:], "B0")
+        self.assertEqual(WATERMARK_WHITE[-2:], "B0")
+
+    def test_eyes_places_its_attribution_in_the_bottom_left(self) -> None:
+        image = draw_eyes_singles_top_8(
+            sample_top_8_entrants(random.Random(37)),
+            tournament=sample_tournament(TournamentFormat.SINGLES),
+        )
+        bottom_strip = image.crop((0, image.height - 45, image.width, image.height))
+
+        self.assertIsNotNone(
+            bottom_strip.crop((0, 0, image.width * 2 // 3, 45)).getbbox()
         )
 
     def test_squares_doubles_first_place_has_the_same_effective_scale(self) -> None:

@@ -27,6 +27,8 @@ from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 
 
 LogoInput = Image.Image | str | Path | None
+WATERMARK_WHITE = "#FFFFFFB0"
+WATERMARK_BLACK = "#000000B0"
 
 
 def _open_logo(value: LogoInput) -> Image.Image | None:
@@ -199,6 +201,22 @@ def _draw_logo_in_box(canvas: Image.Image, logo: Image.Image | None, box: PixelR
     )
 
 
+def _watermark_color(canvas: Image.Image, sample_box: PixelRect) -> str:
+    """Choose a translucent black or white watermark from local brightness."""
+
+    region = canvas.crop(sample_box.as_tuple()).convert("RGBA")
+    if region.width <= 0 or region.height <= 0:
+        return WATERMARK_WHITE
+    luminance_total = 0.0
+    pixel_count = region.width * region.height
+    for red, green, blue, alpha in region.getdata():
+        # Transparent pixels contribute as dark because there is no dependable
+        # backing color to make black readable after export.
+        luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255
+        luminance_total += luminance * alpha / 255
+    return WATERMARK_BLACK if luminance_total / pixel_count >= 0.55 else WATERMARK_WHITE
+
+
 def _draw_horizontal_header_item(
     canvas: Image.Image,
     request: CreationRequest,
@@ -302,6 +320,8 @@ class EyesContentRenderer:
         if request.selection.mode is not CreationMode.EYES:
             raise ValueError("EyesContentRenderer requires Eyes mode")
         result = canvas.convert("RGBA")
+        watermark_box = PixelRect(20, result.height - 50, result.width * 2 // 3, result.height)
+        watermark_color = _watermark_color(result, watermark_box)
         with _temporary_font_settings(
             request.text_settings.font_size_adjustment,
             self.custom_font_bytes,
@@ -314,6 +334,16 @@ class EyesContentRenderer:
                 self._draw_character(result, request, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
             self._draw_header(result, request, preferences)
+            _draw_text(
+                ImageDraw.Draw(result),
+                (20, result.height - 12),
+                ATTRIBUTION_TEXT,
+                anchor="ls",
+                max_width=watermark_box.width,
+                preferred_size=20,
+                font=self.font,
+                fill=watermark_color,
+            )
         return result
 
     @staticmethod
@@ -405,6 +435,8 @@ class SquaresContentRenderer:
         if request.selection.mode is not CreationMode.SQUARES:
             raise ValueError("SquaresContentRenderer requires Squares mode")
         result = canvas.convert("RGBA")
+        watermark_box = PixelRect(result.width // 2, 0, result.width - 40, 45)
+        watermark_color = _watermark_color(result, watermark_box)
         with _temporary_font_settings(
             request.text_settings.font_size_adjustment,
             self.custom_font_bytes,
@@ -417,7 +449,16 @@ class SquaresContentRenderer:
                 self._draw_character(result, request, preferences, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
             self._draw_header(result, request, preferences)
-            self._draw_attribution(result, request)
+            _draw_text(
+                ImageDraw.Draw(result),
+                (result.width - 40, 8),
+                ATTRIBUTION_TEXT,
+                anchor="ra",
+                max_width=watermark_box.width,
+                preferred_size=20,
+                font=self.font,
+                fill=watermark_color,
+            )
         return result
 
     @staticmethod
@@ -502,23 +543,6 @@ class SquaresContentRenderer:
                     else 58
                 ),
             )
-
-    def _draw_attribution(
-        self,
-        canvas: Image.Image,
-        request: CreationRequest,
-    ) -> None:
-        _draw_text(
-            ImageDraw.Draw(canvas),
-            (canvas.width - 40, 8),
-            ATTRIBUTION_TEXT,
-            anchor="ra",
-            max_width=canvas.width // 2,
-            preferred_size=20,
-            font=self.font,
-            fill=request.text_settings.heading_color,
-        )
-
 
 def _squares_header_boxes(
     canvas: Image.Image,
