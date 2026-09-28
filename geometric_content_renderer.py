@@ -22,8 +22,11 @@ from DrawPodium import (
 from eyes_portrait_renderer import render_eye_portrait
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, TournamentFormat
-from portrait_assets import load_scaled_portrait, with_team_color
-from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
+from portrait_assets import with_team_color
+from square_portrait_renderer import (
+    render_square_portrait_group,
+    square_portrait_scale_key,
+)
 
 
 LogoInput = Image.Image | str | Path | None
@@ -507,29 +510,18 @@ class SquaresContentRenderer:
                 else PixelRect(midpoint, content.top, content.right, content.bottom)
             )
         result = _entrant_for_slot(request, placement.entrant_slot)
-        character = _primary_character(result, placement)
-        mode_scale = get_mode_portrait_scale(
-            f"squares_{preferences.selection.submode_id}"
+        member = _member_for_placement(result, placement)
+        scale_key = square_portrait_scale_key(
+            preferences.selection.options.event_format,
+            preferences.selection.options.entrant_count,
+            placement.entrant_slot,
         )
-        portrait = load_scaled_portrait(character, mode_scale * placement.scale)
-        visible_bounds = portrait.getbbox()
-        if visible_bounds is None:
-            return
-        portrait = portrait.crop(visible_bounds)
-        portrait.thumbnail(
-            (
-                max(1, round(content.width * 0.96)),
-                max(1, round(content.height * 0.98)),
-            ),
-            Image.Resampling.LANCZOS,
-        )
-        viewport = Image.new("RGBA", (content.width, content.height), "#00000000")
-        viewport.alpha_composite(
-            portrait,
-            (
-                round(content.width / 2 - portrait.width / 2),
-                content.height - portrait.height,
-            ),
+        viewport = render_square_portrait_group(
+            member.characters,
+            (content.width, content.height),
+            scale_key=scale_key,
+            scale_multiplier=placement.scale,
+            team_color=result.team_color if isinstance(result, DoublesTeam) else None,
         )
         canvas.alpha_composite(viewport, (content.left, content.top))
 

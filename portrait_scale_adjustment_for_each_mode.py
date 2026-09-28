@@ -1,8 +1,9 @@
-"""Second-stage portrait scaling for each podium layout.
+"""Second-stage portrait scaling for each layout and Squares card tier.
 
 These values are multiplied by the character/pose relativity scale from
 portrait_scale_adjustment_to_character_relativity.py. Adjust them to resize all
-portraits in one layout without changing character sizes relative to each other.
+portraits in one layout or card tier without changing character sizes relative
+to each other.
 """
 
 
@@ -13,11 +14,17 @@ PORTRAIT_SCALE_BY_MODE = {
     "singles_top_4": 0.26,
     "singles_top_8": 0.22,
     "singles_top_8_four_podium": 0.26,
-    # Squares cards use the same two-stage portrait scaling as podiums, but
-    # keep independent values so tuning a square never changes a podium.
-    "squares_doubles_top_3": 0.38,
-    "squares_doubles_top_4": 0.34,
-    "squares_singles_top_8": 0.34,
+    # Squares cards use the same two-stage portrait scaling as podiums. Each
+    # geometrically distinct card size has its own value. These are calibrated
+    # so the tallest relativity-adjusted portrait reaches both the top and
+    # bottom of its available character frame. The current tallest reference
+    # is Bowser Pose C at 1172.72 relativity-adjusted source pixels.
+    "squares_singles_top_8_first": 0.567910,
+    "squares_singles_top_8_second_through_fourth": 0.280544,
+    "squares_singles_top_8_fifth_and_seventh": 0.261785,
+    "squares_doubles_first": 0.563647,
+    "squares_doubles_top_3_second_through_third": 0.271164,
+    "squares_doubles_top_4_second_through_fourth": 0.162017,
 }
 
 

@@ -2,6 +2,7 @@
 
 import random
 import unittest
+from unittest.mock import patch
 
 from PIL import Image
 
@@ -22,12 +23,17 @@ from geometric_content_renderer import (
 )
 from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository, ModePreferences
-from models import TournamentFormat
+from models import Character, TournamentFormat
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from sample_creation_data import (
     sample_top_4_teams,
     sample_top_8_entrants,
     sample_tournament,
+)
+from square_portrait_renderer import (
+    _staggered_x_offsets,
+    render_square_portrait_group,
+    square_portrait_scale_key,
 )
 
 
@@ -215,11 +221,106 @@ class GeometricModesTest(unittest.TestCase):
                 for item in preferences.character_slots
                 if item.entrant_slot == 1 and item.member_slot == 1
             )
+            scale_key = square_portrait_scale_key(
+                TournamentFormat.DOUBLES,
+                count,
+                1,
+            )
             effective_scales.append(
                 first_member.scale
-                * get_mode_portrait_scale(f"squares_doubles_top_{count}")
+                * get_mode_portrait_scale(scale_key)
             )
         self.assertAlmostEqual(effective_scales[0], effective_scales[1])
+
+    def test_squares_uses_a_distinct_scale_for_every_card_size_tier(self) -> None:
+        expected = {
+            (TournamentFormat.SINGLES, 8, 1): "squares_singles_top_8_first",
+            (TournamentFormat.SINGLES, 8, 2): "squares_singles_top_8_second_through_fourth",
+            (TournamentFormat.SINGLES, 8, 4): "squares_singles_top_8_second_through_fourth",
+            (TournamentFormat.SINGLES, 8, 5): "squares_singles_top_8_fifth_and_seventh",
+            (TournamentFormat.SINGLES, 8, 8): "squares_singles_top_8_fifth_and_seventh",
+            (TournamentFormat.DOUBLES, 3, 1): "squares_doubles_first",
+            (TournamentFormat.DOUBLES, 4, 1): "squares_doubles_first",
+            (TournamentFormat.DOUBLES, 3, 2): "squares_doubles_top_3_second_through_third",
+            (TournamentFormat.DOUBLES, 4, 2): "squares_doubles_top_4_second_through_fourth",
+        }
+
+        for arguments, scale_key in expected.items():
+            with self.subTest(arguments=arguments):
+                self.assertEqual(square_portrait_scale_key(*arguments), scale_key)
+                self.assertGreater(get_mode_portrait_scale(scale_key), 0)
+
+    def test_tallest_square_portrait_fills_each_card_tier_vertically(self) -> None:
+        tiers = {
+            "squares_singles_top_8_first": (560, 666),
+            "squares_singles_top_8_second_through_fourth": (360, 329),
+            "squares_singles_top_8_fifth_and_seventh": (264, 307),
+            "squares_doubles_first": (570, 661),
+            "squares_doubles_top_3_second_through_third": (300, 318),
+            "squares_doubles_top_4_second_through_fourth": (300, 190),
+        }
+        tallest_pose = Character("Bowser", pose="c")
+
+        for scale_key, viewport_size in tiers.items():
+            with self.subTest(scale_key=scale_key):
+                result = render_square_portrait_group(
+                    [tallest_pose],
+                    viewport_size,
+                    scale_key=scale_key,
+                )
+                bounds = result.getbbox()
+                self.assertIsNotNone(bounds)
+                assert bounds is not None
+                self.assertEqual(bounds[1], 0)
+                self.assertEqual(bounds[3], viewport_size[1])
+
+    def test_square_multi_character_stagger_matches_podium_order(self) -> None:
+        self.assertEqual(_staggered_x_offsets(1, (500, 400)), (0,))
+        self.assertEqual(_staggered_x_offsets(2, (500, 400)), (-56, 56))
+        self.assertEqual(_staggered_x_offsets(3, (500, 400)), (0, -56, 56))
+        self.assertEqual(
+            _staggered_x_offsets(6, (500, 400)),
+            (0, -56, 56, 0, -56, 56),
+        )
+
+    def test_squares_loads_every_character_for_singles_and_doubles(self) -> None:
+        singles = sample_top_8_entrants(random.Random(51))
+        teams = sample_top_4_teams(random.Random(52))
+        expected_singles = sum(len(entrant.characters) for entrant in singles)
+        expected_doubles = sum(
+            len(team.entrant_1.characters) + len(team.entrant_2.characters)
+            for team in teams
+        )
+        first_team_character_count = (
+            len(teams[0].entrant_1.characters) + len(teams[0].entrant_2.characters)
+        )
+        fake_portrait = Image.new("RGBA", (40, 80), "#FFFFFFFF")
+
+        with patch(
+            "square_portrait_renderer.load_scaled_portrait",
+            return_value=fake_portrait,
+        ) as load_portrait:
+            draw_squares_singles_top_8(
+                singles,
+                tournament=sample_tournament(TournamentFormat.SINGLES),
+            )
+            self.assertEqual(load_portrait.call_count, expected_singles)
+
+        with patch(
+            "square_portrait_renderer.load_scaled_portrait",
+            return_value=fake_portrait,
+        ) as load_portrait:
+            draw_squares_doubles_top_4(
+                teams,
+                tournament=sample_tournament(TournamentFormat.DOUBLES),
+            )
+            self.assertEqual(load_portrait.call_count, expected_doubles)
+            self.assertTrue(
+                all(
+                    call.args[0].color == teams[0].team_color
+                    for call in load_portrait.call_args_list[:first_team_character_count]
+                )
+            )
 
     def test_public_singles_renderers_use_reviewed_canvas_sizes(self) -> None:
         entrants = sample_top_8_entrants(random.Random(11))
