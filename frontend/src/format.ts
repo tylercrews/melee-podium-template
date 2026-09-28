@@ -17,10 +17,16 @@ export interface FormattingAssetColor {
   metallic: boolean;
 }
 
+export interface PresetTransparency {
+  main_color: number;
+  face_color: number;
+  base_color: number;
+}
+
 export interface FormattingAssetColors {
   mode: FormattingColorSelectionMode;
   preset: FormattingColorPreset | null;
-  preset_transparency: number;
+  preset_transparency: PresetTransparency;
   colors: FormattingAssetColor[];
 }
 
@@ -107,7 +113,7 @@ export const DEFAULT_IMAGE_SETTINGS: ImageSettings = {
 export const DEFAULT_FORMATTING_ASSET_COLORS: FormattingAssetColors = {
   mode: "premade",
   preset: "smash_player_colors",
-  preset_transparency: 0,
+  preset_transparency: { main_color: 0, face_color: 0, base_color: 0 },
   colors: [],
 };
 
@@ -336,12 +342,23 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
   }
   const mode = value.mode as FormattingColorSelectionMode;
   const preset = value.preset === null ? null : value.preset as FormattingColorPreset;
-  const presetTransparency = value.preset_transparency === undefined
-    ? 0
-    : finiteNumber(value.preset_transparency, "preset transparency");
-  if (!Number.isInteger(presetTransparency) || presetTransparency < 0 || presetTransparency > 100) {
-    throw new Error("Format code has an invalid preset transparency.");
-  }
+  const rawTransparency = value.preset_transparency;
+  const transparencyValue = (part: keyof PresetTransparency): number => {
+    // Early version-1 formats stored one percentage for the whole preset.
+    const candidate = isObject(rawTransparency)
+      ? rawTransparency[part]
+      : rawTransparency ?? 0;
+    const normalized = finiteNumber(candidate, `${part.replace("_color", "")} preset transparency`);
+    if (!Number.isInteger(normalized) || normalized < 0 || normalized > 100) {
+      throw new Error("Format code has an invalid preset transparency.");
+    }
+    return normalized;
+  };
+  const presetTransparency: PresetTransparency = {
+    main_color: transparencyValue("main_color"),
+    face_color: transparencyValue("face_color"),
+    base_color: transparencyValue("base_color"),
+  };
   if (mode === "premade" ? !preset || !formattingColorPresets.has(preset) || value.colors.length !== 0 : preset !== null) {
     throw new Error("Format code has an invalid formatting color selection.");
   }
@@ -360,7 +377,14 @@ function normalizeFormattingAssetColors(value: unknown): FormattingAssetColors {
   if ((expectedCount !== null && colors.length !== expectedCount) || (mode === "pick_all" && colors.length === 0)) {
     throw new Error("Format code has the wrong number of formatting color selections.");
   }
-  return { mode, preset, preset_transparency: mode === "premade" ? presetTransparency : 0, colors };
+  return {
+    mode,
+    preset,
+    preset_transparency: mode === "premade"
+      ? presetTransparency
+      : { ...DEFAULT_FORMATTING_ASSET_COLORS.preset_transparency },
+    colors,
+  };
 }
 
 function normalizeEntrantTextColors(value: unknown): EntrantTextColors {
@@ -467,8 +491,9 @@ export function parseFormatCode(code: string): FormatConfiguration {
 export function isFormatComplete(format: FormatConfiguration): boolean {
   try {
     const normalized = normalizeFormat(format);
-    return normalized.selection.mode === "podium"
-      && normalized.selection.options.podium_style !== null
+    const supportedMode = normalized.selection.mode === "squares"
+      || (normalized.selection.mode === "podium" && normalized.selection.options.podium_style !== null);
+    return supportedMode
       && normalized.selection.options.event_format !== null
       && hasValidEntrantCount(normalized.selection)
       && hasCompleteFormattingAssetColors(normalized)
@@ -493,6 +518,7 @@ export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelS
 }
 
 export function formatCanvasSize(format: FormatConfiguration): PixelSize | null {
+  if (format.selection.mode === "squares") return { width: 1920, height: 1080 };
   if (format.selection.mode !== "podium") return null;
   if (format.selection.options.podium_style === "customizable") return { width: 1920, height: 941 };
   if (format.selection.options.podium_style === "legacy") return { width: 1672, height: 941 };

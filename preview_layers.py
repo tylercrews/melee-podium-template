@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from itertools import permutations
 from pathlib import Path
 
@@ -12,11 +13,13 @@ from creation import CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont, PodiumMode
 from formatting_assets import FormattingAssetRenderer
+from geometric_content_renderer import SquaresContentRenderer, _squares_header_boxes
+from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository
 from models import TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
-from sample_creation_data import sample_top_8_entrants, sample_tournament
+from sample_creation_data import sample_top_4_teams, sample_top_8_entrants, sample_tournament
 
 
 LAYER_CANVAS_SIZE = PixelSize(1920, 941)
@@ -28,11 +31,32 @@ LAYOUTS = {
     "top_8": (8, None),
     "top_8_four_podiums": (8, "four_podium"),
 }
+SQUARE_LAYOUTS = {
+    "singles_top_8": (TournamentFormat.SINGLES, 8),
+    "doubles_top_3": (TournamentFormat.DOUBLES, 3),
+    "doubles_top_4": (TournamentFormat.DOUBLES, 4),
+}
+SQUARE_HEADER_LAYOUTS = {
+    "singles": (TournamentFormat.SINGLES, 8),
+    "doubles": (TournamentFormat.DOUBLES, 4),
+}
+COLOR_LAYER_IDS = ("smash_player_colors", "olympic_medals", "rainbow", "pick_all")
+SQUARE_COLOR_PARTS = ("main_color", "base_color")
 RAINBOW_MAIN_COLORS = (
     "#F23838FF", "#F28C28FF", "#F2D338FF", "#3BC65AFF",
     "#32C7CFFF", "#3478F6FF", "#5746C7FF", "#A84BE0FF",
 )
 CUSTOM_RED = PodiumColorSelection("#E53935FF", "#8E1B18FF", "#000000FF")
+PICK_ALL_COLORS = (
+    PodiumColorSelection("#FF4D6DFF", "#8D1830FF", "#20050BFF"),
+    PodiumColorSelection("#4D96FFFF", "#1F579EFF", "#06162BFF"),
+    PodiumColorSelection("#FFD93DFF", "#9B781AFF", "#2B2105FF"),
+    PodiumColorSelection("#6BCB77FF", "#2F7D3BFF", "#09230EFF"),
+    PodiumColorSelection("#FF9234FF", "#A74D0FFF", "#2C1204FF"),
+    PodiumColorSelection("#35D0BAFF", "#167869FF", "#052723FF"),
+    PodiumColorSelection("#B76DFFFF", "#6B31A3FF", "#1C092EFF"),
+    PodiumColorSelection("#D7D9E0FF", "#737784FF", "#17191FFF"),
+)
 
 
 def header_permutation_id(header_layout: dict[str, str]) -> str:
@@ -61,6 +85,17 @@ def _logo_placeholder(canvas: Image.Image, position: str) -> None:
     draw.line((right - 18, top + 18, left + 18, bottom - 18), fill=color, width=5)
 
 
+def _boxed_logo_placeholder(canvas: Image.Image, box: tuple[int, int, int, int]) -> None:
+    draw = ImageDraw.Draw(canvas)
+    left, top, right, bottom = box
+    inset = 12
+    left, top, right, bottom = left + inset, top + inset, right - inset, bottom - inset
+    color = "#8E95AFFF"
+    draw.rounded_rectangle((left, top, right, bottom), radius=10, outline=color, width=5)
+    draw.line((left + 12, top + 12, right - 12, bottom - 12), fill=color, width=5)
+    draw.line((right - 12, top + 12, left + 12, bottom - 12), fill=color, width=5)
+
+
 def render_header_layer(font: PodiumFont, header_layout: dict[str, str]) -> Image.Image:
     selection = ModeSelection(
         CreationMode.PODIUM,
@@ -86,6 +121,43 @@ def render_header_layer(font: PodiumFont, header_layout: dict[str, str]) -> Imag
     return canvas
 
 
+def render_square_header_layer(
+    font: PodiumFont,
+    header_layout_id: str,
+    header_layout: dict[str, str],
+) -> Image.Image:
+    event_format, entrant_count = SQUARE_HEADER_LAYOUTS[header_layout_id]
+    selection = ModeSelection(
+        CreationMode.SQUARES,
+        ModeOptions(event_format=event_format, entrant_count=entrant_count),
+    )
+    preferences = ModePreferenceRepository().load(selection)
+    canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), (0, 0, 0, 0))
+    request = CreationRequest(
+        selection=selection,
+        background=BackgroundRequest(size=preferences.canvas_size),
+        entrants=(
+            sample_top_8_entrants()[:entrant_count]
+            if event_format is TournamentFormat.SINGLES
+            else sample_top_4_teams()[:entrant_count]
+        ),
+        tournament=sample_tournament(event_format),
+        formatting_colors=GeometricFormattingColors.one("#000000FF", "#E53935FF"),
+        header_layout=header_layout,
+        text_settings=TextSettings(),
+    )
+    renderer = SquaresContentRenderer(font=font)
+    renderer._draw_header(canvas, request, preferences)
+    logo_position = next(
+        position
+        for position, content in header_layout.items()
+        if content == "tournament_logo"
+    )
+    logo_box = _squares_header_boxes(canvas, preferences)[logo_position][0]
+    _boxed_logo_placeholder(canvas, logo_box.as_tuple())
+    return canvas
+
+
 def _repeat_colors(colors: tuple[PodiumColorSelection, ...], count: int = 8) -> PodiumColorConfiguration:
     return PodiumColorConfiguration.per_podium(*(colors[index % len(colors)] for index in range(count)))
 
@@ -104,6 +176,8 @@ def _customizable_colors(layer_id: str, asset_count: int) -> PodiumColorConfigur
         return _rainbow_colors(asset_count)
     if layer_id == "custom_red":
         return _repeat_colors((CUSTOM_RED,))
+    if layer_id == "pick_all":
+        return _repeat_colors(PICK_ALL_COLORS)
     raise ValueError(f"Unknown customizable preview layer: {layer_id}")
 
 
@@ -137,6 +211,33 @@ def render_podium_layer(style: PodiumStyle, layout_id: str, color_id: str | None
     return result
 
 
+def render_square_layer(layout_id: str, color_id: str, part: str) -> Image.Image:
+    event_format, entrant_count = SQUARE_LAYOUTS[layout_id]
+    selection = ModeSelection(
+        CreationMode.SQUARES,
+        ModeOptions(event_format=event_format, entrant_count=entrant_count),
+    )
+    preferences = ModePreferenceRepository().load(selection)
+    if part != "main_color":
+        preferences = replace(preferences, placement_tags=())
+    source_colors = _customizable_colors(color_id, entrant_count)
+    transparent = "#00000000"
+    colors = GeometricFormattingColors(
+        tuple(
+            GeometricFormattingColor(
+                resolved.base_color if part == "base_color" else transparent,
+                resolved.main_color if part == "main_color" else transparent,
+            )
+            for resolved in (
+                source_colors.color_for_slot(slot).resolve()
+                for slot in range(1, entrant_count + 1)
+            )
+        )
+    )
+    canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), transparent)
+    return FormattingAssetRenderer().draw(canvas, preferences, colors)
+
+
 def generate_preview_layers(output_root: Path) -> list[Path]:
     outputs: list[Path] = []
     header_root = output_root / "headers"
@@ -147,6 +248,21 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
             path.parent.mkdir(parents=True, exist_ok=True)
             render_header_layer(font, layout).save(path, format="PNG", optimize=True)
             outputs.append(path)
+            for header_layout_id in SQUARE_HEADER_LAYOUTS:
+                square_path = (
+                    output_root
+                    / "square_headers"
+                    / font.value
+                    / header_layout_id
+                    / f"{header_permutation_id(layout)}.png"
+                )
+                square_path.parent.mkdir(parents=True, exist_ok=True)
+                render_square_header_layer(font, header_layout_id, layout).save(
+                    square_path,
+                    format="PNG",
+                    optimize=True,
+                )
+                outputs.append(square_path)
 
     podium_root = output_root / "podiums"
     for layout_id in LAYOUTS:
@@ -159,4 +275,16 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
             path.parent.mkdir(parents=True, exist_ok=True)
             render_podium_layer(PodiumStyle.CUSTOMIZABLE, layout_id, color_id).save(path, format="PNG", optimize=True)
             outputs.append(path)
+    square_root = output_root / "squares"
+    for layout_id in SQUARE_LAYOUTS:
+        for color_id in COLOR_LAYER_IDS:
+            for part in SQUARE_COLOR_PARTS:
+                path = square_root / layout_id / f"{color_id}-{part}.png"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                render_square_layer(layout_id, color_id, part).save(
+                    path,
+                    format="PNG",
+                    optimize=True,
+                )
+                outputs.append(path)
     return outputs

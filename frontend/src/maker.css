@@ -355,6 +355,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .formatting-colors__select { display: grid; max-width: 440px; gap: 8px; color: #dfe1eeff; font-size: .72rem; font-weight: 900; letter-spacing: .05em; }
 .formatting-colors__select select { min-height: 44px; padding: 9px 38px 9px 12px; border: 1px solid #46506fff; border-radius: 6px; color: #f8f7ffff; background: #0d101bff; font-size: .78rem; font-weight: 750; }
 .formatting-colors__preset { display: grid; max-width: 440px; gap: 16px; }
+.formatting-colors__transparency-group { display: grid; gap: 14px; }
 .formatting-colors__transparency { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; color: #dfe1eeff; font-size: .72rem; font-weight: 900; letter-spacing: .05em; }
 .formatting-colors__transparency output { color: #00dc68ff; font-family: "Cascadia Code", Consolas, monospace; }
 .formatting-colors__transparency input { grid-column: 1 / -1; width: 100%; accent-color: #238fe8ff; cursor: pointer; }

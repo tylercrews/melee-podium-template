@@ -20,6 +20,8 @@ from creation import TextSettings
 from DrawPodium import PodiumFont
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
+from geometric_content_renderer import SquaresContentRenderer
+from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
@@ -38,6 +40,13 @@ SUPPORTED_LAYOUTS = frozenset(
         (TournamentFormat.DOUBLES, 4, None),
     }
 )
+SUPPORTED_SQUARE_LAYOUTS = frozenset(
+    {
+        (TournamentFormat.SINGLES, 8, None),
+        (TournamentFormat.DOUBLES, 3, None),
+        (TournamentFormat.DOUBLES, 4, None),
+    }
+)
 
 
 def render_format_preview(
@@ -52,24 +61,33 @@ def render_format_preview(
     font: PodiumFont = PodiumFont.TYROWO,
     custom_font_bytes: bytes | None = None,
     text_settings: TextSettings | None = None,
+    creation_mode: CreationMode = CreationMode.PODIUM,
     entrants: list[SinglesEntrant] | list[DoublesTeam] | None = None,
     tournament: Tournament | None = None,
+    formatting_colors: GeometricFormattingColors | None = None,
 ) -> Image.Image:
-    """Return a full example render for one currently supported podium format."""
+    """Return a full example render for one supported frontend format."""
 
     if not isinstance(style, PodiumStyle):
         raise TypeError("style must be a PodiumStyle")
     layout = (event_format, entrant_count, variant)
-    if layout not in SUPPORTED_LAYOUTS:
+    supported_layouts = (
+        SUPPORTED_LAYOUTS
+        if creation_mode is CreationMode.PODIUM
+        else SUPPORTED_SQUARE_LAYOUTS
+        if creation_mode is CreationMode.SQUARES
+        else frozenset()
+    )
+    if layout not in supported_layouts:
         raise ValueError("Unsupported format preview layout")
 
     selection = ModeSelection(
-        CreationMode.PODIUM,
+        creation_mode,
         ModeOptions(
             event_format=event_format,
             entrant_count=entrant_count,
             variant=variant,
-            podium_style=style,
+            podium_style=style if creation_mode is CreationMode.PODIUM else None,
         ),
     )
     preferences = ModePreferenceRepository().load(selection)
@@ -100,15 +118,18 @@ def render_format_preview(
         entrants = entrants[:entrant_count]
     podium_colors = (
         podium_colors or PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
-        if style is PodiumStyle.CUSTOMIZABLE
+        if creation_mode is CreationMode.PODIUM and style is PodiumStyle.CUSTOMIZABLE
         else None
     )
+    if creation_mode is CreationMode.SQUARES and formatting_colors is None:
+        raise ValueError("Squares previews require formatting colors")
     request = CreationRequest(
         selection=selection,
         background=background,
         entrants=entrants,
         tournament=tournament or sample_tournament(event_format),
         podium_colors=podium_colors,
+        formatting_colors=formatting_colors,
         header_layout=header_layout,
         text_settings=text_settings or TextSettings(),
     )
@@ -116,6 +137,15 @@ def render_format_preview(
     # reviewed preference files remain marked ready:false. Production creation
     # continues to refuse unfinished preference sets in CreationPipeline.
     canvas = create_background(background)
-    formatted = FormattingAssetRenderer().draw(canvas, preferences, podium_colors)
-    return LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes).draw(formatted, request, preferences)
+    formatted = FormattingAssetRenderer().draw(
+        canvas,
+        preferences,
+        podium_colors or formatting_colors,
+    )
+    renderer = (
+        LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+        if creation_mode is CreationMode.PODIUM
+        else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+    )
+    return renderer.draw(formatted, request, preferences)
 

@@ -104,7 +104,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
         {([
           { value: "podium" as const, label: "Podiums", detail: "Entrants arranged across placement podiums", disabled: false },
           { value: "eyes" as const, label: "Eyes", detail: "Coming later", disabled: true },
-          { value: "squares" as const, label: "Squares", detail: "Coming later", disabled: true },
+          { value: "squares" as const, label: "Squares", detail: "Portrait cards with customizable borders and backgrounds", disabled: false },
         ]).map((option) => <label className={`format-choice${option.disabled ? " format-choice--disabled" : ""}`} key={option.value}><input type="radio" name="image-format" value={option.value} checked={selection.mode === option.value} onChange={() => updateMode(option.value)} disabled={option.disabled} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{option.label}</strong><small>{option.detail}</small></span></label>)}
       </div></fieldset>
 

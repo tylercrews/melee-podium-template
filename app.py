@@ -18,7 +18,8 @@ from bracket_import import BracketImport, BracketProvider, fetch_challonge, fetc
 from background_builder import LocalBackgroundAssets
 from color_values import normalize_rgba_hex
 from creation import TextSettings
-from creation_modes import PodiumStyle
+from creation_modes import CreationMode, PodiumStyle
+from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
 from format_preview import render_format_preview
@@ -360,9 +361,25 @@ def _custom_preview_colors(
         raise ValueError("Formatting asset colors must be an object")
     mode = value.get("mode")
     if mode == "premade":
-        transparency = value.get("preset_transparency", 0)
-        if isinstance(transparency, bool) or not isinstance(transparency, int) or not 0 <= transparency <= 100:
-            raise ValueError("Preset transparency must be an integer from 0 through 100")
+        raw_transparency = value.get("preset_transparency", 0)
+        if isinstance(raw_transparency, Mapping):
+            transparency = {
+                part: raw_transparency.get(part, 0)
+                for part in ("main_color", "face_color", "base_color")
+            }
+        else:
+            # Early version-1 formats used one percentage for every part.
+            transparency = {
+                part: raw_transparency
+                for part in ("main_color", "face_color", "base_color")
+            }
+        if any(
+            isinstance(amount, bool)
+            or not isinstance(amount, int)
+            or not 0 <= amount <= 100
+            for amount in transparency.values()
+        ):
+            raise ValueError("Preset transparencies must be integers from 0 through 100")
         preset = value.get("preset")
         if preset == "smash_player_colors":
             colors = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
@@ -373,20 +390,25 @@ def _custom_preview_colors(
             colors = _rainbow_preview_colors(asset_count)
         else:
             raise ValueError("Unknown formatting color preset")
-        if transparency == 0:
+        if not any(transparency.values()):
             return colors
-        alpha = round(255 * (100 - transparency) / 100)
-        def with_alpha(color: str | None) -> str | None:
-            return None if color is None else f"{color[:7]}{alpha:02X}"
+
+        def with_alpha(color: str, part: str) -> str:
+            alpha = round(255 * (100 - transparency[part]) / 100)
+            return f"{color[:7]}{alpha:02X}"
+
         return _repeat_podium_colors(tuple(
             PodiumColorSelection(
-                with_alpha(selection.main_color),
-                with_alpha(selection.face_color),
-                with_alpha(selection.base_color),
+                with_alpha(resolved.main_color, "main_color"),
+                with_alpha(resolved.face_color, "face_color"),
+                with_alpha(resolved.base_color, "base_color"),
                 selection.metallic,
-                with_alpha(selection.text_color),
+                with_alpha(resolved.text_color, "main_color"),
             )
-            for selection in (colors.color_for_slot(slot) for slot in range(1, 9))
+            for selection, resolved in (
+                (selection, selection.resolve())
+                for selection in (colors.color_for_slot(slot) for slot in range(1, 9))
+            )
         ))
     raw_colors = value.get("colors")
     if not isinstance(raw_colors, list) or not raw_colors:
@@ -405,6 +427,28 @@ def _custom_preview_colors(
     if mode == "pick_all":
         return _repeat_podium_colors(colors)
     raise ValueError("Invalid formatting color selection")
+
+
+def _geometric_preview_colors(
+    value: object,
+    entrant_count: int,
+    variant: str | None,
+) -> GeometricFormattingColors:
+    """Map shared UI fields to Squares: main=border and sides=background."""
+
+    podium_colors = _custom_preview_colors(value, entrant_count, variant)
+    return GeometricFormattingColors(
+        tuple(
+            GeometricFormattingColor(
+                selection.resolve().base_color,
+                selection.resolve().main_color,
+            )
+            for selection in (
+                podium_colors.color_for_slot(slot)
+                for slot in range(1, entrant_count + 1)
+            )
+        )
+    )
 
 
 def _entrant_text_colors(value: object) -> tuple[str, tuple[str, ...], tuple[bool, ...]]:
@@ -501,6 +545,7 @@ def customized_format_preview() -> Any:
     if not isinstance(payload, Mapping):
         return jsonify(error="Request body must be a JSON object"), 400
     try:
+        creation_mode = CreationMode(payload.get("mode", "podium"))
         style = PodiumStyle(payload.get("style", "legacy"))
         event_format = TournamentFormat(payload.get("event_format", "singles"))
         entrant_count = int(payload.get("entrant_count", 8))
@@ -508,9 +553,14 @@ def customized_format_preview() -> Any:
         raise ValueError("Invalid format preview options") from error
     variant_value = payload.get("variant")
     variant = variant_value if isinstance(variant_value, str) and variant_value else None
-    colors = (
+    podium_colors = (
         _custom_preview_colors(payload.get("formatting_asset_colors"), entrant_count, variant)
-        if style is PodiumStyle.CUSTOMIZABLE
+        if creation_mode is CreationMode.PODIUM and style is PodiumStyle.CUSTOMIZABLE
+        else None
+    )
+    formatting_colors = (
+        _geometric_preview_colors(payload.get("formatting_asset_colors"), entrant_count, variant)
+        if creation_mode is CreationMode.SQUARES
         else None
     )
     raw_text_settings = payload.get("text_settings")
@@ -544,13 +594,15 @@ def customized_format_preview() -> Any:
         entrant_count,
         variant,
         transparent=bool(payload.get("transparent", True)),
-        podium_colors=colors,
+        podium_colors=podium_colors,
         header_layout=payload.get("header_layout") if isinstance(payload.get("header_layout"), Mapping) else None,
         font=font,
         custom_font_bytes=custom_font_bytes,
         text_settings=text_settings,
+        creation_mode=creation_mode,
         entrants=_preview_entrants(payload.get("entrants"), event_format),
         tournament=_preview_tournament(payload.get("tournament"), event_format),
+        formatting_colors=formatting_colors,
     )
     output = BytesIO()
     image.save(output, format="PNG")

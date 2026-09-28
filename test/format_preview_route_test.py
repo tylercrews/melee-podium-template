@@ -86,6 +86,65 @@ class FormatPreviewRouteTests(unittest.TestCase):
         self.assertEqual(first.face_color[-2:], "80")
         self.assertEqual(first.base_color[-2:], "80")
 
+    def test_applies_independent_transparency_to_each_preset_part(self) -> None:
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
+            response = self.client.post(
+                "/api/format-preview",
+                json={
+                    "style": "customizable",
+                    "event_format": "singles",
+                    "entrant_count": 3,
+                    "formatting_asset_colors": {
+                        "mode": "premade",
+                        "preset": "smash_player_colors",
+                        "preset_transparency": {
+                            "main_color": 10,
+                            "face_color": 20,
+                            "base_color": 75,
+                        },
+                        "colors": [],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        first = render_preview.call_args.kwargs["podium_colors"].color_for_slot(1)
+        self.assertEqual(first.main_color[-2:], "E6")
+        self.assertEqual(first.face_color[-2:], "CC")
+        self.assertEqual(first.base_color[-2:], "40")
+
+    def test_squares_maps_main_to_border_and_sides_to_background(self) -> None:
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
+            response = self.client.post(
+                "/api/format-preview",
+                json={
+                    "mode": "squares",
+                    "style": "legacy",
+                    "event_format": "doubles",
+                    "entrant_count": 4,
+                    "formatting_asset_colors": {
+                        "mode": "pick_1",
+                        "preset": None,
+                        "preset_transparency": {
+                            "main_color": 0,
+                            "face_color": 0,
+                            "base_color": 0,
+                        },
+                        "colors": [{
+                            "main_color": "#AABBCCDD",
+                            "face_color": "#11223344",
+                            "base_color": "#20304080",
+                            "metallic": False,
+                        }],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        colors = render_preview.call_args.kwargs["formatting_colors"]
+        self.assertEqual(colors.for_slot(1).trim_color, "#AABBCCDD")
+        self.assertEqual(colors.for_slot(1).background_color, "#20304080")
+
     def test_lists_provided_fonts_and_renders_uploaded_font_bytes(self) -> None:
         fonts_response = self.client.get("/api/fonts")
         self.assertEqual(fonts_response.status_code, 200)

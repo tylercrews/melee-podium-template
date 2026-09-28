@@ -6,8 +6,9 @@ import unittest
 from pathlib import Path
 
 from creation import TextSettings
-from creation_modes import PodiumStyle
+from creation_modes import CreationMode, PodiumStyle
 from format_preview import render_format_preview
+from geometric_formatting_colors import GeometricFormattingColors
 from models import TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorSelection
 
@@ -62,6 +63,23 @@ class FormatPreviewTests(unittest.TestCase):
             podium_colors=PodiumColorConfiguration.per_podium(green, green, green),
         )
         self.assertNotEqual(red_preview.tobytes(), green_preview.tobytes())
+
+    def test_squares_preview_uses_its_reviewed_layout_and_colors(self) -> None:
+        preview = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.DOUBLES,
+            4,
+            transparent=True,
+            creation_mode=CreationMode.SQUARES,
+            formatting_colors=GeometricFormattingColors.one(
+                "#102030CC",
+                "#E5393580",
+            ),
+        )
+
+        self.assertEqual(preview.size, (1920, 1080))
+        self.assertEqual(preview.mode, "RGBA")
+        self.assertIsNotNone(preview.getbbox())
 
     def test_header_assignments_change_the_rendered_text_positions(self) -> None:
         left_title = render_format_preview(
