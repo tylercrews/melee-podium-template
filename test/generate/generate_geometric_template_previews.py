@@ -13,6 +13,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from DrawEyes import (
+    EyesMode,
+    draw_eyes,
     draw_doubles_top_3 as draw_eyes_doubles_top_3,
     draw_doubles_top_4 as draw_eyes_doubles_top_4,
     draw_singles_top_8 as draw_eyes_singles_top_8,
@@ -24,6 +26,7 @@ from DrawSquares import (
 )
 from models import TournamentFormat
 from sample_creation_data import (
+    sample_singles_entrants,
     sample_top_4_teams,
     sample_top_8_entrants,
     sample_tournament,
@@ -66,6 +69,32 @@ def _generate_eyes_previews() -> list[Path]:
         fill_color=DARK_BACKGROUND,
         output_path=outputs[2],
     )
+    extended = (
+        (EyesMode.SINGLES_TOP_10, 10, tuple(range(1, 11))),
+        (EyesMode.SINGLES_TOP_15, 15, tuple(range(1, 16))),
+        (
+            EyesMode.SINGLES_TOP_16,
+            16,
+            (1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13),
+        ),
+        (EyesMode.SINGLES_TOP_20, 20, tuple(range(1, 21))),
+        (EyesMode.SINGLES_TOP_25, 25, tuple(range(1, 26))),
+    )
+    for index, (mode, count, placements) in enumerate(extended, start=1):
+        output = OUTPUT_FOLDER / f"eyes-singles-top-{count}.png"
+        random.seed(300 + index)
+        draw_eyes(
+            mode,
+            sample_singles_entrants(
+                count,
+                random.Random(30 + index),
+                placements=placements,
+            ),
+            tournament=singles_tournament,
+            fill_color=DARK_BACKGROUND,
+            output_path=output,
+        )
+        outputs.append(output)
     return outputs
 
 
@@ -167,10 +196,53 @@ def _regenerate_overview() -> Path:
     return output
 
 
+def _regenerate_extended_eyes_overview() -> Path:
+    overview = Image.new("RGB", (1920, 1080), DARK_BACKGROUND)
+    draw = ImageDraw.Draw(overview)
+    title_font = ImageFont.truetype(PROJECT_ROOT / "fonts" / "Ubuntu-Regular.ttf", 30)
+    label_font = ImageFont.truetype(PROJECT_ROOT / "fonts" / "Ubuntu-Regular.ttf", 22)
+    draw.text(
+        (50, 24),
+        "Eyes — extended singles layout studies",
+        fill="white",
+        font=title_font,
+    )
+    entries = (
+        (10, "PR Top 10"),
+        (15, "PR Top 15"),
+        (16, "Tournament Top 16"),
+        (20, "PR Top 20"),
+        (25, "PR Top 25"),
+    )
+    cell_width = 360
+    gap = 15
+    left_margin = (overview.width - (cell_width * 5 + gap * 4)) // 2
+    for index, (count, label) in enumerate(entries):
+        preview = _fit_preview(
+            OUTPUT_FOLDER / f"eyes-singles-top-{count}.png",
+            (cell_width, 900),
+        )
+        cell_left = left_margin + index * (cell_width + gap)
+        x = cell_left + (cell_width - preview.width) // 2
+        y = 80 + (900 - preview.height) // 2
+        overview.paste(preview, (x, y))
+        bounds = draw.textbbox((0, 0), label, font=label_font)
+        draw.text(
+            (cell_left + (cell_width - (bounds[2] - bounds[0])) // 2, 1010),
+            label,
+            fill="white",
+            font=label_font,
+        )
+    output = OUTPUT_FOLDER / "eyes-extended-overview.png"
+    overview.save(output)
+    return output
+
+
 def main() -> None:
     outputs = _generate_eyes_previews()
     outputs.extend(_generate_squares_previews())
     outputs.append(_regenerate_overview())
+    outputs.append(_regenerate_extended_eyes_overview())
     for output in outputs:
         print(output)
 

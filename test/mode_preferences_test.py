@@ -149,7 +149,7 @@ class ModePreferencesTest(unittest.TestCase):
             counts,
             {
                 CreationMode.PODIUM: 12,
-                CreationMode.EYES: 5,
+                CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
             },
         )
@@ -171,8 +171,25 @@ class ModePreferencesTest(unittest.TestCase):
                 item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES}
                 and item.selection.submode_id
                 in {"singles_top_8", "doubles_top_3", "doubles_top_4"}
+            ) or (
+                item.selection.mode is CreationMode.EYES
+                and item.selection.submode_id
+                in {
+                    "singles_top_10",
+                    "singles_top_15",
+                    "singles_top_16",
+                    "singles_top_20",
+                    "singles_top_25",
+                }
             )
             self.assertEqual(item.ready, reviewed_layout)
+            if (
+                item.selection.mode is CreationMode.EYES
+                and item.selection.options.entrant_count in {10, 15, 16, 20, 25}
+            ):
+                self.assertEqual(item.canvas_size.width, 1920)
+                self.assertLess(item.canvas_size.height, 5000)
+                continue
             expected_canvas = {
                 CreationMode.EYES: PixelSize(1080, 1920),
                 CreationMode.SQUARES: PixelSize(1920, 1080),

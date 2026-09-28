@@ -381,7 +381,17 @@ class EyesContentRenderer:
         cards: Mapping[int, PixelRect],
     ) -> None:
         card = cards[placement.entrant_slot]
-        number_width = max(100, round(card.width * 0.16))
+        number_width = max(
+            160 if request.selection.options.event_format is TournamentFormat.SINGLES else 100,
+            round(
+                card.width
+                * (
+                    0.22
+                    if request.selection.options.event_format is TournamentFormat.SINGLES
+                    else 0.16
+                )
+            ),
+        )
         portrait_area = PixelRect(
             card.left + 8,
             card.top + 5,
@@ -389,6 +399,14 @@ class EyesContentRenderer:
             card.bottom - 5,
         )
         if request.selection.options.event_format is TournamentFormat.DOUBLES:
+            top_band = max(76, round(card.height * 0.22))
+            bottom_band = max(74, round(card.height * 0.20))
+            portrait_area = PixelRect(
+                portrait_area.left,
+                card.top + top_band,
+                portrait_area.right,
+                card.bottom - bottom_band,
+            )
             midpoint = (portrait_area.left + portrait_area.right) // 2
             portrait_area = (
                 PixelRect(portrait_area.left, portrait_area.top, midpoint, portrait_area.bottom)
@@ -425,6 +443,26 @@ class EyesContentRenderer:
             "bottom": "metadata",
         }
         logo = _open_logo(self.tournament_logo)
+        if bar.width > bar.height:
+            gap = 24
+            section_width = (bar.width - gap * 2) // 3
+            for index, position in enumerate(("top", "middle", "bottom")):
+                content = layout.get(position)
+                if content is None:
+                    continue
+                left = bar.left + index * (section_width + gap)
+                right = bar.right if index == 2 else left + section_width
+                _draw_horizontal_header_item(
+                    canvas,
+                    request,
+                    content,
+                    PixelRect(left, bar.top, right, bar.bottom),
+                    self.font,
+                    logo,
+                    ("la", "ma", "ra")[index],
+                    title_preferred_size=64,
+                )
+            return
         section_height = bar.height // 3
         for index, position in enumerate(("top", "middle", "bottom")):
             content = layout[position]

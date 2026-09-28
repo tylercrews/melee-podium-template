@@ -31,9 +31,9 @@
       "asset_id": "eyes_rectangle",
       "destination": {
         "left": 30,
-        "top": 70,
+        "top": 35,
         "right": 820,
-        "bottom": 390
+        "bottom": 420
       },
       "z_index": 0
     },
@@ -42,9 +42,9 @@
       "asset_id": "eyes_rectangle",
       "destination": {
         "left": 30,
-        "top": 520,
+        "top": 475,
         "right": 820,
-        "bottom": 840
+        "bottom": 860
       },
       "z_index": 0
     },
@@ -53,9 +53,9 @@
       "asset_id": "eyes_rectangle",
       "destination": {
         "left": 30,
-        "top": 970,
+        "top": 915,
         "right": 820,
-        "bottom": 1290
+        "bottom": 1300
       },
       "z_index": 0
     },
@@ -64,7 +64,7 @@
       "asset_id": "eyes_rectangle",
       "destination": {
         "left": 30,
-        "top": 1420,
+        "top": 1355,
         "right": 820,
         "bottom": 1740
       },
@@ -76,11 +76,11 @@
       "slot_id": "entrant_1_placement_tag",
       "asset_id": "01st.png",
       "anchor": {
-        "x": 747,
-        "y": 230
+        "x": 737,
+        "y": 231
       },
       "max_size": {
-        "width": 130,
+        "width": 150,
         "height": 180
       },
       "z_index": 1
@@ -89,12 +89,12 @@
       "slot_id": "entrant_2_placement_tag",
       "asset_id": "02nd.png",
       "anchor": {
-        "x": 756,
-        "y": 680
+        "x": 753,
+        "y": 671
       },
       "max_size": {
-        "width": 112,
-        "height": 120
+        "width": 118,
+        "height": 130
       },
       "z_index": 2
     },
@@ -102,12 +102,12 @@
       "slot_id": "entrant_3_placement_tag",
       "asset_id": "03rd.png",
       "anchor": {
-        "x": 756,
-        "y": 1130
+        "x": 753,
+        "y": 1111
       },
       "max_size": {
-        "width": 112,
-        "height": 120
+        "width": 118,
+        "height": 130
       },
       "z_index": 3
     },
@@ -115,12 +115,12 @@
       "slot_id": "entrant_4_placement_tag",
       "asset_id": "04th.png",
       "anchor": {
-        "x": 756,
-        "y": 1580
+        "x": 753,
+        "y": 1551
       },
       "max_size": {
-        "width": 112,
-        "height": 120
+        "width": 118,
+        "height": 130
       },
       "z_index": 4
     }
@@ -131,8 +131,8 @@
       "entrant_slot": 1,
       "member_slot": 1,
       "anchor": {
-        "x": 227,
-        "y": 230
+        "x": 196,
+        "y": 231
       },
       "scale": 1.0,
       "z_index": 11
@@ -142,8 +142,8 @@
       "entrant_slot": 1,
       "member_slot": 2,
       "anchor": {
-        "x": 622,
-        "y": 230
+        "x": 528,
+        "y": 231
       },
       "scale": 1.0,
       "z_index": 11
@@ -153,8 +153,8 @@
       "entrant_slot": 2,
       "member_slot": 1,
       "anchor": {
-        "x": 227,
-        "y": 680
+        "x": 196,
+        "y": 671
       },
       "scale": 1.0,
       "z_index": 12
@@ -164,8 +164,8 @@
       "entrant_slot": 2,
       "member_slot": 2,
       "anchor": {
-        "x": 622,
-        "y": 680
+        "x": 528,
+        "y": 671
       },
       "scale": 1.0,
       "z_index": 12
@@ -175,8 +175,8 @@
       "entrant_slot": 3,
       "member_slot": 1,
       "anchor": {
-        "x": 227,
-        "y": 1130
+        "x": 196,
+        "y": 1111
       },
       "scale": 1.0,
       "z_index": 13
@@ -186,8 +186,8 @@
       "entrant_slot": 3,
       "member_slot": 2,
       "anchor": {
-        "x": 622,
-        "y": 1130
+        "x": 528,
+        "y": 1111
       },
       "scale": 1.0,
       "z_index": 13
@@ -197,8 +197,8 @@
       "entrant_slot": 4,
       "member_slot": 1,
       "anchor": {
-        "x": 227,
-        "y": 1580
+        "x": 196,
+        "y": 1551
       },
       "scale": 1.0,
       "z_index": 14
@@ -208,8 +208,8 @@
       "entrant_slot": 4,
       "member_slot": 2,
       "anchor": {
-        "x": 622,
-        "y": 1580
+        "x": 528,
+        "y": 1551
       },
       "scale": 1.0,
       "z_index": 14
@@ -217,65 +217,193 @@
   ],
   "text_slots": [
     {
-      "slot_id": "entrant_1_label",
+      "slot_id": "entrant_1_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 48,
-        "y": 398
+        "x": 362,
+        "y": 40
       },
-      "max_width": 754,
-      "pillow_anchor": "la",
-      "preferred_size": 54,
+      "max_width": 628,
+      "pillow_anchor": "ma",
+      "preferred_size": 50,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
     },
     {
-      "slot_id": "entrant_2_label",
+      "slot_id": "entrant_1_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 1,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 408
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_1_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 1,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 408
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 48,
-        "y": 848
+        "x": 362,
+        "y": 480
       },
-      "max_width": 754,
-      "pillow_anchor": "la",
-      "preferred_size": 54,
+      "max_width": 628,
+      "pillow_anchor": "ma",
+      "preferred_size": 50,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
     },
     {
-      "slot_id": "entrant_3_label",
+      "slot_id": "entrant_2_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 2,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 848
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 2,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 848
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 3,
       "member_slot": null,
       "anchor": {
-        "x": 48,
-        "y": 1298
+        "x": 362,
+        "y": 920
       },
-      "max_width": 754,
-      "pillow_anchor": "la",
-      "preferred_size": 54,
+      "max_width": 628,
+      "pillow_anchor": "ma",
+      "preferred_size": 50,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
     },
     {
-      "slot_id": "entrant_4_label",
+      "slot_id": "entrant_3_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 3,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 1288
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 3,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 1288
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_4_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 4,
       "member_slot": null,
       "anchor": {
-        "x": 48,
-        "y": 1748
+        "x": 362,
+        "y": 1360
       },
-      "max_width": 754,
-      "pillow_anchor": "la",
-      "preferred_size": 54,
+      "max_width": 628,
+      "pillow_anchor": "ma",
+      "preferred_size": 50,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_4_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 4,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 1728
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_4_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 4,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 1728
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 42,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"

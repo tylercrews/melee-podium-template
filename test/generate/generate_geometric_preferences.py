@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 
@@ -110,16 +111,52 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
             (30, 28 + index * 231, 820, 188 + index * 231)
             for index in range(8)
         ]
+        canvas_size = (1080, 1920)
+        header_rectangle = (850, 20, 1060, 1900)
     elif event_format == "doubles" and count == 3:
         rectangles = [
-            (30, top, 820, top + 380)
-            for top in (90, 660, 1230)
+            (30, top, 820, top + 475)
+            for top in (55, 625, 1195)
         ]
+        canvas_size = (1080, 1920)
+        header_rectangle = (850, 20, 1060, 1900)
     elif event_format == "doubles" and count == 4:
         rectangles = [
-            (30, top, 820, top + 320)
-            for top in (70, 520, 970, 1420)
+            (30, top, 820, top + 385)
+            for top in (35, 475, 915, 1355)
         ]
+        canvas_size = (1080, 1920)
+        header_rectangle = (850, 20, 1060, 1900)
+    elif event_format == "singles" and count in {10, 15, 16, 20, 25}:
+        canvas_width = 1920
+        side_margin = 40
+        column_gap = 28
+        column_width = (canvas_width - side_margin * 2 - column_gap * 2) // 3
+        first_rectangle = (side_margin, 260, canvas_width - side_margin, 590)
+        grid_top = 630
+        row_height = 260
+        row_gap = 26
+        remaining = count - 1
+        rectangles = [first_rectangle]
+        for row in range(math.ceil(remaining / 3)):
+            items_in_row = min(3, remaining - row * 3)
+            row_width = items_in_row * column_width + (items_in_row - 1) * column_gap
+            row_left = (canvas_width - row_width) // 2
+            top = grid_top + row * (row_height + row_gap)
+            rectangles.extend(
+                (
+                    row_left + column * (column_width + column_gap),
+                    top,
+                    row_left + column * (column_width + column_gap) + column_width,
+                    top + row_height,
+                )
+                for column in range(items_in_row)
+            )
+        canvas_size = (
+            canvas_width,
+            rectangles[-1][3] + 80,
+        )
+        header_rectangle = (40, 30, canvas_width - 40, 225)
     else:
         raise ValueError("Unsupported reviewed Eyes layout")
 
@@ -127,7 +164,12 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
         {
             "slot_id": "header_bar",
             "asset_id": "eyes_header_bar",
-            "destination": {"left": 850, "top": 20, "right": 1060, "bottom": 1900},
+            "destination": {
+                "left": header_rectangle[0],
+                "top": header_rectangle[1],
+                "right": header_rectangle[2],
+                "bottom": header_rectangle[3],
+            },
             "z_index": 0,
         }
     ] + [
@@ -137,50 +179,109 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
     characters: list[dict[str, object]] = []
     placement_tags: list[dict[str, object]] = []
     text: list[dict[str, object]] = []
-    placements = (1, 2, 3, 4, 5, 5, 7, 7) if count == 8 else tuple(range(1, count + 1))
+    if count == 8:
+        placements = (1, 2, 3, 4, 5, 5, 7, 7)
+    elif count == 16:
+        placements = (1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13)
+    else:
+        placements = tuple(range(1, count + 1))
     for slot, (left, top, right, bottom) in enumerate(rectangles, start=1):
         if event_format == "singles":
             characters.append(_character(slot, (left + right) // 2, (top + bottom) // 2))
-            tag_field = "entrant.tag"
-            tag_size = 52
-        else:
-            characters.extend(
-                (
-                    _character(slot, left + (right - left) // 4, (top + bottom) // 2, member=1),
-                    _character(slot, left + 3 * (right - left) // 4, (top + bottom) // 2, member=2),
+            tag_width = 200 if slot == 1 and count > 8 else 130 if slot == 1 else 112
+            tag_height = 220 if slot == 1 and count > 8 else 150
+            name_column_width = max(160, round((right - left) * 0.22))
+            placement_tags.append(
+                _placement_tag(
+                    slot,
+                    placements[slot - 1],
+                    right - tag_width // 2 - 8,
+                    (top + bottom) // 2,
+                    tag_width,
+                    tag_height,
                 )
             )
-            tag_field = "entrant.team_name"
-            tag_size = 62 if count == 3 else 54
-        tag_width = 130 if slot == 1 else 112
-        tag_height = 150 if event_format == "singles" else 180 if slot == 1 else 120
+            text.append(
+                _text(
+                    f"entrant_{slot}_label",
+                    "entrant.tag",
+                    slot,
+                    right - 16,
+                    bottom - 12,
+                    max(name_column_width - 28, round((right - left) * 0.46)),
+                    68 if slot == 1 and count > 8 else 52 if count == 8 else 48,
+                    anchor="rs",
+                )
+            )
+            continue
+
+        top_band = max(76, round((bottom - top) * 0.22))
+        bottom_band = max(74, round((bottom - top) * 0.20))
+        portrait_top = top + top_band
+        portrait_bottom = bottom - bottom_band
+        portrait_right = right - max(100, round((right - left) * 0.16))
+        portrait_center_y = (portrait_top + portrait_bottom) // 2
+        portrait_midpoint = (left + portrait_right) // 2
+        characters.extend(
+            (
+                _character(slot, (left + portrait_midpoint) // 2, portrait_center_y, member=1),
+                _character(slot, (portrait_midpoint + portrait_right) // 2, portrait_center_y, member=2),
+            )
+        )
+        tag_width = 150 if slot == 1 else 118
+        tag_height = min(180 if slot == 1 else 130, portrait_bottom - portrait_top)
         placement_tags.append(
             _placement_tag(
                 slot,
                 placements[slot - 1],
                 right - tag_width // 2 - 8,
-                (top + bottom) // 2,
+                portrait_center_y,
                 tag_width,
                 tag_height,
             )
         )
-        text.append(
-            _text(
-                f"entrant_{slot}_label",
-                tag_field,
-                slot,
-                left + 18,
-                bottom + 8,
-                right - left - 36,
-                tag_size,
-                anchor="la",
+        available_width = portrait_right - left
+        text.extend(
+            (
+                _text(
+                    f"entrant_{slot}_team_name",
+                    "entrant.team_name",
+                    slot,
+                    left + available_width // 2,
+                    top + 5,
+                    available_width - 36,
+                    58 if count == 3 else 50,
+                    anchor="ma",
+                ),
+                _text(
+                    f"entrant_{slot}_member_1_tag",
+                    "member.tag",
+                    slot,
+                    left + available_width // 4,
+                    bottom - 12,
+                    available_width // 2 - 26,
+                    48 if count == 3 else 42,
+                    anchor="ms",
+                    member=1,
+                ),
+                _text(
+                    f"entrant_{slot}_member_2_tag",
+                    "member.tag",
+                    slot,
+                    left + 3 * available_width // 4,
+                    bottom - 12,
+                    available_width // 2 - 26,
+                    48 if count == 3 else 42,
+                    anchor="ms",
+                    member=2,
+                ),
             )
         )
     return {
         "schema_version": 1,
         "ready": True,
         "selection": _selection("eyes", event_format, count),
-        "canvas_size": {"width": 1080, "height": 1920},
+        "canvas_size": {"width": canvas_size[0], "height": canvas_size[1]},
         "formatting_assets": formatting,
         "placement_tags": placement_tags,
         "character_slots": characters,
@@ -360,9 +461,15 @@ def _write(mode: str, event_format: str, count: int, value: dict[str, object]) -
 
 
 def main() -> None:
-    for mode, builder in (("eyes", _eyes_preferences), ("squares", _squares_preferences)):
-        for event_format, count in (("singles", 8), ("doubles", 3), ("doubles", 4)):
-            _write(mode, event_format, count, builder(event_format, count))
+    modes = (
+        ("eyes", _eyes_preferences, (8, 10, 15, 16, 20, 25)),
+        ("squares", _squares_preferences, (8,)),
+    )
+    for mode, builder, singles_counts in modes:
+        for count in singles_counts:
+            _write(mode, "singles", count, builder("singles", count))
+        for count in (3, 4):
+            _write(mode, "doubles", count, builder("doubles", count))
         # Retain the reserved singles scaffolds but give them the mode's real
         # output dimensions so selecting a future layout cannot mis-size assets.
         for count in (3, 4):

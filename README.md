@@ -86,6 +86,7 @@ Maybes/Eventuallies:
 * Stress-test browser memory limits for guest image uploads, then implement safe in-memory tournament-logo and background selection for users who are not signed in.
 
 Different Layout Styles One Day:
+* a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s
 * once we have placement numbers rendered instead of static assets, create an alternate counting mode where it puts 1-8 (5th 6th 7th 8th instead of 5th 5th 7th 7th) so that people can use it for PRs as well. Or maybe a top 10 pr mode.
 * flying v with first place centered
 * top 8er / waddle wednesday layout

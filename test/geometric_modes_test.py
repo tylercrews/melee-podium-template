@@ -8,8 +8,9 @@ from PIL import Image
 
 from background_builder import PixelRect, PixelSize
 from creation_modes import CreationMode, ModeOptions, ModeSelection
-from DrawEyes import draw_doubles_top_3 as draw_eyes_doubles_top_3
+from DrawEyes import EyesMode, draw_doubles_top_3 as draw_eyes_doubles_top_3
 from DrawEyes import draw_doubles_top_4 as draw_eyes_doubles_top_4
+from DrawEyes import draw_eyes
 from DrawEyes import draw_singles_top_8 as draw_eyes_singles_top_8
 from DrawSquares import draw_doubles_top_3 as draw_squares_doubles_top_3
 from DrawSquares import draw_doubles_top_4 as draw_squares_doubles_top_4
@@ -26,6 +27,7 @@ from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository,
 from models import Character, TournamentFormat
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from sample_creation_data import (
+    sample_singles_entrants,
     sample_top_4_teams,
     sample_top_8_entrants,
     sample_tournament,
@@ -86,6 +88,89 @@ class GeometricModesTest(unittest.TestCase):
                             else []
                         ),
                     ],
+                )
+
+    def test_extended_eyes_layouts_use_full_width_first_and_three_column_grid(self) -> None:
+        repository = ModePreferenceRepository()
+        expected_placements = {
+            10: list(range(1, 11)),
+            15: list(range(1, 16)),
+            16: [1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13],
+            20: list(range(1, 21)),
+            25: list(range(1, 26)),
+        }
+        for count, placements in expected_placements.items():
+            preferences = repository.load(
+                ModeSelection(
+                    CreationMode.EYES,
+                    ModeOptions(TournamentFormat.SINGLES, count),
+                )
+            )
+            cards = [
+                item.destination
+                for item in preferences.formatting_assets
+                if item.asset_id == "eyes_rectangle"
+            ]
+            header = next(
+                item.destination
+                for item in preferences.formatting_assets
+                if item.asset_id == "eyes_header_bar"
+            )
+            self.assertEqual(preferences.canvas_size.width, 1920)
+            self.assertLess(preferences.canvas_size.height, 5000)
+            self.assertGreater(header.width, header.height)
+            self.assertEqual(len(cards), count)
+            self.assertGreater(cards[0].width, cards[1].width * 2)
+            rows: dict[int, int] = {}
+            for card in cards[1:]:
+                rows[card.top] = rows.get(card.top, 0) + 1
+            self.assertLessEqual(max(rows.values()), 3)
+            self.assertEqual(
+                [int(item.asset_id[:2]) for item in preferences.placement_tags],
+                placements,
+            )
+
+    def test_eyes_names_stay_inside_their_associated_colored_bars(self) -> None:
+        repository = ModePreferenceRepository()
+        singles = repository.load(
+            ModeSelection(
+                CreationMode.EYES,
+                ModeOptions(TournamentFormat.SINGLES, 8),
+            )
+        )
+        singles_cards = {
+            int(item.slot_id.rsplit("_", 1)[1]): item.destination
+            for item in singles.formatting_assets
+            if item.asset_id == "eyes_rectangle"
+        }
+        for label in singles.text_slots:
+            card = singles_cards[label.entrant_slot or 0]
+            self.assertLess(label.anchor.y, card.bottom)
+            self.assertGreater(label.anchor.y, card.top)
+            self.assertGreater(label.anchor.x, card.left + card.width * 3 // 4)
+            self.assertEqual(label.pillow_anchor, "rs")
+
+        for count in (3, 4):
+            doubles = repository.load(
+                ModeSelection(
+                    CreationMode.EYES,
+                    ModeOptions(TournamentFormat.DOUBLES, count),
+                )
+            )
+            cards = {
+                int(item.slot_id.rsplit("_", 1)[1]): item.destination
+                for item in doubles.formatting_assets
+                if item.asset_id == "eyes_rectangle"
+            }
+            for slot in range(1, count + 1):
+                card = cards[slot]
+                text = [item for item in doubles.text_slots if item.entrant_slot == slot]
+                team = next(item for item in text if item.field == "entrant.team_name")
+                members = [item for item in text if item.field == "member.tag"]
+                self.assertEqual(len(members), 2)
+                self.assertLess(team.anchor.y, card.top + card.height // 3)
+                self.assertTrue(
+                    all(item.anchor.y > card.top + card.height * 2 // 3 for item in members)
                 )
 
     def test_squares_doubles_emphasizes_first_and_places_headers_below_other_cards(self) -> None:
@@ -392,6 +477,19 @@ class GeometricModesTest(unittest.TestCase):
         self.assertEqual(squares.size, (1920, 1080))
         self.assertEqual(eyes.mode, "RGBA")
         self.assertEqual(squares.mode, "RGBA")
+
+    def test_extended_eyes_public_renderer_uses_variable_height_canvas(self) -> None:
+        entrants = sample_singles_entrants(10, random.Random(61))
+        image = draw_eyes(
+            EyesMode.SINGLES_TOP_10,
+            entrants,
+            tournament=sample_tournament(TournamentFormat.SINGLES),
+        )
+
+        self.assertEqual(image.width, 1920)
+        self.assertGreater(image.height, 1080)
+        self.assertLess(image.height, 5000)
+        self.assertIsNotNone(image.getbbox())
 
     def test_both_doubles_layouts_render_two_members_per_team(self) -> None:
         teams = sample_top_4_teams(random.Random(22))

@@ -8,6 +8,8 @@ from models import TournamentFormat
 from sample_creation_data import (
     SAMPLE_TEAM_COLORS,
     SAMPLE_TOP_8_ENTRANT_POOL,
+    SAMPLE_TOP_25_ENTRANT_POOL,
+    sample_singles_entrants,
     sample_top_4_teams,
     sample_top_8_entrants,
     sample_tournament,
@@ -15,6 +17,19 @@ from sample_creation_data import (
 
 
 class SampleCreationDataTest(unittest.TestCase):
+    def test_extended_sample_helper_returns_unique_sorted_entrants(self) -> None:
+        placements = (1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13)
+        entrants = sample_singles_entrants(
+            16,
+            random.Random(42),
+            placements=placements,
+        )
+
+        self.assertEqual(tuple(item.placement for item in entrants), placements)
+        self.assertEqual(len({item.tag for item in entrants}), 16)
+        self.assertEqual(sorted(item.seed for item in entrants), list(range(1, 17)))
+        self.assertEqual(len(SAMPLE_TOP_25_ENTRANT_POOL), 25)
+
     def test_pool_contains_the_expected_players_and_characters(self) -> None:
         actual = {
             entrant.tag: [

@@ -20,13 +20,18 @@ from creation import TextSettings
 from DrawPodium import PodiumFont
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
-from geometric_content_renderer import SquaresContentRenderer
+from geometric_content_renderer import EyesContentRenderer, SquaresContentRenderer
 from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
-from sample_creation_data import sample_top_4_teams, sample_top_8_entrants, sample_tournament
+from sample_creation_data import (
+    sample_singles_entrants,
+    sample_top_4_teams,
+    sample_top_8_entrants,
+    sample_tournament,
+)
 
 
 PREVIEW_BACKGROUND_ASSET_ID = "00_Battlefield_5000_5000_resaved.png"
@@ -43,6 +48,13 @@ SUPPORTED_LAYOUTS = frozenset(
 SUPPORTED_SQUARE_LAYOUTS = frozenset(
     {
         (TournamentFormat.SINGLES, 8, None),
+        (TournamentFormat.DOUBLES, 3, None),
+        (TournamentFormat.DOUBLES, 4, None),
+    }
+)
+SUPPORTED_EYES_LAYOUTS = frozenset(
+    {
+        *((TournamentFormat.SINGLES, count, None) for count in (8, 10, 15, 16, 20, 25)),
         (TournamentFormat.DOUBLES, 3, None),
         (TournamentFormat.DOUBLES, 4, None),
     }
@@ -76,6 +88,8 @@ def render_format_preview(
         if creation_mode is CreationMode.PODIUM
         else SUPPORTED_SQUARE_LAYOUTS
         if creation_mode is CreationMode.SQUARES
+        else SUPPORTED_EYES_LAYOUTS
+        if creation_mode is CreationMode.EYES
         else frozenset()
     )
     if layout not in supported_layouts:
@@ -107,7 +121,11 @@ def render_format_preview(
     randomizer = random.Random(2026)
     if entrants is None:
         entrants = (
-            sample_top_8_entrants(randomizer)[:entrant_count]
+            (
+                sample_top_8_entrants(randomizer)
+                if entrant_count == 8
+                else sample_singles_entrants(entrant_count, randomizer)
+            )
             if event_format is TournamentFormat.SINGLES
             else sample_top_4_teams(randomizer)[:entrant_count]
         )
@@ -121,8 +139,8 @@ def render_format_preview(
         if creation_mode is CreationMode.PODIUM and style is PodiumStyle.CUSTOMIZABLE
         else None
     )
-    if creation_mode is CreationMode.SQUARES and formatting_colors is None:
-        raise ValueError("Squares previews require formatting colors")
+    if creation_mode in {CreationMode.EYES, CreationMode.SQUARES} and formatting_colors is None:
+        raise ValueError("Eyes and Squares previews require formatting colors")
     request = CreationRequest(
         selection=selection,
         background=background,
@@ -145,6 +163,8 @@ def render_format_preview(
     renderer = (
         LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
         if creation_mode is CreationMode.PODIUM
+        else EyesContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+        if creation_mode is CreationMode.EYES
         else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
     )
     return renderer.draw(formatted, request, preferences)

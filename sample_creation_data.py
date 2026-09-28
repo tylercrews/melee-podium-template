@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 import random
+from collections.abc import Sequence
 
 from models import (
     Character,
@@ -51,6 +52,71 @@ SAMPLE_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
 )
 
 
+SAMPLE_TOP_25_ENTRANT_POOL: tuple[Entrant, ...] = SAMPLE_TOP_8_ENTRANT_POOL + (
+    Entrant(tag="Tempo | Axe", characters=[Character("Pikachu", pose=None)]),
+    Entrant(tag="Wizzrobe", characters=[Character("Captain Falcon", pose=None)]),
+    Entrant(tag="VGBC | aMSa", characters=[Character("Yoshi", pose=None)]),
+    Entrant(tag="Plup", characters=[Character("Sheik", pose=None)]),
+    Entrant(tag="S2J", characters=[Character("Captain Falcon", pose=None)]),
+    Entrant(tag="Moky", characters=[Character("Fox", pose=None)]),
+    Entrant(tag="FLY | Jmook", characters=[Character("Sheik", pose=None)]),
+    Entrant(tag="Nouns | Aklo", characters=[Character("Link", pose=None)]),
+    Entrant(tag="n0ne", characters=[Character("Captain Falcon", pose=None)]),
+    Entrant(tag="lloD", characters=[Character("Peach", pose=None)]),
+    Entrant(tag="Trif", characters=[Character("Peach", pose=None)]),
+    Entrant(tag="Spark", characters=[Character("Sheik", pose=None)]),
+    Entrant(tag="Joshman", characters=[Character("Fox", pose=None)]),
+    Entrant(tag="Kodorin", characters=[Character("Marth", pose=None)]),
+    Entrant(tag="BLE | SluG", characters=[Character("Ice Climbers", pose=None)]),
+    Entrant(tag="Junebug", characters=[Character("Donkey Kong", pose=None)]),
+    Entrant(tag="Morsecode762", characters=[Character("Samus", pose=None)]),
+)
+
+
+def sample_singles_entrants(
+    count: int,
+    rng: random.Random | None = None,
+    *,
+    placements: Sequence[int] | None = None,
+) -> list[SinglesEntrant]:
+    """Return up to 25 unique sample entrants in result-display order."""
+
+    if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+        raise ValueError("count must be a positive integer")
+    if count > len(SAMPLE_TOP_25_ENTRANT_POOL):
+        raise ValueError("sample singles data supports at most 25 entrants")
+    if placements is None:
+        placements = tuple(range(1, count + 1))
+    if len(placements) != count or any(
+        isinstance(placement, bool) or not isinstance(placement, int) or placement <= 0
+        for placement in placements
+    ):
+        raise ValueError("placements must contain one positive integer per entrant")
+
+    randomizer = rng if rng is not None else random
+    entrants_in_result_order = randomizer.sample(
+        SAMPLE_TOP_25_ENTRANT_POOL,
+        k=count,
+    )
+    seeds = randomizer.sample(range(1, count + 1), k=count)
+    return [
+        SinglesEntrant(
+            tag=entrant.tag,
+            characters=list(entrant.characters),
+            bluesky_handle=entrant.bluesky_handle,
+            x_handle=entrant.x_handle,
+            seed=seed,
+            placement=placement,
+        )
+        for placement, entrant, seed in zip(
+            placements,
+            entrants_in_result_order,
+            seeds,
+            strict=True,
+        )
+    ]
+
+
 def sample_top_8_entrants(
     rng: random.Random | None = None,
 ) -> list[SinglesEntrant]:
@@ -62,7 +128,6 @@ def sample_top_8_entrants(
         k=len(SAMPLE_TOP_8_ENTRANT_POOL),
     )
     seeds = randomizer.sample(range(1, 9), k=8)
-
     return [
         SinglesEntrant(
             tag=entrant.tag,
@@ -73,11 +138,7 @@ def sample_top_8_entrants(
             placement=placement,
         )
         for placement, (entrant, seed) in enumerate(
-            zip(
-                entrants_in_result_order,
-                seeds,
-                strict=True,
-            ),
+            zip(entrants_in_result_order, seeds, strict=True),
             start=1,
         )
     ]

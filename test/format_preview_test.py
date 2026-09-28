@@ -81,6 +81,20 @@ class FormatPreviewTests(unittest.TestCase):
         self.assertEqual(preview.mode, "RGBA")
         self.assertIsNotNone(preview.getbbox())
 
+    def test_eyes_preview_supports_extended_variable_height_layouts(self) -> None:
+        preview = render_format_preview(
+            PodiumStyle.LEGACY,
+            TournamentFormat.SINGLES,
+            10,
+            transparent=True,
+            creation_mode=CreationMode.EYES,
+            formatting_colors=GeometricFormattingColors.one("#D9365EFF"),
+        )
+
+        self.assertEqual(preview.width, 1920)
+        self.assertGreater(preview.height, 1080)
+        self.assertIsNotNone(preview.getbbox())
+
     def test_header_assignments_change_the_rendered_text_positions(self) -> None:
         left_title = render_format_preview(
             PodiumStyle.LEGACY,

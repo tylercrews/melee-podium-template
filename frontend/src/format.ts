@@ -189,8 +189,12 @@ export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, En
     ],
   },
   eyes: {
-    singles: [3, 4, 8, 10, 15, 20, 25, 32].map((entrant_count) => ({ entrant_count, variant: null, label: `Top ${entrant_count}` })),
-    doubles: [3, 4, 8].map((entrant_count) => ({ entrant_count, variant: null, label: `Top ${entrant_count}` })),
+    singles: [8, 10, 15, 16, 20, 25].map((entrant_count) => ({
+      entrant_count,
+      variant: null,
+      label: entrant_count === 16 ? "Tournament Top 16" : entrant_count === 8 ? "Top 8" : `PR Top ${entrant_count}`,
+    })),
+    doubles: [3, 4].map((entrant_count) => ({ entrant_count, variant: null, label: `Top ${entrant_count}` })),
   },
   squares: {
     singles: [{ entrant_count: 8, variant: null, label: "Top 8" }],

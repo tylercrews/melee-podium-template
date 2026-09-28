@@ -23,6 +23,11 @@ from models import DoublesTeam, SinglesEntrant, Tournament
 
 class EyesMode(StrEnum):
     SINGLES_TOP_8 = "singles_top_8"
+    SINGLES_TOP_10 = "singles_top_10"
+    SINGLES_TOP_15 = "singles_top_15"
+    SINGLES_TOP_16 = "singles_top_16"
+    SINGLES_TOP_20 = "singles_top_20"
+    SINGLES_TOP_25 = "singles_top_25"
     DOUBLES_TOP_3 = "doubles_top_3"
     DOUBLES_TOP_4 = "doubles_top_4"
 
@@ -88,6 +93,41 @@ def draw_singles_top_8(
     **kwargs: object,
 ) -> Image.Image:
     return draw_eyes(EyesMode.SINGLES_TOP_8, entrants, **kwargs)
+
+
+def draw_singles_top_10(
+    entrants: Sequence[SinglesEntrant],
+    **kwargs: object,
+) -> Image.Image:
+    return draw_eyes(EyesMode.SINGLES_TOP_10, entrants, **kwargs)
+
+
+def draw_singles_top_15(
+    entrants: Sequence[SinglesEntrant],
+    **kwargs: object,
+) -> Image.Image:
+    return draw_eyes(EyesMode.SINGLES_TOP_15, entrants, **kwargs)
+
+
+def draw_singles_top_16(
+    entrants: Sequence[SinglesEntrant],
+    **kwargs: object,
+) -> Image.Image:
+    return draw_eyes(EyesMode.SINGLES_TOP_16, entrants, **kwargs)
+
+
+def draw_singles_top_20(
+    entrants: Sequence[SinglesEntrant],
+    **kwargs: object,
+) -> Image.Image:
+    return draw_eyes(EyesMode.SINGLES_TOP_20, entrants, **kwargs)
+
+
+def draw_singles_top_25(
+    entrants: Sequence[SinglesEntrant],
+    **kwargs: object,
+) -> Image.Image:
+    return draw_eyes(EyesMode.SINGLES_TOP_25, entrants, **kwargs)
 
 
 def draw_doubles_top_3(

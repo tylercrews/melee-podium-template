@@ -560,7 +560,7 @@ def customized_format_preview() -> Any:
     )
     formatting_colors = (
         _geometric_preview_colors(payload.get("formatting_asset_colors"), entrant_count, variant)
-        if creation_mode is CreationMode.SQUARES
+        if creation_mode in {CreationMode.EYES, CreationMode.SQUARES}
         else None
     )
     raw_text_settings = payload.get("text_settings")
