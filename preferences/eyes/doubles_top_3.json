@@ -66,7 +66,7 @@
       "asset_id": "01st.png",
       "anchor": {
         "x": 737,
-        "y": 297
+        "y": 153
       },
       "max_size": {
         "width": 150,
@@ -79,7 +79,7 @@
       "asset_id": "02nd.png",
       "anchor": {
         "x": 753,
-        "y": 867
+        "y": 698
       },
       "max_size": {
         "width": 118,
@@ -92,7 +92,7 @@
       "asset_id": "03rd.png",
       "anchor": {
         "x": 753,
-        "y": 1437
+        "y": 1268
       },
       "max_size": {
         "width": 118,
@@ -187,8 +187,24 @@
       "color": "#FFFFFFFF"
     },
     {
+      "slot_id": "entrant_1_member_1_sponsor",
+      "field": "member.sponsor",
+      "entrant_slot": 1,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 468
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 28,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
       "slot_id": "entrant_1_member_1_tag",
-      "field": "member.tag",
+      "field": "member.player_tag",
       "entrant_slot": 1,
       "member_slot": 1,
       "anchor": {
@@ -203,8 +219,24 @@
       "color": "#FFFFFFFF"
     },
     {
+      "slot_id": "entrant_1_member_2_sponsor",
+      "field": "member.sponsor",
+      "entrant_slot": 1,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 468
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 28,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
       "slot_id": "entrant_1_member_2_tag",
-      "field": "member.tag",
+      "field": "member.player_tag",
       "entrant_slot": 1,
       "member_slot": 2,
       "anchor": {
@@ -235,8 +267,24 @@
       "color": "#FFFFFFFF"
     },
     {
+      "slot_id": "entrant_2_member_1_sponsor",
+      "field": "member.sponsor",
+      "entrant_slot": 2,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 1038
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 28,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
       "slot_id": "entrant_2_member_1_tag",
-      "field": "member.tag",
+      "field": "member.player_tag",
       "entrant_slot": 2,
       "member_slot": 1,
       "anchor": {
@@ -251,8 +299,24 @@
       "color": "#FFFFFFFF"
     },
     {
+      "slot_id": "entrant_2_member_2_sponsor",
+      "field": "member.sponsor",
+      "entrant_slot": 2,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 1038
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 28,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
       "slot_id": "entrant_2_member_2_tag",
-      "field": "member.tag",
+      "field": "member.player_tag",
       "entrant_slot": 2,
       "member_slot": 2,
       "anchor": {
@@ -283,8 +347,24 @@
       "color": "#FFFFFFFF"
     },
     {
+      "slot_id": "entrant_3_member_1_sponsor",
+      "field": "member.sponsor",
+      "entrant_slot": 3,
+      "member_slot": 1,
+      "anchor": {
+        "x": 196,
+        "y": 1608
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 28,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
       "slot_id": "entrant_3_member_1_tag",
-      "field": "member.tag",
+      "field": "member.player_tag",
       "entrant_slot": 3,
       "member_slot": 1,
       "anchor": {
@@ -299,8 +379,24 @@
       "color": "#FFFFFFFF"
     },
     {
+      "slot_id": "entrant_3_member_2_sponsor",
+      "field": "member.sponsor",
+      "entrant_slot": 3,
+      "member_slot": 2,
+      "anchor": {
+        "x": 528,
+        "y": 1608
+      },
+      "max_width": 306,
+      "pillow_anchor": "ms",
+      "preferred_size": 28,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
       "slot_id": "entrant_3_member_2_tag",
-      "field": "member.tag",
+      "field": "member.player_tag",
       "entrant_slot": 3,
       "member_slot": 2,
       "anchor": {

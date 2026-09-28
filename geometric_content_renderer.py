@@ -114,6 +114,12 @@ def _text_value(
     result: SinglesEntrant | DoublesTeam,
     include_seeding: bool,
 ) -> str | None:
+    def identity_part(tag: str, *, sponsor: bool) -> str | None:
+        parts = [part.strip() for part in tag.split("|")]
+        if len(parts) == 1:
+            return None if sponsor else parts[0]
+        return " | ".join(parts[:-1]) if sponsor else parts[-1]
+
     if placement.field == "entrant.placement":
         return str(result.placement)
     if placement.field == "entrant.seed":
@@ -122,11 +128,18 @@ def _text_value(
         return result.team_name if isinstance(result, DoublesTeam) else None
     if placement.field == "entrant.tag":
         return result.tag if isinstance(result, SinglesEntrant) else None
+    if placement.field == "entrant.sponsor":
+        return identity_part(result.tag, sponsor=True) if isinstance(result, SinglesEntrant) else None
+    if placement.field == "entrant.player_tag":
+        return identity_part(result.tag, sponsor=False) if isinstance(result, SinglesEntrant) else None
     if placement.field == "member.tag" and isinstance(result, DoublesTeam):
         if placement.member_slot == 1:
             return result.entrant_1.tag
         if placement.member_slot == 2:
             return result.entrant_2.tag
+    if placement.field in {"member.sponsor", "member.player_tag"} and isinstance(result, DoublesTeam):
+        member = result.entrant_1 if placement.member_slot == 1 else result.entrant_2
+        return identity_part(member.tag, sponsor=placement.field == "member.sponsor")
     raise ValueError(f"Unknown geometric text field: {placement.field}")
 
 

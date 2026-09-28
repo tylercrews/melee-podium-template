@@ -129,6 +129,12 @@ class GeometricModesTest(unittest.TestCase):
                 [int(item.asset_id[:2]) for item in preferences.placement_tags],
                 placements,
             )
+            self.assertTrue(
+                all(
+                    tag.anchor.y < card.top + card.height // 2
+                    for tag, card in zip(preferences.placement_tags, cards, strict=True)
+                )
+            )
 
     def test_eyes_names_stay_inside_their_associated_colored_bars(self) -> None:
         repository = ModePreferenceRepository()
@@ -166,11 +172,19 @@ class GeometricModesTest(unittest.TestCase):
                 card = cards[slot]
                 text = [item for item in doubles.text_slots if item.entrant_slot == slot]
                 team = next(item for item in text if item.field == "entrant.team_name")
-                members = [item for item in text if item.field == "member.tag"]
+                members = [item for item in text if item.field == "member.player_tag"]
+                sponsors = [item for item in text if item.field == "member.sponsor"]
                 self.assertEqual(len(members), 2)
+                self.assertEqual(len(sponsors), 2)
                 self.assertLess(team.anchor.y, card.top + card.height // 3)
                 self.assertTrue(
                     all(item.anchor.y > card.top + card.height * 2 // 3 for item in members)
+                )
+                self.assertTrue(
+                    all(
+                        sponsor.anchor.y < member.anchor.y
+                        for sponsor, member in zip(sponsors, members, strict=True)
+                    )
                 )
 
     def test_squares_doubles_emphasizes_first_and_places_headers_below_other_cards(self) -> None:

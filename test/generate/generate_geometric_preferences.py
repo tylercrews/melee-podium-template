@@ -188,29 +188,49 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
     for slot, (left, top, right, bottom) in enumerate(rectangles, start=1):
         if event_format == "singles":
             characters.append(_character(slot, (left + right) // 2, (top + bottom) // 2))
-            tag_width = 200 if slot == 1 and count > 8 else 130 if slot == 1 else 112
-            tag_height = 220 if slot == 1 and count > 8 else 150
+            if slot == 1 and count > 8:
+                tag_width, tag_height = 180, 180
+            elif count > 8:
+                tag_width, tag_height = 100, 118
+            elif slot == 1:
+                tag_width, tag_height = 88, 78
+            else:
+                tag_width, tag_height = 82, 74
             name_column_width = max(160, round((right - left) * 0.22))
             placement_tags.append(
                 _placement_tag(
                     slot,
                     placements[slot - 1],
                     right - tag_width // 2 - 8,
-                    (top + bottom) // 2,
+                    top + 10 + tag_height // 2,
                     tag_width,
                     tag_height,
                 )
             )
-            text.append(
-                _text(
+            player_size = 68 if slot == 1 and count > 8 else 52 if count == 8 else 48
+            identity_width = max(name_column_width - 28, round((right - left) * 0.46))
+            text.extend(
+                (
+                    _text(
+                        f"entrant_{slot}_sponsor",
+                        "entrant.sponsor",
+                        slot,
+                        right - 16,
+                        bottom - player_size - 12,
+                        identity_width,
+                        38 if slot == 1 and count > 8 else 30,
+                        anchor="rs",
+                    ),
+                    _text(
                     f"entrant_{slot}_label",
-                    "entrant.tag",
+                    "entrant.player_tag",
                     slot,
                     right - 16,
                     bottom - 12,
-                    max(name_column_width - 28, round((right - left) * 0.46)),
-                    68 if slot == 1 and count > 8 else 52 if count == 8 else 48,
+                    identity_width,
+                    player_size,
                     anchor="rs",
+                    ),
                 )
             )
             continue
@@ -235,7 +255,7 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
                 slot,
                 placements[slot - 1],
                 right - tag_width // 2 - 8,
-                portrait_center_y,
+                top + 8 + tag_height // 2,
                 tag_width,
                 tag_height,
             )
@@ -254,8 +274,19 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
                     anchor="ma",
                 ),
                 _text(
+                    f"entrant_{slot}_member_1_sponsor",
+                    "member.sponsor",
+                    slot,
+                    left + available_width // 4,
+                    bottom - (62 if count == 3 else 55),
+                    available_width // 2 - 26,
+                    28 if count == 3 else 25,
+                    anchor="ms",
+                    member=1,
+                ),
+                _text(
                     f"entrant_{slot}_member_1_tag",
-                    "member.tag",
+                    "member.player_tag",
                     slot,
                     left + available_width // 4,
                     bottom - 12,
@@ -265,8 +296,19 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
                     member=1,
                 ),
                 _text(
+                    f"entrant_{slot}_member_2_sponsor",
+                    "member.sponsor",
+                    slot,
+                    left + 3 * available_width // 4,
+                    bottom - (62 if count == 3 else 55),
+                    available_width // 2 - 26,
+                    28 if count == 3 else 25,
+                    anchor="ms",
+                    member=2,
+                ),
+                _text(
                     f"entrant_{slot}_member_2_tag",
-                    "member.tag",
+                    "member.player_tag",
                     slot,
                     left + 3 * available_width // 4,
                     bottom - 12,
