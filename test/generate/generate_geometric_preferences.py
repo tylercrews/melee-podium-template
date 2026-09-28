@@ -32,6 +32,30 @@ def _formatting(slot: int, asset: str, rect: tuple[int, int, int, int]) -> dict[
     }
 
 
+def _ordinal_asset(placement: int) -> str:
+    suffix = "th"
+    if placement % 100 not in {11, 12, 13}:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(placement % 10, "th")
+    return f"{placement:02d}{suffix}.png"
+
+
+def _placement_tag(
+    slot: int,
+    placement: int,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+) -> dict[str, object]:
+    return {
+        "slot_id": f"entrant_{slot}_placement_tag",
+        "asset_id": _ordinal_asset(placement),
+        "anchor": {"x": x, "y": y},
+        "max_size": {"width": width, "height": height},
+        "z_index": slot,
+    }
+
+
 def _character(
     slot: int,
     x: int,
@@ -111,7 +135,9 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
         for index, rectangle in enumerate(rectangles, start=1)
     ]
     characters: list[dict[str, object]] = []
+    placement_tags: list[dict[str, object]] = []
     text: list[dict[str, object]] = []
+    placements = (1, 2, 3, 4, 5, 5, 7, 7) if count == 8 else tuple(range(1, count + 1))
     for slot, (left, top, right, bottom) in enumerate(rectangles, start=1):
         if event_format == "singles":
             characters.append(_character(slot, (left + right) // 2, (top + bottom) // 2))
@@ -126,29 +152,28 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
             )
             tag_field = "entrant.team_name"
             tag_size = 62 if count == 3 else 54
-        text.extend(
-            (
-                _text(
-                    f"entrant_{slot}_placement",
-                    "entrant.placement",
-                    slot,
-                    right - 22,
-                    (top + bottom) // 2,
-                    130,
-                    round((bottom - top) * 0.68),
-                    anchor="rm",
-                    color="#FFD400FF",
-                ),
-                _text(
-                    f"entrant_{slot}_label",
-                    tag_field,
-                    slot,
-                    left + 18,
-                    bottom + 8,
-                    right - left - 36,
-                    tag_size,
-                    anchor="la",
-                ),
+        tag_width = 130 if slot == 1 else 112
+        tag_height = 150 if event_format == "singles" else 180 if slot == 1 else 120
+        placement_tags.append(
+            _placement_tag(
+                slot,
+                placements[slot - 1],
+                right - tag_width // 2 - 8,
+                (top + bottom) // 2,
+                tag_width,
+                tag_height,
+            )
+        )
+        text.append(
+            _text(
+                f"entrant_{slot}_label",
+                tag_field,
+                slot,
+                left + 18,
+                bottom + 8,
+                right - left - 36,
+                tag_size,
+                anchor="la",
             )
         )
     return {
@@ -157,7 +182,7 @@ def _eyes_preferences(event_format: str, count: int) -> dict[str, object]:
         "selection": _selection("eyes", event_format, count),
         "canvas_size": {"width": 1080, "height": 1920},
         "formatting_assets": formatting,
-        "placement_tags": [],
+        "placement_tags": placement_tags,
         "character_slots": characters,
         "text_slots": text,
     }
@@ -178,19 +203,19 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
         scales = (1.70, 1.05, 1.05, 1.05, 0.88, 0.88, 0.88, 0.88)
     elif event_format == "doubles" and count == 3:
         rectangles = [
-            (70, 220, 630, 880),
-            (680, 220, 1240, 880),
-            (1290, 220, 1850, 880),
+            (40, 25, 1300, 845),
+            (1340, 25, 1880, 420),
+            (1340, 450, 1880, 845),
         ]
-        scales = (1.0, 1.0, 1.0)
+        scales = (1.25, 0.90, 0.90)
     elif event_format == "doubles" and count == 4:
         rectangles = [
-            (50, 245, 485, 870),
-            (510, 245, 945, 870),
-            (970, 245, 1405, 870),
-            (1430, 245, 1865, 870),
+            (40, 25, 1300, 845),
+            (1340, 25, 1880, 285),
+            (1340, 305, 1880, 565),
+            (1340, 585, 1880, 845),
         ]
-        scales = (1.0, 1.0, 1.0, 1.0)
+        scales = (1.25, 0.86, 0.86, 0.86)
     else:
         raise ValueError("Unsupported reviewed Squares layout")
 
@@ -199,7 +224,9 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
         for index, rectangle in enumerate(rectangles, start=1)
     ]
     characters: list[dict[str, object]] = []
+    placement_tags: list[dict[str, object]] = []
     text: list[dict[str, object]] = []
+    placements = (1, 2, 3, 4, 5, 5, 7, 7) if count == 8 else tuple(range(1, count + 1))
     for slot, ((left, top, right, bottom), scale) in enumerate(
         zip(rectangles, scales, strict=True),
         start=1,
@@ -219,19 +246,21 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
                 )
             )
             label_field = "entrant.team_name"
-        placement_size = 150 if slot == 1 and count == 8 else 86
+        if slot == 1:
+            tag_size = (190, 215) if event_format == "doubles" else (155, 175)
+        else:
+            tag_size = (100, 95) if event_format == "doubles" else (92, 88)
+        placement_tags.append(
+            _placement_tag(
+                slot,
+                placements[slot - 1],
+                left + tag_size[0] // 2 + 18,
+                top + tag_size[1] // 2 + 14,
+                *tag_size,
+            )
+        )
         text.extend(
             (
-                _text(
-                    f"entrant_{slot}_placement",
-                    "entrant.placement",
-                    slot,
-                    left + 28,
-                    top + 18,
-                    min(170, right - left - 50),
-                    placement_size,
-                    anchor="la",
-                ),
                 _text(
                     f"entrant_{slot}_label",
                     label_field,
@@ -260,7 +289,7 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
         "selection": _selection("squares", event_format, count),
         "canvas_size": {"width": 1920, "height": 1080},
         "formatting_assets": formatting,
-        "placement_tags": [],
+        "placement_tags": placement_tags,
         "character_slots": characters,
         "text_slots": text,
     }

@@ -415,7 +415,7 @@ class SquaresContentRenderer:
             ):
                 self._draw_character(result, request, preferences, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
-            self._draw_header(result, request)
+            self._draw_header(result, request, preferences)
         return result
 
     @staticmethod
@@ -469,23 +469,29 @@ class SquaresContentRenderer:
         )
         canvas.alpha_composite(viewport, (content.left, content.top))
 
-    def _draw_header(self, canvas: Image.Image, request: CreationRequest) -> None:
-        layout = request.header_layout or {
-            "top_left": "tournament_title",
-            "top_right": "tournament_logo",
-            "bottom_left": "metadata",
-            "bottom_right": None,
-        }
+    def _draw_header(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> None:
+        layout = request.header_layout or (
+            {
+                "top_left": "tournament_title",
+                "top_right": "tournament_logo",
+                "bottom_left": None,
+                "bottom_right": "metadata",
+            }
+            if request.selection.options.event_format is TournamentFormat.DOUBLES
+            else {
+                "top_left": "tournament_title",
+                "top_right": "tournament_logo",
+                "bottom_left": "metadata",
+                "bottom_right": None,
+            }
+        )
         logo = _open_logo(self.tournament_logo)
-        boxes = {
-            "top_left": (PixelRect(40, 25, 760, 170), "la"),
-            "top_right": (PixelRect(canvas.width - 760, 25, canvas.width - 40, 170), "ra"),
-            "bottom_left": (PixelRect(40, canvas.height - 155, 760, canvas.height - 25), "ls"),
-            "bottom_right": (
-                PixelRect(canvas.width - 760, canvas.height - 155, canvas.width - 40, canvas.height - 25),
-                "rs",
-            ),
-        }
+        boxes = _squares_header_boxes(canvas, preferences)
         for position, content in layout.items():
             if content is None:
                 continue
@@ -499,3 +505,62 @@ class SquaresContentRenderer:
                 logo,
                 anchor,
             )
+
+
+def _squares_header_boxes(
+    canvas: Image.Image,
+    preferences: ModePreferences,
+) -> dict[str, tuple[PixelRect, str]]:
+    """Return four selectable header regions for the current Squares layout."""
+
+    if preferences.selection.options.event_format is not TournamentFormat.DOUBLES:
+        return {
+            "top_left": (PixelRect(40, 25, 760, 170), "la"),
+            "top_right": (
+                PixelRect(canvas.width - 760, 25, canvas.width - 40, 170),
+                "ra",
+            ),
+            "bottom_left": (
+                PixelRect(40, canvas.height - 155, 760, canvas.height - 25),
+                "ls",
+            ),
+            "bottom_right": (
+                PixelRect(
+                    canvas.width - 760,
+                    canvas.height - 155,
+                    canvas.width - 40,
+                    canvas.height - 25,
+                ),
+                "rs",
+            ),
+        }
+
+    cards = _card_rectangles(preferences)
+    if len(cards) < 2:
+        raise ValueError("Squares doubles layouts require at least two cards")
+    left = min(card.left for card in cards.values())
+    top = max(card.bottom for card in cards.values()) + 18
+    right = max(card.right for card in cards.values())
+    bottom = canvas.height - 25
+    gap = 20
+    available_width = right - left - gap * 3
+    section_width = available_width // 4
+    section_lefts = [left + index * (section_width + gap) for index in range(4)]
+    return {
+        "top_left": (
+            PixelRect(section_lefts[0], top, section_lefts[0] + section_width, bottom),
+            "la",
+        ),
+        "top_right": (
+            PixelRect(section_lefts[1], top, section_lefts[1] + section_width, bottom),
+            "ma",
+        ),
+        "bottom_left": (
+            PixelRect(section_lefts[2], top, section_lefts[2] + section_width, bottom),
+            "ma",
+        ),
+        "bottom_right": (
+            PixelRect(section_lefts[3], top, right, bottom),
+            "ra",
+        ),
+    }

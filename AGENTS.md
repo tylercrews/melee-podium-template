@@ -65,6 +65,8 @@
 - Legacy four-podium layouts distribute their bodies with 13, 13, and 12 pixels of overlap. The second-place body and all associated content shift 16 pixels right from the extracted legacy coordinates; third-place and its content shift 17 pixels right.
 - Draw podium formatting assets from left to right by their destination position so the right-facing box edges overlap correctly. Keep entrant character/content draw order independent, with lower placements drawn over higher placements where their layout requires it.
 - Store podium placement-number art in `formatting_assets/placement_numbers/` using zero-padded ordinal filenames such as `01st.png`, `02nd.png`, and `25th.png`.
+- Eyes and Squares layouts also use the canonical `formatting_assets/placement_numbers/` ordinal artwork; do not render their placements as font text.
+- Squares doubles layouts emphasize first place with a substantially larger and wider card on the left. Stack the smaller second-through-fourth cards vertically on the right, and keep outer top and bottom margins compact. Use the horizontal band beneath the cards for four selectable tournament-header sections; the default title/subtitle belongs at the far left and metadata at the far right rather than stacking them.
 - Podium preferences own placement-tag entries separately from podium-body placements. Each entry identifies an asset plus a center anchor and a maximum size; render these tags after podium bodies and before entrant character/text content. Tied legacy Top 8 results use `05th.png` for both fifth-place podiums and `07th.png` for both seventh-place podiums.
 
 ## Customizable podium colors

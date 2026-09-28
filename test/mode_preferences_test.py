@@ -206,7 +206,15 @@ class ModePreferencesTest(unittest.TestCase):
                     bool(item.text_slots),
                     item.selection.mode is CreationMode.PODIUM,
                 )
-            if item.selection.mode is CreationMode.PODIUM:
+            if item.selection.mode in {
+                CreationMode.EYES,
+                CreationMode.SQUARES,
+            }:
+                self.assertEqual(
+                    len(item.placement_tags),
+                    item.selection.options.entrant_count if item.ready else 0,
+                )
+            elif item.selection.mode is CreationMode.PODIUM:
                 expected_tag_count = (
                     3
                     if item.selection.options.podium_style
@@ -219,8 +227,6 @@ class ModePreferencesTest(unittest.TestCase):
                     )
                 )
                 self.assertEqual(len(item.placement_tags), expected_tag_count)
-            else:
-                self.assertFalse(item.placement_tags)
             self.assertEqual(
                 ModePreferenceRepository().load(item.selection),
                 item,

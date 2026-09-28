@@ -14,6 +14,7 @@ from DrawSquares import draw_doubles_top_3 as draw_squares_doubles_top_3
 from DrawSquares import draw_doubles_top_4 as draw_squares_doubles_top_4
 from DrawSquares import draw_singles_top_8 as draw_squares_singles_top_8
 from formatting_assets import FormattingAssetRenderer
+from geometric_content_renderer import _squares_header_boxes
 from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository, ModePreferences
 from models import TournamentFormat
@@ -56,6 +57,68 @@ class GeometricModesTest(unittest.TestCase):
                     2 if event_format is TournamentFormat.DOUBLES else 1
                 )
                 self.assertEqual(len(preferences.character_slots), expected_characters)
+                self.assertEqual(len(preferences.placement_tags), count)
+                self.assertFalse(
+                    any(item.field == "entrant.placement" for item in preferences.text_slots)
+                )
+                self.assertEqual(
+                    [item.asset_id for item in preferences.placement_tags],
+                    [
+                        "01st.png",
+                        "02nd.png",
+                        "03rd.png",
+                        *(["04th.png"] if count >= 4 else []),
+                        *(
+                            ["05th.png", "05th.png", "07th.png", "07th.png"]
+                            if count == 8
+                            else []
+                        ),
+                    ],
+                )
+
+    def test_squares_doubles_emphasizes_first_and_places_headers_below_other_cards(self) -> None:
+        repository = ModePreferenceRepository()
+        for count in (3, 4):
+            preferences = repository.load(
+                ModeSelection(
+                    CreationMode.SQUARES,
+                    ModeOptions(TournamentFormat.DOUBLES, count),
+                )
+            )
+            cards = {
+                int(item.slot_id.rsplit("_", 1)[1]): item.destination
+                for item in preferences.formatting_assets
+            }
+            first = cards[1]
+            smaller = [cards[slot] for slot in range(2, count + 1)]
+            self.assertGreater(first.width * first.height, max(card.width * card.height for card in smaller))
+            self.assertGreater(first.width, max(card.width for card in smaller))
+            self.assertEqual(
+                [card.left for card in smaller],
+                [smaller[0].left] * len(smaller),
+            )
+            self.assertTrue(
+                all(
+                    upper.bottom < lower.top
+                    for upper, lower in zip(smaller, smaller[1:])
+                )
+            )
+            boxes = _squares_header_boxes(
+                Image.new("RGBA", preferences.canvas_size.as_tuple()),
+                preferences,
+            )
+            self.assertGreaterEqual(
+                min(box.top for box, _anchor in boxes.values()),
+                max(card.bottom for card in smaller),
+            )
+            self.assertEqual(
+                len({box.top for box, _anchor in boxes.values()}),
+                1,
+            )
+            self.assertLess(
+                boxes["top_left"][0].left,
+                boxes["bottom_right"][0].left,
+            )
 
     def test_public_singles_renderers_use_reviewed_canvas_sizes(self) -> None:
         entrants = sample_top_8_entrants(random.Random(11))
