@@ -71,6 +71,7 @@ TODO LIST:
 * ASAP - need to think of a solution for what to do when someone selects a lot of metadata options. They're going to run out of space VERY Quickly. Maybe we can rearrange to have some properties be side by side
 * whenever you implement the new image template styles (eyes + squares) the image preview is going to generate of course, but we should also make it so that there's a little preview thumbnail the same way that I added one for the background images
 * need to figure out how larger counts of included entrants work with the preset coloring. Like do you do rainbow shades in between? Shades per row? Shades per placement number (for the top 16 one)? idk.
+* instead of waiting til it's totally perfect, deploy the eyes as a beta and make the tweaks to the portraits and stuff later. Just keep shipping stuff lol.
 
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
