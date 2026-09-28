@@ -173,8 +173,21 @@ class GeometricModesTest(unittest.TestCase):
             _watermark_color(Image.new("RGBA", (100, 50), "#000000FF"), sample_box),
             WATERMARK_WHITE,
         )
-        self.assertEqual(WATERMARK_BLACK[-2:], "B0")
-        self.assertEqual(WATERMARK_WHITE[-2:], "B0")
+        self.assertEqual(WATERMARK_BLACK[-2:], "40")
+        self.assertEqual(WATERMARK_WHITE[-2:], "40")
+
+    def test_black_watermark_is_blended_into_an_opaque_light_background(self) -> None:
+        image = draw_squares_singles_top_8(
+            sample_top_8_entrants(random.Random(41)),
+            tournament=sample_tournament(TournamentFormat.SINGLES),
+            fill_color="#FFFFFFFF",
+        )
+        pixels = list(image.crop((image.width // 2, 0, image.width, 50)).getdata())
+        watermark_pixels = [pixel for pixel in pixels if pixel != (255, 255, 255, 255)]
+
+        self.assertTrue(watermark_pixels)
+        self.assertTrue(all(pixel[3] == 255 for pixel in watermark_pixels))
+        self.assertGreaterEqual(min(pixel[0] for pixel in watermark_pixels), 190)
 
     def test_eyes_places_its_attribution_in_the_bottom_left(self) -> None:
         image = draw_eyes_singles_top_8(

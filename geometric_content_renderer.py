@@ -27,8 +27,8 @@ from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 
 
 LogoInput = Image.Image | str | Path | None
-WATERMARK_WHITE = "#FFFFFFB0"
-WATERMARK_BLACK = "#000000B0"
+WATERMARK_WHITE = "#FFFFFF40"
+WATERMARK_BLACK = "#00000040"
 
 
 def _open_logo(value: LogoInput) -> Image.Image | None:
@@ -217,6 +217,31 @@ def _watermark_color(canvas: Image.Image, sample_box: PixelRect) -> str:
     return WATERMARK_BLACK if luminance_total / pixel_count >= 0.55 else WATERMARK_WHITE
 
 
+def _composite_watermark(
+    canvas: Image.Image,
+    *,
+    position: tuple[int, int],
+    anchor: str,
+    max_width: int,
+    font: PodiumFont,
+    fill: str,
+) -> None:
+    """Blend translucent watermark text instead of replacing canvas pixels."""
+
+    layer = Image.new("RGBA", canvas.size, "#00000000")
+    _draw_text(
+        ImageDraw.Draw(layer),
+        position,
+        ATTRIBUTION_TEXT,
+        anchor=anchor,
+        max_width=max_width,
+        preferred_size=20,
+        font=font,
+        fill=fill,
+    )
+    canvas.alpha_composite(layer)
+
+
 def _draw_horizontal_header_item(
     canvas: Image.Image,
     request: CreationRequest,
@@ -334,13 +359,11 @@ class EyesContentRenderer:
                 self._draw_character(result, request, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
             self._draw_header(result, request, preferences)
-            _draw_text(
-                ImageDraw.Draw(result),
-                (20, result.height - 12),
-                ATTRIBUTION_TEXT,
+            _composite_watermark(
+                result,
+                position=(20, result.height - 12),
                 anchor="ls",
                 max_width=watermark_box.width,
-                preferred_size=20,
                 font=self.font,
                 fill=watermark_color,
             )
@@ -449,13 +472,11 @@ class SquaresContentRenderer:
                 self._draw_character(result, request, preferences, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
             self._draw_header(result, request, preferences)
-            _draw_text(
-                ImageDraw.Draw(result),
-                (result.width - 40, 8),
-                ATTRIBUTION_TEXT,
+            _composite_watermark(
+                result,
+                position=(result.width - 40, 8),
                 anchor="ra",
                 max_width=watermark_box.width,
-                preferred_size=20,
                 font=self.font,
                 fill=watermark_color,
             )
