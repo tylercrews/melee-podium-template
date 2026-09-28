@@ -1,0 +1,501 @@
+"""Character, result text, and header rendering for Eyes and Squares modes."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from PIL import Image, ImageDraw
+
+from background_builder import PixelRect
+from creation import CreationRequest
+from creation_modes import CreationMode
+from DrawPodium import (
+    PodiumFont,
+    _draw_text,
+    _font_to_fit,
+    _temporary_font_settings,
+)
+from eyes_portrait_renderer import render_eye_portrait
+from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
+from models import Character, DoublesTeam, Entrant, SinglesEntrant, TournamentFormat
+from portrait_assets import load_scaled_portrait, with_team_color
+from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
+
+
+LogoInput = Image.Image | str | Path | None
+
+
+def _open_logo(value: LogoInput) -> Image.Image | None:
+    if value is None:
+        return None
+    if isinstance(value, Image.Image):
+        return value.convert("RGBA")
+    with Image.open(value) as source:
+        return source.convert("RGBA")
+
+
+def _metadata_lines(request: CreationRequest) -> list[str]:
+    tournament = request.tournament
+    count_label = (
+        "Teams"
+        if tournament.event_format is TournamentFormat.DOUBLES
+        else "Entrants"
+    )
+    values: Mapping[str, Any] = {
+        "event": tournament.event,
+        "date": tournament.date,
+        "entrants_count": f"{tournament.entrants_count} {count_label}",
+        "tournament_link": tournament.link,
+        "tournament_location": tournament.location,
+        "stream_link": tournament.stream_link,
+        "vod_link": tournament.vod_link,
+        "to_x_account": tournament.organizer_x_account,
+        "to_twitch_account": tournament.organizer_twitch_account,
+        "to_bluesky_account": tournament.organizer_bluesky_account,
+    }
+    return [
+        str(values[field])
+        for field in request.text_settings.metadata_fields
+        if values[field] is not None
+    ]
+
+
+def _entrant_for_slot(request: CreationRequest, one_based_slot: int) -> SinglesEntrant | DoublesTeam:
+    return request.entrants[one_based_slot - 1]
+
+
+def _member_for_placement(
+    result: SinglesEntrant | DoublesTeam,
+    placement: CharacterPlacement,
+) -> Entrant:
+    if isinstance(result, SinglesEntrant):
+        return result
+    if placement.member_slot == 1:
+        return result.entrant_1
+    if placement.member_slot == 2:
+        return result.entrant_2
+    raise ValueError("Doubles character placements require member_slot 1 or 2")
+
+
+def _primary_character(result: SinglesEntrant | DoublesTeam, placement: CharacterPlacement) -> Character:
+    member = _member_for_placement(result, placement)
+    character = member.characters[0]
+    if isinstance(result, DoublesTeam):
+        return with_team_color(character, result.team_color)
+    return character
+
+
+def _card_rectangles(preferences: ModePreferences) -> dict[int, PixelRect]:
+    cards: dict[int, PixelRect] = {}
+    for placement in preferences.formatting_assets:
+        if placement.asset_id not in {"eyes_rectangle", "square_card"}:
+            continue
+        try:
+            slot = int(placement.slot_id.rsplit("_", 1)[1])
+        except (IndexError, ValueError) as error:
+            raise ValueError(
+                f"Card slot must end in a one-based number: {placement.slot_id}"
+            ) from error
+        cards[slot] = placement.destination
+    return cards
+
+
+def _text_value(
+    placement: TextPlacement,
+    result: SinglesEntrant | DoublesTeam,
+    include_seeding: bool,
+) -> str | None:
+    if placement.field == "entrant.placement":
+        return str(result.placement)
+    if placement.field == "entrant.seed":
+        return f"{result.seed}s" if include_seeding and result.seed is not None else None
+    if placement.field == "entrant.team_name":
+        return result.team_name if isinstance(result, DoublesTeam) else None
+    if placement.field == "entrant.tag":
+        return result.tag if isinstance(result, SinglesEntrant) else None
+    if placement.field == "member.tag" and isinstance(result, DoublesTeam):
+        if placement.member_slot == 1:
+            return result.entrant_1.tag
+        if placement.member_slot == 2:
+            return result.entrant_2.tag
+    raise ValueError(f"Unknown geometric text field: {placement.field}")
+
+
+def _explicit_entrant_color(request: CreationRequest, one_based_slot: int) -> str | None:
+    settings = request.text_settings
+    if settings.entrant_text_color_mode == "match_podium":
+        return None
+    colors = settings.entrant_text_colors
+    if settings.entrant_text_color_mode == "pick_1":
+        return colors[0]
+    if settings.entrant_text_color_mode == "pick_2":
+        return colors[(one_based_slot - 1) % 2]
+    return colors[one_based_slot - 1]
+
+
+def _draw_result_text(
+    canvas: Image.Image,
+    request: CreationRequest,
+    preferences: ModePreferences,
+    font: PodiumFont,
+) -> None:
+    draw = ImageDraw.Draw(canvas)
+    for placement in sorted(
+        preferences.text_slots,
+        key=lambda item: (item.z_index, item.slot_id),
+    ):
+        if placement.entrant_slot is None:
+            continue
+        result = _entrant_for_slot(request, placement.entrant_slot)
+        value = _text_value(
+            placement,
+            result,
+            request.text_settings.include_seeding,
+        )
+        if value is None:
+            continue
+        chosen_color = _explicit_entrant_color(request, placement.entrant_slot)
+        fill = chosen_color or placement.color or "#FFFFFFFF"
+        metallic = False
+        if chosen_color is not None:
+            settings = request.text_settings
+            color_index = (
+                0
+                if settings.entrant_text_color_mode == "pick_1"
+                else (placement.entrant_slot - 1) % 2
+                if settings.entrant_text_color_mode == "pick_2"
+                else placement.entrant_slot - 1
+            )
+            metallic = settings.entrant_text_metallic[color_index]
+        _draw_text(
+            draw,
+            (placement.anchor.x, placement.anchor.y),
+            value,
+            anchor=placement.pillow_anchor,
+            max_width=placement.max_width,
+            preferred_size=placement.preferred_size or 42,
+            wrap=placement.wrap,
+            font=font,
+            fill=fill,
+            metallic=metallic,
+        )
+
+
+def _draw_logo_in_box(canvas: Image.Image, logo: Image.Image | None, box: PixelRect) -> None:
+    if logo is None:
+        return
+    layer = logo.copy()
+    layer.thumbnail((box.width, box.height), Image.Resampling.LANCZOS)
+    canvas.alpha_composite(
+        layer,
+        (
+            box.left + (box.width - layer.width) // 2,
+            box.top + (box.height - layer.height) // 2,
+        ),
+    )
+
+
+def _draw_horizontal_header_item(
+    canvas: Image.Image,
+    request: CreationRequest,
+    content: str,
+    box: PixelRect,
+    font: PodiumFont,
+    logo: Image.Image | None,
+    anchor: str,
+) -> None:
+    if content == "tournament_logo":
+        _draw_logo_in_box(canvas, logo, box)
+        return
+    lines = (
+        [request.tournament.title]
+        + ([request.tournament.subtitle] if request.tournament.subtitle else [])
+        if content == "tournament_title"
+        else _metadata_lines(request)
+    )
+    if not lines:
+        return
+    text = "\n".join(lines)
+    draw_anchor = {"ls": "la", "rs": "ra"}.get(anchor, anchor)
+    x = box.left if draw_anchor == "la" else box.right if draw_anchor == "ra" else (box.left + box.right) // 2
+    y = box.top
+    _draw_text(
+        ImageDraw.Draw(canvas),
+        (x, y),
+        text,
+        anchor=draw_anchor,
+        max_width=box.width,
+        preferred_size=58 if content == "tournament_title" else 26,
+        wrap=False,
+        font=font,
+        fill=request.text_settings.heading_color,
+        metallic=request.text_settings.heading_metallic,
+        align="left" if draw_anchor.startswith("l") else "right" if draw_anchor.startswith("r") else "center",
+    )
+
+
+def _render_rotated_header_item(
+    request: CreationRequest,
+    content: str,
+    box: PixelRect,
+    font: PodiumFont,
+    logo: Image.Image | None,
+) -> Image.Image:
+    # Draw horizontally into the inverse dimensions, then rotate clockwise so
+    # all three selections read along the Eyes mode's right rail.
+    horizontal = Image.new("RGBA", (box.height - 16, box.width - 16), "#00000000")
+    inner = PixelRect(4, 4, horizontal.width - 4, horizontal.height - 4)
+    if content == "tournament_logo":
+        _draw_logo_in_box(horizontal, logo, inner)
+    else:
+        lines = (
+            [request.tournament.title]
+            + ([request.tournament.subtitle] if request.tournament.subtitle else [])
+            if content == "tournament_title"
+            else _metadata_lines(request)
+        )
+        if lines:
+            text = "\n".join(lines)
+            draw = ImageDraw.Draw(horizontal)
+            preferred = 58 if content == "tournament_title" else 27
+            loaded = _font_to_fit(text, inner.width, preferred, font)
+            bounds = draw.multiline_textbbox(
+                (0, 0),
+                text,
+                font=loaded,
+                spacing=5,
+                align="center",
+            )
+            x = horizontal.width // 2
+            y = (horizontal.height - (bounds[3] - bounds[1])) // 2 - bounds[1]
+            draw.multiline_text(
+                (x, y),
+                text,
+                font=loaded,
+                anchor="ma",
+                align="center",
+                spacing=5,
+                fill=request.text_settings.heading_color,
+                stroke_width=2,
+                stroke_fill="#000000A0",
+            )
+    return horizontal.transpose(Image.Transpose.ROTATE_270)
+
+
+@dataclass(frozen=True, slots=True)
+class EyesContentRenderer:
+    font: PodiumFont = PodiumFont.TYROWO
+    tournament_logo: LogoInput = None
+    custom_font_bytes: bytes | None = None
+
+    def draw(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> Image.Image:
+        if request.selection.mode is not CreationMode.EYES:
+            raise ValueError("EyesContentRenderer requires Eyes mode")
+        result = canvas.convert("RGBA")
+        with _temporary_font_settings(
+            request.text_settings.font_size_adjustment,
+            self.custom_font_bytes,
+        ):
+            cards = _card_rectangles(preferences)
+            for placement in sorted(
+                preferences.character_slots,
+                key=lambda item: (item.z_index, item.slot_id),
+            ):
+                self._draw_character(result, request, placement, cards)
+            _draw_result_text(result, request, preferences, self.font)
+            self._draw_header(result, request, preferences)
+        return result
+
+    @staticmethod
+    def _draw_character(
+        canvas: Image.Image,
+        request: CreationRequest,
+        placement: CharacterPlacement,
+        cards: Mapping[int, PixelRect],
+    ) -> None:
+        card = cards[placement.entrant_slot]
+        number_width = max(100, round(card.width * 0.16))
+        portrait_area = PixelRect(
+            card.left + 8,
+            card.top + 5,
+            card.right - number_width,
+            card.bottom - 5,
+        )
+        if request.selection.options.event_format is TournamentFormat.DOUBLES:
+            midpoint = (portrait_area.left + portrait_area.right) // 2
+            portrait_area = (
+                PixelRect(portrait_area.left, portrait_area.top, midpoint, portrait_area.bottom)
+                if placement.member_slot == 1
+                else PixelRect(midpoint, portrait_area.top, portrait_area.right, portrait_area.bottom)
+            )
+        result = _entrant_for_slot(request, placement.entrant_slot)
+        character = _primary_character(result, placement)
+        viewport = render_eye_portrait(
+            character,
+            (portrait_area.width, portrait_area.height),
+            zoom_multiplier=placement.scale,
+        )
+        canvas.alpha_composite(viewport, (portrait_area.left, portrait_area.top))
+
+    def _draw_header(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> None:
+        bar = next(
+            item.destination
+            for item in preferences.formatting_assets
+            if item.asset_id == "eyes_header_bar"
+        )
+        layout = request.header_layout or {
+            "top": "tournament_logo",
+            "middle": "tournament_title",
+            "bottom": "metadata",
+        }
+        logo = _open_logo(self.tournament_logo)
+        section_height = bar.height // 3
+        for index, position in enumerate(("top", "middle", "bottom")):
+            content = layout[position]
+            if content is None:
+                continue
+            box = PixelRect(
+                bar.left + 8,
+                bar.top + index * section_height + 8,
+                bar.right - 8,
+                bar.top + (index + 1) * section_height - 8,
+            )
+            layer = _render_rotated_header_item(
+                request,
+                content,
+                box,
+                self.font,
+                logo,
+            )
+            canvas.alpha_composite(
+                layer,
+                (
+                    box.left + (box.width - layer.width) // 2,
+                    box.top + (box.height - layer.height) // 2,
+                ),
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class SquaresContentRenderer:
+    font: PodiumFont = PodiumFont.TYROWO
+    tournament_logo: LogoInput = None
+    custom_font_bytes: bytes | None = None
+
+    def draw(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> Image.Image:
+        if request.selection.mode is not CreationMode.SQUARES:
+            raise ValueError("SquaresContentRenderer requires Squares mode")
+        result = canvas.convert("RGBA")
+        with _temporary_font_settings(
+            request.text_settings.font_size_adjustment,
+            self.custom_font_bytes,
+        ):
+            cards = _card_rectangles(preferences)
+            for placement in sorted(
+                preferences.character_slots,
+                key=lambda item: (item.z_index, item.slot_id),
+            ):
+                self._draw_character(result, request, preferences, placement, cards)
+            _draw_result_text(result, request, preferences, self.font)
+            self._draw_header(result, request)
+        return result
+
+    @staticmethod
+    def _draw_character(
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+        placement: CharacterPlacement,
+        cards: Mapping[int, PixelRect],
+    ) -> None:
+        card = cards[placement.entrant_slot]
+        inset = max(8, round(min(card.width, card.height) * 0.025))
+        footer_height = max(62, round(card.height * 0.17))
+        content = PixelRect(
+            card.left + inset,
+            card.top + inset,
+            card.right - inset,
+            card.bottom - footer_height,
+        )
+        if request.selection.options.event_format is TournamentFormat.DOUBLES:
+            midpoint = (content.left + content.right) // 2
+            content = (
+                PixelRect(content.left, content.top, midpoint, content.bottom)
+                if placement.member_slot == 1
+                else PixelRect(midpoint, content.top, content.right, content.bottom)
+            )
+        result = _entrant_for_slot(request, placement.entrant_slot)
+        character = _primary_character(result, placement)
+        mode_scale = get_mode_portrait_scale(
+            f"squares_{preferences.selection.submode_id}"
+        )
+        portrait = load_scaled_portrait(character, mode_scale * placement.scale)
+        visible_bounds = portrait.getbbox()
+        if visible_bounds is None:
+            return
+        portrait = portrait.crop(visible_bounds)
+        portrait.thumbnail(
+            (
+                max(1, round(content.width * 0.96)),
+                max(1, round(content.height * 0.98)),
+            ),
+            Image.Resampling.LANCZOS,
+        )
+        viewport = Image.new("RGBA", (content.width, content.height), "#00000000")
+        viewport.alpha_composite(
+            portrait,
+            (
+                round(content.width / 2 - portrait.width / 2),
+                content.height - portrait.height,
+            ),
+        )
+        canvas.alpha_composite(viewport, (content.left, content.top))
+
+    def _draw_header(self, canvas: Image.Image, request: CreationRequest) -> None:
+        layout = request.header_layout or {
+            "top_left": "tournament_title",
+            "top_right": "tournament_logo",
+            "bottom_left": "metadata",
+            "bottom_right": None,
+        }
+        logo = _open_logo(self.tournament_logo)
+        boxes = {
+            "top_left": (PixelRect(40, 25, 760, 170), "la"),
+            "top_right": (PixelRect(canvas.width - 760, 25, canvas.width - 40, 170), "ra"),
+            "bottom_left": (PixelRect(40, canvas.height - 155, 760, canvas.height - 25), "ls"),
+            "bottom_right": (
+                PixelRect(canvas.width - 760, canvas.height - 155, canvas.width - 40, canvas.height - 25),
+                "rs",
+            ),
+        }
+        for position, content in layout.items():
+            if content is None:
+                continue
+            box, anchor = boxes[position]
+            _draw_horizontal_header_item(
+                canvas,
+                request,
+                content,
+                box,
+                self.font,
+                logo,
+                anchor,
+            )

@@ -1,12 +1,230 @@
 {
   "schema_version": 1,
-  "ready": false,
+  "ready": true,
   "selection": {
     "mode": "eyes",
-    "options": {"event_format": "doubles", "entrant_count": 3, "variant": null, "podium_style": null}
+    "options": {
+      "event_format": "doubles",
+      "entrant_count": 3,
+      "variant": null,
+      "podium_style": null
+    }
   },
-  "canvas_size": {"width": 1672, "height": 941},
-  "formatting_assets": [],
-  "character_slots": [],
-  "text_slots": []
+  "canvas_size": {
+    "width": 1080,
+    "height": 1920
+  },
+  "formatting_assets": [
+    {
+      "slot_id": "header_bar",
+      "asset_id": "eyes_header_bar",
+      "destination": {
+        "left": 850,
+        "top": 20,
+        "right": 1060,
+        "bottom": 1900
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_1",
+      "asset_id": "eyes_rectangle",
+      "destination": {
+        "left": 30,
+        "top": 90,
+        "right": 820,
+        "bottom": 470
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_2",
+      "asset_id": "eyes_rectangle",
+      "destination": {
+        "left": 30,
+        "top": 660,
+        "right": 820,
+        "bottom": 1040
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_3",
+      "asset_id": "eyes_rectangle",
+      "destination": {
+        "left": 30,
+        "top": 1230,
+        "right": 820,
+        "bottom": 1610
+      },
+      "z_index": 0
+    }
+  ],
+  "placement_tags": [],
+  "character_slots": [
+    {
+      "slot_id": "entrant_1_member_1_character",
+      "entrant_slot": 1,
+      "member_slot": 1,
+      "anchor": {
+        "x": 227,
+        "y": 280
+      },
+      "scale": 1.0,
+      "z_index": 11
+    },
+    {
+      "slot_id": "entrant_1_member_2_character",
+      "entrant_slot": 1,
+      "member_slot": 2,
+      "anchor": {
+        "x": 622,
+        "y": 280
+      },
+      "scale": 1.0,
+      "z_index": 11
+    },
+    {
+      "slot_id": "entrant_2_member_1_character",
+      "entrant_slot": 2,
+      "member_slot": 1,
+      "anchor": {
+        "x": 227,
+        "y": 850
+      },
+      "scale": 1.0,
+      "z_index": 12
+    },
+    {
+      "slot_id": "entrant_2_member_2_character",
+      "entrant_slot": 2,
+      "member_slot": 2,
+      "anchor": {
+        "x": 622,
+        "y": 850
+      },
+      "scale": 1.0,
+      "z_index": 12
+    },
+    {
+      "slot_id": "entrant_3_member_1_character",
+      "entrant_slot": 3,
+      "member_slot": 1,
+      "anchor": {
+        "x": 227,
+        "y": 1420
+      },
+      "scale": 1.0,
+      "z_index": 13
+    },
+    {
+      "slot_id": "entrant_3_member_2_character",
+      "entrant_slot": 3,
+      "member_slot": 2,
+      "anchor": {
+        "x": 622,
+        "y": 1420
+      },
+      "scale": 1.0,
+      "z_index": 13
+    }
+  ],
+  "text_slots": [
+    {
+      "slot_id": "entrant_1_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 1,
+      "member_slot": null,
+      "anchor": {
+        "x": 798,
+        "y": 280
+      },
+      "max_width": 130,
+      "pillow_anchor": "rm",
+      "preferred_size": 258,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFD400FF"
+    },
+    {
+      "slot_id": "entrant_1_label",
+      "field": "entrant.team_name",
+      "entrant_slot": 1,
+      "member_slot": null,
+      "anchor": {
+        "x": 48,
+        "y": 478
+      },
+      "max_width": 754,
+      "pillow_anchor": "la",
+      "preferred_size": 62,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 2,
+      "member_slot": null,
+      "anchor": {
+        "x": 798,
+        "y": 850
+      },
+      "max_width": 130,
+      "pillow_anchor": "rm",
+      "preferred_size": 258,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFD400FF"
+    },
+    {
+      "slot_id": "entrant_2_label",
+      "field": "entrant.team_name",
+      "entrant_slot": 2,
+      "member_slot": null,
+      "anchor": {
+        "x": 48,
+        "y": 1048
+      },
+      "max_width": 754,
+      "pillow_anchor": "la",
+      "preferred_size": 62,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 3,
+      "member_slot": null,
+      "anchor": {
+        "x": 798,
+        "y": 1420
+      },
+      "max_width": 130,
+      "pillow_anchor": "rm",
+      "preferred_size": 258,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFD400FF"
+    },
+    {
+      "slot_id": "entrant_3_label",
+      "field": "entrant.team_name",
+      "entrant_slot": 3,
+      "member_slot": null,
+      "anchor": {
+        "x": 48,
+        "y": 1618
+      },
+      "max_width": 754,
+      "pillow_anchor": "la",
+      "preferred_size": 62,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    }
+  ]
 }

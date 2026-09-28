@@ -6,12 +6,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
+from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import FormattingAssetPlacement, ModePreferences
 from podium_colors import (
+    PodiumColorConfiguration,
     PodiumColorInput,
+    PodiumColorSelection,
     apply_podium_colors,
     podium_color_for_slot,
 )
@@ -37,7 +40,7 @@ class FormattingRenderer(Protocol):
         self,
         canvas: Image.Image,
         preferences: ModePreferences,
-        podium_colors: PodiumColorInput | None = None,
+        colors: PodiumColorInput | GeometricFormattingColors | None = None,
     ) -> Image.Image:
         """Draw the mode's framing assets over ``canvas``."""
 
@@ -87,7 +90,7 @@ class FormattingAssetRenderer:
         self,
         canvas: Image.Image,
         preferences: ModePreferences,
-        podium_colors: PodiumColorInput | None = None,
+        colors: PodiumColorInput | GeometricFormattingColors | None = None,
     ) -> Image.Image:
         """Composite mode assets in their mode-specific visual order."""
 
@@ -96,13 +99,23 @@ class FormattingAssetRenderer:
             and preferences.selection.options.podium_style
             is PodiumStyle.CUSTOMIZABLE
         )
-        if customizable and podium_colors is None:
+        geometric = preferences.selection.mode in {
+            CreationMode.EYES,
+            CreationMode.SQUARES,
+        }
+        if customizable and not isinstance(colors, (PodiumColorSelection, PodiumColorConfiguration)):
             raise ValueError("Customizable podiums require podium_colors")
-        if not customizable and podium_colors is not None:
-            raise ValueError("podium_colors are only valid for customizable podiums")
+        if geometric and not isinstance(colors, GeometricFormattingColors):
+            raise ValueError("Eyes and Squares require geometric formatting colors")
+        if not customizable and not geometric and colors is not None:
+            raise ValueError("Formatting colors are not valid for this mode")
 
         result = canvas.convert("RGBA")
         for placement in _formatting_asset_draw_order(preferences):
+            if geometric:
+                assert isinstance(colors, GeometricFormattingColors)
+                _draw_geometric_asset(result, preferences, placement, colors)
+                continue
             source = self.assets.open(preferences.selection, placement.asset_id)
             try:
                 layer = source.copy()
@@ -110,7 +123,7 @@ class FormattingAssetRenderer:
                 source.close()
             destination = placement.destination
             if customizable:
-                assert podium_colors is not None
+                assert isinstance(colors, (PodiumColorSelection, PodiumColorConfiguration))
                 try:
                     slot = int(placement.slot_id.removeprefix("podium_"))
                 except ValueError:
@@ -119,7 +132,7 @@ class FormattingAssetRenderer:
                     slot = 1
                 layer = apply_podium_colors(
                     layer,
-                    podium_color_for_slot(podium_colors, slot),
+                    podium_color_for_slot(colors, slot),
                 )
             if layer.size != (destination.width, destination.height):
                 # Recolor semantic masks before resampling. Lanczos creates
@@ -153,6 +166,63 @@ class FormattingAssetRenderer:
                 (left, top, left + layer.width, top + layer.height),
             )
         return result
+
+
+def _draw_geometric_asset(
+    canvas: Image.Image,
+    preferences: ModePreferences,
+    placement: FormattingAssetPlacement,
+    colors: GeometricFormattingColors,
+) -> None:
+    """Draw scalable mode-owned framing without maintaining raster masks."""
+
+    destination = placement.destination
+    size = (destination.width, destination.height)
+    layer = Image.new("RGBA", size, "#00000000")
+    draw = ImageDraw.Draw(layer)
+    if placement.asset_id == "eyes_header_bar":
+        draw.rounded_rectangle(
+            (0, 0, size[0] - 1, size[1] - 1),
+            radius=min(30, size[0] // 6),
+            fill="#05070BE6",
+        )
+    else:
+        try:
+            slot = int(placement.slot_id.rsplit("_", 1)[1])
+        except (IndexError, ValueError):
+            slot = 1
+        palette = colors.for_slot(slot)
+        if placement.asset_id == "eyes_rectangle":
+            draw.rounded_rectangle(
+                (0, 0, size[0] - 1, size[1] - 1),
+                radius=max(8, min(30, size[1] // 7)),
+                fill=palette.background_color,
+            )
+        elif placement.asset_id == "square_card":
+            trim = palette.trim_color or "#FFFFFFFF"
+            outline_width = max(8, round(min(size) * 0.025))
+            draw.rectangle(
+                (0, 0, size[0] - 1, size[1] - 1),
+                fill=palette.background_color,
+                outline=trim,
+                width=outline_width,
+            )
+            footer_height = max(62, round(size[1] * 0.17))
+            draw.rectangle(
+                (
+                    outline_width,
+                    size[1] - footer_height,
+                    size[0] - outline_width - 1,
+                    size[1] - outline_width - 1,
+                ),
+                fill=trim,
+            )
+        else:
+            raise ValueError(
+                f"Unknown {preferences.selection.mode.value} formatting asset: "
+                f"{placement.asset_id}"
+            )
+    _composite_clipped(canvas, layer, destination.as_tuple())
 
 
 def _formatting_asset_draw_order(

@@ -17,6 +17,7 @@ from color_values import normalize_rgba_hex
 from content_renderer import ContentRenderer
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer, FormattingRenderer
+from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import (
     ModePreferenceRepository,
     ModePreferences,
@@ -84,7 +85,8 @@ class CreationRequest:
     entrants: Sequence[EntrantResult]
     tournament: Tournament
     podium_colors: PodiumColorInput | None = None
-    header_layout: Mapping[str, str] | None = None
+    formatting_colors: GeometricFormattingColors | None = None
+    header_layout: Mapping[str, str | None] | None = None
     text_settings: TextSettings = field(default_factory=TextSettings)
 
     def __post_init__(self) -> None:
@@ -104,11 +106,38 @@ class CreationRequest:
                 "podium_colors must be a PodiumColorSelection, "
                 "PodiumColorConfiguration, or null"
             )
+        if self.formatting_colors is not None and not isinstance(
+            self.formatting_colors,
+            GeometricFormattingColors,
+        ):
+            raise TypeError("formatting_colors must be GeometricFormattingColors or null")
         if self.header_layout is not None:
-            expected_positions = {"top_left", "top_middle", "top_right"}
             expected_contents = {"tournament_logo", "tournament_title", "metadata"}
-            if set(self.header_layout) != expected_positions or set(self.header_layout.values()) != expected_contents:
-                raise ValueError("header_layout must assign each header item to one unique top position")
+            expected_positions = {
+                CreationMode.PODIUM: {"top_left", "top_middle", "top_right"},
+                CreationMode.EYES: {"top", "middle", "bottom"},
+                CreationMode.SQUARES: {
+                    "top_left",
+                    "top_right",
+                    "bottom_left",
+                    "bottom_right",
+                },
+            }[self.selection.mode]
+            values = tuple(self.header_layout.values())
+            if set(self.header_layout) != expected_positions:
+                raise ValueError(
+                    f"header_layout has invalid positions for {self.selection.mode.value}"
+                )
+            if self.selection.mode is CreationMode.SQUARES:
+                if set(value for value in values if value is not None) != expected_contents or values.count(None) != 1:
+                    raise ValueError(
+                        "Squares header_layout must assign each header item to one "
+                        "unique corner and leave one corner empty"
+                    )
+            elif set(values) != expected_contents:
+                raise ValueError(
+                    "header_layout must assign each header item to one unique position"
+                )
             object.__setattr__(self, "header_layout", dict(self.header_layout))
         entrants = tuple(self.entrants)
         object.__setattr__(self, "entrants", entrants)
@@ -138,6 +167,11 @@ class CreationRequest:
             raise ValueError("Customizable podiums require podium_colors")
         if not customizable and self.podium_colors is not None:
             raise ValueError("podium_colors are only valid for customizable podiums")
+        geometric = self.selection.mode in {CreationMode.EYES, CreationMode.SQUARES}
+        if geometric and self.formatting_colors is None:
+            raise ValueError("Eyes and Squares require formatting_colors")
+        if not geometric and self.formatting_colors is not None:
+            raise ValueError("formatting_colors are only valid for Eyes and Squares")
 
 
 @dataclass(slots=True)
@@ -164,7 +198,7 @@ class CreationPipeline:
         formatted = self.formatting_renderer.draw(
             background,
             mode_preferences,
-            request.podium_colors,
+            request.podium_colors or request.formatting_colors,
         )
         self._validate_stage_image("formatting", formatted, request.background)
 

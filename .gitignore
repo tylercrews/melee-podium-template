@@ -12,6 +12,7 @@ frontend/dist/
 dist/
 build/
 /tmp/
+test/generated/
 
 # Environment files
 .env

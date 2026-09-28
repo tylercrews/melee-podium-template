@@ -1,12 +1,584 @@
 {
   "schema_version": 1,
-  "ready": false,
+  "ready": true,
   "selection": {
     "mode": "squares",
-    "options": {"event_format": "singles", "entrant_count": 8, "variant": null, "podium_style": null}
+    "options": {
+      "event_format": "singles",
+      "entrant_count": 8,
+      "variant": null,
+      "podium_style": null
+    }
   },
-  "canvas_size": {"width": 1672, "height": 941},
-  "formatting_assets": [],
-  "character_slots": [],
-  "text_slots": []
+  "canvas_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "formatting_assets": [
+    {
+      "slot_id": "entrant_1",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 80,
+        "top": 190,
+        "right": 630,
+        "bottom": 890
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_2",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 680,
+        "top": 190,
+        "right": 1060,
+        "bottom": 560
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_3",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 1090,
+        "top": 190,
+        "right": 1470,
+        "bottom": 560
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_4",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 1500,
+        "top": 190,
+        "right": 1880,
+        "bottom": 560
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_5",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 680,
+        "top": 590,
+        "right": 960,
+        "bottom": 890
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_6",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 980,
+        "top": 590,
+        "right": 1260,
+        "bottom": 890
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_7",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 1280,
+        "top": 590,
+        "right": 1560,
+        "bottom": 890
+      },
+      "z_index": 0
+    },
+    {
+      "slot_id": "entrant_8",
+      "asset_id": "square_card",
+      "destination": {
+        "left": 1580,
+        "top": 590,
+        "right": 1860,
+        "bottom": 890
+      },
+      "z_index": 0
+    }
+  ],
+  "placement_tags": [],
+  "character_slots": [
+    {
+      "slot_id": "entrant_1_character",
+      "entrant_slot": 1,
+      "member_slot": null,
+      "anchor": {
+        "x": 355,
+        "y": 771
+      },
+      "scale": 1.7,
+      "z_index": 11
+    },
+    {
+      "slot_id": "entrant_2_character",
+      "entrant_slot": 2,
+      "member_slot": null,
+      "anchor": {
+        "x": 870,
+        "y": 497
+      },
+      "scale": 1.05,
+      "z_index": 12
+    },
+    {
+      "slot_id": "entrant_3_character",
+      "entrant_slot": 3,
+      "member_slot": null,
+      "anchor": {
+        "x": 1280,
+        "y": 497
+      },
+      "scale": 1.05,
+      "z_index": 13
+    },
+    {
+      "slot_id": "entrant_4_character",
+      "entrant_slot": 4,
+      "member_slot": null,
+      "anchor": {
+        "x": 1690,
+        "y": 497
+      },
+      "scale": 1.05,
+      "z_index": 14
+    },
+    {
+      "slot_id": "entrant_5_character",
+      "entrant_slot": 5,
+      "member_slot": null,
+      "anchor": {
+        "x": 820,
+        "y": 828
+      },
+      "scale": 0.88,
+      "z_index": 15
+    },
+    {
+      "slot_id": "entrant_6_character",
+      "entrant_slot": 6,
+      "member_slot": null,
+      "anchor": {
+        "x": 1120,
+        "y": 828
+      },
+      "scale": 0.88,
+      "z_index": 16
+    },
+    {
+      "slot_id": "entrant_7_character",
+      "entrant_slot": 7,
+      "member_slot": null,
+      "anchor": {
+        "x": 1420,
+        "y": 828
+      },
+      "scale": 0.88,
+      "z_index": 17
+    },
+    {
+      "slot_id": "entrant_8_character",
+      "entrant_slot": 8,
+      "member_slot": null,
+      "anchor": {
+        "x": 1720,
+        "y": 828
+      },
+      "scale": 0.88,
+      "z_index": 18
+    }
+  ],
+  "text_slots": [
+    {
+      "slot_id": "entrant_1_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 1,
+      "member_slot": null,
+      "anchor": {
+        "x": 108,
+        "y": 208
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 150,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_1_label",
+      "field": "entrant.tag",
+      "entrant_slot": 1,
+      "member_slot": null,
+      "anchor": {
+        "x": 355,
+        "y": 831
+      },
+      "max_width": 516,
+      "pillow_anchor": "mm",
+      "preferred_size": 70,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_1_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 1,
+      "member_slot": null,
+      "anchor": {
+        "x": 608,
+        "y": 208
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 2,
+      "member_slot": null,
+      "anchor": {
+        "x": 708,
+        "y": 208
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_label",
+      "field": "entrant.tag",
+      "entrant_slot": 2,
+      "member_slot": null,
+      "anchor": {
+        "x": 870,
+        "y": 529
+      },
+      "max_width": 346,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 2,
+      "member_slot": null,
+      "anchor": {
+        "x": 1038,
+        "y": 208
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 3,
+      "member_slot": null,
+      "anchor": {
+        "x": 1118,
+        "y": 208
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_label",
+      "field": "entrant.tag",
+      "entrant_slot": 3,
+      "member_slot": null,
+      "anchor": {
+        "x": 1280,
+        "y": 529
+      },
+      "max_width": 346,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 3,
+      "member_slot": null,
+      "anchor": {
+        "x": 1448,
+        "y": 208
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_4_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 4,
+      "member_slot": null,
+      "anchor": {
+        "x": 1528,
+        "y": 208
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_4_label",
+      "field": "entrant.tag",
+      "entrant_slot": 4,
+      "member_slot": null,
+      "anchor": {
+        "x": 1690,
+        "y": 529
+      },
+      "max_width": 346,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_4_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 4,
+      "member_slot": null,
+      "anchor": {
+        "x": 1858,
+        "y": 208
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_5_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 5,
+      "member_slot": null,
+      "anchor": {
+        "x": 708,
+        "y": 608
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_5_label",
+      "field": "entrant.tag",
+      "entrant_slot": 5,
+      "member_slot": null,
+      "anchor": {
+        "x": 820,
+        "y": 859
+      },
+      "max_width": 246,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_5_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 5,
+      "member_slot": null,
+      "anchor": {
+        "x": 938,
+        "y": 608
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_6_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 6,
+      "member_slot": null,
+      "anchor": {
+        "x": 1008,
+        "y": 608
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_6_label",
+      "field": "entrant.tag",
+      "entrant_slot": 6,
+      "member_slot": null,
+      "anchor": {
+        "x": 1120,
+        "y": 859
+      },
+      "max_width": 246,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_6_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 6,
+      "member_slot": null,
+      "anchor": {
+        "x": 1238,
+        "y": 608
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_7_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 7,
+      "member_slot": null,
+      "anchor": {
+        "x": 1308,
+        "y": 608
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_7_label",
+      "field": "entrant.tag",
+      "entrant_slot": 7,
+      "member_slot": null,
+      "anchor": {
+        "x": 1420,
+        "y": 859
+      },
+      "max_width": 246,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_7_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 7,
+      "member_slot": null,
+      "anchor": {
+        "x": 1538,
+        "y": 608
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_8_placement",
+      "field": "entrant.placement",
+      "entrant_slot": 8,
+      "member_slot": null,
+      "anchor": {
+        "x": 1608,
+        "y": 608
+      },
+      "max_width": 170,
+      "pillow_anchor": "la",
+      "preferred_size": 86,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_8_label",
+      "field": "entrant.tag",
+      "entrant_slot": 8,
+      "member_slot": null,
+      "anchor": {
+        "x": 1720,
+        "y": 859
+      },
+      "max_width": 246,
+      "pillow_anchor": "mm",
+      "preferred_size": 45,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_8_seed",
+      "field": "entrant.seed",
+      "entrant_slot": 8,
+      "member_slot": null,
+      "anchor": {
+        "x": 1838,
+        "y": 608
+      },
+      "max_width": 100,
+      "pillow_anchor": "ra",
+      "preferred_size": 27,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    }
+  ]
 }

@@ -13,6 +13,11 @@ PORTRAIT_SCALE_BY_MODE = {
     "singles_top_4": 0.26,
     "singles_top_8": 0.22,
     "singles_top_8_four_podium": 0.26,
+    # Squares cards use the same two-stage portrait scaling as podiums, but
+    # keep independent values so tuning a square never changes a podium.
+    "squares_doubles_top_3": 0.38,
+    "squares_doubles_top_4": 0.34,
+    "squares_singles_top_8": 0.34,
 }
 
 

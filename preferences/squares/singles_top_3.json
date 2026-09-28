@@ -3,9 +3,17 @@
   "ready": false,
   "selection": {
     "mode": "squares",
-    "options": {"event_format": "singles", "entrant_count": 3, "variant": null, "podium_style": null}
+    "options": {
+      "event_format": "singles",
+      "entrant_count": 3,
+      "variant": null,
+      "podium_style": null
+    }
   },
-  "canvas_size": {"width": 1672, "height": 941},
+  "canvas_size": {
+    "width": 1920,
+    "height": 1080
+  },
   "formatting_assets": [],
   "character_slots": [],
   "text_slots": []

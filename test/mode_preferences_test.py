@@ -163,35 +163,49 @@ class ModePreferencesTest(unittest.TestCase):
             {PodiumStyle.LEGACY: 6, PodiumStyle.CUSTOMIZABLE: 6},
         )
         for item in preferences:
-            reviewed_legacy_top_8 = (
+            reviewed_layout = (
                 item.selection.mode is CreationMode.PODIUM
                 and item.selection.options.podium_style is PodiumStyle.LEGACY
                 and item.selection.submode_id == "singles_top_8"
+            ) or (
+                item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES}
+                and item.selection.submode_id
+                in {"singles_top_8", "doubles_top_3", "doubles_top_4"}
             )
-            self.assertEqual(item.ready, reviewed_legacy_top_8)
-            expected_canvas = (
+            self.assertEqual(item.ready, reviewed_layout)
+            expected_canvas = {
+                CreationMode.EYES: PixelSize(1080, 1920),
+                CreationMode.SQUARES: PixelSize(1920, 1080),
+            }.get(
+                item.selection.mode,
                 PixelSize(1920, 941)
-                if item.selection.mode is CreationMode.PODIUM
-                and item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
-                else PixelSize(1672, 941)
+                if item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
+                else PixelSize(1672, 941),
             )
             self.assertEqual(item.canvas_size, expected_canvas)
             extracted_legacy = (
                 item.selection.mode is CreationMode.PODIUM
                 and item.selection.options.podium_style is PodiumStyle.LEGACY
             )
-            extracted_podium_formatting = item.selection.mode is CreationMode.PODIUM
-            if extracted_podium_formatting:
+            if item.ready:
                 self.assertTrue(item.formatting_assets)
             else:
-                self.assertFalse(item.formatting_assets)
-            extracted_podium_content = item.selection.mode is CreationMode.PODIUM
-            if extracted_podium_content:
+                self.assertEqual(
+                    bool(item.formatting_assets),
+                    item.selection.mode is CreationMode.PODIUM,
+                )
+            if item.ready:
                 self.assertTrue(item.character_slots)
                 self.assertTrue(item.text_slots)
             else:
-                self.assertFalse(item.character_slots)
-                self.assertFalse(item.text_slots)
+                self.assertEqual(
+                    bool(item.character_slots),
+                    item.selection.mode is CreationMode.PODIUM,
+                )
+                self.assertEqual(
+                    bool(item.text_slots),
+                    item.selection.mode is CreationMode.PODIUM,
+                )
             if item.selection.mode is CreationMode.PODIUM:
                 expected_tag_count = (
                     3
