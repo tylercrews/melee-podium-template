@@ -49,7 +49,7 @@ def _staggered_x_offsets(
     if character_count <= 0:
         return ()
     width, height = viewport_size
-    spread = max(1, round(min(width, height) * 0.14))
+    spread = max(1, round(min(width, height) * 0.18))
     center_left_right = (0, -spread, spread)
     # As on the podiums, a two-character lineup balances around center. Three
     # or more starts at center and then alternates left/right in repeating sets.

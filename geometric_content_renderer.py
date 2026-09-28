@@ -400,6 +400,10 @@ class EyesContentRenderer:
             character,
             (portrait_area.width, portrait_area.height),
             zoom_multiplier=placement.scale,
+            doubles=(
+                request.selection.options.event_format
+                is TournamentFormat.DOUBLES
+            ),
         )
         canvas.alpha_composite(viewport, (portrait_area.left, portrait_area.top))
 
@@ -504,10 +508,24 @@ class SquaresContentRenderer:
         )
         if request.selection.options.event_format is TournamentFormat.DOUBLES:
             midpoint = (content.left + content.right) // 2
+            # Let each teammate's clipped viewport reach slightly through the
+            # card center. This shifts both lineups inward and gives their
+            # center/left/right portrait stagger more breathing room.
+            center_overlap = round(content.width * 0.06)
             content = (
-                PixelRect(content.left, content.top, midpoint, content.bottom)
+                PixelRect(
+                    content.left,
+                    content.top,
+                    midpoint + center_overlap,
+                    content.bottom,
+                )
                 if placement.member_slot == 1
-                else PixelRect(midpoint, content.top, content.right, content.bottom)
+                else PixelRect(
+                    midpoint - center_overlap,
+                    content.top,
+                    content.right,
+                    content.bottom,
+                )
             )
         result = _entrant_for_slot(request, placement.entrant_slot)
         member = _member_for_placement(result, placement)

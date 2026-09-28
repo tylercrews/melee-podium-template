@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
 from itertools import permutations
 from pathlib import Path
 
@@ -41,7 +40,6 @@ SQUARE_HEADER_LAYOUTS = {
     "doubles": (TournamentFormat.DOUBLES, 4),
 }
 COLOR_LAYER_IDS = ("smash_player_colors", "olympic_medals", "rainbow", "pick_all")
-SQUARE_COLOR_PARTS = ("main_color", "base_color")
 RAINBOW_MAIN_COLORS = (
     "#F23838FF", "#F28C28FF", "#F2D338FF", "#3BC65AFF",
     "#32C7CFFF", "#3478F6FF", "#5746C7FF", "#A84BE0FF",
@@ -211,22 +209,19 @@ def render_podium_layer(style: PodiumStyle, layout_id: str, color_id: str | None
     return result
 
 
-def render_square_layer(layout_id: str, color_id: str, part: str) -> Image.Image:
+def render_square_layer(layout_id: str, color_id: str) -> Image.Image:
     event_format, entrant_count = SQUARE_LAYOUTS[layout_id]
     selection = ModeSelection(
         CreationMode.SQUARES,
         ModeOptions(event_format=event_format, entrant_count=entrant_count),
     )
     preferences = ModePreferenceRepository().load(selection)
-    if part != "main_color":
-        preferences = replace(preferences, placement_tags=())
     source_colors = _customizable_colors(color_id, entrant_count)
-    transparent = "#00000000"
     colors = GeometricFormattingColors(
         tuple(
             GeometricFormattingColor(
-                resolved.base_color if part == "base_color" else transparent,
-                resolved.main_color if part == "main_color" else transparent,
+                resolved.base_color,
+                resolved.main_color,
             )
             for resolved in (
                 source_colors.color_for_slot(slot).resolve()
@@ -234,20 +229,17 @@ def render_square_layer(layout_id: str, color_id: str, part: str) -> Image.Image
             )
         )
     )
-    canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), transparent)
+    canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     return FormattingAssetRenderer().draw(canvas, preferences, colors)
 
 
-def generate_preview_layers(output_root: Path) -> list[Path]:
+def generate_square_preview_layers(output_root: Path) -> list[Path]:
+    """Generate only Squares headers and combined preset-card layers."""
+
     outputs: list[Path] = []
-    header_root = output_root / "headers"
     for font in PodiumFont:
         for contents in permutations(HEADER_CONTENTS):
             layout = dict(zip(HEADER_POSITIONS, contents, strict=True))
-            path = header_root / font.value / f"{header_permutation_id(layout)}.png"
-            path.parent.mkdir(parents=True, exist_ok=True)
-            render_header_layer(font, layout).save(path, format="PNG", optimize=True)
-            outputs.append(path)
             for header_layout_id in SQUARE_HEADER_LAYOUTS:
                 square_path = (
                     output_root
@@ -264,6 +256,31 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
                 )
                 outputs.append(square_path)
 
+    square_root = output_root / "squares"
+    for layout_id in SQUARE_LAYOUTS:
+        for color_id in COLOR_LAYER_IDS:
+            path = square_root / layout_id / f"{color_id}.png"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            render_square_layer(layout_id, color_id).save(
+                path,
+                format="PNG",
+                optimize=True,
+            )
+            outputs.append(path)
+    return outputs
+
+
+def generate_preview_layers(output_root: Path) -> list[Path]:
+    outputs: list[Path] = []
+    header_root = output_root / "headers"
+    for font in PodiumFont:
+        for contents in permutations(HEADER_CONTENTS):
+            layout = dict(zip(HEADER_POSITIONS, contents, strict=True))
+            path = header_root / font.value / f"{header_permutation_id(layout)}.png"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            render_header_layer(font, layout).save(path, format="PNG", optimize=True)
+            outputs.append(path)
+
     podium_root = output_root / "podiums"
     for layout_id in LAYOUTS:
         path = podium_root / "legacy" / f"{layout_id}.png"
@@ -275,16 +292,5 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
             path.parent.mkdir(parents=True, exist_ok=True)
             render_podium_layer(PodiumStyle.CUSTOMIZABLE, layout_id, color_id).save(path, format="PNG", optimize=True)
             outputs.append(path)
-    square_root = output_root / "squares"
-    for layout_id in SQUARE_LAYOUTS:
-        for color_id in COLOR_LAYER_IDS:
-            for part in SQUARE_COLOR_PARTS:
-                path = square_root / layout_id / f"{color_id}-{part}.png"
-                path.parent.mkdir(parents=True, exist_ok=True)
-                render_square_layer(layout_id, color_id, part).save(
-                    path,
-                    format="PNG",
-                    optimize=True,
-                )
-                outputs.append(path)
+    outputs.extend(generate_square_preview_layers(output_root))
     return outputs

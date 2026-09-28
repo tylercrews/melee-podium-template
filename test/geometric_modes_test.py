@@ -206,6 +206,22 @@ class GeometricModesTest(unittest.TestCase):
             bottom_strip.crop((0, 0, image.width * 2 // 3, 45)).getbbox()
         )
 
+    def test_eyes_header_rail_is_frameless(self) -> None:
+        preferences = ModePreferenceRepository().load(
+            ModeSelection(
+                CreationMode.EYES,
+                ModeOptions(TournamentFormat.SINGLES, 8),
+            )
+        )
+        transparent = Image.new("RGBA", preferences.canvas_size.as_tuple())
+        formatting = FormattingAssetRenderer().draw(
+            transparent,
+            preferences,
+            GeometricFormattingColors.one("#E53935FF"),
+        )
+
+        self.assertEqual(formatting.getpixel((900, 100))[3], 0)
+
     def test_squares_doubles_first_place_has_the_same_effective_scale(self) -> None:
         repository = ModePreferenceRepository()
         effective_scales = []
@@ -276,11 +292,11 @@ class GeometricModesTest(unittest.TestCase):
 
     def test_square_multi_character_stagger_matches_podium_order(self) -> None:
         self.assertEqual(_staggered_x_offsets(1, (500, 400)), (0,))
-        self.assertEqual(_staggered_x_offsets(2, (500, 400)), (-56, 56))
-        self.assertEqual(_staggered_x_offsets(3, (500, 400)), (0, -56, 56))
+        self.assertEqual(_staggered_x_offsets(2, (500, 400)), (-72, 72))
+        self.assertEqual(_staggered_x_offsets(3, (500, 400)), (0, -72, 72))
         self.assertEqual(
             _staggered_x_offsets(6, (500, 400)),
-            (0, -56, 56, 0, -56, 56),
+            (0, -72, 72, 0, -72, 72),
         )
 
     def test_squares_loads_every_character_for_singles_and_doubles(self) -> None:

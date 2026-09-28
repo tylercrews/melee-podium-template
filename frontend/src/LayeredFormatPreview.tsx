@@ -19,7 +19,7 @@ interface FormatPreviewProps {
 export interface FormatFontInfo { id: string; name: string; url: string; custom: boolean }
 
 interface LayerRequest {
-  foregroundLayers: Array<{ url: string; part?: "main_color" | "face_color" | "base_color" }>;
+  foregroundLayers: Array<{ url: string }>;
   headerUrl: string;
   label: string;
   logoPosition: "top_left" | "top_middle" | "top_right";
@@ -89,21 +89,16 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     : ["tyrowo", "impact", "ubuntu"].includes(selectedFontId) ? selectedFontId : "tyrowo";
   const logoPosition = (Object.entries(format.header_layout).find(([, content]) => content === "tournament_logo")?.[0] ?? "top_left") as LayerRequest["logoPosition"];
   const colors = format.formatting_asset_colors;
-  const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
   let foregroundLayers: LayerRequest["foregroundLayers"];
   let headerUrl: string;
   if (mode === "squares") {
     const squareLayout = `${eventFormat}_${layout}`;
-    foregroundLayers = (["base_color", "main_color"] as const).map((part) => ({
-      url: `${layerRoot}/squares/${squareLayout}/${colorId}-${part}.png`,
-      part,
-    }));
-    headerUrl = `${layerRoot}/square_headers/${fontId}/${squareLayout}/${headerPermutationId(format)}.png`;
+    const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
+    foregroundLayers = [{ url: `${layerRoot}/squares/${squareLayout}/${colorId}.png` }];
+    headerUrl = `${layerRoot}/square_headers/${fontId}/${eventFormat}/${headerPermutationId(format)}.png`;
   } else if (style === "customizable") {
-    foregroundLayers = (["base_color", "face_color", "main_color"] as const).map((part) => ({
-      url: `${layerRoot}/podiums/customizable/${layout}/${colorId}-${part}.png`,
-      part,
-    }));
+    const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "custom_red";
+    foregroundLayers = [{ url: `${layerRoot}/podiums/customizable/${layout}/${colorId}.png` }];
     headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
   } else {
     foregroundLayers = [{ url: `${layerRoot}/podiums/legacy/${layout}.png` }];
@@ -313,12 +308,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         if (!context) throw new Error("Canvas preview is unavailable.");
         drawBackground(context, format, request.outputSize, background, backgroundImage);
         for (const foreground of foregrounds) {
-          context.save();
-          if (format.formatting_asset_colors.mode === "premade" && foreground.part) {
-            context.globalAlpha = 1 - format.formatting_asset_colors.preset_transparency[foreground.part] / 100;
-          }
           context.drawImage(foreground.image, 0, 0, request.outputSize.width, request.outputSize.height);
-          context.restore();
         }
         const headerLayer = logo ? headerWithoutPlaceholder(header, request.logoBox) : header;
         context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);

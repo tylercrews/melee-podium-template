@@ -4,10 +4,24 @@ from __future__ import annotations
 
 from pathlib import Path
 import random
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-from DrawSquares import draw_doubles_top_3, draw_doubles_top_4, draw_singles_top_8
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from DrawEyes import (
+    draw_doubles_top_3 as draw_eyes_doubles_top_3,
+    draw_doubles_top_4 as draw_eyes_doubles_top_4,
+    draw_singles_top_8 as draw_eyes_singles_top_8,
+)
+from DrawSquares import (
+    draw_doubles_top_3 as draw_squares_doubles_top_3,
+    draw_doubles_top_4 as draw_squares_doubles_top_4,
+    draw_singles_top_8 as draw_squares_singles_top_8,
+)
 from models import TournamentFormat
 from sample_creation_data import (
     sample_top_4_teams,
@@ -16,9 +30,43 @@ from sample_creation_data import (
 )
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_FOLDER = PROJECT_ROOT / "test" / "generated" / "template-previews"
 DARK_BACKGROUND = "#17191FFF"
+
+
+def _generate_eyes_previews() -> list[Path]:
+    OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+    entrants = sample_top_8_entrants(random.Random(11))
+    teams = sample_top_4_teams(random.Random(22))
+    singles_tournament = sample_tournament(TournamentFormat.SINGLES)
+    doubles_tournament = sample_tournament(TournamentFormat.DOUBLES)
+    outputs = [
+        OUTPUT_FOLDER / "eyes-singles-top-8.png",
+        OUTPUT_FOLDER / "eyes-doubles-top-3.png",
+        OUTPUT_FOLDER / "eyes-doubles-top-4.png",
+    ]
+    random.seed(201)
+    draw_eyes_singles_top_8(
+        entrants,
+        tournament=singles_tournament,
+        fill_color=DARK_BACKGROUND,
+        output_path=outputs[0],
+    )
+    random.seed(202)
+    draw_eyes_doubles_top_3(
+        teams[:3],
+        tournament=doubles_tournament,
+        fill_color=DARK_BACKGROUND,
+        output_path=outputs[1],
+    )
+    random.seed(203)
+    draw_eyes_doubles_top_4(
+        teams,
+        tournament=doubles_tournament,
+        fill_color=DARK_BACKGROUND,
+        output_path=outputs[2],
+    )
+    return outputs
 
 
 def _generate_squares_previews() -> list[Path]:
@@ -37,28 +85,28 @@ def _generate_squares_previews() -> list[Path]:
     # Portraits with unspecified poses intentionally select a pose at render
     # time. Seed that selection so committed preview sheets are reproducible.
     random.seed(101)
-    draw_singles_top_8(
+    draw_squares_singles_top_8(
         entrants,
         tournament=singles_tournament,
         fill_color=DARK_BACKGROUND,
         output_path=outputs[0],
     )
     random.seed(102)
-    draw_doubles_top_3(
+    draw_squares_doubles_top_3(
         teams[:3],
         tournament=doubles_tournament,
         fill_color=DARK_BACKGROUND,
         output_path=outputs[1],
     )
     random.seed(103)
-    draw_doubles_top_4(
+    draw_squares_doubles_top_4(
         teams,
         tournament=doubles_tournament,
         fill_color=DARK_BACKGROUND,
         output_path=outputs[2],
     )
     random.seed(101)
-    draw_singles_top_8(
+    draw_squares_singles_top_8(
         entrants,
         tournament=singles_tournament,
         fill_color="#FFFFFFFF",
@@ -120,7 +168,8 @@ def _regenerate_overview() -> Path:
 
 
 def main() -> None:
-    outputs = _generate_squares_previews()
+    outputs = _generate_eyes_previews()
+    outputs.extend(_generate_squares_previews())
     outputs.append(_regenerate_overview())
     for output in outputs:
         print(output)

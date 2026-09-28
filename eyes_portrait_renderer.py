@@ -7,6 +7,9 @@ from PIL import Image
 from models import Character
 from portrait_assets import load_character_source
 from portrait_scale_adjustment_for_eyes import get_eye_portrait_adjustment
+from portrait_scale_adjustment_for_eyes_doubles import (
+    get_doubles_eye_portrait_adjustment,
+)
 
 
 def render_eye_portrait(
@@ -14,6 +17,7 @@ def render_eye_portrait(
     size: tuple[int, int],
     *,
     zoom_multiplier: float = 1.0,
+    doubles: bool = False,
 ) -> Image.Image:
     """Center one pose's reviewed eye point in a clipped RGBA viewport."""
 
@@ -23,7 +27,11 @@ def render_eye_portrait(
     if zoom_multiplier <= 0:
         raise ValueError("zoom_multiplier must be greater than zero")
     source, pose = load_character_source(character)
-    adjustment = get_eye_portrait_adjustment(character.melee_fighter_name, pose)
+    adjustment = (
+        get_doubles_eye_portrait_adjustment(character.melee_fighter_name, pose)
+        if doubles
+        else get_eye_portrait_adjustment(character.melee_fighter_name, pose)
+    )
     bounds = source.getbbox()
     if bounds is None:
         return Image.new("RGBA", size, "#00000000")

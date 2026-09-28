@@ -181,11 +181,10 @@ def _draw_geometric_asset(
     layer = Image.new("RGBA", size, "#00000000")
     draw = ImageDraw.Draw(layer)
     if placement.asset_id == "eyes_header_bar":
-        draw.rounded_rectangle(
-            (0, 0, size[0] - 1, size[1] - 1),
-            radius=min(30, size[0] // 6),
-            fill="#05070BE6",
-        )
+        # The placement still owns the three Eyes header sections, but the
+        # right rail is intentionally frameless so tournament information is
+        # drawn directly over the selected background.
+        return
     else:
         try:
             slot = int(placement.slot_id.rsplit("_", 1)[1])

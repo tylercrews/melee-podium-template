@@ -7,6 +7,10 @@ from eyes_portrait_renderer import render_eye_portrait
 from models import Character
 from portrait_assets import CHARACTER_FOLDER, PORTRAIT_FILENAME
 from portrait_scale_adjustment_for_eyes import EYE_PORTRAIT_ADJUSTMENTS
+from portrait_scale_adjustment_for_eyes_doubles import (
+    get_doubles_eye_portrait_adjustment,
+    missing_doubles_pose_profiles,
+)
 
 
 def available_poses() -> dict[str, dict[str, list]]:
@@ -50,6 +54,37 @@ class EyePositioningTest(unittest.TestCase):
                     self.assertEqual(crop.mode, "RGBA")
                     self.assertEqual(crop.size, (780, 160))
                     center_sample = crop.getchannel("A").crop((370, 60, 410, 100))
+                    self.assertIsNotNone(center_sample.getbbox())
+
+    def test_every_pose_has_a_renderable_doubles_profile(self) -> None:
+        self.assertEqual(missing_doubles_pose_profiles(), ())
+        for character_name, poses in available_poses().items():
+            for pose, paths in poses.items():
+                path = next(
+                    (candidate for candidate in paths if "_default_" in candidate.name),
+                    paths[0],
+                )
+                match = PORTRAIT_FILENAME.match(path.name)
+                assert match is not None
+                character = Character(
+                    character_name,
+                    color=match.group("color"),
+                    pose=pose,
+                )
+
+                with self.subTest(character=character_name, pose=pose):
+                    adjustment = get_doubles_eye_portrait_adjustment(
+                        character_name,
+                        pose,
+                    )
+                    self.assertGreater(adjustment.zoom, 0)
+                    crop = render_eye_portrait(
+                        character,
+                        (324, 310),
+                        doubles=True,
+                    )
+                    self.assertEqual(crop.size, (324, 310))
+                    center_sample = crop.getchannel("A").crop((142, 135, 182, 175))
                     self.assertIsNotNone(center_sample.getbbox())
 
 

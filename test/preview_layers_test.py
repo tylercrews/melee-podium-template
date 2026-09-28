@@ -11,6 +11,7 @@ from preview_layers import (
     HEADER_CONTENTS,
     HEADER_POSITIONS,
     LAYOUTS,
+    SQUARE_HEADER_LAYOUTS,
     SQUARE_LAYOUTS,
     header_permutation_id,
 )
@@ -23,12 +24,12 @@ LAYER_ROOT = PROJECT_ROOT / "frontend" / "public" / "format_preview_layers"
 class PreviewLayerTests(unittest.TestCase):
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
-        self.assertEqual(len(files), 164)
+        self.assertEqual(len(files), 86)
         self.assertEqual(len(tuple((LAYER_ROOT / "headers").rglob("*.png"))), 18)
-        self.assertEqual(len(tuple((LAYER_ROOT / "square_headers").rglob("*.png"))), 54)
+        self.assertEqual(len(tuple((LAYER_ROOT / "square_headers").rglob("*.png"))), 36)
         self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "legacy").rglob("*.png"))), 4)
-        self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "customizable").rglob("*.png"))), 64)
-        self.assertEqual(len(tuple((LAYER_ROOT / "squares").rglob("*.png"))), 24)
+        self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "customizable").rglob("*.png"))), 16)
+        self.assertEqual(len(tuple((LAYER_ROOT / "squares").rglob("*.png"))), 12)
 
     def test_layers_are_nonempty_rgba_images_with_expected_dimensions(self) -> None:
         for path in LAYER_ROOT.rglob("*.png"):
@@ -45,15 +46,13 @@ class PreviewLayerTests(unittest.TestCase):
             set(SQUARE_LAYOUTS),
             {"singles_top_8", "doubles_top_3", "doubles_top_4"},
         )
+        self.assertEqual(set(SQUARE_HEADER_LAYOUTS), {"singles", "doubles"})
 
-    def test_square_layers_separate_border_and_background_pixels(self) -> None:
+    def test_square_layers_combine_border_and_background(self) -> None:
         root = LAYER_ROOT / "squares" / "singles_top_8"
-        with Image.open(root / "smash_player_colors-main_color.png") as border:
-            self.assertIsNotNone(border.getbbox())
-            self.assertEqual(border.getpixel((300, 300))[3], 0)
-        with Image.open(root / "smash_player_colors-base_color.png") as background:
-            self.assertIsNotNone(background.getbbox())
-            self.assertGreater(background.getpixel((300, 300))[3], 0)
+        with Image.open(root / "smash_player_colors.png") as layer:
+            self.assertIsNotNone(layer.getbbox())
+            self.assertGreater(layer.getpixel((300, 300))[3], 0)
 
 
 if __name__ == "__main__":
