@@ -160,17 +160,49 @@
   ],
   "text_slots": [
     {
-      "slot_id": "entrant_1_label",
+      "slot_id": "entrant_1_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 630,
+        "x": 266,
+        "y": 72
+      },
+      "max_width": 930,
+      "pillow_anchor": "la",
+      "preferred_size": 64,
+      "wrap": false,
+      "z_index": 5,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_1_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 1,
+      "member_slot": 1,
+      "anchor": {
+        "x": 344,
         "y": 801
       },
-      "max_width": 1146,
+      "max_width": 554,
       "pillow_anchor": "mm",
-      "preferred_size": 45,
+      "preferred_size": 76,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_1_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 1,
+      "member_slot": 2,
+      "anchor": {
+        "x": 916,
+        "y": 801
+      },
+      "max_width": 554,
+      "pillow_anchor": "mm",
+      "preferred_size": 76,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
@@ -181,28 +213,60 @@
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 1198,
-        "y": 68
+        "x": 1202,
+        "y": 719
       },
-      "max_width": 100,
-      "pillow_anchor": "ra",
-      "preferred_size": 27,
+      "max_width": 105,
+      "pillow_anchor": "rs",
+      "preferred_size": 44,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
     },
     {
-      "slot_id": "entrant_2_label",
+      "slot_id": "entrant_2_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 1570,
+        "x": 1396,
+        "y": 72
+      },
+      "max_width": 460,
+      "pillow_anchor": "la",
+      "preferred_size": 44,
+      "wrap": false,
+      "z_index": 5,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 2,
+      "member_slot": 1,
+      "anchor": {
+        "x": 1424,
         "y": 412
       },
-      "max_width": 586,
+      "max_width": 274,
       "pillow_anchor": "mm",
-      "preferred_size": 45,
+      "preferred_size": 52,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_2_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 2,
+      "member_slot": 2,
+      "anchor": {
+        "x": 1716,
+        "y": 412
+      },
+      "max_width": 274,
+      "pillow_anchor": "mm",
+      "preferred_size": 52,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
@@ -213,28 +277,60 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 1858,
-        "y": 68
+        "x": 1862,
+        "y": 366
       },
-      "max_width": 100,
-      "pillow_anchor": "ra",
-      "preferred_size": 27,
+      "max_width": 78,
+      "pillow_anchor": "rs",
+      "preferred_size": 34,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
     },
     {
-      "slot_id": "entrant_3_label",
+      "slot_id": "entrant_3_team_name",
       "field": "entrant.team_name",
       "entrant_slot": 3,
       "member_slot": null,
       "anchor": {
-        "x": 1570,
+        "x": 1396,
+        "y": 497
+      },
+      "max_width": 460,
+      "pillow_anchor": "la",
+      "preferred_size": 44,
+      "wrap": false,
+      "z_index": 5,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_member_1_tag",
+      "field": "member.tag",
+      "entrant_slot": 3,
+      "member_slot": 1,
+      "anchor": {
+        "x": 1424,
         "y": 837
       },
-      "max_width": 586,
+      "max_width": 274,
       "pillow_anchor": "mm",
-      "preferred_size": 45,
+      "preferred_size": 52,
+      "wrap": false,
+      "z_index": 30,
+      "color": "#FFFFFFFF"
+    },
+    {
+      "slot_id": "entrant_3_member_2_tag",
+      "field": "member.tag",
+      "entrant_slot": 3,
+      "member_slot": 2,
+      "anchor": {
+        "x": 1716,
+        "y": 837
+      },
+      "max_width": 274,
+      "pillow_anchor": "mm",
+      "preferred_size": 52,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"
@@ -245,12 +341,12 @@
       "entrant_slot": 3,
       "member_slot": null,
       "anchor": {
-        "x": 1858,
-        "y": 493
+        "x": 1862,
+        "y": 791
       },
-      "max_width": 100,
-      "pillow_anchor": "ra",
-      "preferred_size": 27,
+      "max_width": 78,
+      "pillow_anchor": "rs",
+      "preferred_size": 34,
       "wrap": false,
       "z_index": 30,
       "color": "#FFFFFFFF"

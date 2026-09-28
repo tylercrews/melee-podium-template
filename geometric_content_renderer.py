@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -147,10 +147,11 @@ def _draw_result_text(
     request: CreationRequest,
     preferences: ModePreferences,
     font: PodiumFont,
+    placements: Iterable[TextPlacement] | None = None,
 ) -> None:
     draw = ImageDraw.Draw(canvas)
     for placement in sorted(
-        preferences.text_slots,
+        preferences.text_slots if placements is None else placements,
         key=lambda item: (item.z_index, item.slot_id),
     ):
         if placement.entrant_slot is None:
@@ -472,12 +473,39 @@ class SquaresContentRenderer:
             self.custom_font_bytes,
         ):
             cards = _card_rectangles(preferences)
+            first_character_z = min(
+                (placement.z_index for placement in preferences.character_slots),
+                default=0,
+            )
+            background_text = tuple(
+                placement
+                for placement in preferences.text_slots
+                if placement.z_index < first_character_z
+            )
+            foreground_text = tuple(
+                placement
+                for placement in preferences.text_slots
+                if placement.z_index >= first_character_z
+            )
+            _draw_result_text(
+                result,
+                request,
+                preferences,
+                self.font,
+                background_text,
+            )
             for placement in sorted(
                 preferences.character_slots,
                 key=lambda item: (item.z_index, item.slot_id),
             ):
                 self._draw_character(result, request, preferences, placement, cards)
-            _draw_result_text(result, request, preferences, self.font)
+            _draw_result_text(
+                result,
+                request,
+                preferences,
+                self.font,
+                foreground_text,
+            )
             self._draw_header(result, request, preferences)
             _composite_watermark(
                 result,

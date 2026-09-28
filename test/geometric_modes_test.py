@@ -136,6 +136,49 @@ class GeometricModesTest(unittest.TestCase):
                 boxes["top_right"][0].left,
             )
 
+    def test_squares_doubles_layers_team_name_above_and_member_names_in_footer(self) -> None:
+        repository = ModePreferenceRepository()
+        for count in (3, 4):
+            preferences = repository.load(
+                ModeSelection(
+                    CreationMode.SQUARES,
+                    ModeOptions(TournamentFormat.DOUBLES, count),
+                )
+            )
+            cards = {
+                int(item.slot_id.rsplit("_", 1)[1]): item.destination
+                for item in preferences.formatting_assets
+            }
+            character_z = min(item.z_index for item in preferences.character_slots)
+            for slot in range(1, count + 1):
+                card = cards[slot]
+                slot_text = [
+                    item
+                    for item in preferences.text_slots
+                    if item.entrant_slot == slot
+                ]
+                team_name = next(
+                    item for item in slot_text if item.field == "entrant.team_name"
+                )
+                member_names = [
+                    item for item in slot_text if item.field == "member.tag"
+                ]
+                seed = next(item for item in slot_text if item.field == "entrant.seed")
+
+                self.assertEqual(len(member_names), 2)
+                self.assertLess(team_name.z_index, character_z)
+                self.assertTrue(all(item.z_index > character_z for item in member_names))
+                self.assertGreater(seed.z_index, character_z)
+                self.assertLess(team_name.anchor.y, card.top + card.height // 3)
+                self.assertGreater(seed.anchor.y, card.top + card.height // 2)
+                self.assertLess(seed.anchor.y, member_names[0].anchor.y)
+                self.assertEqual(seed.pillow_anchor, "rs")
+                self.assertGreaterEqual(seed.preferred_size or 0, 34)
+                self.assertGreaterEqual(
+                    min(item.preferred_size or 0 for item in member_names),
+                    46,
+                )
+
     def test_squares_singles_uses_the_same_three_section_bottom_header(self) -> None:
         preferences = ModePreferenceRepository().load(
             ModeSelection(

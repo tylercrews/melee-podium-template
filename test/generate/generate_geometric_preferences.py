@@ -245,7 +245,6 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
                     _character(slot, left + 3 * (right - left) // 4, portrait_bottom, member=2, scale=scale),
                 )
             )
-            label_field = "entrant.team_name"
         if slot == 1:
             tag_size = (190, 215) if event_format == "doubles" else (155, 175)
         else:
@@ -259,8 +258,9 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
                 *tag_size,
             )
         )
-        text.extend(
-            (
+        if event_format == "singles":
+            text.extend(
+                (
                 _text(
                     f"entrant_{slot}_label",
                     label_field,
@@ -280,6 +280,64 @@ def _squares_preferences(event_format: str, count: int) -> dict[str, object]:
                     100,
                     27,
                     anchor="ra",
+                ),
+                )
+            )
+            continue
+
+        card_width = right - left
+        footer_center_y = bottom - footer_height // 2
+        names_left = left + 18
+        names_right = right - 18
+        member_region_width = (names_right - names_left) // 2
+        team_x = left + tag_size[0] + 36
+        member_size = 76 if slot == 1 else 52 if count == 3 else 46
+        seed_size = 44 if slot == 1 else 34
+        team_size = 64 if slot == 1 else 44 if count == 3 else 38
+        text.extend(
+            (
+                _text(
+                    f"entrant_{slot}_team_name",
+                    "entrant.team_name",
+                    slot,
+                    team_x,
+                    top + 22,
+                    right - team_x - 24,
+                    team_size,
+                    anchor="la",
+                    z_index=5,
+                ),
+                _text(
+                    f"entrant_{slot}_member_1_tag",
+                    "member.tag",
+                    slot,
+                    names_left + member_region_width // 2,
+                    footer_center_y,
+                    member_region_width - 18,
+                    member_size,
+                    anchor="mm",
+                    member=1,
+                ),
+                _text(
+                    f"entrant_{slot}_member_2_tag",
+                    "member.tag",
+                    slot,
+                    names_left + member_region_width + member_region_width // 2,
+                    footer_center_y,
+                    member_region_width - 18,
+                    member_size,
+                    anchor="mm",
+                    member=2,
+                ),
+                _text(
+                    f"entrant_{slot}_seed",
+                    "entrant.seed",
+                    slot,
+                    right - 18,
+                    portrait_bottom - 12,
+                    105 if slot == 1 else 78,
+                    seed_size,
+                    anchor="rs",
                 ),
             )
         )
