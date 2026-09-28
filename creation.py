@@ -116,25 +116,14 @@ class CreationRequest:
             expected_positions = {
                 CreationMode.PODIUM: {"top_left", "top_middle", "top_right"},
                 CreationMode.EYES: {"top", "middle", "bottom"},
-                CreationMode.SQUARES: {
-                    "top_left",
-                    "top_right",
-                    "bottom_left",
-                    "bottom_right",
-                },
+                CreationMode.SQUARES: {"top_left", "top_middle", "top_right"},
             }[self.selection.mode]
             values = tuple(self.header_layout.values())
             if set(self.header_layout) != expected_positions:
                 raise ValueError(
                     f"header_layout has invalid positions for {self.selection.mode.value}"
                 )
-            if self.selection.mode is CreationMode.SQUARES:
-                if set(value for value in values if value is not None) != expected_contents or values.count(None) != 1:
-                    raise ValueError(
-                        "Squares header_layout must assign each header item to one "
-                        "unique corner and leave one corner empty"
-                    )
-            elif set(values) != expected_contents:
+            if set(values) != expected_contents:
                 raise ValueError(
                     "header_layout must assign each header item to one unique position"
                 )

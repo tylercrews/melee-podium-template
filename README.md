@@ -56,6 +56,7 @@ npm run build
 
 - [Malarki_](https://x.com/Malarki_), who I commissioned to expand the pool of character poses and did an amazing job.
 - [Top8er](https://www.top8er.com/), an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being [open source](https://github.com/ShonTitor/Top8er) (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.
+- Elenrique3 for creating the original Top8er 2023 design, which was already almost perfect, and Malarki_ again for coming up with the eyes template.
 - Nicolet I would like to thank in particular for sending me the repo for the startgg USB reporting, and DevDogg for connecting me with them
 - AeonSSB, Cjag01, radzo73, and caha1an, who created the [Melee-CSProject](https://github.com/AeonSSB/Melee-CSProject) that I got the original poses from.
 - [CeLL on this old Smashboards thread](https://smashboards.com/threads/character-stock-icon-dump.390494/) for posting a dump of all the character stock icons.

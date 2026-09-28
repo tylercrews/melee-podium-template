@@ -206,6 +206,7 @@ def _draw_horizontal_header_item(
     font: PodiumFont,
     logo: Image.Image | None,
     anchor: str,
+    title_preferred_size: int = 58,
 ) -> None:
     if content == "tournament_logo":
         _draw_logo_in_box(canvas, logo, box)
@@ -228,7 +229,7 @@ def _draw_horizontal_header_item(
         text,
         anchor=draw_anchor,
         max_width=box.width,
-        preferred_size=58 if content == "tournament_title" else 26,
+        preferred_size=title_preferred_size if content == "tournament_title" else 26,
         wrap=False,
         font=font,
         fill=request.text_settings.heading_color,
@@ -475,21 +476,11 @@ class SquaresContentRenderer:
         request: CreationRequest,
         preferences: ModePreferences,
     ) -> None:
-        layout = request.header_layout or (
-            {
-                "top_left": "tournament_title",
-                "top_right": "tournament_logo",
-                "bottom_left": None,
-                "bottom_right": "metadata",
-            }
-            if request.selection.options.event_format is TournamentFormat.DOUBLES
-            else {
-                "top_left": "tournament_title",
-                "top_right": "tournament_logo",
-                "bottom_left": "metadata",
-                "bottom_right": None,
-            }
-        )
+        layout = request.header_layout or {
+            "top_left": "tournament_title",
+            "top_middle": "tournament_logo",
+            "top_right": "metadata",
+        }
         logo = _open_logo(self.tournament_logo)
         boxes = _squares_header_boxes(canvas, preferences)
         for position, content in layout.items():
@@ -504,6 +495,11 @@ class SquaresContentRenderer:
                 self.font,
                 logo,
                 anchor,
+                title_preferred_size=(
+                    72
+                    if request.selection.options.event_format is TournamentFormat.DOUBLES
+                    else 58
+                ),
             )
 
 
@@ -511,56 +507,40 @@ def _squares_header_boxes(
     canvas: Image.Image,
     preferences: ModePreferences,
 ) -> dict[str, tuple[PixelRect, str]]:
-    """Return four selectable header regions for the current Squares layout."""
-
-    if preferences.selection.options.event_format is not TournamentFormat.DOUBLES:
-        return {
-            "top_left": (PixelRect(40, 25, 760, 170), "la"),
-            "top_right": (
-                PixelRect(canvas.width - 760, 25, canvas.width - 40, 170),
-                "ra",
-            ),
-            "bottom_left": (
-                PixelRect(40, canvas.height - 155, 760, canvas.height - 25),
-                "ls",
-            ),
-            "bottom_right": (
-                PixelRect(
-                    canvas.width - 760,
-                    canvas.height - 155,
-                    canvas.width - 40,
-                    canvas.height - 25,
-                ),
-                "rs",
-            ),
-        }
+    """Return three bottom header regions using the Podium assignment keys."""
 
     cards = _card_rectangles(preferences)
-    if len(cards) < 2:
-        raise ValueError("Squares doubles layouts require at least two cards")
+    if not cards:
+        raise ValueError("Squares layouts require at least one card")
     left = min(card.left for card in cards.values())
     top = max(card.bottom for card in cards.values()) + 18
     right = max(card.right for card in cards.values())
     bottom = canvas.height - 25
-    gap = 20
-    available_width = right - left - gap * 3
-    section_width = available_width // 4
-    section_lefts = [left + index * (section_width + gap) for index in range(4)]
+    gap = 24
+    available_width = right - left - gap * 2
+    if preferences.selection.options.event_format is TournamentFormat.DOUBLES:
+        # The logo needs less horizontal space than two lines of title or a
+        # metadata list.  Wider outer sections also let the deliberately larger
+        # Doubles title remain visibly larger instead of width-fitting back to
+        # the Singles size.
+        side_width = round(available_width * 0.4)
+        middle_width = available_width - side_width * 2
+    else:
+        side_width = available_width // 3
+        middle_width = available_width - side_width * 2
+    middle_left = left + side_width + gap
+    right_left = middle_left + middle_width + gap
     return {
         "top_left": (
-            PixelRect(section_lefts[0], top, section_lefts[0] + section_width, bottom),
+            PixelRect(left, top, left + side_width, bottom),
             "la",
         ),
+        "top_middle": (
+            PixelRect(middle_left, top, middle_left + middle_width, bottom),
+            "ma",
+        ),
         "top_right": (
-            PixelRect(section_lefts[1], top, section_lefts[1] + section_width, bottom),
-            "ma",
-        ),
-        "bottom_left": (
-            PixelRect(section_lefts[2], top, section_lefts[2] + section_width, bottom),
-            "ma",
-        ),
-        "bottom_right": (
-            PixelRect(section_lefts[3], top, right, bottom),
+            PixelRect(right_left, top, right, bottom),
             "ra",
         ),
     }

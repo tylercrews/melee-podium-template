@@ -116,10 +116,34 @@ class GeometricModesTest(unittest.TestCase):
                 len({box.top for box, _anchor in boxes.values()}),
                 1,
             )
+            self.assertEqual(
+                set(boxes),
+                {"top_left", "top_middle", "top_right"},
+            )
             self.assertLess(
                 boxes["top_left"][0].left,
-                boxes["bottom_right"][0].left,
+                boxes["top_right"][0].left,
             )
+
+    def test_squares_singles_uses_the_same_three_section_bottom_header(self) -> None:
+        preferences = ModePreferenceRepository().load(
+            ModeSelection(
+                CreationMode.SQUARES,
+                ModeOptions(TournamentFormat.SINGLES, 8),
+            )
+        )
+        cards = [item.destination for item in preferences.formatting_assets]
+        boxes = _squares_header_boxes(
+            Image.new("RGBA", preferences.canvas_size.as_tuple()),
+            preferences,
+        )
+
+        self.assertEqual(set(boxes), {"top_left", "top_middle", "top_right"})
+        self.assertGreaterEqual(
+            min(box.top for box, _anchor in boxes.values()),
+            max(card.bottom for card in cards),
+        )
+        self.assertEqual(min(card.top for card in cards), 25)
 
     def test_squares_doubles_first_place_has_the_same_effective_scale(self) -> None:
         repository = ModePreferenceRepository()
