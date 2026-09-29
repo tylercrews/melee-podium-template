@@ -68,6 +68,7 @@ npm run build
 
 
 TODO LIST:
+* header and metadata should have sliders for font size pickable by the user, maybe even get granular with the metadata fields each having different font sizes
 * add thanks to devdogg for being a tester on my deploy day and finding the critical error bugs in saving formats and generation without subtitle
 * once you load a format it's difficult to start fresh without refreshing, should I have a button to clear everything out?
 * the image preview for the eyes layout is stretched wide to fit the preview for the old kind, but it should have its own dimensions, and keep those dimensions going forward after it is selected
