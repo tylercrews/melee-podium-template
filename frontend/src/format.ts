@@ -534,6 +534,10 @@ export function formatCanvasSize(format: FormatConfiguration): PixelSize | null 
   if (format.selection.mode === "squares") return { width: 1920, height: 1080 };
   if (format.selection.mode === "eyes") {
     const count = format.selection.options.entrant_count;
+    // Use the representative Eyes Top 8 canvas while the remaining format
+    // choices are incomplete. This keeps the live preview portrait-oriented
+    // instead of falling through to the legacy podium dimensions.
+    if (format.selection.options.event_format === null || count === null) return { width: 1080, height: 1920 };
     if (format.selection.options.event_format === "doubles" || count === 8) return { width: 1080, height: 1920 };
     if (count === 10) return { width: 1920, height: 1542 };
     if (count === 15) return { width: 1920, height: 2114 };
