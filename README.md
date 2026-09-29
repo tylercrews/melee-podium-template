@@ -70,6 +70,7 @@ npm run build
 TODO LIST:
 * update the watermark to the new website meleepodium.meme
 * the image preview for the eyes layout is stretched wide to fit the preview for the old kind, but it should have its own dimensions, and keep those dimensions going forward after it is selected
+* main tab descriptions (the details under Load A Format, etc) break lines short, and should just extend instead
 TEST THIS * ASAP - need to think of a solution for what to do when someone selects a lot of metadata options. They're going to run out of space VERY Quickly. Maybe we can rearrange to have some properties be side by side
 TEST THIS * whenever you implement the new image template styles (eyes + squares) the image preview is going to generate of course, but we should also make it so that there's a little preview thumbnail the same way that I added one for the background images
 TEST THIS * need to figure out how larger counts of included entrants work with the preset coloring. Like do you do rainbow shades in between? Shades per row? Shades per placement number (for the top 16 one)? idk.
