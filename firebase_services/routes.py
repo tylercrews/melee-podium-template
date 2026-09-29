@@ -21,6 +21,7 @@ from .documents import (
 )
 from .images import UserImageService, maximum_image_bytes
 from .fonts import MAX_FONT_BYTES, UserFontService
+from .error_logging import firebase_error_logger
 
 
 firebase_blueprint = Blueprint("firebase", __name__, url_prefix="/api/firebase")
@@ -65,7 +66,11 @@ def firebase_not_configured(error: FirebaseConfigurationError) -> tuple[Any, int
 
 @firebase_blueprint.errorhandler(FirebaseServiceError)
 def firebase_operation_failed(error: FirebaseServiceError) -> tuple[Any, int]:
-    current_app.logger.exception("Firebase operation failed", exc_info=error.__cause__ or error)
+    cause = error.__cause__ or error
+    current_app.logger.exception("Firebase operation failed", exc_info=cause)
+    firebase_error_logger().exception(
+        "Firebase operation failed: %s", error, exc_info=cause
+    )
     return jsonify(error=str(error)), 503
 
 

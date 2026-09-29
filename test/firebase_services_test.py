@@ -15,6 +15,9 @@ from werkzeug.datastructures import FileStorage
 from firebase_services.authentication import bearer_token
 from firebase_services.documents import (
     MAX_DOCUMENT_JSON_BYTES,
+    WRAPPED_ARRAY_KEY,
+    _decoded_firestore_value,
+    _firestore_value,
     validate_document_id,
     validate_saved_document,
 )
@@ -28,6 +31,12 @@ from firebase_services.images import (
 )
 from firebase_services.fonts import MAX_FONT_BYTES, read_font_upload, validate_font_bytes, validate_font_name
 from firebase_services.routes import firebase_blueprint
+from firebase_services.error_logging import (
+    FIREBASE_LOGGER_NAME,
+    configure_firebase_error_logging,
+    firebase_error_logger,
+)
+import logging
 
 
 def png_bytes(width: int = 4, height: int = 3) -> bytes:
@@ -76,6 +85,32 @@ class FirebaseDocumentBoundaryTests(unittest.TestCase):
         for value in ("", "../other-user", "contains/slash", "contains space"):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 validate_document_id(value)
+
+    def test_firestore_encoding_round_trips_nested_metadata_rows(self) -> None:
+        data = {
+            "text_settings": {
+                "metadata_rows": [["event", "date"], ["entrants_count"]],
+                "include_seeding": True,
+            },
+            "colors": ["#FF0000FF", "#0000FFFF"],
+        }
+        encoded = _firestore_value(data)
+        self.assertEqual(_decoded_firestore_value(encoded), data)
+        self.assertIn(
+            WRAPPED_ARRAY_KEY,
+            encoded["text_settings"]["metadata_rows"],
+        )
+
+        def contains_directly_nested_array(value: object) -> bool:
+            if isinstance(value, list):
+                return any(isinstance(item, list) for item in value) or any(
+                    contains_directly_nested_array(item) for item in value
+                )
+            if isinstance(value, dict):
+                return any(contains_directly_nested_array(item) for item in value.values())
+            return False
+
+        self.assertFalse(contains_directly_nested_array(encoded))
 
 
 class FirebaseImageBoundaryTests(unittest.TestCase):
@@ -143,6 +178,27 @@ class FirebaseRouteTests(unittest.TestCase):
         self.assertEqual(endpoint, "firebase.get_image")
         endpoint, _values = adapter.match("/api/firebase/fonts", method="GET")
         self.assertEqual(endpoint, "firebase.list_fonts")
+
+
+class FirebaseErrorLoggingTests(unittest.TestCase):
+    def tearDown(self) -> None:
+        logger = logging.getLogger(FIREBASE_LOGGER_NAME)
+        for handler in list(logger.handlers):
+            handler.close()
+            logger.removeHandler(handler)
+
+    def test_configures_dedicated_rotating_log(self) -> None:
+        log_path = Path.cwd() / "firebase-test-errors.log"
+        with patch.dict(os.environ, {"FIREBASE_ERROR_LOG": str(log_path)}):
+            self.assertEqual(
+                configure_firebase_error_logging(Path.cwd()),
+                log_path.resolve(),
+            )
+        handlers = firebase_error_logger().handlers
+        self.assertEqual(len(handlers), 1)
+        self.assertEqual(Path(handlers[0].baseFilename), log_path.resolve())
+        self.assertEqual(handlers[0].maxBytes, 1_000_000)
+        self.assertEqual(handlers[0].backupCount, 2)
 
 
 if __name__ == "__main__":

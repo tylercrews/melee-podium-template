@@ -40,6 +40,7 @@ load_dotenv(EXTERNAL_SECRETS_FILE, override=False)
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
 from firebase_services import firebase_blueprint, initialize_firebase_if_configured
+from firebase_services.error_logging import configure_firebase_error_logging
 
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 STATS_DATABASE_PATH = Path(
@@ -50,6 +51,7 @@ _PORTRAIT_FILENAME = re.compile(
 )
 
 app = Flask(__name__, static_folder=None)
+configure_firebase_error_logging(PROJECT_ROOT)
 app.register_blueprint(firebase_blueprint)
 initialize_firebase_if_configured()
 BUILTIN_BACKGROUNDS = LocalBackgroundAssets()

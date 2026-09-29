@@ -17,6 +17,9 @@ DOCUMENT_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 RESOURCE_COLLECTIONS = frozenset({"entrants", "layouts"})
 MAX_DOCUMENT_JSON_BYTES = 900_000
 MAX_DOCUMENT_NAME_LENGTH = 120
+DATA_ENCODING_FIELD = "dataEncoding"
+WRAPPED_ARRAY_ENCODING = "wrapped-arrays-v1"
+WRAPPED_ARRAY_KEY = "__melee_podium_array__"
 
 
 class FirebaseResourceNotFound(LookupError):
@@ -73,8 +76,36 @@ def _json_value(value: Any) -> Any:
     return value
 
 
+def _firestore_value(value: Any) -> Any:
+    """Encode JSON without Firestore's unsupported directly nested arrays."""
+    if isinstance(value, Mapping):
+        return {key: _firestore_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return {WRAPPED_ARRAY_KEY: [_firestore_value(item) for item in value]}
+    return value
+
+
+def _decoded_firestore_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        if set(value) == {WRAPPED_ARRAY_KEY} and isinstance(
+            value[WRAPPED_ARRAY_KEY], list
+        ):
+            return [
+                _decoded_firestore_value(item)
+                for item in value[WRAPPED_ARRAY_KEY]
+            ]
+        return {
+            key: _decoded_firestore_value(item) for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_decoded_firestore_value(item) for item in value]
+    return value
+
+
 def _snapshot_json(snapshot: Any) -> dict[str, Any]:
     result = _json_value(snapshot.to_dict() or {})
+    if result.pop(DATA_ENCODING_FIELD, None) == WRAPPED_ARRAY_ENCODING:
+        result["data"] = _decoded_firestore_value(result.get("data", {}))
     result["id"] = snapshot.id
     return result
 
@@ -123,7 +154,8 @@ class UserDocumentRepository:
                 {
                     "schemaVersion": 1,
                     "name": name,
-                    "data": data,
+                    "data": _firestore_value(data),
+                    DATA_ENCODING_FIELD: WRAPPED_ARRAY_ENCODING,
                     "createdAt": firestore.SERVER_TIMESTAMP,
                     "updatedAt": firestore.SERVER_TIMESTAMP,
                 }
@@ -142,7 +174,8 @@ class UserDocumentRepository:
                 {
                     "schemaVersion": 1,
                     "name": name,
-                    "data": data,
+                    "data": _firestore_value(data),
+                    DATA_ENCODING_FIELD: WRAPPED_ARRAY_ENCODING,
                     "updatedAt": firestore.SERVER_TIMESTAMP,
                 },
                 merge=True,
