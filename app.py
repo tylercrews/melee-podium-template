@@ -343,7 +343,7 @@ def _rainbow_preview_colors(
         indexes = (0, 3, 7)
     elif asset_count == 4:
         indexes = (1, 3, 5, 7)
-    elif asset_count == 8:
+    elif asset_count >= 8:
         indexes = tuple(range(8))
     else:
         indexes = tuple(
@@ -395,10 +395,14 @@ def _custom_preview_colors(
             )
         elif preset == "olympic_medals":
             source = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
-            colors = _repeat_podium_colors(
-                tuple(source.color_for_slot(slot) for slot in range(1, 9)),
-                color_count,
+            medal_colors = tuple(
+                source.color_for_slot(slot)
+                for slot in range(1, min(3, color_count) + 1)
+            ) + tuple(
+                source.color_for_slot(4)
+                for _slot in range(4, color_count + 1)
             )
+            colors = PodiumColorConfiguration.per_podium(*medal_colors)
         elif preset == "rainbow":
             asset_count = 4 if variant == "four_podium" else entrant_count
             colors = _rainbow_preview_colors(asset_count, color_count)
@@ -609,6 +613,19 @@ def customized_format_preview() -> Any:
     else:
         raise ValueError("A selected custom font file is required for preview")
     entrant_text_color_mode, entrant_text_colors, entrant_text_metallic = _entrant_text_colors(payload.get("entrant_text_colors"))
+    raw_metadata_rows = raw_text_settings.get("metadata_rows")
+    if raw_metadata_rows is None:
+        raw_metadata_fields = raw_text_settings.get(
+            "metadata_fields",
+            ("tournament_link", "event", "date", "entrants_count"),
+        )
+        if not isinstance(raw_metadata_fields, (list, tuple)):
+            raise ValueError("metadata_fields must be an array")
+        raw_metadata_rows = [[field] for field in raw_metadata_fields]
+    if not isinstance(raw_metadata_rows, (list, tuple)) or any(
+        not isinstance(row, (list, tuple)) for row in raw_metadata_rows
+    ):
+        raise ValueError("metadata_rows must be an array of arrays")
     text_settings = TextSettings(
         heading_color=raw_text_settings.get("heading_color", "#FFFFFFFF"),
         heading_metallic=raw_text_settings.get("heading_metallic", False),
@@ -618,7 +635,7 @@ def customized_format_preview() -> Any:
         font_size_adjustment=0 if font_asset_id.startswith("provided:") else raw_text_settings.get("font_size_adjustment", 0),
         include_seeding=raw_text_settings.get("include_seeding", True),
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
-        metadata_fields=tuple(raw_text_settings.get("metadata_fields", ("tournament_link", "event", "date", "entrants_count"))),
+        metadata_rows=tuple(tuple(row) for row in raw_metadata_rows),
     )
     image = render_format_preview(
         style,

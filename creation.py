@@ -29,6 +29,7 @@ from podium_colors import PodiumColorConfiguration, PodiumColorInput, PodiumColo
 
 EntrantResult = SinglesEntrant | DoublesTeam
 METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"})
+MAX_METADATA_ROWS = 5
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +43,7 @@ class TextSettings:
     include_seeding: bool = True
     replace_base_urls_with_icons: bool = True
     metadata_fields: tuple[str, ...] = ("tournament_link", "event", "date", "entrants_count")
+    metadata_rows: tuple[tuple[str, ...], ...] | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "heading_color", normalize_rgba_hex(self.heading_color, field_name="heading color"))
@@ -66,10 +68,20 @@ class TextSettings:
             raise TypeError("replace_base_urls_with_icons must be a boolean")
         if not isinstance(self.include_seeding, bool):
             raise TypeError("include_seeding must be a boolean")
-        fields = tuple(self.metadata_fields)
+        rows = (
+            tuple((field,) for field in self.metadata_fields)
+            if self.metadata_rows is None
+            else tuple(tuple(row) for row in self.metadata_rows)
+        )
+        if len(rows) > MAX_METADATA_ROWS or any(not row for row in rows):
+            raise ValueError(
+                f"metadata_rows must contain at most {MAX_METADATA_ROWS} non-empty rows"
+            )
+        fields = tuple(field for row in rows for field in row)
         if len(set(fields)) != len(fields) or not set(fields) <= METADATA_FIELDS:
-            raise ValueError("metadata_fields contains an unknown field")
+            raise ValueError("metadata_rows contains an unknown or duplicate field")
         object.__setattr__(self, "metadata_fields", fields)
+        object.__setattr__(self, "metadata_rows", rows)
 
 
 class PreferencesNotReadyError(RuntimeError):

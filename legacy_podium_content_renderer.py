@@ -462,9 +462,21 @@ class LegacyPodiumContentRenderer:
         (metadata_x, _), metadata_anchor, metadata_width, metadata_align = (
             _header_geometry(metadata_position, width)
         )
-        metadata_items = self._metadata_items(request)
+        metadata_rows = self._metadata_items(request)
         y = 3
-        for text, preferred_size in metadata_items:
+        for row in metadata_rows:
+            if len(row) > 1:
+                y += self._draw_joined_metadata_row(
+                    canvas,
+                    request,
+                    row,
+                    x=metadata_x,
+                    y=y,
+                    anchor=metadata_anchor,
+                    max_width=metadata_width,
+                )
+                continue
+            text, preferred_size = row[0]
             icon = _website_icon_and_remainder(text) if request.text_settings.replace_base_urls_with_icons else None
             if icon is None:
                 draw_text(draw, (metadata_x, y), text, anchor=metadata_anchor, max_width=metadata_width, preferred_size=preferred_size, align=metadata_align, fill=request.text_settings.heading_color, metallic=request.text_settings.heading_metallic)
@@ -515,10 +527,98 @@ class LegacyPodiumContentRenderer:
             y += max(27, preferred_size + 7)
         self._draw_attribution(canvas, request, mode)
 
+    def _draw_joined_metadata_row(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        row: list[tuple[str, int]],
+        *,
+        x: int,
+        y: int,
+        anchor: str,
+        max_width: int,
+    ) -> int:
+        """Draw one compact metadata row while retaining supported URL icons."""
+
+        pieces: list[tuple[Image.Image | None, str]] = []
+        for text, _preferred_size in row:
+            icon = (
+                _website_icon_and_remainder(text)
+                if request.text_settings.replace_base_urls_with_icons
+                else None
+            )
+            if icon is None:
+                pieces.append((None, text))
+                continue
+            icon_path, remainder = icon
+            with Image.open(icon_path) as source:
+                pieces.append((source.convert("RGBA"), remainder))
+
+        preferred_size = min(item[1] for item in row)
+        icon_space = sum(39 for icon, remainder in pieces if icon is not None and remainder)
+        icon_space += sum(32 for icon, remainder in pieces if icon is not None and not remainder)
+        measurement = " • ".join(text for _icon, text in pieces)
+        loaded = _font_to_fit(
+            measurement or "•",
+            max(1, max_width - icon_space),
+            preferred_size,
+            self.font,
+        )
+        separator_width = round(loaded.getlength(" • "))
+        piece_widths = [
+            (32 if icon is not None else 0)
+            + (7 if icon is not None and text else 0)
+            + round(loaded.getlength(text))
+            for icon, text in pieces
+        ]
+        row_width = sum(piece_widths) + separator_width * (len(pieces) - 1)
+        left = x if anchor.startswith("l") else x - row_width // 2 if anchor.startswith("m") else x - row_width
+        bounds = loaded.getbbox("Ag")
+        text_height = bounds[3] - bounds[1]
+        row_height = max(32 if any(icon is not None for icon, _text in pieces) else 0, text_height)
+        cursor = left
+        draw = ImageDraw.Draw(canvas)
+        for index, ((icon, text), piece_width) in enumerate(zip(pieces, piece_widths, strict=True)):
+            if icon is not None:
+                icon.thumbnail((32, 32), Image.Resampling.LANCZOS)
+                canvas.alpha_composite(
+                    icon,
+                    (round(cursor), y + (row_height - icon.height) // 2),
+                )
+                cursor += icon.width + (7 if text else 0)
+            if text:
+                _draw_text(
+                    draw,
+                    (round(cursor), y),
+                    text,
+                    anchor="la",
+                    max_width=max_width,
+                    preferred_size=loaded.size,
+                    font=self.font,
+                    fill=request.text_settings.heading_color,
+                    metallic=request.text_settings.heading_metallic,
+                )
+            cursor = left + sum(piece_widths[: index + 1]) + separator_width * index
+            if index < len(pieces) - 1:
+                _draw_text(
+                    draw,
+                    (round(cursor), y),
+                    " • ",
+                    anchor="la",
+                    max_width=separator_width,
+                    preferred_size=loaded.size,
+                    font=self.font,
+                    fill=request.text_settings.heading_color,
+                    metallic=request.text_settings.heading_metallic,
+                )
+                cursor += separator_width
+        return max(27, row_height + 7)
+
     @staticmethod
-    def _metadata_items(request: CreationRequest) -> list[tuple[str, int]]:
+    def _metadata_items(request: CreationRequest) -> list[list[tuple[str, int]]]:
         tournament = request.tournament
-        selected = request.text_settings.metadata_fields
+        selected = request.text_settings.metadata_rows
+        assert selected is not None
         count_label = "Teams" if tournament.event_format is TournamentFormat.DOUBLES else "Entrants"
         values = {
             "event": (tournament.event, 34),
@@ -532,7 +632,15 @@ class LegacyPodiumContentRenderer:
             "to_twitch_account": (tournament.organizer_twitch_account, 18),
             "to_bluesky_account": (tournament.organizer_bluesky_account, 18),
         }
-        return [(str(values[field][0]), values[field][1]) for field in selected if values[field][0] is not None]
+        return [
+            [
+                (str(values[field][0]), values[field][1])
+                for field in row
+                if values[field][0] is not None
+            ]
+            for row in selected
+            if any(values[field][0] is not None for field in row)
+        ]
 
     def _draw_tournament_text(
         self,

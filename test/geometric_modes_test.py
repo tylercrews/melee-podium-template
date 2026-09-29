@@ -6,7 +6,8 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from background_builder import PixelRect, PixelSize
+from background_builder import BackgroundRequest, PixelRect, PixelSize
+from creation import CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection
 from DrawEyes import EyesMode, draw_doubles_top_3 as draw_eyes_doubles_top_3
 from DrawEyes import draw_doubles_top_4 as draw_eyes_doubles_top_4
@@ -19,6 +20,7 @@ from formatting_assets import FormattingAssetRenderer
 from geometric_content_renderer import (
     WATERMARK_BLACK,
     WATERMARK_WHITE,
+    _metadata_lines,
     _squares_header_boxes,
     _watermark_color,
 )
@@ -40,6 +42,28 @@ from square_portrait_renderer import (
 
 
 class GeometricModesTest(unittest.TestCase):
+    def test_grouped_metadata_uses_bullet_separators_and_one_line_per_row(self) -> None:
+        selection = ModeSelection(
+            CreationMode.EYES,
+            ModeOptions(TournamentFormat.SINGLES, 8),
+        )
+        request = CreationRequest(
+            selection=selection,
+            background=BackgroundRequest(PixelSize(1080, 1920)),
+            entrants=sample_top_8_entrants(random.Random(4)),
+            tournament=sample_tournament(TournamentFormat.SINGLES),
+            formatting_colors=GeometricFormattingColors.one("#E53935FF"),
+            text_settings=TextSettings(
+                metadata_rows=(("event", "date"), ("entrants_count",)),
+            ),
+        )
+
+        lines = _metadata_lines(request)
+
+        self.assertEqual(len(lines), 2)
+        self.assertIn(" • ", lines[0])
+        self.assertNotIn(" • ", lines[1])
+
     def test_reviewed_preferences_have_mode_specific_canvas_geometry(self) -> None:
         repository = ModePreferenceRepository()
         expected = {

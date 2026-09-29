@@ -186,6 +186,41 @@ class CreationPipelineTest(unittest.TestCase):
                 entrant_text_metallic=(True,),
             )
 
+    def test_text_settings_preserve_grouped_metadata_rows(self) -> None:
+        settings = TextSettings(
+            metadata_rows=(
+                ("event", "date"),
+                ("entrants_count", "tournament_link"),
+            ),
+        )
+
+        self.assertEqual(
+            settings.metadata_rows,
+            (
+                ("event", "date"),
+                ("entrants_count", "tournament_link"),
+            ),
+        )
+        self.assertEqual(
+            settings.metadata_fields,
+            ("event", "date", "entrants_count", "tournament_link"),
+        )
+
+        with self.assertRaisesRegex(ValueError, "at most 5"):
+            TextSettings(
+                metadata_rows=tuple(
+                    (field,)
+                    for field in (
+                        "event",
+                        "date",
+                        "entrants_count",
+                        "tournament_link",
+                        "tournament_location",
+                        "stream_link",
+                    )
+                )
+            )
+
     def test_pick_all_requires_one_entrant_text_color_per_result(self) -> None:
         with self.assertRaisesRegex(ValueError, "one color per entrant"):
             CreationRequest(

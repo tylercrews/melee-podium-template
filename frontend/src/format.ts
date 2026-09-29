@@ -43,7 +43,7 @@ export interface TextSettings {
   font_size_adjustment: number;
   include_seeding: boolean;
   replace_base_urls_with_icons: boolean;
-  metadata_fields: MetadataField[];
+  metadata_rows: MetadataField[][];
 }
 
 export interface PixelSize { width: number; height: number }
@@ -124,6 +124,7 @@ export const DEFAULT_ENTRANT_TEXT_COLORS: EntrantTextColors = {
 };
 
 export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
+export const MAX_METADATA_ROWS = 5;
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   heading_color: "#FFFFFFFF",
@@ -132,7 +133,7 @@ export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   font_size_adjustment: 0,
   include_seeding: true,
   replace_base_urls_with_icons: true,
-  metadata_fields: ["tournament_link", "event", "date", "entrants_count"],
+  metadata_rows: [["tournament_link"], ["event"], ["date"], ["entrants_count"]],
 };
 
 export const EMPTY_FORMAT: FormatConfiguration = {
@@ -414,11 +415,19 @@ function normalizeEntrantTextColors(value: unknown): EntrantTextColors {
 }
 
 function normalizeTextSettings(value: unknown): TextSettings {
-  if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_fields: [...DEFAULT_TEXT_SETTINGS.metadata_fields] };
-  if (!isObject(value) || (value.heading_color !== undefined && (typeof value.heading_color !== "string" || !rgbaColor.test(value.heading_color))) || (value.heading_metallic !== undefined && typeof value.heading_metallic !== "boolean") || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean") || !Array.isArray(value.metadata_fields)) {
+  if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_rows: DEFAULT_TEXT_SETTINGS.metadata_rows.map((row) => [...row]) };
+  if (!isObject(value) || (value.heading_color !== undefined && (typeof value.heading_color !== "string" || !rgbaColor.test(value.heading_color))) || (value.heading_metallic !== undefined && typeof value.heading_metallic !== "boolean") || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean")) {
     throw new Error("Format code has invalid text settings.");
   }
-  const fields = value.metadata_fields as unknown[];
+  const legacyFields = value.metadata_fields;
+  const rawRows = value.metadata_rows ?? (
+    Array.isArray(legacyFields) ? legacyFields.map((field) => [field]) : undefined
+  );
+  if (!Array.isArray(rawRows) || rawRows.length > MAX_METADATA_ROWS || rawRows.some((row) => !Array.isArray(row) || row.length === 0)) {
+    throw new Error(`Format code metadata must use at most ${MAX_METADATA_ROWS} non-empty rows.`);
+  }
+  const rows = rawRows as unknown[][];
+  const fields = rows.flat();
   if (fields.some((field) => !metadataFields.has(field as MetadataField)) || new Set(fields).size !== fields.length) {
     throw new Error("Format code has invalid or duplicate metadata fields.");
   }
@@ -430,7 +439,7 @@ function normalizeTextSettings(value: unknown): TextSettings {
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
     include_seeding: value.include_seeding !== false,
     replace_base_urls_with_icons: value.replace_base_urls_with_icons !== false,
-    metadata_fields: fields as MetadataField[],
+    metadata_rows: rows.map((row) => row as MetadataField[]),
   };
 }
 

@@ -222,7 +222,7 @@ def _rainbow_colors(asset_count: int) -> PodiumColorConfiguration:
         else (1, 3, 5, 7)
         if asset_count == 4
         else tuple(range(8))
-        if asset_count == 8
+        if asset_count >= 8
         else tuple(
             round(index * 7 / max(1, asset_count - 1))
             for index in range(asset_count)
@@ -243,10 +243,14 @@ def _customizable_colors(layer_id: str, asset_count: int) -> PodiumColorConfigur
         )
     if layer_id == "olympic_medals":
         preset = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
-        return _repeat_colors(
-            tuple(preset.color_for_slot(slot) for slot in range(1, 9)),
-            asset_count,
+        medal_colors = tuple(
+            preset.color_for_slot(slot)
+            for slot in range(1, min(3, asset_count) + 1)
+        ) + tuple(
+            preset.color_for_slot(4)
+            for _slot in range(4, asset_count + 1)
         )
+        return PodiumColorConfiguration.per_podium(*medal_colors)
     if layer_id == "rainbow":
         return _rainbow_colors(asset_count)
     if layer_id == "custom_red":
@@ -354,6 +358,14 @@ def generate_eye_preview_layers(output_root: Path) -> list[Path]:
                 )
                 outputs.append(path)
 
+    outputs.extend(generate_eye_color_preview_layers(output_root))
+    return outputs
+
+
+def generate_eye_color_preview_layers(output_root: Path) -> list[Path]:
+    """Generate only the combined Eyes preset-rectangle layers."""
+
+    outputs: list[Path] = []
     eye_root = output_root / "eyes"
     for layout_id in EYE_LAYOUTS:
         for color_id in COLOR_LAYER_IDS:

@@ -62,10 +62,16 @@ def _metadata_lines(request: CreationRequest) -> list[str]:
         "to_twitch_account": tournament.organizer_twitch_account,
         "to_bluesky_account": tournament.organizer_bluesky_account,
     }
+    rows = request.text_settings.metadata_rows
+    assert rows is not None
     return [
-        str(values[field])
-        for field in request.text_settings.metadata_fields
-        if values[field] is not None
+        " • ".join(
+            str(values[field])
+            for field in row
+            if values[field] is not None
+        )
+        for row in rows
+        if any(values[field] is not None for field in row)
     ]
 
 

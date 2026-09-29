@@ -14,6 +14,7 @@ from preview_layers import (
     LAYOUTS,
     SQUARE_HEADER_LAYOUTS,
     SQUARE_LAYOUTS,
+    _customizable_colors,
     header_permutation_id,
 )
 
@@ -91,6 +92,28 @@ class PreviewLayerTests(unittest.TestCase):
                 self.assertLessEqual(image.width, 360)
                 self.assertLessEqual(image.height, 240)
                 self.assertIsNotNone(image.getbbox())
+
+    def test_large_cached_presets_repeat_or_keep_later_medals_gray(self) -> None:
+        for preset in ("smash_player_colors", "rainbow"):
+            with self.subTest(preset=preset):
+                colors = _customizable_colors(preset, 25)
+                self.assertEqual(
+                    colors.color_for_slot(1).resolve().main_color,
+                    colors.color_for_slot(9).resolve().main_color,
+                )
+                self.assertEqual(
+                    colors.color_for_slot(2).resolve().main_color,
+                    colors.color_for_slot(10).resolve().main_color,
+                )
+        medals = _customizable_colors("olympic_medals", 25)
+        self.assertNotEqual(
+            medals.color_for_slot(1).resolve().main_color,
+            medals.color_for_slot(4).resolve().main_color,
+        )
+        self.assertEqual(
+            medals.color_for_slot(4).resolve().main_color,
+            medals.color_for_slot(25).resolve().main_color,
+        )
 
 
 if __name__ == "__main__":

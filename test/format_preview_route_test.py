@@ -176,6 +176,82 @@ class FormatPreviewRouteTests(unittest.TestCase):
         self.assertEqual(colors.for_slot(1).background_color, "#AABBCCDD")
         self.assertIsNone(colors.for_slot(1).trim_color)
 
+    def test_large_eyes_presets_repeat_or_extend_as_reviewed(self) -> None:
+        for preset in ("smash_player_colors", "rainbow", "olympic_medals"):
+            with self.subTest(preset=preset), patch(
+                "app.render_format_preview",
+                return_value=Image.new("RGBA", (16, 16)),
+            ) as render_preview:
+                response = self.client.post(
+                    "/api/format-preview",
+                    json={
+                        "mode": "eyes",
+                        "event_format": "singles",
+                        "entrant_count": 25,
+                        "formatting_asset_colors": {
+                            "mode": "premade",
+                            "preset": preset,
+                            "preset_transparency": {
+                                "main_color": 0,
+                                "face_color": 0,
+                                "base_color": 0,
+                            },
+                            "colors": [],
+                        },
+                    },
+                )
+
+                self.assertEqual(response.status_code, 200)
+                colors = render_preview.call_args.kwargs["formatting_colors"]
+                if preset == "olympic_medals":
+                    self.assertNotEqual(
+                        colors.for_slot(1).background_color,
+                        colors.for_slot(4).background_color,
+                    )
+                    self.assertEqual(
+                        colors.for_slot(4).background_color,
+                        colors.for_slot(25).background_color,
+                    )
+                else:
+                    self.assertEqual(
+                        colors.for_slot(1).background_color,
+                        colors.for_slot(9).background_color,
+                    )
+                    self.assertEqual(
+                        colors.for_slot(2).background_color,
+                        colors.for_slot(10).background_color,
+                    )
+
+    def test_accepts_grouped_metadata_rows_and_legacy_flat_fields(self) -> None:
+        for text_settings, expected in (
+            (
+                {"metadata_rows": [["event", "date"], ["entrants_count"]]},
+                (("event", "date"), ("entrants_count",)),
+            ),
+            (
+                {"metadata_fields": ["event", "date"]},
+                (("event",), ("date",)),
+            ),
+        ):
+            with self.subTest(text_settings=text_settings), patch(
+                "app.render_format_preview",
+                return_value=Image.new("RGBA", (16, 16)),
+            ) as render_preview:
+                response = self.client.post(
+                    "/api/format-preview",
+                    json={
+                        "event_format": "singles",
+                        "entrant_count": 3,
+                        "text_settings": text_settings,
+                    },
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    render_preview.call_args.kwargs["text_settings"].metadata_rows,
+                    expected,
+                )
+
     def test_lists_provided_fonts_and_renders_uploaded_font_bytes(self) -> None:
         fonts_response = self.client.get("/api/fonts")
         self.assertEqual(fonts_response.status_code, 200)
