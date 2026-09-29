@@ -68,6 +68,7 @@ npm run build
 
 
 TODO LIST:
+* add thanks to devdogg for being a tester on my deploy day and finding the critical error bugs in saving formats and generation without subtitle
 * once you load a format it's difficult to start fresh without refreshing, should I have a button to clear everything out?
 * the image preview for the eyes layout is stretched wide to fit the preview for the old kind, but it should have its own dimensions, and keep those dimensions going forward after it is selected
 * main tab descriptions (the details under Load A Format, etc) break lines short, and should just extend instead
