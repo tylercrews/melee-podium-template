@@ -37,8 +37,8 @@ const apiBase = new URL(
 );
 
 /**
- * Builds URLs that work both on Vite's dev server and when the app is mounted
- * at /melee-podium-template/. VITE_API_BASE_URL can override the default.
+ * Builds URLs from Vite's configured public base. VITE_API_BASE_URL can
+ * override the default for deployments that host the API separately.
  */
 export function apiUrl(endpoint: string): string {
   return new URL(endpoint.replace(/^\/+/, ""), apiBase).toString();

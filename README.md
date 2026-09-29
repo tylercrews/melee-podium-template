@@ -35,7 +35,7 @@ cd .\frontend
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173/melee-podium-template/`. Vite proxies API and character-asset requests to the Flask server on port 5000.
+Open `http://127.0.0.1:5173/`. Vite proxies API and character-asset requests to the Flask server on port 5000.
 
 ### Local checks
 

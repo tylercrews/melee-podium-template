@@ -418,11 +418,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #e85f3d66; outlin
 .format-copy-button:hover { border-color: #238fe8ff; color: #ffffffff; background: #1b2b42ff; }
 .format-copy-button svg { width: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .format-preview { display: grid; gap: 12px; }
-.format-preview__frame { position: relative; display: grid; width: 100%; max-height: calc(100vh - 300px); min-height: 0; padding: 0; place-items: center; overflow: hidden; border: 1px solid #444b69ff; border-radius: 7px 2px 7px 2px; background: #090b14ff; box-shadow: 0 20px 45px #00000080; cursor: zoom-in; }
+.format-preview__frame { position: relative; display: grid; width: 100%; max-height: min(55vh, 620px); min-height: 0; padding: 0; place-items: center; overflow: hidden; border: 1px solid #444b69ff; border-radius: 7px 2px 7px 2px; background: #090b14ff; box-shadow: 0 20px 45px #00000080; cursor: zoom-in; }
 .format-preview__frame:hover { border-color: #7fc4ffff; }
 .format-preview__frame:focus-visible { outline: 3px solid #238fe899; outline-offset: 3px; }
 .format-preview__demo { display: block; width: 100%; height: auto; }
-.format-preview__canvas { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(100vh - 302px); }
+.format-preview__canvas { display: block; width: auto; max-width: 100%; height: auto; max-height: min(calc(55vh - 2px), 618px); }
 .format-preview__canvas[hidden], .format-preview__demo[hidden] { display: none; }
 .format-preview__logo { position: absolute; top: 6%; left: 5%; width: 18%; max-height: 22%; object-fit: contain; filter: drop-shadow(0 2px 5px #000000b3); }
 .format-preview__loading { position: absolute; right: 10px; bottom: 10px; padding: 6px 9px; border: 1px solid #46506fff; border-radius: 999px; color: #dff4ffff; background: #090b14e6; font-size: .64rem; font-weight: 900; box-shadow: 0 4px 14px #00000080; }
