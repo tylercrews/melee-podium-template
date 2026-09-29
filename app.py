@@ -258,7 +258,7 @@ def _fighter_options() -> list[dict[str, Any]]:
 
 @app.get("/api/health")
 def health() -> Any:
-    return jsonify(status="ok")
+    return jsonify(status="ok", release="2026-09-29-blank-tournament-fields-v2")
 
 
 @app.get("/api/stats")
@@ -507,27 +507,24 @@ def _preview_tournament(value: Any, event_format: TournamentFormat) -> Tournamen
     source = _json_object(value, "preview tournament")
     fallback = sample_tournament(event_format)
 
-    def text_or(name: str, default: str | None) -> str | None:
-        # Omitted values belong to an unfinished sample preview. An explicitly
-        # blank optional field belongs to the user's completed tournament and
-        # must stay blank rather than leaking sample text into the final image.
-        return default if name not in source else _optional_text(source, name)
-
     raw_count = source.get("entrants_count")
     entrants_count = _optional_positive_int(source, "entrants_count") if raw_count not in (None, "") else fallback.entrants_count
     return Tournament(
-        title=text_or("title", fallback.title) or fallback.title,
-        subtitle=text_or("subtitle", fallback.subtitle),
-        event=text_or("event", fallback.event),
-        date=text_or("date", str(fallback.date)) or str(fallback.date),
+        # Once the client supplies tournament data, optional blank or omitted
+        # fields must remain absent. Sample content is only for requests that
+        # omit the complete tournament object.
+        title=_optional_text(source, "title") or fallback.title,
+        subtitle=_optional_text(source, "subtitle"),
+        event=_optional_text(source, "event"),
+        date=_optional_text(source, "date") or str(fallback.date),
         entrants_count=entrants_count or fallback.entrants_count,
-        link=text_or("link", fallback.link),
-        location=text_or("location", fallback.location),
-        stream_link=text_or("stream_link", fallback.stream_link),
-        vod_link=text_or("vod_link", fallback.vod_link),
-        organizer_x_account=text_or("organizer_x_account", fallback.organizer_x_account),
-        organizer_twitch_account=text_or("organizer_twitch_account", fallback.organizer_twitch_account),
-        organizer_bluesky_account=text_or("organizer_bluesky_account", fallback.organizer_bluesky_account),
+        link=_optional_text(source, "link"),
+        location=_optional_text(source, "location"),
+        stream_link=_optional_text(source, "stream_link"),
+        vod_link=_optional_text(source, "vod_link"),
+        organizer_x_account=_optional_text(source, "organizer_x_account"),
+        organizer_twitch_account=_optional_text(source, "organizer_twitch_account"),
+        organizer_bluesky_account=_optional_text(source, "organizer_bluesky_account"),
         event_format=event_format,
     )
 

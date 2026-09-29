@@ -349,7 +349,11 @@ class FormatPreviewRouteTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIsNone(render_preview.call_args.kwargs["tournament"].subtitle)
+        tournament = render_preview.call_args.kwargs["tournament"]
+        self.assertIsNone(tournament.subtitle)
+        self.assertIsNone(tournament.event)
+        self.assertIsNone(tournament.link)
+        self.assertIsNone(tournament.location)
 
     def test_passes_heading_and_entrant_text_colors_to_preview_renderer(self) -> None:
         with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
