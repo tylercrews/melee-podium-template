@@ -68,7 +68,6 @@ npm run build
 
 
 TODO LIST:
-* update the watermark to the new website meleepodium.meme
 * the image preview for the eyes layout is stretched wide to fit the preview for the old kind, but it should have its own dimensions, and keep those dimensions going forward after it is selected
 * main tab descriptions (the details under Load A Format, etc) break lines short, and should just extend instead
 TEST THIS * ASAP - need to think of a solution for what to do when someone selects a lot of metadata options. They're going to run out of space VERY Quickly. Maybe we can rearrange to have some properties be side by side

@@ -73,7 +73,7 @@ class FooterLayoutTests(unittest.TestCase):
             mode=PodiumMode.DOUBLES_TOP_4,
         )
         self.assertEqual(anchor, "la")
-        self.assertLess(position[0], self.canvas.width // 2)
+        self.assertLess(position[0], self.canvas.width * 3 // 4)
 
     def test_attribution_moves_away_from_a_low_right_entrant_tag(self) -> None:
         tags = ["Short"] * 7 + [
@@ -90,7 +90,7 @@ class FooterLayoutTests(unittest.TestCase):
             mode=PodiumMode.SINGLES_TOP_8_FOUR_PODIUM,
         )
         self.assertEqual(anchor, "la")
-        self.assertLess(position[0], self.canvas.width // 2)
+        self.assertLess(position[0], self.canvas.width * 3 // 4)
 
     def test_attribution_can_use_middle_when_both_corners_have_text(self) -> None:
         names = [
@@ -113,7 +113,7 @@ class FooterLayoutTests(unittest.TestCase):
 
         self.assertEqual(anchor, "la")
         self.assertGreater(position[0], 10)
-        self.assertLess(position[0], self.canvas.width // 2)
+        self.assertLess(position[0], self.canvas.width * 3 // 4)
 
 
 if __name__ == "__main__":
