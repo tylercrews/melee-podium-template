@@ -19,7 +19,7 @@ MAX_DOCUMENT_JSON_BYTES = 900_000
 MAX_DOCUMENT_NAME_LENGTH = 120
 DATA_ENCODING_FIELD = "dataEncoding"
 WRAPPED_ARRAY_ENCODING = "wrapped-arrays-v1"
-WRAPPED_ARRAY_KEY = "__melee_podium_array__"
+WRAPPED_ARRAY_KEY = "meleePodiumArrayValues"
 
 
 class FirebaseResourceNotFound(LookupError):
