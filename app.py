@@ -508,7 +508,10 @@ def _preview_tournament(value: Any, event_format: TournamentFormat) -> Tournamen
     fallback = sample_tournament(event_format)
 
     def text_or(name: str, default: str | None) -> str | None:
-        return _optional_text(source, name) if source.get(name) not in (None, "") else default
+        # Omitted values belong to an unfinished sample preview. An explicitly
+        # blank optional field belongs to the user's completed tournament and
+        # must stay blank rather than leaking sample text into the final image.
+        return default if name not in source else _optional_text(source, name)
 
     raw_count = source.get("entrants_count")
     entrants_count = _optional_positive_int(source, "entrants_count") if raw_count not in (None, "") else fallback.entrants_count

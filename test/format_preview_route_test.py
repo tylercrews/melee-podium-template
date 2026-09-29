@@ -330,6 +330,27 @@ class FormatPreviewRouteTests(unittest.TestCase):
         self.assertEqual(tournament.location, "Local Venue, Philadelphia, PA")
         self.assertEqual([entrant.tag for entrant in entrants], ["Alpha", "Bravo", "Charlie"])
 
+    def test_preserves_an_explicitly_blank_tournament_subtitle(self) -> None:
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
+            response = self.client.post(
+                "/api/format-preview",
+                json={
+                    "style": "legacy",
+                    "event_format": "singles",
+                    "entrant_count": 3,
+                    "transparent": True,
+                    "tournament": {
+                        "title": "My Local",
+                        "subtitle": None,
+                        "date": "2026-09-28",
+                        "entrants_count": 24,
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(render_preview.call_args.kwargs["tournament"].subtitle)
+
     def test_passes_heading_and_entrant_text_colors_to_preview_renderer(self) -> None:
         with patch("app.render_format_preview", return_value=Image.new("RGBA", (16, 16))) as render_preview:
             response = self.client.post(
