@@ -68,6 +68,7 @@ npm run build
 
 
 TODO LIST:
+* in legacy podiums mode the pink (left) podium looks the TINIEST bit bigger than the other. It's really not that noticeable, but compared to the two fifth place podiums it does because the orange and teal seem a lot better aligned
 * header and metadata should have sliders for font size pickable by the user, maybe even get granular with the metadata fields each having different font sizes
 * add thanks to devdogg for being a tester on my deploy day and finding the critical error bugs in saving formats and generation without subtitle
 * once you load a format it's difficult to start fresh without refreshing, should I have a button to clear everything out?
