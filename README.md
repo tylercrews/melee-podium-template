@@ -68,14 +68,10 @@ npm run build
 
 
 TODO LIST:
+* create some "quick select" options on the first loading screen that skip all of the layout-specific settings and make it easier to just use quickly.
+* new pinwheel-style layout that shen showed me
 * in legacy podiums mode the pink (left) podium looks the TINIEST bit bigger than the other. It's really not that noticeable, but compared to the two fifth place podiums it does because the orange and teal seem a lot better aligned
 * header and metadata should have sliders for font size pickable by the user, maybe even get granular with the metadata fields each having different font sizes
-* add thanks to devdogg for being a tester on my deploy day and finding the critical error bugs in saving formats and generation without subtitle
-* once you load a format it's difficult to start fresh without refreshing, should I have a button to clear everything out?
-* the image preview for the eyes layout is stretched wide to fit the preview for the old kind, but it should have its own dimensions, and keep those dimensions going forward after it is selected
-* main tab descriptions (the details under Load A Format, etc) break lines short, and should just extend instead
-TEST THIS * ASAP - need to think of a solution for what to do when someone selects a lot of metadata options. They're going to run out of space VERY Quickly. Maybe we can rearrange to have some properties be side by side
-TEST THIS * whenever you implement the new image template styles (eyes + squares) the image preview is going to generate of course, but we should also make it so that there's a little preview thumbnail the same way that I added one for the background images
 TEST THIS * need to figure out how larger counts of included entrants work with the preset coloring. Like do you do rainbow shades in between? Shades per row? Shades per placement number (for the top 16 one)? idk.
 * make eye tweaks for singles and doubles
 
