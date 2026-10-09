@@ -69,6 +69,7 @@ npm run build
 
 TODO LIST:
 * create some "quick select" options on the first loading screen that skip all of the layout-specific settings and make it easier to just use quickly.
+* get some melee fonts added in. like the timer one is super clean
 * new pinwheel-style layout that shen showed me
 * in legacy podiums mode the pink (left) podium looks the TINIEST bit bigger than the other. It's really not that noticeable, but compared to the two fifth place podiums it does because the orange and teal seem a lot better aligned
 * header and metadata should have sliders for font size pickable by the user, maybe even get granular with the metadata fields each having different font sizes
