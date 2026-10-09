@@ -21,6 +21,8 @@ export interface FormatFontInfo { id: string; name: string; url: string; custom:
 interface LayerRequest {
   foregroundLayers: Array<{ url: string }>;
   headerUrl: string;
+  logoPlaceholderUrl?: string;
+  resultLabelsUrl?: string;
   label: string;
   logoPosition: "top_left" | "top_middle" | "top_right";
   logoBox: { left: number; top: number; right: number; bottom: number };
@@ -57,6 +59,13 @@ function headerPermutationId(format: FormatConfiguration): string {
 }
 
 function headerBox(format: FormatConfiguration, outputSize: PixelSize, position: LayerRequest["logoPosition"]): LayerRequest["logoBox"] {
+  if (format.selection.mode === "radial") {
+    return {
+      top_left: { left: 690, top: 532, right: 1230, bottom: 668 },
+      top_middle: { left: 735, top: 345, right: 1185, bottom: 750 },
+      top_right: { left: 705, top: 675, right: 1215, bottom: 900 },
+    }[position];
+  }
   if (format.selection.mode === "eyes") {
     const index = position === "top_left" ? 0 : position === "top_middle" ? 1 : 2;
     if (outputSize.width === 1080) {
@@ -116,7 +125,11 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   const colors = format.formatting_asset_colors;
   let foregroundLayers: LayerRequest["foregroundLayers"];
   let headerUrl: string;
-  if (mode === "eyes") {
+  if (mode === "radial") {
+    const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
+    foregroundLayers = [{ url: `${layerRoot}/radial/singles_top_8/${colorId}.png` }];
+    headerUrl = `${layerRoot}/radial_headers/${fontId}/${headerPermutationId(format)}.png`;
+  } else if (mode === "eyes") {
     const eyeEntrantCount = format.selection.options.entrant_count
       ?? (eventFormat === "doubles" ? 3 : 8);
     const eyeLayout = `${eventFormat}_top_${eyeEntrantCount}`;
@@ -136,7 +149,7 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     foregroundLayers = [{ url: `${layerRoot}/podiums/legacy/${layout}.png` }];
     headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
   }
-  const styleLabel = mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
+  const styleLabel = mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
   const layoutLabel = format.selection.options.variant === "four_podium"
     ? "Top 8 – 4 Podiums"
@@ -144,6 +157,8 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   return {
     foregroundLayers,
     headerUrl,
+    logoPlaceholderUrl: mode === "radial" ? `${layerRoot}/radial_logos/${logoPosition}.png` : undefined,
+    resultLabelsUrl: mode === "radial" ? `${layerRoot}/radial_labels.png` : undefined,
     label: `${styleLabel} · ${eventLabel} · ${layoutLabel}`,
     logoPosition,
     logoBox: headerBox(format, outputSize, logoPosition),
@@ -176,7 +191,7 @@ function previewEntrants(entrants: EntrantDraft[], entrantCount: number, include
   });
 }
 
-async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean): Promise<HTMLImageElement> {
+async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean, logoImage: FormatImageInfo | null): Promise<HTMLImageElement> {
   const entrantCount = format.selection.options.entrant_count ?? 8;
   const config = {
     mode: format.selection.mode,
@@ -189,6 +204,7 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
     entrant_text_colors: format.entrant_text_colors,
     header_layout: format.header_layout,
     text_settings: format.text_settings,
+    logo_size: format.image_settings.logo_size,
     tournament: tournamentComplete ? {
       title: tournament.title.trim(),
       subtitle: tournament.subtitle.trim() || null,
@@ -206,12 +222,19 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
     entrants: entrantsComplete ? previewEntrants(entrants, entrantCount, format.text_settings.include_seeding) : undefined,
   };
   let init: RequestInit;
-  if (fontAsset?.custom) {
-    const fontResponse = await fetch(fontAsset.url);
-    if (!fontResponse.ok) throw new Error("Could not load the selected custom font.");
+  if (fontAsset?.custom || (format.selection.mode === "radial" && logoImage)) {
     const form = new FormData();
     form.append("config", JSON.stringify(config));
-    form.append("font_file", await fontResponse.blob(), fontAsset.name);
+    if (fontAsset?.custom) {
+      const fontResponse = await fetch(fontAsset.url);
+      if (!fontResponse.ok) throw new Error("Could not load the selected custom font.");
+      form.append("font_file", await fontResponse.blob(), fontAsset.name);
+    }
+    if (format.selection.mode === "radial" && logoImage) {
+      const logoResponse = await fetch(logoImage.url);
+      if (!logoResponse.ok) throw new Error("Could not load the selected tournament logo.");
+      form.append("logo_file", await logoResponse.blob(), "logo.png");
+    }
     init = { method: "POST", body: form };
   } else {
     init = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) };
@@ -256,7 +279,7 @@ function drawLogo(context: CanvasRenderingContext2D, format: FormatConfiguration
     context.rotate(Math.PI / 2);
     context.drawImage(logo, -width / 2, -height / 2, width, height);
     context.restore();
-  } else if (format.selection.mode === "squares" || format.selection.mode === "eyes") {
+  } else if (format.selection.mode === "squares" || format.selection.mode === "eyes" || format.selection.mode === "radial") {
     context.drawImage(logo, box.left + (box.right - box.left - width) / 2, box.top + (box.bottom - box.top - height) / 2, width, height);
   } else {
     const left = position === "top_middle" ? (outputSize.width - width) / 2 : position === "top_right" ? outputSize.width - width - 20 : 20;
@@ -334,11 +357,13 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     setRefreshedSignature(null);
     const timeout = window.setTimeout(async () => {
       try {
-        const [foregrounds, header, background, logo] = await Promise.all([
+        const [foregrounds, header, background, logo, logoPlaceholder, resultLabels] = await Promise.all([
           Promise.all(request.foregroundLayers.map(async (layer) => ({ ...layer, image: await loadImage(layer.url) }))),
           loadImage(request.headerUrl),
           backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
           logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
+          !logoImage && request.logoPlaceholderUrl ? loadImage(request.logoPlaceholderUrl) : Promise.resolve(null),
+          request.resultLabelsUrl ? loadImage(request.resultLabelsUrl) : Promise.resolve(null),
         ]);
         if (cancelled || !canvas.current) return;
         const target = canvas.current;
@@ -350,9 +375,12 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         for (const foreground of foregrounds) {
           context.drawImage(foreground.image, 0, 0, request.outputSize.width, request.outputSize.height);
         }
-        const headerLayer = logo ? headerWithoutPlaceholder(header, request.logoBox) : header;
+        if (format.selection.mode === "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+        if (logoPlaceholder) context.drawImage(logoPlaceholder, 0, 0, request.outputSize.width, request.outputSize.height);
+        const headerLayer = logo && format.selection.mode !== "radial" ? headerWithoutPlaceholder(header, request.logoBox) : header;
         context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
-        drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+        if (resultLabels) context.drawImage(resultLabels, 0, 0, request.outputSize.width, request.outputSize.height);
+        if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
         setLoading(false);
       } catch {
         if (!cancelled) { setFailed(true); setLoading(false); }
@@ -370,7 +398,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     setFailed(false);
     try {
       const [foreground, background, logo] = await Promise.all([
-        loadConfiguredForeground(format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete),
+        loadConfiguredForeground(format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage),
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);
@@ -380,7 +408,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
       if (!context) throw new Error("Canvas preview is unavailable.");
       drawBackground(context, format, request.outputSize, background, backgroundImage);
       context.drawImage(foreground, 0, 0, request.outputSize.width, request.outputSize.height);
-      drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+      if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
       setExactPreview(true);
       setRefreshedSignature(previewSignature);
       if (download) {

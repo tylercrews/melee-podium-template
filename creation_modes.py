@@ -17,6 +17,7 @@ class CreationMode(StrEnum):
     PODIUM = "podium"
     EYES = "eyes"
     SQUARES = "squares"
+    RADIAL = "radial"
 
 
 class PodiumStyle(StrEnum):
@@ -113,6 +114,12 @@ class ModeSelection:
             raise ValueError("Podium mode requires a legacy or customizable podium_style")
         if self.mode is not CreationMode.PODIUM and self.options.podium_style is not None:
             raise ValueError("podium_style is only valid for Podium mode")
+        if self.mode is CreationMode.RADIAL and (
+            self.options.event_format is not TournamentFormat.SINGLES
+            or self.options.entrant_count != 8
+            or self.options.variant is not None
+        ):
+            raise ValueError("Radial supports Singles Top 8")
 
     @property
     def submode_id(self) -> str:

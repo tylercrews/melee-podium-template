@@ -18,6 +18,8 @@ def render_eye_portrait(
     *,
     zoom_multiplier: float = 1.0,
     doubles: bool = False,
+    focal_destination: tuple[float, float] | None = None,
+    framing_width: float | None = None,
 ) -> Image.Image:
     """Center one pose's reviewed eye point in a clipped RGBA viewport."""
 
@@ -26,6 +28,8 @@ def render_eye_portrait(
         raise ValueError("Eye portrait viewport dimensions must be positive")
     if zoom_multiplier <= 0:
         raise ValueError("zoom_multiplier must be greater than zero")
+    if framing_width is not None and framing_width <= 0:
+        raise ValueError("framing_width must be greater than zero")
     source, pose = load_character_source(character)
     adjustment = (
         get_doubles_eye_portrait_adjustment(character.melee_fighter_name, pose)
@@ -35,7 +39,7 @@ def render_eye_portrait(
     bounds = source.getbbox()
     if bounds is None:
         return Image.new("RGBA", size, "#00000000")
-    scale = width / (bounds[2] - bounds[0])
+    scale = (framing_width if framing_width is not None else width) / (bounds[2] - bounds[0])
     scale *= adjustment.zoom * zoom_multiplier
     resized = source.resize(
         (
@@ -48,11 +52,12 @@ def render_eye_portrait(
     if character.mirror_horizontally:
         focal_x = source.width - focal_x
     viewport = Image.new("RGBA", size, "#00000000")
+    destination_x, destination_y = focal_destination or (width / 2, height / 2)
     viewport.alpha_composite(
         resized,
         (
-            round(width / 2 - focal_x * scale),
-            round(height / 2 - adjustment.focal_y * scale),
+            round(destination_x - focal_x * scale),
+            round(destination_y - adjustment.focal_y * scale),
         ),
     )
     return viewport

@@ -102,6 +102,7 @@ class FormattingAssetRenderer:
         geometric = preferences.selection.mode in {
             CreationMode.EYES,
             CreationMode.SQUARES,
+            CreationMode.RADIAL,
         }
         if customizable and not isinstance(colors, (PodiumColorSelection, PodiumColorConfiguration)):
             raise ValueError("Customizable podiums require podium_colors")
@@ -111,6 +112,11 @@ class FormattingAssetRenderer:
             raise ValueError("Formatting colors are not valid for this mode")
 
         result = canvas.convert("RGBA")
+        if preferences.selection.mode is CreationMode.RADIAL:
+            from radial_geometry import draw_radial_formatting
+
+            assert isinstance(colors, GeometricFormattingColors)
+            return draw_radial_formatting(result, preferences, colors)
         for placement in _formatting_asset_draw_order(preferences):
             if geometric:
                 assert isinstance(colors, GeometricFormattingColors)

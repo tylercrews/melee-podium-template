@@ -1,4 +1,4 @@
-export type CreationMode = "podium" | "eyes" | "squares";
+export type CreationMode = "podium" | "eyes" | "squares" | "radial";
 export type EventFormat = "singles" | "doubles";
 export type PodiumStyle = "legacy" | "customizable";
 export type HeaderPosition = "top_left" | "top_middle" | "top_right";
@@ -154,7 +154,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
   text_settings: DEFAULT_TEXT_SETTINGS,
 };
 
-const modes = new Set<CreationMode>(["podium", "eyes", "squares"]);
+const modes = new Set<CreationMode>(["podium", "eyes", "squares", "radial"]);
 const eventFormats = new Set<EventFormat>(["singles", "doubles"]);
 const podiumStyles = new Set<PodiumStyle>(["legacy", "customizable"]);
 const headerPositions: HeaderPosition[] = ["top_left", "top_middle", "top_right"];
@@ -177,6 +177,10 @@ const entrantTextColorModes = new Set<EntrantTextColorSelectionMode>(["match_pod
 const metadataFields = new Set<MetadataField>(ALL_METADATA_FIELDS);
 
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
+  radial: {
+    singles: [{ entrant_count: 8, variant: null, label: "Top 8" }],
+    doubles: [],
+  },
   podium: {
     singles: [
       { entrant_count: 3, variant: null, label: "Top 3" },
@@ -531,7 +535,7 @@ export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelS
 }
 
 export function formatCanvasSize(format: FormatConfiguration): PixelSize | null {
-  if (format.selection.mode === "squares") return { width: 1920, height: 1080 };
+  if (format.selection.mode === "squares" || format.selection.mode === "radial") return { width: 1920, height: 1080 };
   if (format.selection.mode === "eyes") {
     const count = format.selection.options.entrant_count;
     // Use the representative Eyes Top 8 canvas while the remaining format

@@ -33,8 +33,9 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       selection: {
         ...selection,
         mode,
-        options: { ...selection.options, entrant_count: null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
+        options: { ...selection.options, event_format: mode === "radial" && selection.options.event_format === "doubles" ? null : selection.options.event_format, entrant_count: null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
       },
+      header_layout: mode === "radial" ? { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" } : value.header_layout,
     });
   }
 
@@ -56,6 +57,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   }
 
   function headerPositionLabel(position: HeaderPosition, fallback: string) {
+    if (selection.mode === "radial") return { top_left: "Middle Top", top_middle: "Middle", top_right: "Middle Bottom" }[position];
     const verticalEyes = selection.mode === "eyes"
       && (selection.options.event_format === "doubles" || selection.options.entrant_count === 8);
     if (!verticalEyes) return fallback;
@@ -74,6 +76,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
           { value: "podium" as const, label: "Podiums", detail: "Entrants arranged across placement podiums", disabled: false, thumbnail: "podium.webp" },
           { value: "eyes" as const, label: "Eyes", detail: "Close-up portrait strips with placement numbers", disabled: false, thumbnail: "eyes.webp" },
           { value: "squares" as const, label: "Squares", detail: "Portrait cards with customizable borders and backgrounds", disabled: false, thumbnail: "squares.webp" },
+          { value: "radial" as const, label: "Radial", detail: "Eight triangular portraits around a central tournament header", disabled: false, thumbnail: "radial.webp" },
         ]).map((option) => <label className={`format-choice format-choice--with-thumbnail${option.disabled ? " format-choice--disabled" : ""}`} key={option.value}><input type="radio" name="image-format" value={option.value} checked={selection.mode === option.value} onChange={() => updateMode(option.value)} disabled={option.disabled} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{option.label}</strong><small>{option.detail}</small></span><img className="format-choice__thumbnail" src={`${import.meta.env.BASE_URL}format_mode_thumbnails/${option.thumbnail}`} alt={`${option.label} example`} /></label>)}
       </div></fieldset>
 
@@ -85,7 +88,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div></fieldset>}
 
       <fieldset className="format-choice-group"><legend>Bracket type</legend><div className="format-choice-grid">
-        {(["singles", "doubles"] as const).map((eventFormat) => <label className="format-choice" key={eventFormat}><input type="radio" name="event-format" value={eventFormat} checked={selection.options.event_format === eventFormat} onChange={() => updateEventFormat(eventFormat)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{eventFormat === "singles" ? "Singles" : "Doubles"}</strong><small>{eventFormat === "singles" ? "One player per result" : "Two-player teams"}</small></span></label>)}
+        {(selection.mode === "radial" ? ["singles"] as const : ["singles", "doubles"] as const).map((eventFormat) => <label className="format-choice" key={eventFormat}><input type="radio" name="event-format" value={eventFormat} checked={selection.options.event_format === eventFormat} onChange={() => updateEventFormat(eventFormat)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{eventFormat === "singles" ? "Singles" : "Doubles"}</strong><small>{eventFormat === "singles" ? "One player per result" : "Two-player teams"}</small></span></label>)}
       </div></fieldset>
     </section>
 

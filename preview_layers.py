@@ -441,4 +441,6 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
             outputs.append(path)
     outputs.extend(generate_square_preview_layers(output_root))
     outputs.extend(generate_eye_preview_layers(output_root))
+    from radial_preview_layers import generate_radial_preview_layers
+    outputs.extend(generate_radial_preview_layers(output_root))
     return outputs

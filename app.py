@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from io import BytesIO
+from PIL import Image
 import json
+import math
 import os
 from pathlib import Path
 import sqlite3
@@ -26,6 +28,7 @@ from format_preview import render_format_preview
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
 from sample_creation_data import sample_tournament
 from firebase_services.fonts import read_font_upload
+from firebase_services.images import read_image_upload
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -470,10 +473,10 @@ def _geometric_preview_colors(
         tuple(
             GeometricFormattingColor(
                 selection.resolve().main_color
-                if creation_mode is CreationMode.EYES
+                if creation_mode in {CreationMode.EYES, CreationMode.RADIAL}
                 else selection.resolve().base_color,
                 None
-                if creation_mode is CreationMode.EYES
+                if creation_mode in {CreationMode.EYES, CreationMode.RADIAL}
                 else selection.resolve().main_color,
             )
             for selection in (
@@ -565,6 +568,7 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
 @app.post("/api/format-preview")
 def customized_format_preview() -> Any:
     custom_font_bytes = None
+    tournament_logo = None
     if request.mimetype == "multipart/form-data":
         try:
             payload = json.loads(request.form.get("config", ""))
@@ -573,6 +577,11 @@ def customized_format_preview() -> Any:
         upload = request.files.get("font_file")
         if upload is not None:
             custom_font_bytes, _extension, _content_type, _filename = read_font_upload(upload)
+        logo_upload = request.files.get("logo_file")
+        if logo_upload is not None:
+            logo_bytes, *_details = read_image_upload(logo_upload)
+            with Image.open(BytesIO(logo_bytes)) as source:
+                tournament_logo = source.convert("RGBA")
     else:
         payload = request.get_json(silent=True)
     if not isinstance(payload, Mapping):
@@ -585,6 +594,9 @@ def customized_format_preview() -> Any:
     except (TypeError, ValueError) as error:
         raise ValueError("Invalid format preview options") from error
     variant_value = payload.get("variant")
+    logo_scale = payload.get("logo_size", 1)
+    if isinstance(logo_scale, bool) or not isinstance(logo_scale, (int, float)) or not math.isfinite(logo_scale) or not .001 <= logo_scale <= 100:
+        raise ValueError("logo_size must be a number between .001 and 100")
     variant = variant_value if isinstance(variant_value, str) and variant_value else None
     podium_colors = (
         _custom_preview_colors(payload.get("formatting_asset_colors"), entrant_count, variant)
@@ -598,7 +610,7 @@ def customized_format_preview() -> Any:
             variant,
             creation_mode,
         )
-        if creation_mode in {CreationMode.EYES, CreationMode.SQUARES}
+        if creation_mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL}
         else None
     )
     raw_text_settings = payload.get("text_settings")
@@ -654,6 +666,8 @@ def customized_format_preview() -> Any:
         entrants=_preview_entrants(payload.get("entrants"), event_format),
         tournament=_preview_tournament(payload.get("tournament"), event_format),
         formatting_colors=formatting_colors,
+        tournament_logo=tournament_logo,
+        logo_scale=logo_scale if tournament_logo is not None else None,
     )
     output = BytesIO()
     image.save(output, format="PNG")

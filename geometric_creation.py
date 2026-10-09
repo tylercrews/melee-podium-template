@@ -1,4 +1,4 @@
-"""Shared creation entry point used by the DrawEyes and DrawSquares APIs."""
+"""Shared creation entry point for Eyes, Squares, and Radial APIs."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from geometric_content_renderer import EyesContentRenderer, LogoInput, SquaresCo
 from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import ModePreferenceRepository
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
+from radial_content_renderer import RadialContentRenderer
 
 
 EntrantResult = SinglesEntrant | DoublesTeam
@@ -31,6 +32,7 @@ def draw_geometric_template(
     fill_color: str = "#00000000",
     header_layout: Mapping[str, str | None] | None = None,
     tournament_logo: LogoInput = None,
+    logo_scale: float | None = None,
     font: PodiumFont | str = PodiumFont.TYROWO,
     custom_font_bytes: bytes | None = None,
     text_settings: TextSettings | None = None,
@@ -38,8 +40,8 @@ def draw_geometric_template(
 ) -> Image.Image:
     """Render one reviewed non-podium layout through the creation pipeline."""
 
-    if creation_mode not in {CreationMode.EYES, CreationMode.SQUARES}:
-        raise ValueError("draw_geometric_template only supports Eyes and Squares")
+    if creation_mode not in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL}:
+        raise ValueError("draw_geometric_template only supports Eyes, Squares, and Radial")
     try:
         font = PodiumFont(font)
     except ValueError as error:
@@ -77,6 +79,8 @@ def draw_geometric_template(
     renderer = (
         EyesContentRenderer(font, tournament_logo, custom_font_bytes)
         if creation_mode is CreationMode.EYES
+        else RadialContentRenderer(font, tournament_logo, custom_font_bytes, logo_scale)
+        if creation_mode is CreationMode.RADIAL
         else SquaresContentRenderer(font, tournament_logo, custom_font_bytes)
     )
     result = CreationPipeline(

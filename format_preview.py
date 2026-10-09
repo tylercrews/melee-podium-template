@@ -24,6 +24,7 @@ from geometric_content_renderer import EyesContentRenderer, SquaresContentRender
 from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository
+from radial_content_renderer import RadialContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 from sample_creation_data import (
@@ -77,6 +78,8 @@ def render_format_preview(
     entrants: list[SinglesEntrant] | list[DoublesTeam] | None = None,
     tournament: Tournament | None = None,
     formatting_colors: GeometricFormattingColors | None = None,
+    tournament_logo: Image.Image | None = None,
+    logo_scale: float | None = None,
 ) -> Image.Image:
     """Return a full example render for one supported frontend format."""
 
@@ -90,6 +93,8 @@ def render_format_preview(
         if creation_mode is CreationMode.SQUARES
         else SUPPORTED_EYES_LAYOUTS
         if creation_mode is CreationMode.EYES
+        else frozenset({(TournamentFormat.SINGLES, 8, None)})
+        if creation_mode is CreationMode.RADIAL
         else frozenset()
     )
     if layout not in supported_layouts:
@@ -139,8 +144,8 @@ def render_format_preview(
         if creation_mode is CreationMode.PODIUM and style is PodiumStyle.CUSTOMIZABLE
         else None
     )
-    if creation_mode in {CreationMode.EYES, CreationMode.SQUARES} and formatting_colors is None:
-        raise ValueError("Eyes and Squares previews require formatting colors")
+    if creation_mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL} and formatting_colors is None:
+        raise ValueError("Eyes, Squares, and Radial previews require formatting colors")
     request = CreationRequest(
         selection=selection,
         background=background,
@@ -165,6 +170,8 @@ def render_format_preview(
         if creation_mode is CreationMode.PODIUM
         else EyesContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
         if creation_mode is CreationMode.EYES
+        else RadialContentRenderer(font=font, tournament_logo=tournament_logo, custom_font_bytes=custom_font_bytes, logo_scale=logo_scale)
+        if creation_mode is CreationMode.RADIAL
         else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
     )
     return renderer.draw(formatted, request, preferences)

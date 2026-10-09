@@ -9,6 +9,7 @@ from preview_layers import (
     generate_preview_layers,
     generate_square_preview_layers,
 )
+from radial_preview_layers import generate_radial_preview_layers
 
 
 if __name__ == "__main__":
@@ -28,11 +29,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Regenerate only Eyes preset and header layers.",
     )
+    parser.add_argument("--radial-only", action="store_true", help="Regenerate only Radial slice and center-header layers.")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent / "frontend" / "public" / "format_preview_layers"
-    if sum((args.squares_only, args.eyes_only, args.eyes_colors_only)) > 1:
+    if sum((args.squares_only, args.eyes_only, args.eyes_colors_only, args.radial_only)) > 1:
         parser.error("Choose only one mode-specific generation flag.")
     generator = (
+        generate_radial_preview_layers
+        if args.radial_only
+        else
         generate_square_preview_layers
         if args.squares_only
         else generate_eye_preview_layers

@@ -18,10 +18,10 @@ from models import TournamentFormat
 
 
 class ModePreferencesTest(unittest.TestCase):
-    def test_the_three_initial_modes_are_explicit(self) -> None:
+    def test_creation_modes_are_explicit(self) -> None:
         self.assertEqual(
             tuple(CreationMode),
-            (CreationMode.PODIUM, CreationMode.EYES, CreationMode.SQUARES),
+            (CreationMode.PODIUM, CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL),
         )
 
     def test_mode_options_are_part_of_the_serialized_selection(self) -> None:
@@ -151,6 +151,7 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.PODIUM: 12,
                 CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
+                CreationMode.RADIAL: 1,
             },
         )
         podium_styles = Counter(
@@ -168,7 +169,7 @@ class ModePreferencesTest(unittest.TestCase):
                 and item.selection.options.podium_style is PodiumStyle.LEGACY
                 and item.selection.submode_id == "singles_top_8"
             ) or (
-                item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES}
+                item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL}
                 and item.selection.submode_id
                 in {"singles_top_8", "doubles_top_3", "doubles_top_4"}
             ) or (
@@ -198,6 +199,7 @@ class ModePreferencesTest(unittest.TestCase):
             expected_canvas = {
                 CreationMode.EYES: PixelSize(1080, 1920),
                 CreationMode.SQUARES: PixelSize(1920, 1080),
+                CreationMode.RADIAL: PixelSize(1920, 1080),
             }.get(
                 item.selection.mode,
                 PixelSize(1920, 941)

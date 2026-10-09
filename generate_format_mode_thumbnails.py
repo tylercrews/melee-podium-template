@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 from DrawEyes import draw_singles_top_8 as draw_eyes_singles_top_8
+from DrawRadial import draw_singles_top_8 as draw_radial_singles_top_8
 from creation_modes import CreationMode, PodiumStyle
 from DrawSquares import draw_singles_top_8 as draw_squares_singles_top_8
 from format_preview import render_format_preview
@@ -52,6 +53,7 @@ def generate_format_mode_thumbnails() -> tuple[Path, ...]:
             tournament=tournament,
             fill_color="#080B14FF",
         ),
+        "radial": draw_radial_singles_top_8(top_8, tournament=tournament),
     }
     return tuple(_save_thumbnail(image, name) for name, image in images.items())
 

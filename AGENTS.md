@@ -11,6 +11,7 @@
 ## Creation modes and pipeline
 
 - The initial creation modes are Podium, Eyes, and Squares. Keep all three explicit and allow more modes to be added later.
+- Radial is a fourth mode, initially Singles Top 8 on a 1920x1080 canvas, based on `docs/archive/template_inspiration/radial-by-currentlyunknown.png`. Its eight triangular portrait masks meet at the canvas center and preserve the reference's portrait, number, and player-tag positions. Reuse the Eyes doubles focal/zoom profiles while keeping Radial section geometry and focal destinations in its own serialized preferences. Its centered overlapping header positions are Middle Top, Middle, and Middle Bottom (using the shared bijective assignment keys); always draw the logo before all header and entrant text, including in previews and downloads.
 - Select the mode before other creation settings. Keep the mode and its settings, including singles/doubles, included entrant count, and any layout variant, together in one mode-selection value.
 - Podium mode has a required second-level choice between `legacy` podiums and `customizable` podiums. Do not treat this as a cosmetic skin: each style owns separate formatting-asset positions and character/text placements because its podium geometry and heights differ.
 - `creation.py` is the overall composition coordinator. Do not use a generic `main.py` for this responsibility.

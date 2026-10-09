@@ -174,11 +174,11 @@ class CreationRequest:
             raise ValueError("Customizable podiums require podium_colors")
         if not customizable and self.podium_colors is not None:
             raise ValueError("podium_colors are only valid for customizable podiums")
-        geometric = self.selection.mode in {CreationMode.EYES, CreationMode.SQUARES}
+        geometric = self.selection.mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL}
         if geometric and self.formatting_colors is None:
-            raise ValueError("Eyes and Squares require formatting_colors")
+            raise ValueError("Eyes, Squares, and Radial require formatting_colors")
         if not geometric and self.formatting_colors is not None:
-            raise ValueError("formatting_colors are only valid for Eyes and Squares")
+            raise ValueError("formatting_colors are only valid for Eyes, Squares, and Radial")
 
 
 @dataclass(slots=True)

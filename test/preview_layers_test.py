@@ -26,7 +26,10 @@ LAYER_ROOT = PROJECT_ROOT / "frontend" / "public" / "format_preview_layers"
 class PreviewLayerTests(unittest.TestCase):
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
-        self.assertEqual(len(files), 262)
+        self.assertEqual(len(files), 288)
+        self.assertEqual(len(tuple((LAYER_ROOT / "radial_headers").rglob("*.png"))), 18)
+        self.assertEqual(len(tuple((LAYER_ROOT / "radial_logos").rglob("*.png"))), 3)
+        self.assertEqual(len(tuple((LAYER_ROOT / "radial").rglob("*.png"))), 4)
         self.assertEqual(len(tuple((LAYER_ROOT / "headers").rglob("*.png"))), 18)
         self.assertEqual(len(tuple((LAYER_ROOT / "square_headers").rglob("*.png"))), 36)
         self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "legacy").rglob("*.png"))), 4)

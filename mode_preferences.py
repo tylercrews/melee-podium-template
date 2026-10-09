@@ -66,6 +66,7 @@ class FormattingAssetPlacement:
     asset_id: str
     destination: PixelRect
     z_index: int = 0
+    polygon: tuple[PixelPoint, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.slot_id, str) or not self.slot_id.strip():
@@ -75,6 +76,16 @@ class FormattingAssetPlacement:
         if not isinstance(self.destination, PixelRect):
             raise TypeError("formatting asset destination must be a PixelRect")
         _integer(self.z_index, "z_index")
+        points = tuple(self.polygon)
+        if points:
+            if len(points) < 3 or any(not isinstance(point, PixelPoint) for point in points):
+                raise ValueError("polygon must contain at least three PixelPoints")
+            if any(not 0 <= point.x <= self.destination.width or not 0 <= point.y <= self.destination.height for point in points):
+                raise ValueError("polygon points must stay within the destination")
+            area = sum(a.x * b.y - b.x * a.y for a, b in zip(points, points[1:] + points[:1]))
+            if area == 0:
+                raise ValueError("polygon must have a nonzero area")
+        object.__setattr__(self, "polygon", points)
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> FormattingAssetPlacement:
@@ -84,6 +95,7 @@ class FormattingAssetPlacement:
             asset_id=value.get("asset_id") if isinstance(value.get("asset_id"), str) else "",
             destination=PixelRect.from_dict(destination),
             z_index=_integer(value.get("z_index", 0), "z_index"),
+            polygon=tuple(PixelPoint.from_dict(item) for item in _items(value.get("polygon", []), "polygon")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -92,6 +104,7 @@ class FormattingAssetPlacement:
             "asset_id": self.asset_id,
             "destination": self.destination.to_dict(),
             "z_index": self.z_index,
+            **({"polygon": [point.to_dict() for point in self.polygon]} if self.polygon else {}),
         }
 
 
