@@ -38,6 +38,7 @@ FILES = (
     "portrait_scale_adjustment_to_character_relativity.py",
     "radial_content_renderer.py",
     "radial_geometry.py",
+    "radial_palette.py",
     "sample_creation_data.py",
     "square_portrait_renderer.py",
     "fonts/Impact.ttf",

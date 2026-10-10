@@ -22,6 +22,7 @@ from color_values import normalize_rgba_hex
 from creation import TextSettings
 from creation_modes import CreationMode, PodiumStyle
 from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
+from radial_palette import radial_palette_color
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
 from format_preview import render_format_preview
@@ -469,14 +470,16 @@ def _geometric_preview_colors(
         variant,
         color_count=entrant_count,
     )
+    if creation_mode is CreationMode.RADIAL:
+        return GeometricFormattingColors(tuple(radial_palette_color(podium_colors.color_for_slot(slot)) for slot in range(1, entrant_count + 1)))
     return GeometricFormattingColors(
         tuple(
             GeometricFormattingColor(
                 selection.resolve().main_color
-                if creation_mode in {CreationMode.EYES, CreationMode.RADIAL}
+                if creation_mode is CreationMode.EYES
                 else selection.resolve().base_color,
                 None
-                if creation_mode in {CreationMode.EYES, CreationMode.RADIAL}
+                if creation_mode is CreationMode.EYES
                 else selection.resolve().main_color,
             )
             for selection in (

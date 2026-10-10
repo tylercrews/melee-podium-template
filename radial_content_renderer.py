@@ -74,7 +74,7 @@ class RadialContentRenderer:
                     focal_destination=(placement.anchor.x - rect.left, placement.anchor.y - rect.top),
                 )
                 result.alpha_composite(clip_to_section(portrait, section), (rect.left, rect.top))
-            draw_radial_dividers(result, preferences)
+            draw_radial_dividers(result, preferences, request.formatting_colors)
             self._draw_header(result, request, preferences)
             # Both result labels and central text remain above an oversized logo.
             text_layer = Image.new("RGBA", result.size, "#00000000")

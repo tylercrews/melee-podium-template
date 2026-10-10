@@ -21,6 +21,8 @@ from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository,
 from models import TournamentFormat
 from radial_content_renderer import RadialContentRenderer
 from radial_geometry import clip_to_section, radial_sections
+from radial_palette import radial_palette_color
+from podium_colors import PodiumColorSelection
 from sample_creation_data import sample_top_8_entrants, sample_tournament
 
 
@@ -39,8 +41,37 @@ class RadialTests(unittest.TestCase):
             self.assertEqual(len(section.polygon), 3)
             self.assertIn(center, [(section.destination.left + p.x, section.destination.top + p.y) for p in section.polygon])
         self.assertFalse(any(p.field == "entrant.placement" for p in self.preferences.text_slots))
-        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((262, 27), (1680, 27), (57, 195), (1857, 195), (90, 585), (1842, 585), (202, 1005), (1692, 1005))])
+        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((210, 48), (1710, 48), (68, 165), (1852, 165), (68, 610), (1852, 610), (200, 1028), (1720, 1028))])
         self.assertEqual([p.asset_id for p in self.preferences.placement_tags], ["01st.png", "02nd.png", "03rd.png", "04th.png", "05th.png", "05th.png", "07th.png", "07th.png"])
+
+    def test_enlarged_numbers_have_a_separate_horizontal_region_from_names(self):
+        names = [p for p in self.preferences.text_slots if p.field == "entrant.tag"]
+        for slot, (number, name) in enumerate(zip(self.preferences.placement_tags, names), 1):
+            self.assertGreaterEqual(number.max_size.height, 80)
+            left = name.anchor.x if name.pillow_anchor.startswith("l") else name.anchor.x - name.max_width if name.pillow_anchor.startswith("r") else name.anchor.x - name.max_width / 2
+            right = left + name.max_width
+            number_left = number.anchor.x - number.max_size.width / 2
+            number_right = number.anchor.x + number.max_size.width / 2
+            self.assertTrue(number_right + 15 <= left or right + 15 <= number_left, slot)
+
+    def test_radial_primary_background_and_box_border_keep_independent_alpha(self):
+        selection = PodiumColorSelection("#12345680", "#010203FF", "#65432140")
+        self.assertEqual(radial_palette_color(selection).to_dict(), {"background_color": "#12345680", "trim_color": "#65432140"})
+
+    def test_border_colors_survive_portraits_and_are_composited_only_once(self):
+        request = replace(self.request, formatting_colors=GeometricFormattingColors.one("#00000000", "#00FF0080"))
+        with patch("radial_content_renderer.render_eye_portrait", side_effect=lambda _character, size, **_settings: Image.new("RGBA", size)):
+            image = RadialContentRenderer().draw(Image.new("RGBA", (1920, 1080)), request, self.preferences)
+        self.assertEqual(image.getpixel((957, 120)), (0, 255, 0, 128))
+
+    def test_api_maps_radial_custom_background_and_border_colors(self):
+        config = {"mode": "radial", "event_format": "singles", "entrant_count": 8, "formatting_asset_colors": {"mode": "pick_1", "preset": None, "colors": [{"main_color": "#11223380", "base_color": "#44556640", "face_color": "#000000FF", "metallic": False}]}}
+        with patch("app.render_format_preview", return_value=Image.new("RGBA", (8, 8))) as renderer:
+            response = app.test_client().post("/api/format-preview", json=config)
+        self.assertEqual(response.status_code, 200)
+        color = renderer.call_args.kwargs["formatting_colors"].for_slot(8)
+        self.assertEqual(color.background_color, "#11223380")
+        self.assertEqual(color.trim_color, "#44556640")
 
     def test_renders_canonical_tied_placement_art_above_an_overlapping_logo(self):
         with patch("formatting_assets.LocalPlacementTagAssets.open", autospec=True, side_effect=lambda _provider, _asset_id: Image.new("RGBA", (14, 14), "#00CCCCFF")) as assets:

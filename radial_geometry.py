@@ -39,16 +39,22 @@ def clip_to_section(image: Image.Image, placement: FormattingAssetPlacement) -> 
     return clipped
 
 
-def draw_radial_dividers(canvas: Image.Image, preferences: ModePreferences) -> None:
-    """Redraw the internal rays above portraits, preserving the reference gaps."""
-    center = (canvas.width // 2, canvas.height // 2)
-    endpoints = set()
-    for section in radial_sections(preferences).values():
+def draw_radial_dividers(
+    canvas: Image.Image,
+    preferences: ModePreferences,
+    colors: GeometricFormattingColors | None = None,
+) -> None:
+    """Draw each section's border inside its own triangle, including shared rays."""
+    for slot, section in radial_sections(preferences).items():
         rect = section.destination
-        endpoints.update((rect.left + p.x, rect.top + p.y) for p in section.polygon)
-    draw = ImageDraw.Draw(canvas)
-    for point in sorted(endpoints - {center}):
-        draw.line((center, point), fill=DIVIDER_COLOR, width=max(2, round(canvas.width / 213)))
+        layer = Image.new("RGBA", (rect.width, rect.height), "#00000000")
+        points = [(p.x, p.y) for p in section.polygon]
+        color = colors.for_slot(slot).trim_color if colors is not None else None
+        ImageDraw.Draw(layer).line(
+            points + points[:1], fill=color or DIVIDER_COLOR,
+            width=max(2, round(canvas.width / 213)), joint="curve",
+        )
+        canvas.alpha_composite(clip_to_section(layer, section), (rect.left, rect.top))
 
 
 def draw_radial_formatting(
@@ -61,5 +67,4 @@ def draw_radial_formatting(
         rect = section.destination
         layer = Image.new("RGBA", (rect.width, rect.height), colors.for_slot(slot).background_color)
         result.alpha_composite(clip_to_section(layer, section), (rect.left, rect.top))
-    draw_radial_dividers(result, preferences)
     return result

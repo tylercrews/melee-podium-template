@@ -15,6 +15,8 @@ from creation_modes import CreationMode, ModeOptions, ModeSelection
 from models import TournamentFormat
 from preview_layers import COLOR_LAYER_IDS, HEADER_CONTENTS, HEADER_POSITIONS, _boxed_logo_placeholder, _customizable_colors, header_permutation_id
 from radial_content_renderer import RadialContentRenderer, radial_header_boxes
+from radial_geometry import draw_radial_dividers
+from radial_palette import radial_palette_color
 from sample_creation_data import sample_top_8_entrants, sample_tournament
 
 
@@ -32,8 +34,9 @@ def generate_radial_preview_layers(output_root: Path) -> list[Path]:
 
     for color_id in COLOR_LAYER_IDS:
         palettes = _customizable_colors(color_id, 8)
-        colors = GeometricFormattingColors(tuple(GeometricFormattingColor(palettes.color_for_slot(slot).main_color) for slot in range(1, 9)))
+        colors = GeometricFormattingColors(tuple(radial_palette_color(palettes.color_for_slot(slot)) for slot in range(1, 9)))
         layer = FormattingAssetRenderer().draw(Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000"), preferences, colors)
+        draw_radial_dividers(layer, preferences, colors)
         save(layer, f"radial/singles_top_8/{color_id}.png")
 
     labels = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
