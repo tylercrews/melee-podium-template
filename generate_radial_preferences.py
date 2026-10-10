@@ -24,8 +24,10 @@ def radial_preferences() -> ModePreferences:
         ((640, 360), (1280, 720), (640, 720)),
     )
     portraits = ((490, 100), (875, 135), (220, 235), (1035, 225), (235, 465), (1035, 480), (465, 560), (850, 565))
-    numbers = ((210, 48), (1710, 48), (68, 165), (1852, 165), (68, 610), (1852, 610), (200, 1028), (1720, 1028))
-    names = ((450, 36), (1470, 36), (145, 195), (1775, 195), (145, 585), (1775, 585), (460, 1059), (1460, 1059))
+    numbers = ((365, 96), (1710, 48), (68, 165), (1852, 165), (68, 915), (1852, 915), (200, 1028), (1720, 1028))
+    names = ((936, 14), (984, 14), (18, 518), (1902, 518), (18, 554), (1902, 554), (936, 1054), (984, 1054))
+    name_anchors = ("ra", "la", "ls", "rs", "la", "ra", "rs", "ls")
+    seeds = ((96, 8, "la"), (1824, 8, "ra"), (14, 70, "la"), (1906, 70, "ra"), (14, 990, "ls"), (1906, 990, "rs"), (96, 1062, "ls"), (1824, 1062, "rs"))
     assets = []
     characters = []
     text = []
@@ -41,15 +43,16 @@ def radial_preferences() -> ModePreferences:
         ))
         characters.append(CharacterPlacement(f"portrait_{slot}", slot, point(*portraits[slot - 1]), z_index=10))
         name_x, name_y = names[slot - 1]
-        anchor = "la" if slot in (3, 5) else "ra" if slot in (4, 6) else "ms" if slot in (7, 8) else "ma"
+        anchor = name_anchors[slot - 1]
+        seed_x, seed_y, seed_anchor = seeds[slot - 1]
         rank = (1, 2, 3, 4, 5, 5, 7, 7)[slot - 1]
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(rank, "th")
         placement_tags.append(PlacementTagPlacement(
-            f"number_{slot}", f"{rank:02}{suffix}.png", PixelPoint(*numbers[slot - 1]), PixelSize(120, 80 if slot in (7, 8) else 90), z_index=20,
+            f"number_{slot}", f"{rank:02}{suffix}.png", PixelPoint(*numbers[slot - 1]), PixelSize(200, 180) if slot == 1 else PixelSize(120, 80 if slot in (7, 8) else 90), z_index=20,
         ))
         text.extend((
             TextPlacement(f"tag_{slot}", "entrant.tag", PixelPoint(name_x, name_y), 330, entrant_slot=slot, pillow_anchor=anchor, preferred_size=40, z_index=30),
-            TextPlacement(f"seed_{slot}", "entrant.seed", PixelPoint(name_x, name_y - 55 if slot in (7, 8) else name_y + 55), 250, entrant_slot=slot, pillow_anchor=anchor, preferred_size=22, z_index=30),
+            TextPlacement(f"seed_{slot}", "entrant.seed", PixelPoint(seed_x, seed_y), 100, entrant_slot=slot, pillow_anchor=seed_anchor, preferred_size=22, z_index=30),
         ))
     for position, bounds in (
         ("top_left", (460, 355, 820, 445)),

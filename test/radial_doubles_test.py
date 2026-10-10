@@ -54,6 +54,22 @@ class RadialDoublesTests(unittest.TestCase):
         for team in range(1, 5):
             self.assertEqual({p.member_slot for p in identities if p.entrant_slot == team}, {1, 2})
 
+    def test_member_names_mirror_and_seeds_use_the_outer_placement_corners(self):
+        names = {(p.entrant_slot, p.member_slot): p for p in self.preferences.text_slots if p.field == "member.tag"}
+        for member in (1, 2):
+            top, bottom = names[(1, member)], names[(4, member)]
+            self.assertEqual(top.anchor.x, bottom.anchor.x)
+            self.assertEqual(top.anchor.y + bottom.anchor.y, 1080)
+        for team in (2, 3):
+            top, bottom = names[(team, 1)], names[(team, 2)]
+            self.assertEqual(top.anchor.x, bottom.anchor.x)
+            self.assertEqual(top.anchor.y + bottom.anchor.y, 1080)
+        seeds = [p for p in self.preferences.text_slots if p.field == "entrant.seed"]
+        for number, seed in zip(self.preferences.placement_tags, seeds):
+            corner = (1920, 0) if number.anchor.x > 960 else (0, 1080) if number.anchor.y > 540 else (0, 0)
+            distance = lambda point: (point.x - corner[0]) ** 2 + (point.y - corner[1]) ** 2
+            self.assertLess(distance(seed.anchor), distance(number.anchor))
+
     def test_internal_teammate_seams_have_no_border_and_share_one_palette(self):
         preferences = replace(self.preferences, text_slots=(), placement_tags=())
         formatted = FormattingAssetRenderer().draw(Image.new("RGBA", (1920, 1080)), preferences, self.colors)

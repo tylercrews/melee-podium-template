@@ -35,25 +35,25 @@ def radial_doubles_preferences() -> ModePreferences:
     # polygons above receive colored borders.
     assets.extend(replace(p, slot_id=p.slot_id.replace("slice_", "portrait_"), asset_id="radial_portrait_slice") for p in singles.formatting_assets if p.asset_id == "radial_slice")
     characters, text, numbers = [], [], []
-    team_labels = ((960, 18, "ma", 1050), (30, 510, "la", 600), (1890, 510, "ra", 600), (960, 1054, "ms", 1050))
+    # Doubles owns its label/art positions independently of Singles refinements.
+    member_names = ((460, 105, "ma"), (1460, 105, "ma"), (145, 195, "la"), (1775, 195, "ra"), (145, 885, "ls"), (1775, 885, "rs"), (460, 975, "ms"), (1460, 975, "ms"))
+    number_anchors = ((325, 96), (68, 165), (1852, 165), (200, 1028))
+    seed_anchors = ((96, 8, "la"), (14, 70, "la"), (1906, 70, "ra"), (96, 1062, "ls"))
+    team_labels = ((960, 18, "ma", 900), (30, 510, "la", 600), (1890, 510, "ra", 600), (960, 1054, "ms", 1050))
     for team, members in enumerate(RADIAL_TEAM_MEMBERS, 1):
         x, y, anchor, width = team_labels[team - 1]
         text.append(TextPlacement(f"team_{team}", "entrant.team_name", PixelPoint(x, y), width, entrant_slot=team, pillow_anchor=anchor, preferred_size=48, z_index=30))
         ordinal = f"{team:02}{ {1: 'st', 2: 'nd', 3: 'rd', 4: 'th'}[team]}.png"
-        numbers.append(replace(singles.placement_tags[members[0] - 1], slot_id=f"number_{team}", asset_id=ordinal))
+        numbers.append(replace(singles.placement_tags[members[0] - 1], slot_id=f"number_{team}", asset_id=ordinal, anchor=PixelPoint(*number_anchors[team - 1])))
         for member, old_slot in enumerate(members, 1):
             characters.append(replace(singles.character_slots[old_slot - 1], entrant_slot=team, member_slot=member))
             label = next(p for p in singles.text_slots if p.entrant_slot == old_slot and p.field == "entrant.tag")
-            if team == 1:
-                label = replace(label, anchor=PixelPoint(label.anchor.x, 112))
-            elif team == 4:
-                label = replace(label, anchor=PixelPoint(label.anchor.x, 975))
+            name_x, name_y, name_anchor = member_names[old_slot - 1]
+            label = replace(label, anchor=PixelPoint(name_x, name_y), pillow_anchor=name_anchor)
             text.append(replace(label, field="member.tag", entrant_slot=team, member_slot=member))
         seed = next(p for p in singles.text_slots if p.entrant_slot == members[0] and p.field == "entrant.seed")
-        if team == 1:
-            seed = replace(seed, anchor=PixelPoint(seed.anchor.x, 172))
-        elif team == 4:
-            seed = replace(seed, anchor=PixelPoint(seed.anchor.x, 920))
+        seed_x, seed_y, seed_anchor = seed_anchors[team - 1]
+        seed = replace(seed, anchor=PixelPoint(seed_x, seed_y), pillow_anchor=seed_anchor)
         text.append(replace(seed, slot_id=f"seed_team_{team}", entrant_slot=team))
     return ModePreferences(
         ModeSelection(CreationMode.RADIAL, ModeOptions(TournamentFormat.DOUBLES, 4)),

@@ -8,13 +8,13 @@ import random
 import unittest
 from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from app import app
 from background_builder import BackgroundRequest, PixelRect
 from creation import CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection
-from DrawPodium import PodiumFont
+from DrawPodium import PodiumFont, _font_to_fit
 from DrawRadial import draw_singles_top_8
 from geometric_formatting_colors import GeometricFormattingColors
 from mode_preferences import FormattingAssetPlacement, ModePreferenceRepository, ModePreferences, PixelPoint
@@ -41,18 +41,39 @@ class RadialTests(unittest.TestCase):
             self.assertEqual(len(section.polygon), 3)
             self.assertIn(center, [(section.destination.left + p.x, section.destination.top + p.y) for p in section.polygon])
         self.assertFalse(any(p.field == "entrant.placement" for p in self.preferences.text_slots))
-        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((210, 48), (1710, 48), (68, 165), (1852, 165), (68, 610), (1852, 610), (200, 1028), (1720, 1028))])
+        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((365, 96), (1710, 48), (68, 165), (1852, 165), (68, 915), (1852, 915), (200, 1028), (1720, 1028))])
         self.assertEqual([p.asset_id for p in self.preferences.placement_tags], ["01st.png", "02nd.png", "03rd.png", "04th.png", "05th.png", "05th.png", "07th.png", "07th.png"])
 
-    def test_enlarged_numbers_have_a_separate_horizontal_region_from_names(self):
+    def test_numbers_and_names_have_separate_outer_corner_regions(self):
         names = [p for p in self.preferences.text_slots if p.field == "entrant.tag"]
-        for slot, (number, name) in enumerate(zip(self.preferences.placement_tags, names), 1):
+        expected_corners = ((936, 14, "ra"), (984, 14, "la"), (18, 518, "ls"), (1902, 518, "rs"), (18, 554, "la"), (1902, 554, "ra"), (936, 1054, "rs"), (984, 1054, "ls"))
+        draw = ImageDraw.Draw(Image.new("RGBA", (1920, 1080)))
+        for slot, (number, name, expected) in enumerate(zip(self.preferences.placement_tags, names, expected_corners), 1):
+            self.assertEqual((name.anchor.x, name.anchor.y, name.pillow_anchor), expected)
             self.assertGreaterEqual(number.max_size.height, 80)
-            left = name.anchor.x if name.pillow_anchor.startswith("l") else name.anchor.x - name.max_width if name.pillow_anchor.startswith("r") else name.anchor.x - name.max_width / 2
-            right = left + name.max_width
+            value = self.entrants[slot - 1].tag
+            font = _font_to_fit(value, name.max_width, name.preferred_size, PodiumFont.TYROWO)
+            left, top, right, bottom = draw.textbbox((name.anchor.x, name.anchor.y), value, font=font, anchor=name.pillow_anchor, stroke_width=2)
             number_left = number.anchor.x - number.max_size.width / 2
             number_right = number.anchor.x + number.max_size.width / 2
-            self.assertTrue(number_right + 15 <= left or right + 15 <= number_left, slot)
+            number_top = number.anchor.y - number.max_size.height / 2
+            number_bottom = number.anchor.y + number.max_size.height / 2
+            self.assertTrue(number_right + 15 <= left or right + 15 <= number_left or number_bottom + 15 <= top or bottom + 15 <= number_top, slot)
+            self.assertGreaterEqual(left, 0)
+            self.assertGreaterEqual(top, 0)
+            self.assertLessEqual(right, 1920)
+            self.assertLessEqual(bottom, 1080)
+
+    def test_seeds_are_deeper_in_the_same_outer_corner_as_their_numbers(self):
+        seeds = [p for p in self.preferences.text_slots if p.field == "entrant.seed"]
+        for number, seed in zip(self.preferences.placement_tags, seeds):
+            corner = (1920 if number.anchor.x > 960 else 0, 1080 if number.anchor.y > 540 else 0)
+            distance = lambda point: (point.x - corner[0]) ** 2 + (point.y - corner[1]) ** 2
+            self.assertLess(distance(seed.anchor), distance(number.anchor))
+            value = f"{self.entrants[seed.entrant_slot - 1].seed}s"
+            font = _font_to_fit(value, seed.max_width, seed.preferred_size, PodiumFont.TYROWO)
+            box = ImageDraw.Draw(Image.new("RGBA", (1920, 1080))).textbbox((seed.anchor.x, seed.anchor.y), value, font=font, anchor=seed.pillow_anchor, stroke_width=2)
+            self.assertTrue(0 <= box[0] < box[2] <= 1920 and 0 <= box[1] < box[3] <= 1080)
 
     def test_radial_primary_background_and_box_border_keep_independent_alpha(self):
         selection = PodiumColorSelection("#12345680", "#010203FF", "#65432140")
