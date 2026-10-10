@@ -178,16 +178,18 @@ function previewCharacter(character: FavoriteCharacter) {
 function previewEntrants(entrants: EntrantDraft[], entrantCount: number, includeSeeding: boolean) {
   return entrants.slice(0, entrantCount).map((entrant) => entrant.kind === "singles" ? {
     tag: entrant.tag.trim(),
+    name_font_size_adjustment: entrant.nameFontSizeAdjustment ?? 0,
     seed: includeSeeding && entrant.seed ? Number(entrant.seed) : null,
     placement: entrant.placement,
     characters: entrant.characters.map(previewCharacter),
   } : {
     team_name: entrant.teamName.trim(),
+    team_name_font_size_adjustment: entrant.teamNameFontSizeAdjustment ?? 0,
     seed: includeSeeding && entrant.seed ? Number(entrant.seed) : null,
     placement: entrant.placement,
     team_color: entrant.teamColor || null,
-    entrant_1: { tag: entrant.entrant1.tag.trim(), characters: entrant.entrant1.characters.map(previewCharacter) },
-    entrant_2: { tag: entrant.entrant2.tag.trim(), characters: entrant.entrant2.characters.map(previewCharacter) },
+    entrant_1: { tag: entrant.entrant1.tag.trim(), name_font_size_adjustment: entrant.entrant1.nameFontSizeAdjustment ?? 0, characters: entrant.entrant1.characters.map(previewCharacter) },
+    entrant_2: { tag: entrant.entrant2.tag.trim(), name_font_size_adjustment: entrant.entrant2.nameFontSizeAdjustment ?? 0, characters: entrant.entrant2.characters.map(previewCharacter) },
   });
 }
 

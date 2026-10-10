@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
+from font_size_adjustments import validate_font_size_adjustment
+
 
 MELEE_FIGHTERS = (
     "Bowser",
@@ -136,6 +138,7 @@ class Entrant:
     tag: str
     bluesky_handle: str | None = None
     x_handle: str | None = None
+    name_font_size_adjustment: int = 0
 
     def __post_init__(self) -> None:
         if not self.characters:
@@ -143,6 +146,7 @@ class Entrant:
         if any(not isinstance(character, Character) for character in self.characters):
             raise TypeError("Entrant characters must all be Character instances")
         _validate_text(self.tag, "Entrant tag")
+        validate_font_size_adjustment(self.name_font_size_adjustment, "name_font_size_adjustment")
         if self.bluesky_handle is not None:
             _validate_text(self.bluesky_handle, "Bluesky handle")
         if self.x_handle is not None:
@@ -170,6 +174,7 @@ class DoublesTeam:
     entrant_2: Entrant
     team_name: str
     team_color: str | None = None
+    team_name_font_size_adjustment: int = 0
 
     def __post_init__(self) -> None:
         _validate_seed(self.seed)
@@ -179,6 +184,7 @@ class DoublesTeam:
         if not isinstance(self.entrant_2, Entrant):
             raise TypeError("Second team member must be an Entrant")
         _validate_text(self.team_name, "Team name")
+        validate_font_size_adjustment(self.team_name_font_size_adjustment, "team_name_font_size_adjustment")
         if self.team_color is not None:
             _validate_text(self.team_color, "Team color")
             normalized_color = self.team_color.strip().lower()

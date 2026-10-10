@@ -1,9 +1,12 @@
 import { DragEvent, useState } from "react";
 import { ALL_METADATA_FIELDS, MAX_METADATA_ROWS, MetadataField } from "./format";
+import FontSizeSlider from "./FontSizeSlider";
 
 interface MetadataRowEditorProps {
   rows: MetadataField[][];
   onChange: (rows: MetadataField[][]) => void;
+  fontSizeAdjustments: number[];
+  onFontSizeChange: (index: number, value: number) => void;
 }
 
 const labels: Record<MetadataField, string> = {
@@ -25,7 +28,7 @@ function withoutField(rows: MetadataField[][], field: MetadataField): MetadataFi
     .filter((row) => row.length > 0);
 }
 
-export default function MetadataRowEditor({ rows, onChange }: MetadataRowEditorProps) {
+export default function MetadataRowEditor({ rows, onChange, fontSizeAdjustments, onFontSizeChange }: MetadataRowEditorProps) {
   const [draggedField, setDraggedField] = useState<MetadataField | null>(null);
   const selected = new Set(rows.flat());
 
@@ -141,6 +144,7 @@ export default function MetadataRowEditor({ rows, onChange }: MetadataRowEditorP
           </div>)}
           <span className="metadata-selector__drop-hint">Drop here to add to row {rowIndex + 1}</span>
         </div>
+        <FontSizeSlider label={`Metadata row ${rowIndex + 1} size adjustment`} value={fontSizeAdjustments[rowIndex] ?? 0} onChange={(value) => onFontSizeChange(rowIndex, value)} />
       </section>)}
       {rows.length < MAX_METADATA_ROWS && <button className="metadata-selector__new-row" type="button" onDragOver={(event) => event.preventDefault()} onDrop={dropAsNewRow} disabled={!draggedField}>Drop here to create row {rows.length + 1}</button>}
     </div>

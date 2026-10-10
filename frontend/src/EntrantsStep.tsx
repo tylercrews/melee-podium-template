@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { FighterOption } from "./api";
 import { DoublesEntrantDraft, EntrantDraft, EntrantMemberDraft, SinglesEntrantDraft } from "./creationData";
 import EntrantCharacterEditor from "./EntrantCharacterEditor";
+import FontSizeSlider from "./FontSizeSlider";
 import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
 import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, newFavoriteId, normalizedFavoriteTag, parseAlternateSpellings } from "./favorites";
 import { EventFormat } from "./format";
@@ -50,7 +51,7 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
   function applyMemberFavorite(index: number, side: "entrant1" | "entrant2", favorite: FavoriteSinglesEntrant) {
     const entrant = value[index];
     if (entrant?.kind !== "doubles") return;
-    update(index, { ...entrant, [side]: favoriteMember(favorite) });
+    update(index, { ...entrant, [side]: { ...favoriteMember(favorite), nameFontSizeAdjustment: entrant[side].nameFontSizeAdjustment } });
   }
 
   function applyTeamFavorite(index: number, favorite: FavoriteDoublesTeam) {
@@ -60,8 +61,8 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
       ...entrant,
       teamName: favorite.team_name,
       teamColor: favorite.team_color,
-      entrant1: { tag: favorite.entrant_1.tag, characters: favorite.entrant_1.characters.map((character) => ({ ...character })), xHandle: "", country: "" },
-      entrant2: { tag: favorite.entrant_2.tag, characters: favorite.entrant_2.characters.map((character) => ({ ...character })), xHandle: "", country: "" },
+      entrant1: { tag: favorite.entrant_1.tag, characters: favorite.entrant_1.characters.map((character) => ({ ...character })), xHandle: "", country: "", nameFontSizeAdjustment: entrant.entrant1.nameFontSizeAdjustment },
+      entrant2: { tag: favorite.entrant_2.tag, characters: favorite.entrant_2.characters.map((character) => ({ ...character })), xHandle: "", country: "", nameFontSizeAdjustment: entrant.entrant2.nameFontSizeAdjustment },
     });
   }
 
@@ -144,11 +145,15 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
       <legend>{ordinal(entrant.placement)}</legend>
       {entrant.kind === "singles" ? <>
         <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applySinglesFavorite(index, favorite)} />
+        <FontSizeSlider label="Player name size adjustment" value={entrant.nameFontSizeAdjustment ?? 0} onChange={(nameFontSizeAdjustment) => update(index, { ...entrant, nameFontSizeAdjustment })} />
         {includeSeeding && <label>Seed<input type="number" min="1" value={entrant.seed} onChange={(event) => update(index, { ...entrant, seed: event.target.value })} required /></label>}
         <EntrantCharacterEditor tag={entrant.tag} tagPlaceholder={`Player ${index + 1}`} characters={entrant.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, tag })} onChange={(characters) => update(index, { ...entrant, characters })} />
         <button className="button button--outline entrant-favorite-button" type="button" onClick={() => openFavoriteDialog(index, entrant)}>{findSinglesFavorite(entrant.tag) ? "Update Favorited Entrant" : "Save As Favorited Entrant"}</button>
       </> : <>
         <DoublesFavoritePicker favorites={favorites.doubles} onChoose={(favorite) => applyTeamFavorite(index, favorite)} />
+        <FontSizeSlider label="Team name size adjustment" value={entrant.teamNameFontSizeAdjustment ?? 0} onChange={(teamNameFontSizeAdjustment) => update(index, { ...entrant, teamNameFontSizeAdjustment })} />
+        <FontSizeSlider label="Player 1 name size adjustment" value={entrant.entrant1.nameFontSizeAdjustment ?? 0} onChange={(nameFontSizeAdjustment) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, nameFontSizeAdjustment } })} />
+        <FontSizeSlider label="Player 2 name size adjustment" value={entrant.entrant2.nameFontSizeAdjustment ?? 0} onChange={(nameFontSizeAdjustment) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, nameFontSizeAdjustment } })} />
         <div className="entrant-team-fields"><label>Team name<input value={entrant.teamName} onChange={(event) => update(index, { ...entrant, teamName: event.target.value })} placeholder={`Team ${index + 1}`} required /></label>{includeSeeding && <label>Seed<input type="number" min="1" value={entrant.seed} onChange={(event) => update(index, { ...entrant, seed: event.target.value })} required /></label>}<label>Team color<select value={entrant.teamColor} onChange={(event) => update(index, { ...entrant, teamColor: event.target.value })}><option value="random">Random</option><option value="red">Red</option><option value="green">Green</option><option value="blue">Blue</option></select></label></div>
         <div className="entrant-team-members"><fieldset className="entrant-card entrant-member-card"><legend>Entrant 1</legend><SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyMemberFavorite(index, "entrant1", favorite)} /><EntrantCharacterEditor tag={entrant.entrant1.tag} tagLabel="Entrant 1 tag" tagPlaceholder={`Player 1 · Team ${index + 1}`} characters={entrant.entrant1.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, tag } })} onChange={(characters) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, characters } })} /></fieldset><fieldset className="entrant-card entrant-member-card"><legend>Entrant 2</legend><SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyMemberFavorite(index, "entrant2", favorite)} /><EntrantCharacterEditor tag={entrant.entrant2.tag} tagLabel="Entrant 2 tag" tagPlaceholder={`Player 2 · Team ${index + 1}`} characters={entrant.entrant2.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, tag } })} onChange={(characters) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, characters } })} /></fieldset></div>
         <button className="button button--outline entrant-favorite-button" type="button" onClick={() => openFavoriteDialog(index, entrant)}>{favorites.doubles.some((favorite) => favorite.team_name.trim().toLocaleLowerCase() === entrant.teamName.trim().toLocaleLowerCase()) ? "Update Favorited Team" : "Save As Favorited Team"}</button>

@@ -111,8 +111,8 @@ class RadialContentRenderer:
             box = boxes[position]
             if content == "metadata":
                 y = box.top
-                for row in metadata_renderer._metadata_items(request):
-                    y += metadata_renderer._draw_joined_metadata_row(text_layer, request, [(text, 26) for text, _size in row], x=(box.left + box.right) // 2, y=y, anchor="ma", max_width=box.width) + 5
+                for row in metadata_renderer._metadata_items(request, preferred_size=26):
+                    y += metadata_renderer._draw_joined_metadata_row(text_layer, request, row, x=(box.left + box.right) // 2, y=y, anchor="ma", max_width=box.width) + 5
             else:
                 _draw_horizontal_header_item(text_layer, request, content, box, self.font, None, "ma", title_preferred_size=48)
         _composite_outlined_text(canvas, text_layer)

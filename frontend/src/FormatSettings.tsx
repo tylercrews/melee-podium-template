@@ -1,4 +1,4 @@
-import { DEFAULT_RADIAL_HEADER_LAYOUT, CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle } from "./format";
+import { DEFAULT_RADIAL_HEADER_LAYOUT, CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle, metadataRowSizeAdjustments } from "./format";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
 import EntrantCountSettings from "./EntrantCountSettings";
@@ -6,6 +6,7 @@ import { selectRadialLayout } from "./radialFormat";
 import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
 import RgbaColorPicker from "./RgbaColorPicker";
 import MetadataRowEditor from "./MetadataRowEditor";
+import FontSizeSlider from "./FontSizeSlider";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -106,12 +107,16 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div>
       <RgbaColorPicker label="Heading Text Color" value={value.text_settings.heading_color} onChange={(heading_color) => onChange({ ...value, text_settings: { ...value.text_settings, heading_color } })} metallic={value.text_settings.heading_metallic} onMetallicChange={(heading_metallic) => onChange({ ...value, text_settings: { ...value.text_settings, heading_metallic } })} />
       <div className="text-settings">
+        <p className="metadata-selector__help">Size sliders add or subtract pixels from the layout's default sizes. Use Refresh Format Preview to see the changes.</p>
         {value.text_settings.font_asset_id.startsWith("user:") && <label className="font-size-slider"><span><strong>Custom font size adjustment</strong><output>{value.text_settings.font_size_adjustment > 0 ? "+" : ""}{value.text_settings.font_size_adjustment}px</output></span><input type="range" min="-20" max="20" step="1" value={value.text_settings.font_size_adjustment} onChange={(event) => onChange({ ...value, text_settings: { ...value.text_settings, font_size_adjustment: Number(event.target.value) } })} /><span className="font-size-slider__marks" aria-hidden="true"><span>−20px</span><span>0</span><span>+20px</span></span></label>}
         <fieldset className="text-preferences"><legend>Preferences</legend><div>
           <label className="text-setting-check"><input type="checkbox" checked={value.text_settings.include_seeding} onChange={(event) => onChange({ ...value, text_settings: { ...value.text_settings, include_seeding: event.target.checked } })} /><span><strong>Include seeding</strong><small>Show each entrant or team's original bracket seed.</small></span></label>
           <label className="text-setting-check"><input type="checkbox" checked={value.text_settings.replace_base_urls_with_icons} onChange={(event) => onChange({ ...value, text_settings: { ...value.text_settings, replace_base_urls_with_icons: event.target.checked } })} /><span><strong>Replace Base URLs With Icons</strong><small>Use service icons for start.gg, YouTube, X, Bluesky, parry.gg, Challonge, and Twitch links.</small></span></label>
         </div></fieldset>
-        <MetadataRowEditor rows={value.text_settings.metadata_rows} onChange={(metadata_rows) => onChange({ ...value, text_settings: { ...value.text_settings, metadata_rows } })} />
+        <FontSizeSlider label="Tournament title size adjustment" value={value.text_settings.title_font_size_adjustment} onChange={(title_font_size_adjustment) => onChange({ ...value, text_settings: { ...value.text_settings, title_font_size_adjustment } })} />
+        <FontSizeSlider label="Subtitle size adjustment" value={value.text_settings.subtitle_font_size_adjustment} onChange={(subtitle_font_size_adjustment) => onChange({ ...value, text_settings: { ...value.text_settings, subtitle_font_size_adjustment } })} />
+        {value.text_settings.include_seeding && <FontSizeSlider label="Seed size adjustment" value={value.text_settings.seed_font_size_adjustment} onChange={(seed_font_size_adjustment) => onChange({ ...value, text_settings: { ...value.text_settings, seed_font_size_adjustment } })} />}
+        <MetadataRowEditor rows={value.text_settings.metadata_rows} onChange={(metadata_rows) => onChange({ ...value, text_settings: { ...value.text_settings, metadata_rows, metadata_row_font_size_adjustments: metadataRowSizeAdjustments(value.text_settings.metadata_rows, value.text_settings.metadata_row_font_size_adjustments, metadata_rows) } })} fontSizeAdjustments={value.text_settings.metadata_row_font_size_adjustments} onFontSizeChange={(index, adjustment) => onChange({ ...value, text_settings: { ...value.text_settings, metadata_row_font_size_adjustments: value.text_settings.metadata_row_font_size_adjustments.map((current, row) => row === index ? adjustment : current) } })} />
       </div>
     </section>
     <ImageBackgroundSettings value={value} backgroundImage={backgroundImage} onChange={onChange} />

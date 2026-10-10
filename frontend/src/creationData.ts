@@ -18,6 +18,7 @@ export interface TournamentDetails {
 }
 
 export interface EntrantMemberDraft {
+  nameFontSizeAdjustment?: number;
   tag: string;
   characters: FavoriteCharacter[];
   xHandle: string;
@@ -32,6 +33,7 @@ export interface SinglesEntrantDraft extends EntrantMemberDraft {
 }
 
 export interface DoublesEntrantDraft {
+  teamNameFontSizeAdjustment?: number;
   kind: "doubles";
   placement: number;
   seed: string;

@@ -40,8 +40,53 @@ function fixture(eventFormat) {
   value.text_settings.heading_color = "#FFEEDDCC";
   value.text_settings.heading_metallic = true;
   value.text_settings.metadata_rows = [["event", "date"], ["entrants_count"], ["tournament_link", "stream_link"]];
+  value.text_settings.metadata_row_font_size_adjustments = [0, 0, 0];
   return value;
 }
+
+test("independent format font sizes survive JSON and saved format loading", () => {
+  const value = fixture("singles");
+  Object.assign(value.text_settings, { title_font_size_adjustment: 20, subtitle_font_size_adjustment: -20, seed_font_size_adjustment: 7, metadata_row_font_size_adjustments: [-4, 3, 12] });
+  assert.deepEqual(formats.parseFormatCode(formats.formatCode(value)), value);
+  assert.deepEqual(formats.normalizeFormat(JSON.parse(JSON.stringify(value))), value);
+  const html = renderToStaticMarkup(createElement(FormatSettings, { value, backgroundImage: null, onChange() {} }));
+  for (const label of ["Tournament title", "Subtitle", "Seed", "Metadata row 1", "Metadata row 2", "Metadata row 3"]) {
+    assert.ok(html.includes(`aria-label="${label} size adjustment"`));
+  }
+});
+
+test("older formats default independent font sizes to zero", () => {
+  const value = fixture("doubles");
+  for (const key of ["title_font_size_adjustment", "subtitle_font_size_adjustment", "seed_font_size_adjustment", "metadata_row_font_size_adjustments"]) delete value.text_settings[key];
+  const loaded = formats.normalizeFormat(value);
+  assert.equal(loaded.text_settings.title_font_size_adjustment, 0);
+  assert.equal(loaded.text_settings.subtitle_font_size_adjustment, 0);
+  assert.equal(loaded.text_settings.seed_font_size_adjustment, 0);
+  assert.deepEqual(loaded.text_settings.metadata_row_font_size_adjustments, [0, 0, 0]);
+  delete value.text_settings.metadata_rows;
+  value.text_settings.metadata_fields = ["event", "date"];
+  assert.deepEqual(formats.normalizeFormat(value).text_settings.metadata_row_font_size_adjustments, [0, 0]);
+});
+
+test("invalid independent font sizes are rejected during import", () => {
+  for (const key of ["title_font_size_adjustment", "subtitle_font_size_adjustment", "seed_font_size_adjustment"]) {
+    for (const size of [-21, 21, 0.5, true, "4"]) {
+      const value = fixture("singles");
+      value.text_settings[key] = size;
+      assert.throws(() => formats.normalizeFormat(value), /Font size adjustments/);
+    }
+  }
+  const value = fixture("singles");
+  value.text_settings.metadata_row_font_size_adjustments = [0];
+  assert.throws(() => formats.normalizeFormat(value), /Metadata font sizes/);
+});
+
+test("metadata sizes follow reordered rows, keep destination sizes when merged, and reset new rows", () => {
+  const rows = [["event", "date"], ["entrants_count"], ["stream_link"]];
+  const sizes = [6, -8, 12];
+  assert.deepEqual(formats.metadataRowSizeAdjustments(rows, sizes, [rows[2], rows[0], rows[1]]), [12, 6, -8]);
+  assert.deepEqual(formats.metadataRowSizeAdjustments(rows, sizes, [["entrants_count", "event"], ["date"], ["stream_link"], ["vod_link"]]), [-8, 6, 12, 0]);
+});
 
 test("Radial has one mode thumbnail and the normal Singles/Doubles controls", () => {
   assert.deepEqual(radial.RADIAL_LAYOUT_CHOICES.map(({ eventFormat, entrantCount }) => [eventFormat, entrantCount]), [["singles", 8], ["doubles", 4]]);

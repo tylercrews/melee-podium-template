@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 
 from PIL import Image, ImageDraw
 
+from font_size_adjustments import adjusted_size, result_text_adjustment
 from constants import PODIUM_BOX_COLORS_BY_SLOT
 from creation import CreationRequest
 from creation_modes import CreationMode, PodiumStyle
@@ -179,6 +180,7 @@ class LegacyPodiumContentRenderer:
                 center_subtitle,
                 request.text_settings.heading_color,
                 request.text_settings.heading_metallic,
+                size_adjustment=request.text_settings.subtitle_font_size_adjustment,
             )
         if is_doubles:
             self._draw_doubles(result, request, preferences, mode)
@@ -209,7 +211,7 @@ class LegacyPodiumContentRenderer:
             request.tournament.subtitle,
             anchor=anchor,
             max_width=max_width,
-            preferred_size=48,
+            preferred_size=adjusted_size(48, request.text_settings.subtitle_font_size_adjustment),
             font=self.font,
             align=align,
             fill=request.text_settings.heading_color,
@@ -257,12 +259,8 @@ class LegacyPodiumContentRenderer:
                 entrant.tag,
                 text_color,
                 tag_max_width,
-                FOUR_PODIUM_TAG_PREFERRED_SIZE
-                if four_podium_top_8
-                else TAG_PREFERRED_SIZE,
-                FOUR_PODIUM_SPONSOR_PREFERRED_SIZE
-                if four_podium_top_8
-                else SPONSOR_PREFERRED_SIZE,
+                adjusted_size(FOUR_PODIUM_TAG_PREFERRED_SIZE if four_podium_top_8 else TAG_PREFERRED_SIZE, entrant.name_font_size_adjustment),
+                adjusted_size(FOUR_PODIUM_SPONSOR_PREFERRED_SIZE if four_podium_top_8 else SPONSOR_PREFERRED_SIZE, entrant.name_font_size_adjustment),
                 text_metallic,
             )
             _draw_character_tag(draw, tag, self.font)
@@ -317,6 +315,8 @@ class LegacyPodiumContentRenderer:
                         member.tag,
                         text_color,
                         DOUBLES_TAG_WIDTHS[mode.layout_count],
+                        preferred_size=adjusted_size(TAG_PREFERRED_SIZE, member.name_font_size_adjustment),
+                        sponsor_preferred_size=adjusted_size(SPONSOR_PREFERRED_SIZE, member.name_font_size_adjustment),
                         metallic=text_metallic,
                     )
                 )
@@ -355,6 +355,8 @@ class LegacyPodiumContentRenderer:
                     fill=placement.color or text_color,
                     font=self.font,
                     include_seed=request.text_settings.include_seeding,
+                    seed_size_adjustment=request.text_settings.seed_font_size_adjustment,
+                    name_size_adjustment=entrant.name_font_size_adjustment,
                     metallic=False if placement.color else text_metallic,
                 )
                 continue
@@ -373,7 +375,7 @@ class LegacyPodiumContentRenderer:
                 text,
                 anchor=placement.pillow_anchor,
                 max_width=placement.max_width,
-                preferred_size=placement.preferred_size or 24,
+                preferred_size=adjusted_size(placement.preferred_size or 24, result_text_adjustment(request.text_settings, entrant, placement.field, placement.member_slot)),
                 font=self.font,
                 wrap=placement.wrap,
                 fill=color,
@@ -449,7 +451,7 @@ class LegacyPodiumContentRenderer:
             request.tournament.title,
             anchor=title_anchor,
             max_width=title_width,
-            preferred_size=72,
+            preferred_size=adjusted_size(72, request.text_settings.title_font_size_adjustment),
             align=title_align,
             fill=request.text_settings.heading_color,
             metallic=request.text_settings.heading_metallic,
@@ -615,7 +617,7 @@ class LegacyPodiumContentRenderer:
         return max(27, row_height + 7)
 
     @staticmethod
-    def _metadata_items(request: CreationRequest) -> list[list[tuple[str, int]]]:
+    def _metadata_items(request: CreationRequest, preferred_size: int | None = None) -> list[list[tuple[str, int]]]:
         tournament = request.tournament
         selected = request.text_settings.metadata_rows
         assert selected is not None
@@ -634,11 +636,11 @@ class LegacyPodiumContentRenderer:
         }
         return [
             [
-                (str(values[field][0]), values[field][1])
+                (str(values[field][0]), adjusted_size(values[field][1] if preferred_size is None else preferred_size, request.text_settings.metadata_row_font_size_adjustments[index]))
                 for field in row
                 if values[field][0] is not None
             ]
-            for row in selected
+            for index, row in enumerate(selected)
             if any(values[field][0] is not None for field in row)
         ]
 
@@ -675,7 +677,7 @@ class LegacyPodiumContentRenderer:
             if title_right_aligned
             else ("ma" if mode.layout_count != 3 else "la"),
             max_width=title_max_width,
-            preferred_size=92,
+            preferred_size=adjusted_size(92, request.text_settings.title_font_size_adjustment),
             fill=request.text_settings.heading_color,
             metallic=request.text_settings.heading_metallic,
         )

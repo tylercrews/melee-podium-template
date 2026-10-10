@@ -152,6 +152,7 @@ def _entrant(data: Any) -> Entrant:
         raise ValueError("entrant.characters must contain at least one character")
     return Entrant(
         tag=_required_text(source, "tag"),
+        name_font_size_adjustment=source.get("name_font_size_adjustment", 0),
         characters=[_character(item) for item in characters],
     )
 
@@ -210,6 +211,7 @@ def _render_request(payload: Mapping[str, Any]) -> tuple[PodiumMode, list[Single
             source = _json_object(item, "doubles team")
             entrants.append(DoublesTeam(
                 team_name=_required_text(source, "team_name"),
+                team_name_font_size_adjustment=source.get("team_name_font_size_adjustment", 0),
                 seed=_optional_positive_int(source, "seed"),
                 placement=_optional_positive_int(source, "placement") or 0,
                 team_color=_optional_text(source, "team_color"),
@@ -224,6 +226,7 @@ def _render_request(payload: Mapping[str, Any]) -> tuple[PodiumMode, list[Single
         members = _entrant(source)
         entrants.append(SinglesEntrant(
             tag=members.tag,
+            name_font_size_adjustment=members.name_font_size_adjustment,
             characters=members.characters,
             seed=_optional_positive_int(source, "seed"),
             placement=_optional_positive_int(source, "placement") or 0,
@@ -548,6 +551,7 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
             source = _json_object(item, "preview doubles team")
             teams.append(DoublesTeam(
                 team_name=_required_text(source, "team_name"),
+                team_name_font_size_adjustment=source.get("team_name_font_size_adjustment", 0),
                 seed=_optional_positive_int(source, "seed"),
                 placement=_optional_positive_int(source, "placement") or 0,
                 team_color=_optional_text(source, "team_color"),
@@ -561,6 +565,7 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
         entrant = _entrant(source)
         entrants.append(SinglesEntrant(
             tag=entrant.tag,
+            name_font_size_adjustment=entrant.name_font_size_adjustment,
             characters=entrant.characters,
             seed=_optional_positive_int(source, "seed"),
             placement=_optional_positive_int(source, "placement") or 0,
@@ -650,6 +655,10 @@ def customized_format_preview() -> Any:
         entrant_text_colors=entrant_text_colors,
         entrant_text_metallic=entrant_text_metallic,
         font_size_adjustment=0 if font_asset_id.startswith("provided:") else raw_text_settings.get("font_size_adjustment", 0),
+        title_font_size_adjustment=raw_text_settings.get("title_font_size_adjustment", 0),
+        subtitle_font_size_adjustment=raw_text_settings.get("subtitle_font_size_adjustment", 0),
+        seed_font_size_adjustment=raw_text_settings.get("seed_font_size_adjustment", 0),
+        metadata_row_font_size_adjustments=tuple(raw_text_settings.get("metadata_row_font_size_adjustments", ())),
         include_seeding=raw_text_settings.get("include_seeding", True),
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
         metadata_rows=tuple(tuple(row) for row in raw_metadata_rows),

@@ -886,6 +886,8 @@ def _draw_lower_entrant_summary(
     font: PodiumFont,
     include_seed: bool = True,
     metallic: bool = False,
+    seed_size_adjustment: int = 0,
+    name_size_adjustment: int = 0,
 ) -> None:
     """Draw one lower-place result as a centered two- or three-line block."""
     max_width = LOWER_SUMMARY_MAX_WIDTH
@@ -903,7 +905,7 @@ def _draw_lower_entrant_summary(
     seed_font = _font_to_fit(
         seed_text or "[]",
         max_width,
-        LOWER_SUMMARY_SEED_SIZE,
+        max(11, LOWER_SUMMARY_SEED_SIZE + seed_size_adjustment),
         font,
     )
     placement_width = round(draw.textlength(placement_text, font=placement_font))
@@ -951,7 +953,7 @@ def _draw_lower_entrant_summary(
             seed_text,
             anchor="lb",
             max_width=max_width,
-            preferred_size=LOWER_SUMMARY_SEED_SIZE,
+            preferred_size=max(11, LOWER_SUMMARY_SEED_SIZE + seed_size_adjustment),
             font=font,
             fill=fill,
             metallic=metallic,
@@ -965,7 +967,7 @@ def _draw_lower_entrant_summary(
             text,
             anchor="mm",
             max_width=max_width,
-            preferred_size=preferred_size,
+            preferred_size=max(11, preferred_size + name_size_adjustment),
             font=font,
             fill=fill,
             glow_fill=fill,
@@ -1000,6 +1002,7 @@ def _draw_tournament_subtitle(
     centered: bool,
     fill: tuple[int, int, int] | str = "white",
     metallic: bool = False,
+    size_adjustment: int = 0,
 ) -> None:
     """Draw the subtitle below portraits and player tags in the layer stack."""
     if tournament.subtitle is None:
@@ -1017,7 +1020,7 @@ def _draw_tournament_subtitle(
         if right_aligned
         else ("ma" if placement_count != 3 else "la"),
         max_width=width // 2,
-        preferred_size=48,
+        preferred_size=max(11, 48 + size_adjustment),
         font=font,
         fill=fill,
         metallic=metallic,

@@ -15,6 +15,7 @@ from background_builder import (
 )
 from color_values import normalize_rgba_hex
 from content_renderer import ContentRenderer
+from font_size_adjustments import validate_font_size_adjustment
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer, FormattingRenderer
 from geometric_formatting_colors import GeometricFormattingColors
@@ -40,6 +41,10 @@ class TextSettings:
     entrant_text_colors: tuple[str, ...] = ()
     entrant_text_metallic: tuple[bool, ...] = ()
     font_size_adjustment: int = 0
+    title_font_size_adjustment: int = 0
+    subtitle_font_size_adjustment: int = 0
+    seed_font_size_adjustment: int = 0
+    metadata_row_font_size_adjustments: tuple[int, ...] = ()
     include_seeding: bool = True
     replace_base_urls_with_icons: bool = True
     metadata_fields: tuple[str, ...] = ("tournament_link", "event", "date", "entrants_count")
@@ -64,6 +69,8 @@ class TextSettings:
         object.__setattr__(self, "entrant_text_metallic", metallic)
         if isinstance(self.font_size_adjustment, bool) or not isinstance(self.font_size_adjustment, int) or not -20 <= self.font_size_adjustment <= 20:
             raise ValueError("font_size_adjustment must be an integer between -20 and 20")
+        for name in ('title_font_size_adjustment', 'subtitle_font_size_adjustment', 'seed_font_size_adjustment'):
+            validate_font_size_adjustment(getattr(self, name), name)
         if not isinstance(self.replace_base_urls_with_icons, bool):
             raise TypeError("replace_base_urls_with_icons must be a boolean")
         if not isinstance(self.include_seeding, bool):
@@ -82,6 +89,12 @@ class TextSettings:
             raise ValueError("metadata_rows contains an unknown or duplicate field")
         object.__setattr__(self, "metadata_fields", fields)
         object.__setattr__(self, "metadata_rows", rows)
+        adjustments = tuple(self.metadata_row_font_size_adjustments) or (0,) * len(rows)
+        if len(adjustments) != len(rows):
+            raise ValueError("metadata row font sizes must match the metadata rows")
+        for value in adjustments:
+            validate_font_size_adjustment(value, "metadata row font size adjustment")
+        object.__setattr__(self, "metadata_row_font_size_adjustments", adjustments)
 
 
 class PreferencesNotReadyError(RuntimeError):

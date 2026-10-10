@@ -41,6 +41,10 @@ export interface TextSettings {
   heading_metallic: boolean;
   font_asset_id: string;
   font_size_adjustment: number;
+  title_font_size_adjustment: number;
+  subtitle_font_size_adjustment: number;
+  seed_font_size_adjustment: number;
+  metadata_row_font_size_adjustments: number[];
   include_seeding: boolean;
   replace_base_urls_with_icons: boolean;
   metadata_rows: MetadataField[][];
@@ -137,6 +141,10 @@ export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   heading_metallic: false,
   font_asset_id: "provided:tyrowo",
   font_size_adjustment: 0,
+  title_font_size_adjustment: 0,
+  subtitle_font_size_adjustment: 0,
+  seed_font_size_adjustment: 0,
+  metadata_row_font_size_adjustments: [0, 0, 0, 0],
   include_seeding: true,
   replace_base_urls_with_icons: true,
   metadata_rows: [["tournament_link"], ["event"], ["date"], ["entrants_count"]],
@@ -442,12 +450,23 @@ function normalizeTextSettings(value: unknown): TextSettings {
     throw new Error("Format code has invalid or duplicate metadata fields.");
   }
   const fontAssetId = value.font_asset_id.trim();
+  const adjustment = (raw: unknown): number => {
+    const next = raw === undefined ? 0 : raw;
+    if (!Number.isInteger(next) || Number(next) < -20 || Number(next) > 20) throw new Error("Font size adjustments must be integers between -20 and 20.");
+    return Number(next);
+  };
+  const rawSizes = value.metadata_row_font_size_adjustments === undefined ? rows.map(() => 0) : value.metadata_row_font_size_adjustments;
+  if (!Array.isArray(rawSizes) || rawSizes.length !== rows.length) throw new Error("Metadata font sizes must match the metadata rows.");
   return {
     heading_color: typeof value.heading_color === "string" ? value.heading_color.toUpperCase() : DEFAULT_TEXT_SETTINGS.heading_color,
     heading_metallic: value.heading_metallic === true,
     font_asset_id: fontAssetId,
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
     include_seeding: value.include_seeding !== false,
+    title_font_size_adjustment: adjustment(value.title_font_size_adjustment),
+    subtitle_font_size_adjustment: adjustment(value.subtitle_font_size_adjustment),
+    seed_font_size_adjustment: adjustment(value.seed_font_size_adjustment),
+    metadata_row_font_size_adjustments: rawSizes.map(adjustment),
     replace_base_urls_with_icons: value.replace_base_urls_with_icons !== false,
     metadata_rows: rows.map((row) => row as MetadataField[]),
   };
@@ -512,6 +531,13 @@ export function parseFormatCode(code: string): FormatConfiguration {
     throw new Error("That code is not valid JSON.");
   }
   return normalizeFormat(value);
+}
+
+export function metadataRowSizeAdjustments(previousRows: MetadataField[][], previousSizes: number[], nextRows: MetadataField[][]): number[] {
+  return nextRows.map((row) => {
+    const previous = previousRows.findIndex((candidate) => candidate.includes(row[0]));
+    return previousSizes[previous] ?? 0;
+  });
 }
 
 export function isFormatComplete(format: FormatConfiguration): boolean {

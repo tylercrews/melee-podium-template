@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 
 from background_builder import PixelRect
 from creation import CreationRequest
+from font_size_adjustments import adjusted_size, result_text_adjustment
 from creation_modes import CreationMode
 from DrawPodium import (
     ATTRIBUTION_TEXT,
@@ -246,7 +247,7 @@ def _draw_result_text(
             value,
             anchor=placement.pillow_anchor,
             max_width=placement.max_width,
-            preferred_size=placement.preferred_size or 42,
+            preferred_size=adjusted_size(placement.preferred_size or 42, result_text_adjustment(request.text_settings, result, placement.field, placement.member_slot)),
             wrap=placement.wrap,
             font=font,
             fill=fill,
@@ -322,31 +323,41 @@ def _draw_horizontal_header_item(
     if content == "tournament_logo":
         _draw_logo_in_box(canvas, logo, box)
         return
-    lines = (
-        [request.tournament.title]
-        + ([request.tournament.subtitle] if request.tournament.subtitle else [])
-        if content == "tournament_title"
-        else _metadata_lines(request)
-    )
+    _draw_header_lines(canvas, request, content, box, font, anchor, title_preferred_size)
+
+
+def _header_text_lines(request: CreationRequest, content: str, title_size: int, metadata_size: int) -> list[tuple[str, int]]:
+    settings = request.text_settings
+    if content == "tournament_title":
+        lines = [(request.tournament.title, adjusted_size(title_size, settings.title_font_size_adjustment))]
+        if request.tournament.subtitle:
+            lines.append((request.tournament.subtitle, adjusted_size(title_size, settings.subtitle_font_size_adjustment)))
+        return lines
+    # Resolve one row at a time so blank metadata does not shift later offsets.
+    from legacy_podium_content_renderer import LegacyPodiumContentRenderer
+    return [(" • ".join(text for text, _size in row), row[0][1])
+            for row in LegacyPodiumContentRenderer._metadata_items(request, preferred_size=metadata_size)]
+
+
+def _draw_header_lines(canvas: Image.Image, request: CreationRequest, content: str, box: PixelRect,
+                       font: PodiumFont, anchor: str, title_size: int = 58, metadata_size: int = 26,
+                       center_vertical: bool = False) -> None:
+    lines = _header_text_lines(request, content, title_size, metadata_size)
     if not lines:
         return
-    text = "\n".join(lines)
-    draw_anchor = {"ls": "la", "rs": "ra"}.get(anchor, anchor)
-    x = box.left if draw_anchor == "la" else box.right if draw_anchor == "ra" else (box.left + box.right) // 2
-    y = box.top
-    _draw_text(
-        ImageDraw.Draw(canvas),
-        (x, y),
-        text,
-        anchor=draw_anchor,
-        max_width=box.width,
-        preferred_size=title_preferred_size if content == "tournament_title" else 26,
-        wrap=False,
-        font=font,
-        fill=request.text_settings.heading_color,
-        metallic=request.text_settings.heading_metallic,
-        align="left" if draw_anchor.startswith("l") else "right" if draw_anchor.startswith("r") else "center",
-    )
+    draw = ImageDraw.Draw(canvas)
+    anchor = {"ls": "la", "rs": "ra"}.get(anchor, anchor)
+    x = box.left if anchor == "la" else box.right if anchor == "ra" else (box.left + box.right) // 2
+    align = "left" if anchor.startswith("l") else "right" if anchor.startswith("r") else "center"
+    loaded = [_font_to_fit(text, box.width, size, font) for text, size in lines]
+    # Ascender-based spacing keeps independently sized rows clear of one another.
+    heights = [face.getbbox(text)[3] for (text, _size), face in zip(lines, loaded)]
+    y = box.top + (max(0, (box.height - sum(heights) - 5 * (len(lines) - 1)) // 2) if center_vertical else 0)
+    for (text, size), height in zip(lines, heights):
+        _draw_text(draw, (x, y), text, anchor=anchor, max_width=box.width,
+                   preferred_size=size, font=font, fill=request.text_settings.heading_color,
+                   metallic=request.text_settings.heading_metallic, align=align)
+        y += height + 5
 
 
 def _render_rotated_header_item(
@@ -363,37 +374,7 @@ def _render_rotated_header_item(
     if content == "tournament_logo":
         _draw_logo_in_box(horizontal, logo, inner)
     else:
-        lines = (
-            [request.tournament.title]
-            + ([request.tournament.subtitle] if request.tournament.subtitle else [])
-            if content == "tournament_title"
-            else _metadata_lines(request)
-        )
-        if lines:
-            text = "\n".join(lines)
-            draw = ImageDraw.Draw(horizontal)
-            preferred = 58 if content == "tournament_title" else 27
-            loaded = _font_to_fit(text, inner.width, preferred, font)
-            bounds = draw.multiline_textbbox(
-                (0, 0),
-                text,
-                font=loaded,
-                spacing=5,
-                align="center",
-            )
-            x = horizontal.width // 2
-            y = (horizontal.height - (bounds[3] - bounds[1])) // 2 - bounds[1]
-            draw.multiline_text(
-                (x, y),
-                text,
-                font=loaded,
-                anchor="ma",
-                align="center",
-                spacing=5,
-                fill=request.text_settings.heading_color,
-                stroke_width=2,
-                stroke_fill="#000000A0",
-            )
+        _draw_header_lines(horizontal, request, content, inner, font, "ma", metadata_size=27, center_vertical=True)
     return horizontal.transpose(Image.Transpose.ROTATE_270)
 
 
