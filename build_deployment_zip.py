@@ -23,6 +23,7 @@ FILES = (
     "eyes_portrait_renderer.py",
     "format_preview.py",
     "formatting_assets.py",
+    "font_size_adjustments.py",
     "geometric_content_renderer.py",
     "geometric_creation.py",
     "geometric_formatting_colors.py",

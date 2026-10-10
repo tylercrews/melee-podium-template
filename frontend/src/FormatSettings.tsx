@@ -77,7 +77,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   return <div className="format-settings">
     <section className="format-settings-card" aria-labelledby="image-format-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Format settings</span><h2 id="image-format-heading">Image format</h2><p>Choose the kind of results image, its visual style, and the bracket type.</p></div>
-      <fieldset className="format-choice-group"><legend>Image type</legend><div className="format-choice-grid format-choice-grid--three">
+      <fieldset className="format-choice-group"><legend>Image type</legend><div className="format-choice-grid">
         {([
           { value: "podium" as const, label: "Podiums", detail: "Entrants arranged across placement podiums", disabled: false, thumbnail: "podium.webp" },
           { value: "eyes" as const, label: "Eyes", detail: "Close-up portrait strips with placement numbers", disabled: false, thumbnail: "eyes.webp" },
