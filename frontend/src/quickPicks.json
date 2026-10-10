@@ -1,0 +1,6 @@
+[
+  { "id": "podium-singles-top-8", "name": "Podium Top 8 singles", "mode": "podium", "event_format": "singles", "entrant_count": 8 },
+  { "id": "podium-doubles-top-4", "name": "Podium Top 4 doubles", "mode": "podium", "event_format": "doubles", "entrant_count": 4 },
+  { "id": "squares-singles-top-8", "name": "Just Give Me Top8er", "mode": "squares", "event_format": "singles", "entrant_count": 8 },
+  { "id": "squares-doubles-top-4", "name": "Squares Top 4 doubles", "mode": "squares", "event_format": "doubles", "entrant_count": 4 }
+]

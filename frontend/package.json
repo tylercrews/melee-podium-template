@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --test test/radial-format.test.mjs"
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "firebase": "^12.3.0",

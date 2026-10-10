@@ -69,7 +69,6 @@ npm run build
 
 
 TODO LIST:
-* create some "quick select" options on the first loading screen that skip all of the layout-specific settings and make it easier to just use quickly.
 * get some melee fonts added in. like the timer one is super clean
 * make eye tweaks for singles and doubles
 
