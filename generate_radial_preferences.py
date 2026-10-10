@@ -5,7 +5,7 @@ from pathlib import Path
 
 from background_builder import PixelRect, PixelSize
 from creation_modes import CreationMode, ModeOptions, ModeSelection
-from mode_preferences import CharacterPlacement, FormattingAssetPlacement, ModePreferences, PixelPoint, TextPlacement
+from mode_preferences import CharacterPlacement, FormattingAssetPlacement, ModePreferences, PixelPoint, PlacementTagPlacement, TextPlacement
 from models import TournamentFormat
 
 
@@ -28,6 +28,7 @@ def radial_preferences() -> ModePreferences:
     assets = []
     characters = []
     text = []
+    placement_tags = []
     for slot, vertices in enumerate(triangles, 1):
         left = min(x for x, y in vertices)
         top = min(y for x, y in vertices)
@@ -42,8 +43,12 @@ def radial_preferences() -> ModePreferences:
         # The side labels sit near the canvas edge; fit long identities inward.
         anchor = "la" if slot in (3, 5) else "ra" if slot in (4, 6) else "ma"
         label_x = 8 if slot in (3, 5) else 1272 if slot in (4, 6) else x
+        rank = (1, 2, 3, 4, 5, 5, 7, 7)[slot - 1]
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(rank, "th")
+        placement_tags.append(PlacementTagPlacement(
+            f"number_{slot}", f"{rank:02}{suffix}.png", point(x, y + 14), PixelSize(70, 44), z_index=20,
+        ))
         text.extend((
-            TextPlacement(f"number_{slot}", "entrant.placement", point(x, y), 160, entrant_slot=slot, preferred_size=36, z_index=30),
             TextPlacement(f"tag_{slot}", "entrant.tag", point(label_x, 706 if slot in (7, 8) else y + 20), 360, entrant_slot=slot, pillow_anchor="ms" if slot in (7, 8) else anchor, preferred_size=40, z_index=30),
             TextPlacement(f"seed_{slot}", "entrant.seed", point(label_x, y - 23 if slot in (7, 8) else y + 49), 250, entrant_slot=slot, pillow_anchor=anchor, preferred_size=22, z_index=30),
         ))
@@ -56,7 +61,7 @@ def radial_preferences() -> ModePreferences:
     return ModePreferences(
         ModeSelection(CreationMode.RADIAL, ModeOptions(TournamentFormat.SINGLES, 8)),
         PixelSize(1920, 1080), ready=True,
-        formatting_assets=tuple(assets), character_slots=tuple(characters), text_slots=tuple(text),
+        formatting_assets=tuple(assets), placement_tags=tuple(placement_tags), character_slots=tuple(characters), text_slots=tuple(text),
     )
 
 

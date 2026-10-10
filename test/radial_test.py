@@ -38,7 +38,16 @@ class RadialTests(unittest.TestCase):
         for section in radial_sections(self.preferences).values():
             self.assertEqual(len(section.polygon), 3)
             self.assertIn(center, [(section.destination.left + p.x, section.destination.top + p.y) for p in section.polygon])
-        self.assertEqual([p.anchor for p in self.preferences.text_slots if p.field == "entrant.placement"], [PixelPoint(x, y) for x, y in ((262, 6), (1680, 6), (57, 174), (1857, 174), (90, 564), (1842, 564), (202, 984), (1692, 984))])
+        self.assertFalse(any(p.field == "entrant.placement" for p in self.preferences.text_slots))
+        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((262, 27), (1680, 27), (57, 195), (1857, 195), (90, 585), (1842, 585), (202, 1005), (1692, 1005))])
+        self.assertEqual([p.asset_id for p in self.preferences.placement_tags], ["01st.png", "02nd.png", "03rd.png", "04th.png", "05th.png", "05th.png", "07th.png", "07th.png"])
+
+    def test_renders_canonical_tied_placement_art_above_an_overlapping_logo(self):
+        with patch("formatting_assets.LocalPlacementTagAssets.open", autospec=True, side_effect=lambda _provider, _asset_id: Image.new("RGBA", (14, 14), "#00CCCCFF")) as assets:
+            image = RadialContentRenderer(tournament_logo=Image.new("RGBA", (200, 200), "#FF0000FF"), logo_scale=10).draw(Image.new("RGBA", (1920, 1080)), self.request, self.preferences)
+        self.assertEqual([call.args[1] for call in assets.call_args_list], ["01st.png", "02nd.png", "03rd.png", "04th.png", "05th.png", "05th.png", "07th.png", "07th.png"])
+        for placement in self.preferences.placement_tags:
+            self.assertEqual(image.getpixel((placement.anchor.x, placement.anchor.y)), (0, 204, 204, 255))
 
     def test_polygon_clipping_preserves_existing_alpha_and_rejects_bad_bounds(self):
         section = FormattingAssetPlacement("slice_1", "radial_slice", PixelRect(0, 0, 20, 20), polygon=(PixelPoint(0, 0), PixelPoint(20, 0), PixelPoint(0, 20)))

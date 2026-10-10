@@ -249,7 +249,112 @@
       "z_index": 0
     }
   ],
-  "placement_tags": [],
+  "placement_tags": [
+    {
+      "slot_id": "number_1",
+      "asset_id": "01st.png",
+      "anchor": {
+        "x": 262,
+        "y": 27
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_2",
+      "asset_id": "02nd.png",
+      "anchor": {
+        "x": 1680,
+        "y": 27
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_3",
+      "asset_id": "03rd.png",
+      "anchor": {
+        "x": 57,
+        "y": 195
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_4",
+      "asset_id": "04th.png",
+      "anchor": {
+        "x": 1857,
+        "y": 195
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_5",
+      "asset_id": "05th.png",
+      "anchor": {
+        "x": 90,
+        "y": 585
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_6",
+      "asset_id": "05th.png",
+      "anchor": {
+        "x": 1842,
+        "y": 585
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_7",
+      "asset_id": "07th.png",
+      "anchor": {
+        "x": 202,
+        "y": 1005
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    },
+    {
+      "slot_id": "number_8",
+      "asset_id": "07th.png",
+      "anchor": {
+        "x": 1692,
+        "y": 1005
+      },
+      "max_size": {
+        "width": 70,
+        "height": 44
+      },
+      "z_index": 20
+    }
+  ],
   "character_slots": [
     {
       "slot_id": "portrait_1",
@@ -342,22 +447,6 @@
   ],
   "text_slots": [
     {
-      "slot_id": "number_1",
-      "field": "entrant.placement",
-      "entrant_slot": 1,
-      "member_slot": null,
-      "anchor": {
-        "x": 262,
-        "y": 6
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
       "slot_id": "tag_1",
       "field": "entrant.tag",
       "entrant_slot": 1,
@@ -385,22 +474,6 @@
       "max_width": 250,
       "pillow_anchor": "ma",
       "preferred_size": 22,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
-      "slot_id": "number_2",
-      "field": "entrant.placement",
-      "entrant_slot": 2,
-      "member_slot": null,
-      "anchor": {
-        "x": 1680,
-        "y": 6
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
       "wrap": false,
       "z_index": 30,
       "color": null
@@ -438,22 +511,6 @@
       "color": null
     },
     {
-      "slot_id": "number_3",
-      "field": "entrant.placement",
-      "entrant_slot": 3,
-      "member_slot": null,
-      "anchor": {
-        "x": 57,
-        "y": 174
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
       "slot_id": "tag_3",
       "field": "entrant.tag",
       "entrant_slot": 3,
@@ -481,22 +538,6 @@
       "max_width": 250,
       "pillow_anchor": "la",
       "preferred_size": 22,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
-      "slot_id": "number_4",
-      "field": "entrant.placement",
-      "entrant_slot": 4,
-      "member_slot": null,
-      "anchor": {
-        "x": 1857,
-        "y": 174
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
       "wrap": false,
       "z_index": 30,
       "color": null
@@ -534,22 +575,6 @@
       "color": null
     },
     {
-      "slot_id": "number_5",
-      "field": "entrant.placement",
-      "entrant_slot": 5,
-      "member_slot": null,
-      "anchor": {
-        "x": 90,
-        "y": 564
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
       "slot_id": "tag_5",
       "field": "entrant.tag",
       "entrant_slot": 5,
@@ -577,22 +602,6 @@
       "max_width": 250,
       "pillow_anchor": "la",
       "preferred_size": 22,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
-      "slot_id": "number_6",
-      "field": "entrant.placement",
-      "entrant_slot": 6,
-      "member_slot": null,
-      "anchor": {
-        "x": 1842,
-        "y": 564
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
       "wrap": false,
       "z_index": 30,
       "color": null
@@ -630,22 +639,6 @@
       "color": null
     },
     {
-      "slot_id": "number_7",
-      "field": "entrant.placement",
-      "entrant_slot": 7,
-      "member_slot": null,
-      "anchor": {
-        "x": 202,
-        "y": 984
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
       "slot_id": "tag_7",
       "field": "entrant.tag",
       "entrant_slot": 7,
@@ -673,22 +666,6 @@
       "max_width": 250,
       "pillow_anchor": "ma",
       "preferred_size": 22,
-      "wrap": false,
-      "z_index": 30,
-      "color": null
-    },
-    {
-      "slot_id": "number_8",
-      "field": "entrant.placement",
-      "entrant_slot": 8,
-      "member_slot": null,
-      "anchor": {
-        "x": 1692,
-        "y": 984
-      },
-      "max_width": 160,
-      "pillow_anchor": "ma",
-      "preferred_size": 36,
       "wrap": false,
       "z_index": 30,
       "color": null

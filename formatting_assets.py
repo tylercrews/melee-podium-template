@@ -151,27 +151,26 @@ class FormattingAssetRenderer:
                 )
             _composite_clipped(result, layer, destination.as_tuple())
 
-        for placement in sorted(
-            preferences.placement_tags,
-            key=lambda item: (item.z_index, item.slot_id),
-        ):
-            source = self.placement_tag_assets.open(placement.asset_id)
-            try:
-                layer = source.copy()
-            finally:
-                source.close()
-            layer.thumbnail(
-                placement.max_size.as_tuple(),
-                Image.Resampling.LANCZOS,
-            )
-            left = placement.anchor.x - layer.width // 2
-            top = placement.anchor.y - layer.height // 2
-            _composite_clipped(
-                result,
-                layer,
-                (left, top, left + layer.width, top + layer.height),
-            )
+        draw_placement_tags(result, preferences, self.placement_tag_assets)
         return result
+
+
+def draw_placement_tags(
+    canvas: Image.Image,
+    preferences: ModePreferences,
+    assets: PlacementTagAssetProvider = LocalPlacementTagAssets(),
+) -> None:
+    """Composite canonical ordinal artwork at the layout's calibrated anchors."""
+    for placement in sorted(preferences.placement_tags, key=lambda item: (item.z_index, item.slot_id)):
+        source = assets.open(placement.asset_id)
+        try:
+            layer = source.copy()
+        finally:
+            source.close()
+        layer.thumbnail(placement.max_size.as_tuple(), Image.Resampling.LANCZOS)
+        left = placement.anchor.x - layer.width // 2
+        top = placement.anchor.y - layer.height // 2
+        _composite_clipped(canvas, layer, (left, top, left + layer.width, top + layer.height))
 
 
 def _draw_geometric_asset(

@@ -3,17 +3,17 @@
 from dataclasses import dataclass
 import math
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageFilter
 
 from creation import CreationRequest
 from creation_modes import CreationMode
-from DrawPodium import PodiumFont, _draw_text, _temporary_font_settings
+from DrawPodium import PodiumFont, _temporary_font_settings
+from formatting_assets import draw_placement_tags
 from eyes_portrait_renderer import render_eye_portrait
 from geometric_content_renderer import (
     LogoInput,
     _draw_horizontal_header_item,
     _draw_result_text,
-    _explicit_entrant_color,
     _open_logo,
 )
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
@@ -78,17 +78,9 @@ class RadialContentRenderer:
             self._draw_header(result, request, preferences)
             # Both result labels and central text remain above an oversized logo.
             text_layer = Image.new("RGBA", result.size, "#00000000")
-            _draw_result_text(text_layer, request, preferences, self.font, (p for p in preferences.text_slots if p.field != "entrant.placement"))
-            for placement in preferences.text_slots:
-                if placement.field != "entrant.placement" or placement.entrant_slot is None:
-                    continue
-                entrant = request.entrants[placement.entrant_slot - 1]
-                color = _explicit_entrant_color(request, placement.entrant_slot) or placement.color or "#FFFFFFFF"
-                settings = request.text_settings
-                index = 0 if settings.entrant_text_color_mode == "pick_1" else (placement.entrant_slot - 1) % 2 if settings.entrant_text_color_mode == "pick_2" else placement.entrant_slot - 1
-                metallic = settings.entrant_text_metallic[index] if settings.entrant_text_color_mode != "match_podium" else False
-                _draw_text(ImageDraw.Draw(text_layer), (placement.anchor.x, placement.anchor.y), f"#{entrant.placement}", anchor=placement.pillow_anchor, max_width=placement.max_width, preferred_size=placement.preferred_size or 36, font=self.font, fill=color, metallic=metallic)
+            _draw_result_text(text_layer, request, preferences, self.font)
             _composite_outlined_text(result, text_layer)
+            draw_placement_tags(result, preferences)
         return result
 
     def _draw_header(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> None:

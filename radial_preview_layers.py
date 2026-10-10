@@ -3,12 +3,12 @@
 from itertools import permutations
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from background_builder import BackgroundRequest
 from creation import CreationRequest, TextSettings
-from DrawPodium import PodiumFont, _draw_text
-from formatting_assets import FormattingAssetRenderer
+from DrawPodium import PodiumFont
+from formatting_assets import FormattingAssetRenderer, draw_placement_tags
 from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
 from mode_preferences import ModePreferenceRepository
 from creation_modes import CreationMode, ModeOptions, ModeSelection
@@ -37,10 +37,7 @@ def generate_radial_preview_layers(output_root: Path) -> list[Path]:
         save(layer, f"radial/singles_top_8/{color_id}.png")
 
     labels = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
-    for text in preferences.text_slots:
-        if text.field == "entrant.placement":
-            rank = (1, 2, 3, 4, 5, 5, 7, 7)[text.entrant_slot - 1]
-            _draw_text(ImageDraw.Draw(labels), (text.anchor.x, text.anchor.y), f"#{rank}", anchor=text.pillow_anchor, max_width=text.max_width, preferred_size=text.preferred_size, font=PodiumFont.UBUNTU, fill="#FFFFFFFF")
+    draw_placement_tags(labels, preferences)
     save(labels, "radial_labels.png")
 
     for position, box in radial_header_boxes(preferences).items():

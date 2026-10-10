@@ -17,7 +17,7 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          V5.5 9/28/2026 
+          V6.0 10/10/2026 
           {" "}●{" "}
           {count} created
           {" "}●{" "}
@@ -51,6 +51,7 @@ function Footer({ renderCount }: FooterProps) {
               <li>Nicolet I would like to thank in particular for sending me the repo for the startgg USB reporting, and DevDogg for connecting me with them.</li>
               <li>AeonSSB, Cjag01, radzo73, and caha1an, who created the <a href="https://github.com/AeonSSB/Melee-CSProject" target="_blank" rel="noreferrer">Melee-CSProject</a> that I got the original poses from.</li>
               <li>Elenrique3 for creating the original Top8er 2023 design. It's truly a nearly perfect design other than the lack of doubles support. And Malarki_ again for coming up with the eyes template.</li>
+              <li>Moxort for coming up with the Radial layout.</li>
               <li><a href="https://smashboards.com/threads/character-stock-icon-dump.390494/" target="_blank" rel="noreferrer">CeLL on this old Smashboards thread</a> for posting a dump of all the character stock icons.</li>
               <li><a href="https://www.spriters-resource.com/gamecube/ssbm/asset/46039/" target="_blank" rel="noreferrer">Mr. C</a> for the Sheik stock icons.</li>
               <li>Also shoutout to <a href="https://smashboards.com/" target="_blank" rel="noreferrer">SmashBoards</a> in general—what an amazing site still.</li>
