@@ -30,6 +30,12 @@ def _save_thumbnail(image: Image.Image, name: str) -> Path:
     return path
 
 
+def generate_radial_mode_thumbnails() -> tuple[Path, ...]:
+    """Generate the single Radial image-type selection thumbnail."""
+    singles = draw_radial_singles_top_8(sample_singles_entrants(8), tournament=sample_tournament(TournamentFormat.SINGLES))
+    return (_save_thumbnail(singles, "radial"),)
+
+
 def generate_format_mode_thumbnails() -> tuple[Path, ...]:
     rng = random.Random(20260928)
     top_8 = sample_singles_entrants(8, rng)
@@ -53,9 +59,8 @@ def generate_format_mode_thumbnails() -> tuple[Path, ...]:
             tournament=tournament,
             fill_color="#080B14FF",
         ),
-        "radial": draw_radial_singles_top_8(top_8, tournament=tournament),
     }
-    return tuple(_save_thumbnail(image, name) for name, image in images.items())
+    return tuple(_save_thumbnail(image, name) for name, image in images.items()) + generate_radial_mode_thumbnails()
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
-import { CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle } from "./format";
+import { DEFAULT_RADIAL_HEADER_LAYOUT, CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle } from "./format";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
 import EntrantCountSettings from "./EntrantCountSettings";
+import { selectRadialLayout } from "./radialFormat";
 import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
 import RgbaColorPicker from "./RgbaColorPicker";
 import MetadataRowEditor from "./MetadataRowEditor";
@@ -33,9 +34,9 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       selection: {
         ...selection,
         mode,
-        options: { ...selection.options, entrant_count: null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
+        options: { ...selection.options, entrant_count: mode === "radial" && selection.options.event_format ? (selection.options.event_format === "singles" ? 8 : 4) : null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
       },
-      header_layout: mode === "radial" ? { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" } : value.header_layout,
+      header_layout: mode === "radial" ? { ...DEFAULT_RADIAL_HEADER_LAYOUT } : value.header_layout,
     });
   }
 
@@ -44,6 +45,10 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   }
 
   function updateEventFormat(event_format: EventFormat) {
+    if (selection.mode === "radial") {
+      onChange(selectRadialLayout(value, event_format));
+      return;
+    }
     onChange({ ...value, selection: { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null } } });
   }
 
@@ -92,7 +97,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div></fieldset>
     </section>
 
-    <EntrantCountSettings value={value} onChange={onChange} />
+    {selection.mode !== "radial" && <EntrantCountSettings value={value} onChange={onChange} />}
 
     <section className="format-settings-card" aria-labelledby="header-layout-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Text and header</span><h2 id="header-layout-heading">Content Selections</h2><p>Assign the header positions and choose which supporting details appear in the image.</p></div>

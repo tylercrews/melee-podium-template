@@ -102,6 +102,12 @@ export const DEFAULT_HEADER_LAYOUT: HeaderLayout = {
   top_right: "metadata",
 };
 
+export const DEFAULT_RADIAL_HEADER_LAYOUT: HeaderLayout = {
+  top_left: "tournament_title",
+  top_middle: "tournament_logo",
+  top_right: "metadata",
+};
+
 export const DEFAULT_IMAGE_SETTINGS: ImageSettings = {
   background_color: "#00000000",
   logo_asset_id: null,
@@ -469,6 +475,9 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
   if (options.variant !== null && typeof options.variant !== "string") {
     throw new Error("Format code has an invalid layout variant.");
   }
+  if (mode === "radial" && (options.variant !== null || (rawEntrantCount !== null && (rawEventFormat === null || rawEntrantCount !== (rawEventFormat === "singles" ? 8 : 4))))) {
+    throw new Error("Radial formats must use Singles Top 8 or Doubles Top 4 without a layout variant.");
+  }
   const rawStyle = options.podium_style;
   if (rawStyle !== null && !podiumStyles.has(rawStyle as PodiumStyle)) {
     throw new Error("Format code has an invalid podium style.");
@@ -482,12 +491,12 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
       mode,
       options: {
         event_format: rawEventFormat as EventFormat | null,
-        entrant_count: rawEntrantCount === null ? null : Number(rawEntrantCount),
+        entrant_count: rawEntrantCount === null ? (mode === "radial" && rawEventFormat !== null ? (rawEventFormat === "singles" ? 8 : 4) : null) : Number(rawEntrantCount),
         variant: options.variant as string | null,
         podium_style: rawStyle as PodiumStyle | null,
       },
     },
-    header_layout: normalizeHeaderLayout(value.header_layout),
+    header_layout: normalizeHeaderLayout(value.header_layout ?? (mode === "radial" ? DEFAULT_RADIAL_HEADER_LAYOUT : undefined)),
     image_settings: normalizeImageSettings(value.image_settings),
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
     entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors),
