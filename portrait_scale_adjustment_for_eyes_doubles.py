@@ -53,12 +53,9 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
     dict[str, DoublesEyePortraitAdjustment],
 ] = {
     "Captain Falcon": {
-        "d": DoublesEyePortraitAdjustment(
-            3.00 * 2.5 / 8.00,
-            focal_x_offset=90,
-            focal_y_offset=25,
-        ),
+        "d": DoublesEyePortraitAdjustment(1.1),
         "e": DoublesEyePortraitAdjustment(2.4),
+        "c": DoublesEyePortraitAdjustment(2.0, focal_x_offset=75),
     },
     "Dr. Mario": {
         "a": DoublesEyePortraitAdjustment(1.7),
@@ -68,10 +65,12 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
     },
     "Fox": {
         "f": DoublesEyePortraitAdjustment(1.45 * 2.0 / 1.35, focal_y_offset=30),
+        "a": DoublesEyePortraitAdjustment(2.0, focal_x_offset=50),
+        "c": DoublesEyePortraitAdjustment(2.0, focal_x_offset=25),
     },
     "Ganondorf": {
         "a": DoublesEyePortraitAdjustment(1.60 * 2.5 / 1.55, focal_y_offset=20),
-        "b": DoublesEyePortraitAdjustment(2.2, focal_x_offset=80, focal_y_offset=30),
+        "b": DoublesEyePortraitAdjustment(2.2, focal_x_offset=40, focal_y_offset=10),
         "c": DoublesEyePortraitAdjustment(1.70 * 2.0 / 1.80),
     },
     "Ice Climbers": {
@@ -81,16 +80,13 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
             focal_y_offset=-65,
         ),
         "b": DoublesEyePortraitAdjustment(2.0, focal_x_offset=25),
-        "c": DoublesEyePortraitAdjustment(2.0, focal_y_offset=10),
+        "c": DoublesEyePortraitAdjustment(1.8, focal_y_offset=10),
+        "d": DoublesEyePortraitAdjustment(1.8),
     },
     "Luigi": {
         "b": DoublesEyePortraitAdjustment(2.0, focal_x_offset=-40),
         "c": DoublesEyePortraitAdjustment(1.20 * 2.0 / 1.15),
-        "d": DoublesEyePortraitAdjustment(
-            1.9500000000000004,
-            focal_x_offset=-40,
-            focal_y_offset=-65,
-        ),
+        "d": DoublesEyePortraitAdjustment(1.95, focal_x_offset=-5, focal_y_offset=-25),
     },
     "Mario": {
         "a": DoublesEyePortraitAdjustment(1.7),
@@ -104,7 +100,7 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
     },
     "Mr. Game and Watch": {
         "a": DoublesEyePortraitAdjustment(1.7, focal_y_offset=15),
-        "b": DoublesEyePortraitAdjustment(1.7, focal_y_offset=20),
+        "b": DoublesEyePortraitAdjustment(1.7, focal_x_offset=-20, focal_y_offset=20),
         "c": DoublesEyePortraitAdjustment(
             1.20 * 1.5 / 1.00,
             focal_x_offset=-100,
@@ -112,7 +108,7 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
         ),
     },
     "Ness": {
-        "a": DoublesEyePortraitAdjustment(1.6, focal_x_offset=40),
+        "a": DoublesEyePortraitAdjustment(1.4, focal_x_offset=20),
         "b": DoublesEyePortraitAdjustment(1.6),
     },
     "Peach": {
@@ -132,8 +128,8 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
     },
     "Samus": {
         "b": DoublesEyePortraitAdjustment(1.7607142857142857, focal_y_offset=-30),
-        "c": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-40),
-        "d": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-20),
+        "c": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-20),
+        "d": DoublesEyePortraitAdjustment(2.0),
     },
     "Sheik": {
         "c": DoublesEyePortraitAdjustment(1.50 * 1.6 / 1.45, focal_y_offset=-30),
@@ -144,14 +140,15 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
         "a": DoublesEyePortraitAdjustment(1.5, focal_y_offset=55),
         "b": DoublesEyePortraitAdjustment(1.20 * 1.4 / 1.05, focal_y_offset=20),
         "c": DoublesEyePortraitAdjustment(2.25 / 1.25, focal_x_offset=-40),
-        "d": DoublesEyePortraitAdjustment(1.80 * 1.15 / 1.20),
+        "d": DoublesEyePortraitAdjustment(1.5525),
     },
     "Young Link": {
         "a": DoublesEyePortraitAdjustment(1.6),
-        "c": DoublesEyePortraitAdjustment(1.5, focal_y_offset=35),
+        "c": DoublesEyePortraitAdjustment(1.5, focal_y_offset=15),
     },
     "Zelda": {
         "a": DoublesEyePortraitAdjustment(2.0, focal_x_offset=45),
+        "b": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-20),
     },
     "Roy": {
         "c": DoublesEyePortraitAdjustment(
@@ -159,6 +156,18 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
             focal_x_offset=5,
             focal_y_offset=24,
         ),
+    },
+    "Bowser": {
+        "c": DoublesEyePortraitAdjustment(2.3, focal_x_offset=60, focal_y_offset=45),
+    },
+    "Jigglypuff": {
+        "d": DoublesEyePortraitAdjustment(1.85),
+    },
+    "Kirby": {
+        "c": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-20),
+    },
+    "Link": {
+        "c": DoublesEyePortraitAdjustment(2.0, focal_x_offset=25),
     },
 }
 
