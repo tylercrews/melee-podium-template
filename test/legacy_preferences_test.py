@@ -49,7 +49,7 @@ class LegacyPreferencesTest(unittest.TestCase):
                         None,
                     ): (
                         anchor[0] + horizontal_offset(entrant_slot),
-                        anchor[1] + (8 if submode_id == "singles_top_8" else 0),
+                        anchor[1] + (8 + (3 if entrant_slot == 7 else 0) if submode_id == "singles_top_8" else 0),
                     )
                     for entrant_slot, anchor in SINGLES_ANCHORS[layout_count].items()
                 }
@@ -177,7 +177,7 @@ class LegacyPreferencesTest(unittest.TestCase):
                 (759, 707),
                 (965, 720),
                 (1168, 724),
-                (1376, 736),
+                (1376, 738),
                 (1581, 740),
             ],
         )
@@ -197,6 +197,8 @@ class LegacyPreferencesTest(unittest.TestCase):
 
         self.assertEqual(podiums[0].destination.left, 6)
         self.assertEqual(podiums[-1].destination.right, 1701)
+        self.assertEqual(podiums[6].destination.top, podiums[7].destination.top)
+        self.assertEqual(podiums[6].destination.bottom, podiums[7].destination.bottom)
         self.assertTrue(
             all(
                 current.destination.left < previous.destination.right
