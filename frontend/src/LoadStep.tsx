@@ -93,7 +93,7 @@ export default function LoadStep({ user, hasLoadedFormat, onChange, onSignIn, on
         setSelectedId("");
         setMessageIsError(false);
         setMessage(`Loaded ${pick.name}. Bracket Import is ready when you are.`);
-      }}><img src={`${import.meta.env.BASE_URL}quick_pick_thumbnails/${pick.id}.webp`} alt={`${pick.mode === "podium" ? "Legacy Podium" : "Squares"} ${pick.event_format} Top ${pick.entrant_count} example`} loading="lazy" /><strong>{pick.name}</strong><span>{pick.mode === "podium" ? "Legacy Podiums" : "Squares"} · {pick.event_format === "singles" ? "Singles" : "Doubles"} · Top {pick.entrant_count}</span></button>)}</div>
+      }}><img src={`${import.meta.env.BASE_URL}quick_pick_thumbnails/${pick.id}.webp`} alt={`${pick.mode === "podium" ? (pick.podium_style === "customizable" ? "Customizable Podium" : "Legacy Podium") : "Squares"} ${pick.event_format} Top ${pick.entrant_count} example`} loading="lazy" /><strong>{pick.name}</strong><span>{pick.mode === "podium" ? (pick.podium_style === "customizable" ? "Customizable Podiums" : "Legacy Podiums") : "Squares"} · {pick.event_format === "singles" ? "Singles" : "Doubles"} · Top {pick.entrant_count}</span></button>)}</div>
       {quickPickId && <button className="button button--dark" type="button" onClick={onProceedToBracket}>Continue to Bracket Import</button>}
     </section>
     {message && <p className="inline-message format-message" role={messageIsError ? "alert" : "status"}>{message}</p>}

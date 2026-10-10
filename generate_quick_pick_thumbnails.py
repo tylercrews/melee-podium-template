@@ -32,7 +32,7 @@ def generate_quick_pick_thumbnails() -> tuple[Path, ...]:
             for color in (controller_colors.color_for_slot(slot).resolve(),)
         )) if mode is CreationMode.SQUARES else None
         image = render_format_preview(
-            PodiumStyle.LEGACY,
+            PodiumStyle(pick.get("podium_style", "legacy")),
             TournamentFormat(pick["event_format"]),
             pick["entrant_count"],
             creation_mode=mode,

@@ -54,7 +54,7 @@ test("all four Quick Picks load complete editable formats with their own thumbna
     assert.equal(format.text_settings.font_asset_id, "provided:ubuntu");
     assert.equal(format.image_settings.logo_asset_id, null);
     assert.equal(format.formatting_asset_colors.preset, "smash_player_colors");
-    assert.equal(format.selection.options.podium_style, pick.mode === "podium" ? "legacy" : null);
+    assert.equal(format.selection.options.podium_style, pick.mode === "podium" ? (pick.event_format === "doubles" ? "customizable" : "legacy") : null);
     const placement = format.image_settings.background_placement;
     const output = formatCanvasSize(format);
     assert.equal(placement.asset_id, "builtin:00_Battlefield_5000_5000_resaved.png");

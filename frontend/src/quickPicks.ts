@@ -16,7 +16,7 @@ export function quickPickFormat(id: string): FormatConfiguration {
         event_format: pick.event_format,
         entrant_count: pick.entrant_count,
         variant: null,
-        podium_style: pick.mode === "podium" ? "legacy" : null,
+        podium_style: pick.podium_style ?? null,
       },
     },
     header_layout: { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" },
