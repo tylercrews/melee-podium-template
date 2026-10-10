@@ -64,6 +64,7 @@ npm run build
 - [Mr. C](https://www.spriters-resource.com/gamecube/ssbm/asset/46039/) for the Sheik stock icons.
 - Also shoutout to [SmashBoards](https://smashboards.com/) in general - what an amazing site still.
 - Big thank you to Shenal and Brooke Bustamove for the positivity and feedback and for actually using this thing when I thought nobody was.
+- And another big thank you to DevDogg for helping me test and debug some issues on my "real" launch day.
 - Shouts out to Shenfest, only reason I'm back in the game.
 - North Carolina Melee!! Love y'all.
 
