@@ -71,12 +71,10 @@ npm run build
 
 TODO LIST:
 * get some melee fonts added in. like the timer one is super clean
-* make eye tweaks for singles and doubles
 
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
-* fix some poses - they feel a little off center. Like Marth pose a and fox pose a feel very off center
 * need an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament
 * bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
 
@@ -85,6 +83,7 @@ Maybes/Eventuallies:
 * add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
 * support for twitter and bluesky handles - need to come up with some place to put them.
 * Stress-test browser memory limits for guest image uploads, then implement safe in-memory tournament-logo and background selection for users who are not signed in.
+* more refinements for portrait position centering and eye positions
 
 Different Layout Styles One Day:
 * a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s
