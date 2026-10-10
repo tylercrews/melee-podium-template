@@ -87,11 +87,11 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
     },
     "Ganondorf": {
         "a": EyePortraitAdjustment(560, 130, 1.55),
-        "b": EyePortraitAdjustment(170, 200, 1.40),
+        "b": EyePortraitAdjustment(170, 170, 1.40),
         "c": EyePortraitAdjustment(750, 80, 1.80),
     },
     "Ice Climbers": {
-        "a": EyePortraitAdjustment(450, 460, 0.85),
+        "a": EyePortraitAdjustment(480, 495, 0.80),
         "b": EyePortraitAdjustment(575, 235, 1.00),
         "c": EyePortraitAdjustment(750, 195, 1.05),
         "d": EyePortraitAdjustment(750, 205, 1.05),
@@ -119,7 +119,7 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "a": EyePortraitAdjustment(505, 300, 1.45),
         "b": EyePortraitAdjustment(500, 275, 1.40),
         "c": EyePortraitAdjustment(760, 140, 1.15),
-        "d": EyePortraitAdjustment(740, 200, 1.20),
+        "d": EyePortraitAdjustment(700, 235, 1.20),
         "e": EyePortraitAdjustment(800, 195, 1.75),
     },
     "Mario": {
@@ -153,7 +153,7 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
     "Peach": {
         "a": EyePortraitAdjustment(380, 225, 1.40),
         "b": EyePortraitAdjustment(475, 215, 1.00),
-        "c": EyePortraitAdjustment(700, 190, 1.65),
+        "c": EyePortraitAdjustment(735, 170, 1.90),
         "d": EyePortraitAdjustment(700, 150, 1.50),
     },
     "Pichu": {
@@ -165,16 +165,16 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "a": EyePortraitAdjustment(460, 390, 0.80),
         "b": EyePortraitAdjustment(500, 350, 0.90),
         "c": EyePortraitAdjustment(780, 320, 0.92),
-        "d": EyePortraitAdjustment(550, 310, 0.82),
+        "d": EyePortraitAdjustment(550, 318, 0.82),
     },
     "Roy": {
         "a": EyePortraitAdjustment(650, 220, 1.50),
         "b": EyePortraitAdjustment(540, 200, 1.50),
-        "c": EyePortraitAdjustment(800, 180, 1.50),
+        "c": EyePortraitAdjustment(795, 156, 4.00),
     },
     "Samus": {
         "a": EyePortraitAdjustment(520, 350, 1.30),
-        "b": EyePortraitAdjustment(600, 190, 1.40),
+        "b": EyePortraitAdjustment(600, 220, 1.40),
         "c": EyePortraitAdjustment(750, 140, 1.60),
         "d": EyePortraitAdjustment(750, 120, 1.60),
     },
@@ -185,9 +185,9 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "f": EyePortraitAdjustment(855, 540, 1.35),
     },
     "Yoshi": {
-        "a": EyePortraitAdjustment(500, 210, 1.25),
+        "a": EyePortraitAdjustment(500, 195, 1.25),
         "b": EyePortraitAdjustment(400, 180, 1.05),
-        "c": EyePortraitAdjustment(690, 150, 1.30),
+        "c": EyePortraitAdjustment(690, 150, 1.25),
         "d": EyePortraitAdjustment(650, 180, 1.20),
     },
     "Young Link": {
