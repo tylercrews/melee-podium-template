@@ -24,6 +24,29 @@ class EyePortraitAdjustment:
             raise ValueError("Eye portrait zoom must be greater than zero")
 
 
+# How to adjust a portrait: find its character and lowercase pose letter below.
+# EyePortraitAdjustment(focal_x, focal_y, zoom) uses ORIGINAL source-image pixels,
+# measured from the canvas top-left (including transparent margins). The renderer
+# places that source point at the viewport center, then clips the portrait.
+# For an unmirrored portrait: increase focal_x to move LEFT, decrease it to move
+# RIGHT; increase focal_y to move UP, decrease it to move DOWN. Horizontal moves
+# reverse for mirrored portraits. To pan the CROP over the source instead, use
+# the opposite direction: lower focal_x pans the crop LEFT, lower focal_y pans
+# it UP; higher values pan the crop RIGHT/DOWN. Higher zoom enlarges the portrait;
+# lower zoom
+# reveals more of it. Zoom 1.0 fits the visible alpha bounds to the viewport width.
+# Start with 10-30 source pixels or a 0.05-0.10 zoom change, then review the crop;
+# the visible movement equals the source-pixel change times the rendered scale.
+# All costumes of a pose share these values. Doubles (and Radial) inherit this
+# table, so for Singles-only edits compensate the Doubles overrides: subtract
+# the Singles focal delta from each offset and multiply the Doubles multiplier
+# by old Singles zoom / new Singles zoom to preserve the previous framing.
+# Regenerate Singles review sheets from the project root with:
+# python test/generate/generate_eye_positioning_previews.py
+# Regenerate Doubles sheets too when inherited values or overrides change:
+# python test/generate/generate_eye_doubles_positioning_previews.py
+# The pink crosshair marks the destination focal point; check eyes and cropping.
+#
 # The point is the visual center between the visible eyes.  Helmet visors and
 # Mr. Game & Watch's head center are used for characters without visible eyes.
 EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
@@ -34,7 +57,7 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
     "Captain Falcon": {
         "b": EyePortraitAdjustment(505, 115, 1.25),
         "c": EyePortraitAdjustment(770, 125, 1.25),
-        "d": EyePortraitAdjustment(650, 105, 1.40),
+        "d": EyePortraitAdjustment(730, 80, 8.00),
         "e": EyePortraitAdjustment(970, 265, 1.50),
     },
     "Donkey Kong": {
@@ -60,17 +83,17 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "c": EyePortraitAdjustment(630, 250, 1.35),
         "d": EyePortraitAdjustment(650, 300, 1.40),
         "e": EyePortraitAdjustment(690, 250, 1.40),
-        "f": EyePortraitAdjustment(900, 250, 1.45),
+        "f": EyePortraitAdjustment(900, 220, 1.35),
     },
     "Ganondorf": {
-        "a": EyePortraitAdjustment(560, 150, 1.60),
-        "b": EyePortraitAdjustment(450, 200, 1.40),
-        "c": EyePortraitAdjustment(750, 80, 1.70),
+        "a": EyePortraitAdjustment(560, 130, 1.55),
+        "b": EyePortraitAdjustment(170, 200, 1.40),
+        "c": EyePortraitAdjustment(750, 80, 1.80),
     },
     "Ice Climbers": {
-        "a": EyePortraitAdjustment(410, 430, 0.90),
-        "b": EyePortraitAdjustment(600, 235, 1.00),
-        "c": EyePortraitAdjustment(750, 205, 1.05),
+        "a": EyePortraitAdjustment(450, 460, 0.85),
+        "b": EyePortraitAdjustment(575, 235, 1.00),
+        "c": EyePortraitAdjustment(750, 195, 1.05),
         "d": EyePortraitAdjustment(750, 205, 1.05),
         "e": EyePortraitAdjustment(800, 150, 1.20),
         "f": EyePortraitAdjustment(800, 150, 1.20),
@@ -94,15 +117,15 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
     },
     "Luigi": {
         "a": EyePortraitAdjustment(505, 300, 1.45),
-        "b": EyePortraitAdjustment(460, 275, 1.40),
-        "c": EyePortraitAdjustment(760, 140, 1.20),
-        "d": EyePortraitAdjustment(740, 180, 1.30),
+        "b": EyePortraitAdjustment(500, 275, 1.40),
+        "c": EyePortraitAdjustment(760, 140, 1.15),
+        "d": EyePortraitAdjustment(740, 200, 1.20),
         "e": EyePortraitAdjustment(800, 195, 1.75),
     },
     "Mario": {
         "a": EyePortraitAdjustment(480, 330, 1.35),
-        "b": EyePortraitAdjustment(520, 300, 1.25),
-        "c": EyePortraitAdjustment(760, 320, 1.40),
+        "b": EyePortraitAdjustment(500, 280, 1.25),
+        "c": EyePortraitAdjustment(720, 280, 1.40),
     },
     "Marth": {
         "a": EyePortraitAdjustment(650, 120, 1.65),
@@ -118,18 +141,18 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "d": EyePortraitAdjustment(750, 300, 1.60),
     },
     "Mr. Game and Watch": {
-        "a": EyePortraitAdjustment(400, 250, 1.05),
-        "b": EyePortraitAdjustment(400, 200, 1.05),
-        "c": EyePortraitAdjustment(600, 320, 1.20),
+        "a": EyePortraitAdjustment(400, 235, 1.05),
+        "b": EyePortraitAdjustment(400, 180, 1.05),
+        "c": EyePortraitAdjustment(600, 340, 1.00),
     },
     "Ness": {
-        "a": EyePortraitAdjustment(610, 330, 1.35),
+        "a": EyePortraitAdjustment(570, 330, 1.35),
         "b": EyePortraitAdjustment(480, 370, 1.40),
         "c": EyePortraitAdjustment(800, 500, 1.25),
     },
     "Peach": {
         "a": EyePortraitAdjustment(380, 225, 1.40),
-        "b": EyePortraitAdjustment(500, 240, 1.10),
+        "b": EyePortraitAdjustment(475, 215, 1.00),
         "c": EyePortraitAdjustment(700, 190, 1.65),
         "d": EyePortraitAdjustment(700, 150, 1.50),
     },
@@ -142,7 +165,7 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "a": EyePortraitAdjustment(460, 390, 0.80),
         "b": EyePortraitAdjustment(500, 350, 0.90),
         "c": EyePortraitAdjustment(780, 320, 0.92),
-        "d": EyePortraitAdjustment(550, 290, 0.82),
+        "d": EyePortraitAdjustment(550, 310, 0.82),
     },
     "Roy": {
         "a": EyePortraitAdjustment(650, 220, 1.50),
@@ -151,29 +174,29 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
     },
     "Samus": {
         "a": EyePortraitAdjustment(520, 350, 1.30),
-        "b": EyePortraitAdjustment(600, 190, 1.45),
-        "c": EyePortraitAdjustment(750, 100, 1.60),
-        "d": EyePortraitAdjustment(750, 100, 1.60),
+        "b": EyePortraitAdjustment(600, 190, 1.40),
+        "c": EyePortraitAdjustment(750, 140, 1.60),
+        "d": EyePortraitAdjustment(750, 120, 1.60),
     },
     "Sheik": {
-        "c": EyePortraitAdjustment(790, 150, 1.50),
-        "d": EyePortraitAdjustment(620, 130, 1.55),
-        "e": EyePortraitAdjustment(700, 60, 1.65),
+        "c": EyePortraitAdjustment(790, 120, 1.45),
+        "d": EyePortraitAdjustment(620, 110, 1.55),
+        "e": EyePortraitAdjustment(700, 70, 1.65),
         "f": EyePortraitAdjustment(855, 540, 1.35),
     },
     "Yoshi": {
-        "a": EyePortraitAdjustment(500, 250, 1.25),
-        "b": EyePortraitAdjustment(400, 200, 1.20),
-        "c": EyePortraitAdjustment(650, 150, 1.50),
-        "d": EyePortraitAdjustment(650, 180, 1.80),
+        "a": EyePortraitAdjustment(500, 210, 1.25),
+        "b": EyePortraitAdjustment(400, 180, 1.05),
+        "c": EyePortraitAdjustment(690, 150, 1.30),
+        "d": EyePortraitAdjustment(650, 180, 1.20),
     },
     "Young Link": {
         "a": EyePortraitAdjustment(500, 400, 1.55),
         "b": EyePortraitAdjustment(600, 220, 1.35),
-        "c": EyePortraitAdjustment(700, 150, 1.65),
+        "c": EyePortraitAdjustment(700, 115, 1.65),
     },
     "Zelda": {
-        "a": EyePortraitAdjustment(610, 120, 1.75),
+        "a": EyePortraitAdjustment(565, 120, 1.75),
         "b": EyePortraitAdjustment(620, 180, 1.20),
         "c": EyePortraitAdjustment(720, 80, 1.50),
     },

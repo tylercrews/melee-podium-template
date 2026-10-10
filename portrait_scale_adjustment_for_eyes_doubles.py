@@ -29,15 +29,35 @@ class DoublesEyePortraitAdjustment:
             raise ValueError("Doubles eye portrait zoom must be greater than zero")
 
 
-# Add only reviewed exceptions here. Every unlisted pose still has an explicit
-# doubles profile through DOUBLES_DEFAULT below. Offsets are source-image
-# pixels; positive X moves the focal point right and positive Y moves it down.
+# How to adjust Doubles: add/edit a character and lowercase pose letter below.
+# DoublesEyePortraitAdjustment(zoom_multiplier, focal_x_offset, focal_y_offset)
+# resolves to Singles zoom * multiplier and Singles focal point + offsets.
+# Unlisted poses use DOUBLES_DEFAULT (2x zoom, zero offsets); an override replaces
+# that entire default, so specify all non-default offsets you want to retain.
+# Higher multiplier zooms IN; lower multiplier zooms OUT. For unmirrored portraits,
+# increase focal_x_offset to move LEFT, decrease it to move RIGHT; increase
+# focal_y_offset to move UP, decrease it to move DOWN. Horizontal moves reverse
+# when mirrored. For CROP movement over the source, reverse these directions:
+# lower X/Y pans the crop LEFT/UP; higher X/Y pans it RIGHT/DOWN.
+# Offsets are original source pixels, not viewport pixels; try
+# 10-30 pixels or a 0.05-0.10 multiplier change, then inspect the result.
+# These overrides affect Doubles and Radial, leaving Eyes Singles unchanged.
+# Some entries compensate Singles-only changes to preserve reviewed Doubles
+# framing. Their zoom expressions retain old Singles zoom * old multiplier,
+# divided by the new Singles zoom. Keep them when adjusting unrelated poses.
+# From the project root, regenerate and review the pink-crosshair crop sheets:
+# python test/generate/generate_eye_doubles_positioning_previews.py
+# python test/generate/generate_eye_positioning_previews.py
 EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
     str,
     dict[str, DoublesEyePortraitAdjustment],
 ] = {
     "Captain Falcon": {
-        "d": DoublesEyePortraitAdjustment(2.5, focal_x_offset=120),
+        "d": DoublesEyePortraitAdjustment(
+            3.00 * 2.5 / 8.00,
+            focal_x_offset=90,
+            focal_y_offset=25,
+        ),
         "e": DoublesEyePortraitAdjustment(2.4),
     },
     "Dr. Mario": {
@@ -46,20 +66,36 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
     "Falco": {
         "e": DoublesEyePortraitAdjustment(1.7, focal_x_offset=100),
     },
+    "Fox": {
+        "f": DoublesEyePortraitAdjustment(1.45 * 2.0 / 1.35, focal_y_offset=30),
+    },
     "Ganondorf": {
-        "a": DoublesEyePortraitAdjustment(2.5),
-        "b": DoublesEyePortraitAdjustment(2.2, focal_x_offset=-200),
+        "a": DoublesEyePortraitAdjustment(1.60 * 2.5 / 1.55, focal_y_offset=20),
+        "b": DoublesEyePortraitAdjustment(2.2, focal_x_offset=80),
+        "c": DoublesEyePortraitAdjustment(1.70 * 2.0 / 1.80),
+    },
+    "Ice Climbers": {
+        "a": DoublesEyePortraitAdjustment(
+            0.90 * 2.0 / 0.85,
+            focal_x_offset=-40,
+            focal_y_offset=-30,
+        ),
+        "b": DoublesEyePortraitAdjustment(2.0, focal_x_offset=25),
+        "c": DoublesEyePortraitAdjustment(2.0, focal_y_offset=10),
     },
     "Luigi": {
+        "b": DoublesEyePortraitAdjustment(2.0, focal_x_offset=-40),
+        "c": DoublesEyePortraitAdjustment(1.20 * 2.0 / 1.15),
         "d": DoublesEyePortraitAdjustment(
-            1.8,
+            1.30 * 1.8 / 1.20,
             focal_x_offset=-80,
-            focal_y_offset=-10,
+            focal_y_offset=-30,
         ),
     },
     "Mario": {
         "a": DoublesEyePortraitAdjustment(1.7),
-        "c": DoublesEyePortraitAdjustment(1.7),
+        "b": DoublesEyePortraitAdjustment(2.0, focal_x_offset=20, focal_y_offset=20),
+        "c": DoublesEyePortraitAdjustment(1.7, focal_x_offset=40, focal_y_offset=40),
     },
     "Marth": {
         "a": DoublesEyePortraitAdjustment(2.6),
@@ -67,33 +103,50 @@ EYE_DOUBLES_PORTRAIT_OVERRIDES: dict[
         "e": DoublesEyePortraitAdjustment(3.2),
     },
     "Mr. Game and Watch": {
-        "a": DoublesEyePortraitAdjustment(1.7),
-        "b": DoublesEyePortraitAdjustment(1.7),
+        "a": DoublesEyePortraitAdjustment(1.7, focal_y_offset=15),
+        "b": DoublesEyePortraitAdjustment(1.7, focal_y_offset=20),
         "c": DoublesEyePortraitAdjustment(
-            1.5,
+            1.20 * 1.5 / 1.00,
             focal_x_offset=-100,
-            focal_y_offset=190,
+            focal_y_offset=170,
         ),
     },
     "Ness": {
-        "a": DoublesEyePortraitAdjustment(1.6),
+        "a": DoublesEyePortraitAdjustment(1.6, focal_x_offset=40),
         "b": DoublesEyePortraitAdjustment(1.6),
     },
+    "Peach": {
+        "b": DoublesEyePortraitAdjustment(
+            1.10 * 2.0 / 1.00,
+            focal_x_offset=25,
+            focal_y_offset=25,
+        ),
+    },
+    "Pikachu": {
+        "d": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-20),
+    },
     "Samus": {
-        "b": DoublesEyePortraitAdjustment(1.7),
+        "b": DoublesEyePortraitAdjustment(1.45 * 1.7 / 1.40),
+        "c": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-40),
+        "d": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-20),
     },
     "Sheik": {
-        "c": DoublesEyePortraitAdjustment(1.6, focal_y_offset=-60),
+        "c": DoublesEyePortraitAdjustment(1.50 * 1.6 / 1.45, focal_y_offset=-30),
+        "d": DoublesEyePortraitAdjustment(2.0, focal_y_offset=20),
+        "e": DoublesEyePortraitAdjustment(2.0, focal_y_offset=-10),
     },
     "Yoshi": {
-        "a": DoublesEyePortraitAdjustment(1.5),
-        "b": DoublesEyePortraitAdjustment(1.4),
-        "c": DoublesEyePortraitAdjustment(1.5),
-        "d": DoublesEyePortraitAdjustment(1.15),
+        "a": DoublesEyePortraitAdjustment(1.5, focal_y_offset=40),
+        "b": DoublesEyePortraitAdjustment(1.20 * 1.4 / 1.05, focal_y_offset=20),
+        "c": DoublesEyePortraitAdjustment(1.50 * 1.5 / 1.30, focal_x_offset=-40),
+        "d": DoublesEyePortraitAdjustment(1.80 * 1.15 / 1.20),
     },
     "Young Link": {
         "a": DoublesEyePortraitAdjustment(1.6),
-        "c": DoublesEyePortraitAdjustment(1.5),
+        "c": DoublesEyePortraitAdjustment(1.5, focal_y_offset=35),
+    },
+    "Zelda": {
+        "a": DoublesEyePortraitAdjustment(2.0, focal_x_offset=45),
     },
 }
 
