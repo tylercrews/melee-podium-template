@@ -127,8 +127,8 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   let headerUrl: string;
   if (mode === "radial") {
     const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
-    foregroundLayers = [{ url: `${layerRoot}/radial/singles_top_8/${colorId}.png` }];
-    headerUrl = `${layerRoot}/radial_headers/${fontId}/${headerPermutationId(format)}.png`;
+    foregroundLayers = [{ url: `${layerRoot}/radial/${eventFormat === "doubles" ? "doubles_top_4" : "singles_top_8"}/${colorId}.png` }];
+    headerUrl = `${layerRoot}/radial_headers/${fontId}/${eventFormat === "doubles" ? "doubles/" : ""}${headerPermutationId(format)}.png`;
   } else if (mode === "eyes") {
     const eyeEntrantCount = format.selection.options.entrant_count
       ?? (eventFormat === "doubles" ? 3 : 8);
@@ -153,12 +153,12 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
   const layoutLabel = format.selection.options.variant === "four_podium"
     ? "Top 8 – 4 Podiums"
-    : `Top ${format.selection.options.entrant_count ?? 8}`;
+    : `Top ${format.selection.options.entrant_count ?? (mode === "radial" && eventFormat === "doubles" ? 4 : 8)}`;
   return {
     foregroundLayers,
     headerUrl,
     logoPlaceholderUrl: mode === "radial" ? `${layerRoot}/radial_logos/${logoPosition}.png` : undefined,
-    resultLabelsUrl: mode === "radial" ? `${layerRoot}/radial_labels.png` : undefined,
+    resultLabelsUrl: mode === "radial" ? `${layerRoot}/radial_labels${eventFormat === "doubles" ? "_doubles" : ""}.png` : undefined,
     label: `${styleLabel} · ${eventLabel} · ${layoutLabel}`,
     logoPosition,
     logoBox: headerBox(format, outputSize, logoPosition),
@@ -192,7 +192,7 @@ function previewEntrants(entrants: EntrantDraft[], entrantCount: number, include
 }
 
 async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean, logoImage: FormatImageInfo | null): Promise<HTMLImageElement> {
-  const entrantCount = format.selection.options.entrant_count ?? 8;
+  const entrantCount = format.selection.options.entrant_count ?? (format.selection.mode === "radial" && format.selection.options.event_format === "doubles" ? 4 : 8);
   const config = {
     mode: format.selection.mode,
     style: format.selection.options.podium_style ?? "legacy",

@@ -115,11 +115,11 @@ class ModeSelection:
         if self.mode is not CreationMode.PODIUM and self.options.podium_style is not None:
             raise ValueError("podium_style is only valid for Podium mode")
         if self.mode is CreationMode.RADIAL and (
-            self.options.event_format is not TournamentFormat.SINGLES
-            or self.options.entrant_count != 8
+            (self.options.event_format, self.options.entrant_count)
+            not in {(TournamentFormat.SINGLES, 8), (TournamentFormat.DOUBLES, 4)}
             or self.options.variant is not None
         ):
-            raise ValueError("Radial supports Singles Top 8")
+            raise ValueError("Radial supports Singles Top 8 and Doubles Top 4")
 
     @property
     def submode_id(self) -> str:

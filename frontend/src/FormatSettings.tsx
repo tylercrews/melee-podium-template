@@ -33,7 +33,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       selection: {
         ...selection,
         mode,
-        options: { ...selection.options, event_format: mode === "radial" && selection.options.event_format === "doubles" ? null : selection.options.event_format, entrant_count: null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
+        options: { ...selection.options, entrant_count: null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
       },
       header_layout: mode === "radial" ? { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" } : value.header_layout,
     });
@@ -88,7 +88,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div></fieldset>}
 
       <fieldset className="format-choice-group"><legend>Bracket type</legend><div className="format-choice-grid">
-        {(selection.mode === "radial" ? ["singles"] as const : ["singles", "doubles"] as const).map((eventFormat) => <label className="format-choice" key={eventFormat}><input type="radio" name="event-format" value={eventFormat} checked={selection.options.event_format === eventFormat} onChange={() => updateEventFormat(eventFormat)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{eventFormat === "singles" ? "Singles" : "Doubles"}</strong><small>{eventFormat === "singles" ? "One player per result" : "Two-player teams"}</small></span></label>)}
+        {(["singles", "doubles"] as const).map((eventFormat) => <label className="format-choice" key={eventFormat}><input type="radio" name="event-format" value={eventFormat} checked={selection.options.event_format === eventFormat} onChange={() => updateEventFormat(eventFormat)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{eventFormat === "singles" ? "Singles" : "Doubles"}</strong><small>{eventFormat === "singles" ? "One player per result" : "Two-player teams"}</small></span></label>)}
       </div></fieldset>
     </section>
 

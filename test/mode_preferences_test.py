@@ -151,7 +151,7 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.PODIUM: 12,
                 CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
-                CreationMode.RADIAL: 1,
+                CreationMode.RADIAL: 2,
             },
         )
         podium_styles = Counter(

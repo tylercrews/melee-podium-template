@@ -93,7 +93,7 @@ def render_format_preview(
         if creation_mode is CreationMode.SQUARES
         else SUPPORTED_EYES_LAYOUTS
         if creation_mode is CreationMode.EYES
-        else frozenset({(TournamentFormat.SINGLES, 8, None)})
+        else frozenset({(TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 4, None)})
         if creation_mode is CreationMode.RADIAL
         else frozenset()
     )

@@ -15,6 +15,7 @@ from geometric_content_renderer import (
     _draw_horizontal_header_item,
     _draw_result_text,
     _open_logo,
+    _primary_character,
 )
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferences
@@ -60,13 +61,16 @@ class RadialContentRenderer:
             raise ValueError("RadialContentRenderer requires Radial mode")
         result = canvas.convert("RGBA")
         sections = radial_sections(preferences)
+        portrait_sections = {p.slot_id: p for p in preferences.formatting_assets if p.asset_id == "radial_portrait_slice"}
+        if portrait_sections and set(portrait_sections) != {p.slot_id for p in preferences.character_slots}:
+            raise ValueError("Radial portrait sections must match the character slots")
         with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
             for placement in sorted(preferences.character_slots, key=lambda item: (item.z_index, item.slot_id)):
-                section = sections[placement.entrant_slot]
+                section = portrait_sections.get(placement.slot_id, sections[placement.entrant_slot])
                 rect = section.destination
                 entrant = request.entrants[placement.entrant_slot - 1]
                 portrait = render_eye_portrait(
-                    entrant.characters[0],
+                    _primary_character(entrant, placement),
                     (rect.width, rect.height),
                     doubles=True,
                     zoom_multiplier=placement.scale,

@@ -179,7 +179,7 @@ const metadataFields = new Set<MetadataField>(ALL_METADATA_FIELDS);
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
   radial: {
     singles: [{ entrant_count: 8, variant: null, label: "Top 8" }],
-    doubles: [],
+    doubles: [{ entrant_count: 4, variant: null, label: "Top 4" }],
   },
   podium: {
     singles: [
