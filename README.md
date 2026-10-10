@@ -71,10 +71,6 @@ npm run build
 TODO LIST:
 * create some "quick select" options on the first loading screen that skip all of the layout-specific settings and make it easier to just use quickly.
 * get some melee fonts added in. like the timer one is super clean
-* new pinwheel-style layout that shen showed me
-* in legacy podiums mode the pink (left) podium looks the TINIEST bit bigger than the other. It's really not that noticeable, but compared to the two fifth place podiums it does because the orange and teal seem a lot better aligned
-* header and metadata should have sliders for font size pickable by the user, maybe even get granular with the metadata fields each having different font sizes
-TEST THIS * need to figure out how larger counts of included entrants work with the preset coloring. Like do you do rainbow shades in between? Shades per row? Shades per placement number (for the top 16 one)? idk.
 * make eye tweaks for singles and doubles
 
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
@@ -94,8 +90,6 @@ Different Layout Styles One Day:
 * a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s
 * once we have placement numbers rendered instead of static assets, create an alternate counting mode where it puts 1-8 (5th 6th 7th 8th instead of 5th 5th 7th 7th) so that people can use it for PRs as well. Or maybe a top 10 pr mode.
 * flying v with first place centered
-* top 8er / waddle wednesday layout
-* long rectangles just showing the eyes of the characters
 * long portraits like the character select screen
 * long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
 * top8.gg has a really cool type of layout where they have title bar, podium-arranged top 3, then 5 on the bottom. But they do all squares. What if I had a half-and-half layout where the top 3 get their characters on short podiums, then the subsequent players get their characters in boxes underneath.
