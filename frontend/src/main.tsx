@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./MakerApp";
+import "./uiTypography.css";
 import "./styles.css";
 import "./maker.css";
 
