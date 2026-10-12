@@ -11,9 +11,11 @@ canvas dimensions. Each lower result has a 68-by-104-pixel portrait starting
 at y=830. The first 5th and first 7th entrants have portraits on the right of
 their text blocks, with right-aligned stock/seed rows, sponsors, and names to
 their left. The second 5th and second 7th keep their original portrait and text
-positions. Shared canonical `05th.png` and `07th.png` artwork sits between each
-pair of portraits, with tiny 16-by-12-pixel maximum bounds matching Customizable's
-fourth-place numeral; individual summary rank labels are omitted. The numbers
+positions. Two copies each of canonical `05th.png` and `07th.png` artwork sit
+in a vertical stack with a 12-pixel gap between the corresponding pairs of portraits. Their 20-by-15-pixel
+maximum bounds match the enlarged Customizable fourth-place numeral. The
+Customizable second-, third-, and fourth-place numbers are increased by 25%
+for this review. Individual summary rank labels are omitted. The numbers
 do not reserve space or move the portraits or text and are composited over the
 portraits when they overlap. The alternating blocks are anchored directly to
 their podium edges. The portrait uses the entrant's first selected character/costume,
