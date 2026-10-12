@@ -4,9 +4,10 @@ This collection contains 123 supplied animated GIFs and 11 byte-identical
 default-costume aliases. Its 134 entries cover every character/color selection
 in `char_assets/renders/` for all 26 playable characters.
 
-The current batch was exported from higher-resolution originals and includes
-the corrected Mr. Game and Watch outlines. Output GIF dimensions and animation
-metadata are recorded individually in the manifest.
+The current batch contains lighting-corrected 512x512 GIFs exported from
+higher-resolution originals, with the corrected Mr. Game and Watch outlines.
+The source batch, individual dimensions, checksums, and animation metadata
+are recorded in the manifest.
 
 ## Paths and filenames
 
