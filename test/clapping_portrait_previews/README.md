@@ -1,5 +1,11 @@
 # Clapping portrait crop review
 
+The actively reviewed Ice Climbers exports live beside this README so they are
+visible to Git and have stable paths: `ice-climbers.gif`, `ice-climbers.png`, and
+`ice-climbers-comparison.png`. The generator refreshes them from the current
+calibration every time it runs. The original GIFs under `char_assets/` are source
+animations; portrait framing and member offsets belong to the calibration file.
+
 Generate the demo with:
 
 ```powershell
@@ -30,7 +36,9 @@ Ice Climbers additionally has serialized `member_layers`: the right member is
 shifted behind the left member before applying the portrait window. Both cutouts
 come from the same costume GIF and frame, keeping their claps synchronized.
 The default costume shows Nana behind Popo, while costume-specific member order
-is preserved. The source animations remain untouched.
+is preserved. Match the reference's hat curve: Nana's crown sits just below
+Popo's, with roughly half her head deliberately beyond the right border and her
+left eye showing inside the frame. The source animations remain untouched.
 
 The runtime renderer returns RGBA portraits with configurable output size,
 backing color, border color/width, mirroring, and frame selection. The backing

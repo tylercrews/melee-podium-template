@@ -38,6 +38,33 @@ def _save_animation(path: Path, frames: list[Image.Image], durations: list[int],
     )
 
 
+def _save_ice_climbers_review(
+    reference: Image.Image,
+    neutral: Image.Image,
+    colored: Image.Image,
+    animated_path: Path,
+) -> None:
+    """Keep the actively reviewed portrait visible outside ignored output folders."""
+
+    review_dir = PROJECT_ROOT / "test/clapping_portrait_previews"
+    review_dir.mkdir(exist_ok=True)
+    colored.save(review_dir / "ice-climbers.png")
+    (review_dir / "ice-climbers.gif").write_bytes(animated_path.read_bytes())
+    comparison = Image.new("RGBA", (750, 430), SHEET_BACKGROUND)
+    draw = ImageDraw.Draw(comparison)
+    for index, (label, image) in enumerate([
+        ("Game reference", reference),
+        ("Current portrait", neutral),
+        ("Name color", colored),
+    ]):
+        left = index * 250 + 13
+        draw.text((left, 14), label, font=_font(20), fill="#FFFFFFFF")
+        comparison.alpha_composite(
+            image.resize((224, 344), Image.Resampling.NEAREST), (left, 54),
+        )
+    comparison.convert("RGB").save(review_dir / "ice-climbers-comparison.png")
+
+
 def generate(output_dir: Path) -> tuple[Path, Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     portrait_dir = output_dir / "portraits"
@@ -96,6 +123,8 @@ def generate(output_dir: Path) -> tuple[Path, Path, Path]:
         _save_animation(portrait_dir / f"{slug}-neutral.gif", gray_frames, durations, loop)
         _save_animation(portrait_dir / f"{slug}.gif", colored_frames, durations, loop)
         _save_animation(portrait_dir / f"{slug}-square.gif", square_frames, durations, loop)
+        if fighter == "Ice Climbers":
+            _save_ice_climbers_review(reference, gray, colored, portrait_dir / f"{slug}.gif")
         cards.append(f'''<article><h2>{html.escape(fighter)}</h2><div class="views">
 <figure><img src="portraits/{slug}-reference.png" width="112" height="172"><figcaption>Game reference</figcaption></figure>
 <figure><img src="portraits/{slug}-neutral.gif" width="112" height="172"><figcaption>Calibrated animation</figcaption></figure>

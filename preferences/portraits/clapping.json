@@ -208,10 +208,10 @@
         512
       ],
       "source_crop": [
-        36.26,
-        84.6,
-        229.64,
-        392.8
+        32.88,
+        79.21,
+        233.02,
+        398.19
       ],
       "preview_frame_index": 18,
       "reference_file": "03 - ness, ice climbers, kirby.png",
@@ -230,8 +230,8 @@
             512
           ],
           "offset": [
-            -170,
-            -4
+            -142,
+            6.0
           ],
           "layer_order": 0
         },
@@ -243,7 +243,7 @@
             512
           ],
           "offset": [
-            0,
+            -6,
             0
           ],
           "layer_order": 1
