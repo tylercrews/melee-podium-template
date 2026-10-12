@@ -17,7 +17,7 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          V6.3 10/10/2026 
+          V7.0 10/12/2026 
           {" "}●{" "}
           {count} created
           {" "}●{" "}
@@ -46,6 +46,7 @@ function Footer({ renderCount }: FooterProps) {
               </button>
             </div>
             <ul>
+              <li>Thank you to the <a href="https://github.com/doldecomp/melee" target="_blank" rel="noreferrer">doldecomp project</a>. The Melee decomp project let me build a <a href="https://github.com/tylercrews/melee-decomp-animations" target="_blank" rel="noreferrer">tool to view and create high-resolution animation assets for any character</a>, which allowed me to start creating animated assets.</li>
               <li><a href="https://x.com/Malarki_" target="_blank" rel="noreferrer">Malarki_</a>, who I commissioned to expand the pool of character poses and did an amazing job.</li>
               <li><a href="https://www.top8er.com/" target="_blank" rel="noreferrer">Top8er</a>, an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being <a href="https://github.com/ShonTitor/Top8er" target="_blank" rel="noreferrer">open source</a> (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.</li>
               <li>Nicolet I would like to thank in particular for sending me the repo for the startgg USB reporting, and DevDogg for connecting me with them.</li>

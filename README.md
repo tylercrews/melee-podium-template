@@ -60,6 +60,7 @@ npm run build
 
 ## Thanks To
 
+- Thank you to the [doldecomp project](https://github.com/doldecomp/melee). The Melee decomp project let me build a [tool to view and create high-resolution animation assets for any character](https://github.com/tylercrews/melee-decomp-animations), which allowed me to start creating animated assets.
 - [Malarki_](https://x.com/Malarki_), who I commissioned to expand the pool of character poses and did an amazing job.
 - [Top8er](https://www.top8er.com/), an amazing site that my local scene was using all the time, only inspired me to create this podium template because there wasn't an option for doubles. Huge thanks for being [open source](https://github.com/ShonTitor/Top8er) (shouts out to ShonTitor, agiera, and jmlee337); it was a huge help for figuring out the start.gg and Challonge bracket importing.
 - Elenrique3 for creating the original Top8er 2023 design. It's truly a nearly perfect design other than the lack of doubles support. And Malarki_ again for coming up with the eyes template.
