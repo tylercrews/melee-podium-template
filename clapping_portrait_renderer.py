@@ -5,6 +5,7 @@ from __future__ import annotations
 from PIL import Image, ImageDraw
 
 from clapping_assets import load_clapping_frame
+from clapping_frame_compositor import compose_clapping_member_layers
 from color_values import normalize_rgba_hex
 from models import Character
 from portrait_crop_adjustment_for_clapping import (
@@ -44,6 +45,7 @@ def render_clapping_portrait_frame(
     if min(inner_width, inner_height) <= 0:
         raise ValueError("Portrait size must leave space inside its border")
 
+    source = compose_clapping_member_layers(source, adjustment)
     left, top, right, bottom = adjustment.source_crop
     source_width, source_height = adjustment.source_size
     center_x = (left + right) / 2 / source_width * source.width

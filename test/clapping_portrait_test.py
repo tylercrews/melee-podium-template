@@ -6,15 +6,18 @@ import sys
 import unittest
 
 from PIL import Image, ImageDraw
+from dataclasses import replace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from clapping_assets import CLAPPING_FOLDER, load_clapping_frame, resolve_clapping_path
+from clapping_frame_compositor import compose_clapping_member_layers
 from clapping_portrait_renderer import render_clapping_portrait, render_clapping_portrait_frame
 from color_values import parse_rgba_hex
 from models import Character, MELEE_FIGHTERS
 from portrait_crop_adjustment_for_clapping import (
-    CALIBRATION_PATH, ClappingPortraitAdjustment, get_clapping_portrait_adjustment,
+    CALIBRATION_PATH, ClappingPortraitAdjustment, ClappingPortraitLayer,
+    get_clapping_portrait_adjustment,
 )
 
 
@@ -97,6 +100,44 @@ class ClappingPortraitTests(unittest.TestCase):
         for index in (-1, True, 999999):
             with self.subTest(index=index), self.assertRaises(ValueError):
                 load_clapping_frame(Character("Fox"), index)
+
+    def test_member_layers_preserve_foreground_occlusion_and_scale_offsets(self):
+        source = Image.new("RGBA", (20, 20), "#00000000")
+        draw = ImageDraw.Draw(source)
+        draw.rectangle((2, 2, 7, 12), fill="#FF0000FF")
+        draw.rectangle((12, 2, 17, 12), fill="#0000FFFF")
+        adjustment = ClappingPortraitAdjustment((20, 20), (0, 0, 20, 20), (
+            ClappingPortraitLayer((0, 0, 10, 20), (0, 0), 1),
+            ClappingPortraitLayer((10, 0, 20, 20), (-7, -1), 0),
+        ))
+        result = compose_clapping_member_layers(source, adjustment)
+        self.assertEqual(result.getpixel((5, 5)), parse_rgba_hex("#FF0000FF"))
+        self.assertEqual(result.getpixel((9, 5)), parse_rgba_hex("#0000FFFF"))
+        self.assertEqual(result.getpixel((15, 5)), parse_rgba_hex("#00000000"))
+        scaled_source = source.resize((40, 40), Image.Resampling.NEAREST)
+        scaled = compose_clapping_member_layers(scaled_source, adjustment)
+        self.assertEqual(scaled.tobytes(), result.resize((40, 40), Image.Resampling.NEAREST).tobytes())
+
+    def test_ice_climbers_rear_member_is_visible_in_every_costume(self):
+        adjustment = get_clapping_portrait_adjustment("Ice Climbers")
+        self.assertEqual(len(adjustment.member_layers), 2)
+        original_adjustment = replace(adjustment, member_layers=())
+        for color in ("default", "red", "green", "blue", "cyan"):
+            with self.subTest(color=color):
+                source = load_clapping_frame(Character("Ice Climbers", color=color), 18)
+                rear = render_clapping_portrait_frame(source, adjustment, background_color="#666666FF")
+                original = render_clapping_portrait_frame(source, original_adjustment, background_color="#666666FF")
+                self.assertNotEqual(rear.tobytes(), original.tobytes())
+
+    def test_member_layer_validation(self):
+        for crop, offset, order in [((0, 0, 0, 10), (0, 0), 0),
+                                    ((0, 0, 10, 10), (float("inf"), 0), 0),
+                                    ((0, 0, 10, 10), (0, 0), True)]:
+            with self.subTest(crop=crop, offset=offset, order=order), self.assertRaises(ValueError):
+                ClappingPortraitLayer(crop, offset, order)
+        layer = ClappingPortraitLayer((0, 0, 10, 10), (0, 0), 0)
+        with self.assertRaises(ValueError):
+            ClappingPortraitAdjustment((20, 20), (0, 0, 20, 20), (layer, layer))
 
     def test_invalid_output_settings_are_rejected(self):
         source = Image.new("RGBA", (20, 20), "#00000000")

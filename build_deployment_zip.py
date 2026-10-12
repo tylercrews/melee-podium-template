@@ -12,6 +12,7 @@ FILES = (
     "requirements.txt",
     "background_builder.py",
     "clapping_assets.py",
+    "clapping_frame_compositor.py",
     "clapping_portrait_renderer.py",
     "color_values.py",
     "constants.py",

@@ -26,6 +26,12 @@ not limit animated previews. `reference_file` and `reference_crop` identify the
 reference used to calibrate that character. These references are offline review
 inputs, not runtime renderer dependencies.
 
+Ice Climbers additionally has serialized `member_layers`: the right member is
+shifted behind the left member before applying the portrait window. Both cutouts
+come from the same costume GIF and frame, keeping their claps synchronized.
+The default costume shows Nana behind Popo, while costume-specific member order
+is preserved. The source animations remain untouched.
+
 The runtime renderer returns RGBA portraits with configurable output size,
 backing color, border color/width, mirroring, and frame selection. The backing
 accepts the actual entrant-name color directly. Clapping costume lookup uses the

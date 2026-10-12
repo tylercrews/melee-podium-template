@@ -220,6 +220,34 @@
         58,
         490,
         219
+      ],
+      "member_layers": [
+        {
+          "source_crop": [
+            256,
+            0,
+            512,
+            512
+          ],
+          "offset": [
+            -170,
+            -4
+          ],
+          "layer_order": 0
+        },
+        {
+          "source_crop": [
+            0,
+            0,
+            256,
+            512
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "layer_order": 1
+        }
       ]
     },
     "Kirby": {
