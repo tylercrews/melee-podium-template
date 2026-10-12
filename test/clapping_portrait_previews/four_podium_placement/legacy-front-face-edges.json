@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "description": "Visible vertical front-face corner lines measured from the tightly cropped legacy Top 4 assets; excludes the perspective side face.",
+  "assets": {
+    "top_4_slot_1.png": {"source_size": [1126, 872], "left": 9, "right": 981},
+    "top_4_slot_2.png": {"source_size": [1119, 822], "left": 7, "right": 989},
+    "top_4_slot_3.png": {"source_size": [1131, 786], "left": 6, "right": 1016},
+    "top_4_slot_4.png": {"source_size": [1140, 737], "left": 11, "right": 1018}
+  }
+}

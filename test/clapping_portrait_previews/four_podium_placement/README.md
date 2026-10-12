@@ -1,5 +1,9 @@
 # Four-podium clapping portrait placement proposal
 
+Proposed display name: **Top 8 - 4 Podiums + 4 Clapping Portraits**. This names
+both parts of the Top 8 result while the existing `four_podium` selection ID
+continues to identify its saved settings.
+
 Render the static layout review with:
 
 ```powershell
@@ -10,8 +14,12 @@ The Legacy and Customizable PNGs use their own existing podium geometry and
 canvas dimensions. Each lower result has a 68-by-104-pixel portrait starting
 at y=830. The first 5th and first 7th entrants have portraits on the right of
 their text blocks, with right-aligned stock/seed rows, sponsors, and names to
-their left. The second 5th and second 7th keep their original portrait and text
-positions. Two copies each of canonical `05th.png` and `07th.png` artwork sit
+their left. Legacy anchors the first portrait's right edge to its podium's
+visible front-right corner, and the second portrait's left edge to the next
+podium's front-left corner. This creates gaps for the numbers without including
+the perspective side faces; `legacy-front-face-edges.json` stores the measured
+asset-relative corners. Customizable retains its existing portrait/text positions.
+Two copies each of canonical `05th.png` and `07th.png` artwork sit
 in a vertical stack with a 12-pixel gap between the corresponding pairs of portraits.
 Their height is taken directly from the final Customizable fourth-place artwork;
 each ordinal keeps its own aspect ratio. The main four numbers fill the outer

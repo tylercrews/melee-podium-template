@@ -36,6 +36,7 @@ BACKGROUND_ID = "00_Battlefield_5000_5000_resaved.png"
 NAME_COLORS = ("#FB8B00FF", "#00CDC3FF", "#FF00FFFF", "#8D8D8DFF")
 PANEL_SIZE = (68, 104)
 SHARED_BADGE_COPY_GAP = 12
+LAYOUT_REVIEW_NAME = "Top 8 - 4 Podiums + 4 Clapping Portraits"
 
 
 def font(size: int) -> ImageFont.FreeTypeFont:
@@ -58,6 +59,21 @@ class PlacementPreviewContentRenderer(LegacyPodiumContentRenderer):
         canvas.alpha_composite(layer)
 
 
+def portrait_column_edges(preferences, body):
+    """Use Legacy's visible front corners independently from its side-face bounds."""
+
+    if preferences.selection.options.podium_style is not PodiumStyle.LEGACY:
+        return body.destination.left + 7, body.destination.right - 7
+    calibration = json.loads((OUTPUT / 'legacy-front-face-edges.json').read_text(encoding='utf-8'))
+    measured = calibration['assets'][body.asset_id]
+    with Image.open(PROJECT_ROOT / 'formatting_assets/podium/legacy' / body.asset_id) as source:
+        if tuple(measured['source_size']) != source.size:
+            raise ValueError(f"Legacy front-face calibration is stale for {body.asset_id}")
+    source_width = measured['source_size'][0]
+    return tuple(body.destination.left + round(measured[side] * body.destination.width / source_width)
+                 for side in ('left', 'right'))
+
+
 def lower_result_geometry(preferences, number_height):
     """Anchor each block to its podium independently of the tiny rank overlay."""
 
@@ -66,8 +82,10 @@ def lower_result_geometry(preferences, number_height):
     for pair_index, asset_id in enumerate(("05th.png", "07th.png")):
         first_index = pair_index * 2
         first, second = bodies[first_index:first_index + 2]
-        second_left = second.destination.left + 7
-        first_right = first.destination.right - 7
+        first_edges = portrait_column_edges(preferences, first)
+        second_edges = portrait_column_edges(preferences, second)
+        second_left = second_edges[0]
+        first_right = first_edges[1]
         first_rect = [first_right - PANEL_SIZE[0], 830, first_right, 830 + PANEL_SIZE[1]]
         second_rect = [second_left, 830, second_left + PANEL_SIZE[0], 830 + PANEL_SIZE[1]]
         with Image.open(PROJECT_ROOT / "formatting_assets/placement_numbers" / asset_id) as source:
@@ -85,17 +103,18 @@ def lower_result_geometry(preferences, number_height):
                 anchor=PixelPoint(center_x, art_top + art.height // 2),
                 max_size=PixelSize(*badge_max_size), z_index=200 + first_index + member_index,
             ))
-        for index, body, rect, alignment in (
-            (first_index, first, first_rect, "right"),
-            (first_index + 1, second, second_rect, "left"),
+        for index, edges, rect, alignment in (
+            (first_index, first_edges, first_rect, "right"),
+            (first_index + 1, second_edges, second_rect, "left"),
         ):
             text_x = rect[0] - 14 if alignment == "right" else rect[2] + 14
-            max_width = text_x - body.destination.left - 7 if alignment == "right" else body.destination.right - text_x - 7
+            max_width = text_x - edges[0] if alignment == "right" else edges[1] - text_x
             assert max_width > 0
             rows.append({
                 "entrant_slot": index + 5, "rank": 5 if pair_index == 0 else 7,
                 "portrait_rect": rect, "text_x": text_x, "text_max_width": max_width,
                 "text_alignment": alignment, "background_and_name_color": NAME_COLORS[index],
+                "podium_front_face_edges": list(edges),
             })
     return rows, badges
 
@@ -147,9 +166,10 @@ def generate() -> None:
         entrants[index] = replace(entrant, characters=selected)
     tournament = replace(
         sample_tournament(), title="Clapping Layout Preview",
-        subtitle="Singles Top 8 - Four Podiums", date="10/12/2026",
+        subtitle=LAYOUT_REVIEW_NAME, date="10/12/2026",
     )
-    draft = {"schema_version": 1, "status": "placement_review", "styles": {}}
+    draft = {"schema_version": 1, "status": "placement_review",
+             "proposed_display_name": LAYOUT_REVIEW_NAME, "styles": {}}
     reference_selection = ModeSelection(CreationMode.PODIUM, ModeOptions(
         event_format=TournamentFormat.SINGLES, entrant_count=8,
         variant="four_podium", podium_style=PodiumStyle.CUSTOMIZABLE,
