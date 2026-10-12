@@ -11,9 +11,9 @@ Character folders use the same display names as `char_assets/renders/`, includin
 existing render convention:
 
 ```text
-<color code><pose>_<color>_<Character_Name>_melee_clapping.gif
-Fox/03g_blue_Fox_melee_clapping.gif
-Mr. Game and Watch/00d_default_Mr._Game_and_Watch_melee_clapping.gif
+<color code><pose>_<color>_<Character_Name>_tyro-decomp-anims_clapping.gif
+Fox/03g_blue_Fox_tyro-decomp-anims_clapping.gif
+Mr. Game and Watch/00d_default_Mr._Game_and_Watch_tyro-decomp-anims_clapping.gif
 ```
 
 Color codes and names match the existing PNG renders and stock icons rather
