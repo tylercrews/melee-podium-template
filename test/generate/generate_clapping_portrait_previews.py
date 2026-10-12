@@ -81,7 +81,7 @@ def generate(output_dir: Path) -> tuple[Path, Path, Path]:
     cards = []
 
     for i, fighter in enumerate(MELEE_FIGHTERS):
-        character = Character(fighter)
+        character = Character(fighter, color="default")
         profile = preferences["characters"][fighter]
         adjustment = get_clapping_portrait_adjustment(fighter)
         color = NAME_COLORS[i % len(NAME_COLORS)]

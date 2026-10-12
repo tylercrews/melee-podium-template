@@ -93,6 +93,8 @@
 
 ## Customizable podium colors
 
+- Clapping GIFs retain their native source timing, including Ice Climbers' 25-frame/500 ms loop. When composing Podiums+Clapping with 42-frame/840 ms characters, map each shorter portrait's frames to the shared clap phase of the longest selected loop. Preserve complete claps and a seamless synchronized cycle; do not reject mixed frame counts. A layout containing only shorter loops retains their native cycle.
+
 - Active customizable podium masks live in `formatting_assets/podium/customizable/` and are tightly cropped from the cleaned semantic masks in `docs/archive/old_podium_iterations/02_3d_second_attempt/`.
 - Customizable podium formatting layouts use a 1920x941 canvas. Preserve the customizable asset's aspect ratio and the corresponding legacy podium's bottom edge, enlarge the bodies relative to legacy, and distribute the complete podium group across the wider canvas. Top 8 uses five-pixel gaps instead of overlaps so all eight bodies remain distinct.
 - Customizable Top 8 uses x-tall, tall, medium, short, x-short, x-short, flat, and flat assets in placement order. Top 3 uses tall, medium, and short; four-podium layouts append x-short.

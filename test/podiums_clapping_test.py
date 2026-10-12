@@ -12,6 +12,7 @@ from format_preview import prepare_format_preview
 from mode_preferences import ModePreferenceRepository
 from models import TournamentFormat
 from png_animation import encode_animated_png
+from sample_creation_data import sample_clapping_top_8_entrants
 
 
 class PodiumsClappingTest(unittest.TestCase):
@@ -71,6 +72,28 @@ class PodiumsClappingTest(unittest.TestCase):
         with Image.open(BytesIO(layout.png(False))) as still:
             self.assertEqual(still.n_frames, 1)
             self.assertEqual(still.convert("RGBA").tobytes(), layout.frame().tobytes())
+
+    def test_shorter_ice_climbers_clap_shares_the_other_portraits_full_cycle(self):
+        layout = prepare_format_preview(PodiumStyle.LEGACY, TournamentFormat.SINGLES, 8, "four_podium",
+                                        font=PodiumFont.UBUNTU, transparent=True,
+                                        entrants=sample_clapping_top_8_entrants())
+        ice = layout.tracks[0]
+        self.assertEqual(len(ice.frames), 25)
+        self.assertEqual(sum(ice.durations), 500)
+        self.assertEqual(len(layout.durations), 42)
+        self.assertEqual(sum(layout.durations), 840)
+        indices = [ice.frame_index_at(index * 20, 840) for index in range(42)]
+        self.assertEqual(set(indices), set(range(25)))
+        self.assertEqual(indices[0], 0)
+        self.assertEqual(indices[-1], 24)
+        with Image.open(BytesIO(layout.png(True))) as animation:
+            self.assertEqual(animation.n_frames, 42)
+            animation.seek(41)
+            self.assertEqual(animation.convert("RGBA").tobytes(), layout.frame(41).tobytes())
+        all_ice = replace(layout, tracks=(ice,))
+        with Image.open(BytesIO(all_ice.png(True))) as animation:
+            self.assertEqual(animation.n_frames, 25)
+            self.assertEqual(sum(all_ice.durations), 500)
 
 
 if __name__ == "__main__":

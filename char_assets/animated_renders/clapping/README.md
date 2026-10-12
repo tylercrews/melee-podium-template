@@ -9,6 +9,13 @@ higher-resolution originals, with the corrected Mr. Game and Watch outlines.
 The source batch, individual dimensions, checksums, and animation metadata
 are recorded in the manifest.
 
+Ice Climbers uses the updated 25-frame, 500 ms exports. The other characters
+retain their 42-frame, 840 ms exports. The standalone GIFs keep their supplied
+timing; Podiums+Clapping fits shorter claps to the longest selected loop so all
+four portraits start and finish their clap together. Its default and blue
+choices remain byte-identical aliases, and the source orange costume retains
+the project's cyan name.
+
 ## Paths and filenames
 
 Character folders use the same display names as `char_assets/renders/`, including

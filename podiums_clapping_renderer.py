@@ -1,7 +1,9 @@
 """Podiums+Clapping's shared static and animated content stage."""
 
 from dataclasses import dataclass, replace
+from bisect import bisect_right
 from io import BytesIO
+from itertools import accumulate
 import json
 from pathlib import Path
 
@@ -12,7 +14,6 @@ from clapping_assets import resolve_clapping_path
 from clapping_portrait_renderer import render_clapping_portrait_frame
 from color_values import format_rgba_hex
 from creation import CreationRequest
-from color_values import format_rgba_hex
 from DrawPodium import ATTRIBUTION_TEXT, _draw_text, _font_to_fit, _load_stock_icon, _temporary_font_settings
 from font_size_adjustments import adjusted_size
 from formatting_assets import draw_placement_tags
@@ -50,6 +51,11 @@ class ClappingTrack:
     durations: list[int]
     preview_index: int
 
+    def frame_index_at(self, elapsed_ms: int, cycle_ms: int) -> int:
+        """Map a shared clap phase into this costume's native frame timeline."""
+        native_elapsed = elapsed_ms * sum(self.durations) // cycle_ms
+        return min(len(self.frames) - 1, bisect_right(list(accumulate(self.durations)), native_elapsed))
+
 
 @dataclass
 class ClappingLayout:
@@ -58,10 +64,21 @@ class ClappingLayout:
     badges: tuple[PlacementTagPlacement, ...]
     preferences: ModePreferences
 
+    @property
+    def durations(self) -> list[int]:
+        # Keep the longest native loop's cadence and fit shorter claps to it.
+        # Ice Climbers' 25-frame clap can therefore share a cycle with 42-frame
+        # characters without skipping its tail or making a huge multi-cycle PNG.
+        return max(self.tracks, key=lambda track: sum(track.durations)).durations
+
     def frame(self, index: int | None = None) -> Image.Image:
         canvas = self.base.copy()
+        durations = self.durations
+        if index is not None and not 0 <= index < len(durations):
+            raise ValueError("Frame index must fit the shared clapping cycle")
+        elapsed = sum(durations[:index]) if index is not None else 0
         for track in self.tracks:
-            frame_index = track.preview_index if index is None else index
+            frame_index = track.preview_index if index is None else track.frame_index_at(elapsed, sum(durations))
             canvas.alpha_composite(track.frames[frame_index], (track.panel.rect.left, track.panel.rect.top))
         draw_placement_tags(canvas, replace(self.preferences, placement_tags=self.badges))
         return canvas
@@ -71,9 +88,7 @@ class ClappingLayout:
             output = BytesIO()
             self.frame().save(output, format="PNG")
             return output.getvalue()
-        durations = self.tracks[0].durations
-        if any(track.durations != durations for track in self.tracks):
-            raise ValueError("Clapping portraits must use synchronized animation frames")
+        durations = self.durations
         bounds = (min(track.panel.rect.left for track in self.tracks),
                   min(track.panel.rect.top for track in self.tracks),
                   max(track.panel.rect.right for track in self.tracks),
