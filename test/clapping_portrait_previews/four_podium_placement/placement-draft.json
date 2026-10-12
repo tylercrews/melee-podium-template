@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "status": "placement_review",
+  "styles": {
+    "legacy": {
+      "canvas_size": {
+        "width": 1672,
+        "height": 941
+      },
+      "lower_result_panels": [
+        {
+          "entrant_slot": 5,
+          "rank": 5,
+          "portrait_rect": [
+            62,
+            830,
+            130,
+            934
+          ],
+          "text_x": 144,
+          "text_max_width": 328,
+          "background_and_name_color": "#FB8B00FF",
+          "demo_tag": "BLE | SluG",
+          "demo_character": "Ice Climbers",
+          "demo_costume": "default"
+        },
+        {
+          "entrant_slot": 6,
+          "rank": 5,
+          "portrait_rect": [
+            473,
+            830,
+            541,
+            934
+          ],
+          "text_x": 555,
+          "text_max_width": 307,
+          "background_and_name_color": "#00CDC3FF",
+          "demo_tag": "TSM | Leffen",
+          "demo_character": "Fox",
+          "demo_costume": "default"
+        },
+        {
+          "entrant_slot": 7,
+          "rank": 7,
+          "portrait_rect": [
+            863,
+            830,
+            931,
+            934
+          ],
+          "text_x": 945,
+          "text_max_width": 299,
+          "background_and_name_color": "#FF00FFFF",
+          "demo_tag": "GG | PPMD",
+          "demo_character": "Falco",
+          "demo_costume": "green"
+        },
+        {
+          "entrant_slot": 8,
+          "rank": 7,
+          "portrait_rect": [
+            1246,
+            830,
+            1314,
+            934
+          ],
+          "text_x": 1328,
+          "text_max_width": 281,
+          "background_and_name_color": "#8D8D8DFF",
+          "demo_tag": "Tempo | Axe",
+          "demo_character": "Pikachu",
+          "demo_costume": "default"
+        }
+      ],
+      "attribution": {
+        "position": [
+          14,
+          18
+        ],
+        "font_size": 18,
+        "color": "#FFFFFF40"
+      }
+    },
+    "customizable": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 941
+      },
+      "lower_result_panels": [
+        {
+          "entrant_slot": 5,
+          "rank": 5,
+          "portrait_rect": [
+            27,
+            830,
+            95,
+            934
+          ],
+          "text_x": 109,
+          "text_max_width": 370,
+          "background_and_name_color": "#FB8B00FF",
+          "demo_tag": "BLE | SluG",
+          "demo_character": "Ice Climbers",
+          "demo_costume": "default"
+        },
+        {
+          "entrant_slot": 6,
+          "rank": 5,
+          "portrait_rect": [
+            533,
+            830,
+            601,
+            934
+          ],
+          "text_x": 615,
+          "text_max_width": 347,
+          "background_and_name_color": "#00CDC3FF",
+          "demo_tag": "TSM | Leffen",
+          "demo_character": "Fox",
+          "demo_costume": "default"
+        },
+        {
+          "entrant_slot": 7,
+          "rank": 7,
+          "portrait_rect": [
+            1016,
+            830,
+            1084,
+            934
+          ],
+          "text_x": 1098,
+          "text_max_width": 339,
+          "background_and_name_color": "#FF00FFFF",
+          "demo_tag": "GG | PPMD",
+          "demo_character": "Falco",
+          "demo_costume": "green"
+        },
+        {
+          "entrant_slot": 8,
+          "rank": 7,
+          "portrait_rect": [
+            1491,
+            830,
+            1559,
+            934
+          ],
+          "text_x": 1573,
+          "text_max_width": 319,
+          "background_and_name_color": "#8D8D8DFF",
+          "demo_tag": "Tempo | Axe",
+          "demo_character": "Pikachu",
+          "demo_costume": "default"
+        }
+      ],
+      "attribution": {
+        "position": [
+          14,
+          18
+        ],
+        "font_size": 18,
+        "color": "#FFFFFF40"
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@ from sample_creation_data import (
     SAMPLE_TEAM_COLORS,
     SAMPLE_TOP_8_ENTRANT_POOL,
     SAMPLE_TOP_25_ENTRANT_POOL,
+    sample_clapping_top_8_entrants,
     sample_singles_entrants,
     sample_top_4_teams,
     sample_top_8_entrants,
@@ -17,6 +18,25 @@ from sample_creation_data import (
 
 
 class SampleCreationDataTest(unittest.TestCase):
+    def test_clapping_demo_has_unique_players_and_seeds_with_varied_lower_characters(self):
+        entrants = sample_clapping_top_8_entrants(random.Random(42))
+        self.assertEqual([entrant.placement for entrant in entrants], list(range(1, 9)))
+        self.assertEqual(sorted(entrant.seed for entrant in entrants), list(range(1, 9)))
+        self.assertEqual(len({entrant.tag for entrant in entrants}), 8)
+        self.assertEqual(
+            [entrant.characters[0].melee_fighter_name for entrant in entrants[4:]],
+            ["Ice Climbers", "Fox", "Falco", "Pikachu"],
+        )
+        self.assertEqual(entrants[6].characters[0].color, "green")
+        self.assertEqual(len(entrants[6].characters), 2)
+
+    def test_clapping_demo_is_reproducible_without_mutating_the_pool(self):
+        first = sample_clapping_top_8_entrants(random.Random(42))
+        second = sample_clapping_top_8_entrants(random.Random(42))
+        self.assertEqual(first, second)
+        first[-1].characters.clear()
+        self.assertTrue(all(entrant.characters for entrant in SAMPLE_TOP_25_ENTRANT_POOL))
+
     def test_extended_sample_helper_returns_unique_sorted_entrants(self) -> None:
         placements = (1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13)
         entrants = sample_singles_entrants(

@@ -173,6 +173,28 @@ def sample_top_4_teams(
     return teams
 
 
+def sample_clapping_top_8_entrants(
+    rng: random.Random | None = None,
+) -> list[SinglesEntrant]:
+    """Include varied lower-result identities for the four-podium crop review."""
+
+    randomizer = rng if rng is not None else random
+    lower_tags = ("BLE | SluG", "TSM | Leffen", "GG | PPMD", "Tempo | Axe")
+    lower = [next(entrant for entrant in SAMPLE_TOP_25_ENTRANT_POOL if entrant.tag == tag)
+             for tag in lower_tags]
+    upper = randomizer.sample(
+        [entrant for entrant in SAMPLE_TOP_8_ENTRANT_POOL if entrant.tag not in lower_tags],
+        k=4,
+    )
+    seeds = randomizer.sample(range(1, 9), k=8)
+    return [SinglesEntrant(
+        tag=entrant.tag,
+        characters=list(entrant.characters),
+        placement=slot,
+        seed=seeds[slot - 1],
+    ) for slot, entrant in enumerate([*upper, *lower], start=1)]
+
+
 def _copy_entrant(entrant: Entrant) -> Entrant:
     """Return a sample entrant with an independently mutable character list."""
 
