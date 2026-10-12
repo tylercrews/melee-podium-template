@@ -12,13 +12,13 @@
           "entrant_slot": 5,
           "rank": 5,
           "portrait_rect": [
-            240,
+            404,
             830,
-            308,
+            472,
             934
           ],
-          "text_x": 226,
-          "text_max_width": 164,
+          "text_x": 390,
+          "text_max_width": 328,
           "text_alignment": "right",
           "background_and_name_color": "#FB8B00FF",
           "demo_tag": "BLE | SluG",
@@ -46,13 +46,13 @@
           "entrant_slot": 7,
           "rank": 7,
           "portrait_rect": [
-            1039,
+            1176,
             830,
-            1107,
+            1244,
             934
           ],
-          "text_x": 1025,
-          "text_max_width": 162,
+          "text_x": 1162,
+          "text_max_width": 299,
           "text_alignment": "right",
           "background_and_name_color": "#FF00FFFF",
           "demo_tag": "GG | PPMD",
@@ -82,29 +82,30 @@
           "slot_id": "lower_pair_1_placement_tag",
           "asset_id": "05th.png",
           "anchor": {
-            "x": 390,
+            "x": 472,
             "y": 882
           },
           "max_size": {
-            "width": 145,
-            "height": 104
+            "width": 16,
+            "height": 12
           },
-          "z_index": 100
+          "z_index": 200
         },
         {
           "slot_id": "lower_pair_2_placement_tag",
           "asset_id": "07th.png",
           "anchor": {
-            "x": 1176,
+            "x": 1245,
             "y": 882
           },
           "max_size": {
-            "width": 145,
-            "height": 104
+            "width": 16,
+            "height": 12
           },
-          "z_index": 101
+          "z_index": 201
         }
       ],
+      "shared_placement_tags_above_portraits": true,
       "attribution": {
         "position": [
           14,
@@ -124,13 +125,13 @@
           "entrant_slot": 5,
           "rank": 5,
           "portrait_rect": [
-            300,
+            411,
             830,
-            368,
+            479,
             934
           ],
-          "text_x": 286,
-          "text_max_width": 259,
+          "text_x": 397,
+          "text_max_width": 370,
           "text_alignment": "right",
           "background_and_name_color": "#FB8B00FF",
           "demo_tag": "BLE | SluG",
@@ -158,13 +159,13 @@
           "entrant_slot": 7,
           "rank": 7,
           "portrait_rect": [
-            1284,
+            1369,
             830,
-            1352,
+            1437,
             934
           ],
-          "text_x": 1270,
-          "text_max_width": 254,
+          "text_x": 1355,
+          "text_max_width": 339,
           "text_alignment": "right",
           "background_and_name_color": "#FF00FFFF",
           "demo_tag": "GG | PPMD",
@@ -194,29 +195,30 @@
           "slot_id": "lower_pair_1_placement_tag",
           "asset_id": "05th.png",
           "anchor": {
-            "x": 450,
+            "x": 506,
             "y": 882
           },
           "max_size": {
-            "width": 145,
-            "height": 104
+            "width": 16,
+            "height": 12
           },
-          "z_index": 100
+          "z_index": 200
         },
         {
           "slot_id": "lower_pair_2_placement_tag",
           "asset_id": "07th.png",
           "anchor": {
-            "x": 1421,
+            "x": 1464,
             "y": 882
           },
           "max_size": {
-            "width": 145,
-            "height": 104
+            "width": 16,
+            "height": 12
           },
-          "z_index": 101
+          "z_index": 201
         }
       ],
+      "shared_placement_tags_above_portraits": true,
       "attribution": {
         "position": [
           14,

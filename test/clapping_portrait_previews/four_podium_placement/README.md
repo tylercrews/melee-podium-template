@@ -12,9 +12,11 @@ at y=830. The first 5th and first 7th entrants have portraits on the right of
 their text blocks, with right-aligned stock/seed rows, sponsors, and names to
 their left. The second 5th and second 7th keep their original portrait and text
 positions. Shared canonical `05th.png` and `07th.png` artwork sits between each
-pair of portraits, with 145-by-104-pixel maximum bounds similar to Legacy's
-fourth-place numeral; individual summary rank labels are omitted. The first
-members' blocks leave clearance around those badges. The portrait uses the entrant's first selected character/costume,
+pair of portraits, with tiny 16-by-12-pixel maximum bounds matching Customizable's
+fourth-place numeral; individual summary rank labels are omitted. The numbers
+do not reserve space or move the portraits or text and are composited over the
+portraits when they overlap. The alternating blocks are anchored directly to
+their podium edges. The portrait uses the entrant's first selected character/costume,
 the reviewed clapping crop, and the same RGBA background as the player-name
 text. The visible lower ranks are 5th, 5th, 7th, and 7th.
 

@@ -21,7 +21,7 @@ from clapping_portrait_renderer import render_clapping_portrait
 from creation import CreationRequest
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import ATTRIBUTION_TEXT, PodiumFont, _load_stock_icon
-from formatting_assets import FormattingAssetRenderer
+from formatting_assets import FormattingAssetRenderer, draw_placement_tags
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository, PixelPoint, PlacementTagPlacement
 from models import TournamentFormat
@@ -34,8 +34,7 @@ OUTPUT = PROJECT_ROOT / "test/clapping_portrait_previews/four_podium_placement"
 BACKGROUND_ID = "00_Battlefield_5000_5000_resaved.png"
 NAME_COLORS = ("#FB8B00FF", "#00CDC3FF", "#FF00FFFF", "#8D8D8DFF")
 PANEL_SIZE = (68, 104)
-SHARED_BADGE_MAX_SIZE = (145, 104)
-SHARED_BADGE_GAP = 12
+SHARED_BADGE_MAX_SIZE = (16, 12)
 
 
 def font(size: int) -> ImageFont.FreeTypeFont:
@@ -59,25 +58,21 @@ class PlacementPreviewContentRenderer(LegacyPodiumContentRenderer):
 
 
 def lower_result_geometry(preferences):
-    """Keep the second members fixed and fit a shared rank between each pair."""
+    """Anchor each block to its podium independently of the tiny rank overlay."""
 
     bodies = sorted(preferences.formatting_assets, key=lambda item: item.destination.left)
     rows, badges = [], []
     for pair_index, asset_id in enumerate(("05th.png", "07th.png")):
         first_index = pair_index * 2
         first, second = bodies[first_index:first_index + 2]
-        with Image.open(PROJECT_ROOT / "formatting_assets/placement_numbers" / asset_id) as source:
-            art = source.copy()
-        art.thumbnail(SHARED_BADGE_MAX_SIZE, Image.Resampling.LANCZOS)
         second_left = second.destination.left + 7
-        badge_left = second_left - SHARED_BADGE_GAP - art.width
-        first_right = badge_left - SHARED_BADGE_GAP
+        first_right = first.destination.right - 7
         first_rect = [first_right - PANEL_SIZE[0], 830, first_right, 830 + PANEL_SIZE[1]]
         second_rect = [second_left, 830, second_left + PANEL_SIZE[0], 830 + PANEL_SIZE[1]]
         badges.append(PlacementTagPlacement(
             slot_id=f"lower_pair_{pair_index + 1}_placement_tag", asset_id=asset_id,
-            anchor=PixelPoint(badge_left + art.width // 2, 830 + PANEL_SIZE[1] // 2),
-            max_size=PixelSize(*SHARED_BADGE_MAX_SIZE), z_index=100 + pair_index,
+            anchor=PixelPoint((first_right + second_left) // 2, 830 + PANEL_SIZE[1] // 2),
+            max_size=PixelSize(*SHARED_BADGE_MAX_SIZE), z_index=200 + pair_index,
         ))
         for index, body, rect, alignment in (
             (first_index, first, first_rect, "right"),
@@ -167,7 +162,6 @@ def generate() -> None:
         review_preferences = replace(
             preferences,
             text_slots=tuple(placement for placement in preferences.text_slots if placement.field != "entrant.summary"),
-            placement_tags=preferences.placement_tags + tuple(shared_badges),
         )
         formatted = FormattingAssetRenderer().draw(create_background(background), review_preferences, colors)
         preview = PlacementPreviewContentRenderer(font=PodiumFont.UBUNTU).draw(formatted, request, review_preferences)
@@ -182,6 +176,8 @@ def generate() -> None:
                 "demo_character": entrant.characters[0].melee_fighter_name,
                 "demo_costume": entrant.characters[0].color,
             })
+        # The requested shared ranks overlay portraits without affecting geometry.
+        draw_placement_tags(preview, replace(review_preferences, placement_tags=tuple(shared_badges)))
         output = OUTPUT / f"{style.value}-top-8-four-podium-placement.png"
         preview.convert("RGB").save(output)
         preview.crop((0, 818, size.width, size.height)).resize(
@@ -190,6 +186,7 @@ def generate() -> None:
         draft["styles"][style.value] = {
             "canvas_size": size.to_dict(), "lower_result_panels": rows,
             "shared_placement_tags": [badge.to_dict() for badge in shared_badges],
+            "shared_placement_tags_above_portraits": True,
             "attribution": {"position": [14, 18], "font_size": 18, "color": "#FFFFFF40"},
         }
         print(output)
