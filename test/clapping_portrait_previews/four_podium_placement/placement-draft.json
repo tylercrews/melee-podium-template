@@ -12,13 +12,14 @@
           "entrant_slot": 5,
           "rank": 5,
           "portrait_rect": [
-            62,
+            240,
             830,
-            130,
+            308,
             934
           ],
-          "text_x": 144,
-          "text_max_width": 328,
+          "text_x": 226,
+          "text_max_width": 164,
+          "text_alignment": "right",
           "background_and_name_color": "#FB8B00FF",
           "demo_tag": "BLE | SluG",
           "demo_character": "Ice Climbers",
@@ -35,6 +36,7 @@
           ],
           "text_x": 555,
           "text_max_width": 307,
+          "text_alignment": "left",
           "background_and_name_color": "#00CDC3FF",
           "demo_tag": "TSM | Leffen",
           "demo_character": "Fox",
@@ -44,13 +46,14 @@
           "entrant_slot": 7,
           "rank": 7,
           "portrait_rect": [
-            863,
+            1039,
             830,
-            931,
+            1107,
             934
           ],
-          "text_x": 945,
-          "text_max_width": 299,
+          "text_x": 1025,
+          "text_max_width": 162,
+          "text_alignment": "right",
           "background_and_name_color": "#FF00FFFF",
           "demo_tag": "GG | PPMD",
           "demo_character": "Falco",
@@ -67,10 +70,39 @@
           ],
           "text_x": 1328,
           "text_max_width": 281,
+          "text_alignment": "left",
           "background_and_name_color": "#8D8D8DFF",
           "demo_tag": "Tempo | Axe",
           "demo_character": "Pikachu",
           "demo_costume": "default"
+        }
+      ],
+      "shared_placement_tags": [
+        {
+          "slot_id": "lower_pair_1_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 390,
+            "y": 882
+          },
+          "max_size": {
+            "width": 145,
+            "height": 104
+          },
+          "z_index": 100
+        },
+        {
+          "slot_id": "lower_pair_2_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1176,
+            "y": 882
+          },
+          "max_size": {
+            "width": 145,
+            "height": 104
+          },
+          "z_index": 101
         }
       ],
       "attribution": {
@@ -92,13 +124,14 @@
           "entrant_slot": 5,
           "rank": 5,
           "portrait_rect": [
-            27,
+            300,
             830,
-            95,
+            368,
             934
           ],
-          "text_x": 109,
-          "text_max_width": 370,
+          "text_x": 286,
+          "text_max_width": 259,
+          "text_alignment": "right",
           "background_and_name_color": "#FB8B00FF",
           "demo_tag": "BLE | SluG",
           "demo_character": "Ice Climbers",
@@ -115,6 +148,7 @@
           ],
           "text_x": 615,
           "text_max_width": 347,
+          "text_alignment": "left",
           "background_and_name_color": "#00CDC3FF",
           "demo_tag": "TSM | Leffen",
           "demo_character": "Fox",
@@ -124,13 +158,14 @@
           "entrant_slot": 7,
           "rank": 7,
           "portrait_rect": [
-            1016,
+            1284,
             830,
-            1084,
+            1352,
             934
           ],
-          "text_x": 1098,
-          "text_max_width": 339,
+          "text_x": 1270,
+          "text_max_width": 254,
+          "text_alignment": "right",
           "background_and_name_color": "#FF00FFFF",
           "demo_tag": "GG | PPMD",
           "demo_character": "Falco",
@@ -147,10 +182,39 @@
           ],
           "text_x": 1573,
           "text_max_width": 319,
+          "text_alignment": "left",
           "background_and_name_color": "#8D8D8DFF",
           "demo_tag": "Tempo | Axe",
           "demo_character": "Pikachu",
           "demo_costume": "default"
+        }
+      ],
+      "shared_placement_tags": [
+        {
+          "slot_id": "lower_pair_1_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 450,
+            "y": 882
+          },
+          "max_size": {
+            "width": 145,
+            "height": 104
+          },
+          "z_index": 100
+        },
+        {
+          "slot_id": "lower_pair_2_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1421,
+            "y": 882
+          },
+          "max_size": {
+            "width": 145,
+            "height": 104
+          },
+          "z_index": 101
         }
       ],
       "attribution": {

@@ -14,7 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from background_builder import (
-    BUILTIN_BACKGROUND_SIZES, BackgroundRequest, ImagePlacement, PixelRect,
+    BUILTIN_BACKGROUND_SIZES, BackgroundRequest, ImagePlacement, PixelRect, PixelSize,
     cover_crop, create_background,
 )
 from clapping_portrait_renderer import render_clapping_portrait
@@ -23,7 +23,7 @@ from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import ATTRIBUTION_TEXT, PodiumFont, _load_stock_icon
 from formatting_assets import FormattingAssetRenderer
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
-from mode_preferences import ModePreferenceRepository
+from mode_preferences import ModePreferenceRepository, PixelPoint, PlacementTagPlacement
 from models import TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 from portrait_assets import PORTRAIT_FILENAME, resolve_character_path
@@ -34,6 +34,8 @@ OUTPUT = PROJECT_ROOT / "test/clapping_portrait_previews/four_podium_placement"
 BACKGROUND_ID = "00_Battlefield_5000_5000_resaved.png"
 NAME_COLORS = ("#FB8B00FF", "#00CDC3FF", "#FF00FFFF", "#8D8D8DFF")
 PANEL_SIZE = (68, 104)
+SHARED_BADGE_MAX_SIZE = (145, 104)
+SHARED_BADGE_GAP = 12
 
 
 def font(size: int) -> ImageFont.FreeTypeFont:
@@ -56,8 +58,44 @@ class PlacementPreviewContentRenderer(LegacyPodiumContentRenderer):
         canvas.alpha_composite(layer)
 
 
-def draw_lower_result(canvas, entrant, rect, text_x, max_width, color, rank):
-    """Review a portrait and a compact, left-aligned version of the existing summary."""
+def lower_result_geometry(preferences):
+    """Keep the second members fixed and fit a shared rank between each pair."""
+
+    bodies = sorted(preferences.formatting_assets, key=lambda item: item.destination.left)
+    rows, badges = [], []
+    for pair_index, asset_id in enumerate(("05th.png", "07th.png")):
+        first_index = pair_index * 2
+        first, second = bodies[first_index:first_index + 2]
+        with Image.open(PROJECT_ROOT / "formatting_assets/placement_numbers" / asset_id) as source:
+            art = source.copy()
+        art.thumbnail(SHARED_BADGE_MAX_SIZE, Image.Resampling.LANCZOS)
+        second_left = second.destination.left + 7
+        badge_left = second_left - SHARED_BADGE_GAP - art.width
+        first_right = badge_left - SHARED_BADGE_GAP
+        first_rect = [first_right - PANEL_SIZE[0], 830, first_right, 830 + PANEL_SIZE[1]]
+        second_rect = [second_left, 830, second_left + PANEL_SIZE[0], 830 + PANEL_SIZE[1]]
+        badges.append(PlacementTagPlacement(
+            slot_id=f"lower_pair_{pair_index + 1}_placement_tag", asset_id=asset_id,
+            anchor=PixelPoint(badge_left + art.width // 2, 830 + PANEL_SIZE[1] // 2),
+            max_size=PixelSize(*SHARED_BADGE_MAX_SIZE), z_index=100 + pair_index,
+        ))
+        for index, body, rect, alignment in (
+            (first_index, first, first_rect, "right"),
+            (first_index + 1, second, second_rect, "left"),
+        ):
+            text_x = rect[0] - 14 if alignment == "right" else rect[2] + 14
+            max_width = text_x - body.destination.left - 7 if alignment == "right" else body.destination.right - text_x - 7
+            assert max_width > 0
+            rows.append({
+                "entrant_slot": index + 5, "rank": 5 if pair_index == 0 else 7,
+                "portrait_rect": rect, "text_x": text_x, "text_max_width": max_width,
+                "text_alignment": alignment, "background_and_name_color": NAME_COLORS[index],
+            })
+    return rows, badges
+
+
+def draw_lower_result(canvas, entrant, rect, text_x, max_width, color, alignment):
+    """Draw a portrait with a left- or right-aligned identity and stock/seed row."""
 
     left, top, right, bottom = rect
     character = entrant.characters[0]
@@ -69,23 +107,25 @@ def draw_lower_result(canvas, entrant, rect, text_x, max_width, color, rank):
     canvas.alpha_composite(portrait, (left, top))
     draw = ImageDraw.Draw(canvas)
     row_y = top + 17
-    rank_text = f"{rank}th"
-    draw.text((text_x, row_y), rank_text, font=font(28), anchor="lm", fill=color)
-    x = text_x + round(font(28).getlength(rank_text)) + 12
-    for character in entrant.characters:
-        icon = _load_stock_icon(character, size=24)
+    icons = [_load_stock_icon(character, size=24) for character in entrant.characters]
+    seed_text = f"[{entrant.seed}s]" if entrant.seed is not None else ""
+    icons_width = sum(icon.width for icon in icons) + 5 * max(0, len(icons) - 1)
+    row_width = icons_width + (12 + round(font(17).getlength(seed_text)) if seed_text else 0)
+    x = text_x - row_width if alignment == "right" else text_x
+    for icon in icons:
         canvas.alpha_composite(icon, (x, row_y - icon.height // 2))
         x += icon.width + 5
-    if entrant.seed is not None:
-        draw.text((x + 7, row_y + 3), f"[{entrant.seed}s]", font=font(17), anchor="lm", fill=color)
+    if seed_text:
+        draw.text((x + 7, row_y + 3), seed_text, font=font(17), anchor="lm", fill=color)
+    anchor = "rm" if alignment == "right" else "lm"
     sponsor, separator, player = entrant.tag.rpartition("|")
     if separator:
-        draw.text((text_x, top + 47), sponsor.strip(), font=fit_font(sponsor.strip(), 22, max_width), anchor="lm", fill=color)
+        draw.text((text_x, top + 47), sponsor.strip(), font=fit_font(sponsor.strip(), 22, max_width), anchor=anchor, fill=color)
         name_y = top + 82
     else:
         player = entrant.tag
         name_y = top + 63
-    draw.text((text_x, name_y), player.strip(), font=fit_font(player.strip(), 46, max_width), anchor="lm", fill=color)
+    draw.text((text_x, name_y), player.strip(), font=fit_font(player.strip(), 46, max_width), anchor=anchor, fill=color)
     assert 0 <= left < right <= canvas.width and 0 <= top < bottom <= canvas.height
 
 
@@ -123,26 +163,24 @@ def generate() -> None:
         )
         # This is an explicit offline geometry review, like the existing podium
         # preview scripts. Leave scaffold readiness and runtime preferences intact.
-        review_preferences = replace(preferences, text_slots=tuple(
-            placement for placement in preferences.text_slots if placement.field != "entrant.summary"
-        ))
+        rows, shared_badges = lower_result_geometry(preferences)
+        review_preferences = replace(
+            preferences,
+            text_slots=tuple(placement for placement in preferences.text_slots if placement.field != "entrant.summary"),
+            placement_tags=preferences.placement_tags + tuple(shared_badges),
+        )
         formatted = FormattingAssetRenderer().draw(create_background(background), review_preferences, colors)
         preview = PlacementPreviewContentRenderer(font=PodiumFont.UBUNTU).draw(formatted, request, review_preferences)
-        rows = []
-        for index, body in enumerate(sorted(preferences.formatting_assets, key=lambda item: item.destination.left)):
-            rect = [body.destination.left + 7, 830, body.destination.left + 7 + PANEL_SIZE[0], 830 + PANEL_SIZE[1]]
-            text_x = rect[2] + 14
-            max_width = body.destination.right - text_x - 7
-            rank = 5 if index < 2 else 7
-            color = NAME_COLORS[index]
-            draw_lower_result(preview, entrants[index + 4], rect, text_x, max_width, color, rank)
-            rows.append({
-                "entrant_slot": index + 5, "rank": rank, "portrait_rect": rect,
-                "text_x": text_x, "text_max_width": max_width,
-                "background_and_name_color": color,
-                "demo_tag": entrants[index + 4].tag,
-                "demo_character": entrants[index + 4].characters[0].melee_fighter_name,
-                "demo_costume": entrants[index + 4].characters[0].color,
+        for row in rows:
+            entrant = entrants[row["entrant_slot"] - 1]
+            draw_lower_result(
+                preview, entrant, row["portrait_rect"], row["text_x"],
+                row["text_max_width"], row["background_and_name_color"], row["text_alignment"],
+            )
+            row.update({
+                "demo_tag": entrant.tag,
+                "demo_character": entrant.characters[0].melee_fighter_name,
+                "demo_costume": entrant.characters[0].color,
             })
         output = OUTPUT / f"{style.value}-top-8-four-podium-placement.png"
         preview.convert("RGB").save(output)
@@ -151,6 +189,7 @@ def generate() -> None:
         ).convert("RGB").save(OUTPUT / f"{style.value}-lower-results-detail.png")
         draft["styles"][style.value] = {
             "canvas_size": size.to_dict(), "lower_result_panels": rows,
+            "shared_placement_tags": [badge.to_dict() for badge in shared_badges],
             "attribution": {"position": [14, 18], "font_size": 18, "color": "#FFFFFF40"},
         }
         print(output)
