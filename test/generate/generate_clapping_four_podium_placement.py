@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -34,8 +35,6 @@ OUTPUT = PROJECT_ROOT / "test/clapping_portrait_previews/four_podium_placement"
 BACKGROUND_ID = "00_Battlefield_5000_5000_resaved.png"
 NAME_COLORS = ("#FB8B00FF", "#00CDC3FF", "#FF00FFFF", "#8D8D8DFF")
 PANEL_SIZE = (68, 104)
-PLACEMENT_NUMBER_SIZE_MULTIPLIER = 1.25
-SHARED_BADGE_MAX_SIZE = (20, 15)
 SHARED_BADGE_COPY_GAP = 12
 
 
@@ -59,21 +58,7 @@ class PlacementPreviewContentRenderer(LegacyPodiumContentRenderer):
         canvas.alpha_composite(layer)
 
 
-def enlarged_podium_tags(preferences):
-    """Increase the small Customizable second-through-fourth numbers for review."""
-
-    if preferences.selection.options.podium_style is not PodiumStyle.CUSTOMIZABLE:
-        return preferences.placement_tags
-    return tuple(
-        replace(tag, max_size=PixelSize(
-            round(tag.max_size.width * PLACEMENT_NUMBER_SIZE_MULTIPLIER),
-            round(tag.max_size.height * PLACEMENT_NUMBER_SIZE_MULTIPLIER),
-        )) if tag.asset_id in {"02nd.png", "03rd.png", "04th.png"} else tag
-        for tag in preferences.placement_tags
-    )
-
-
-def lower_result_geometry(preferences):
+def lower_result_geometry(preferences, number_height):
     """Anchor each block to its podium independently of the tiny rank overlay."""
 
     bodies = sorted(preferences.formatting_assets, key=lambda item: item.destination.left)
@@ -87,7 +72,8 @@ def lower_result_geometry(preferences):
         second_rect = [second_left, 830, second_left + PANEL_SIZE[0], 830 + PANEL_SIZE[1]]
         with Image.open(PROJECT_ROOT / "formatting_assets/placement_numbers" / asset_id) as source:
             art = source.copy()
-        art.thumbnail(SHARED_BADGE_MAX_SIZE, Image.Resampling.LANCZOS)
+        badge_max_size = (math.ceil(art.width * number_height / art.height), number_height)
+        art.thumbnail(badge_max_size, Image.Resampling.LANCZOS)
         center_x = (first_right + second_left) // 2
         group_height = 2 * art.height + SHARED_BADGE_COPY_GAP
         group_top = 830 + PANEL_SIZE[1] // 2 - group_height // 2
@@ -97,7 +83,7 @@ def lower_result_geometry(preferences):
                 slot_id=f"lower_pair_{pair_index + 1}_entrant_{first_index + member_index + 5}_placement_tag",
                 asset_id=asset_id,
                 anchor=PixelPoint(center_x, art_top + art.height // 2),
-                max_size=PixelSize(*SHARED_BADGE_MAX_SIZE), z_index=200 + first_index + member_index,
+                max_size=PixelSize(*badge_max_size), z_index=200 + first_index + member_index,
             ))
         for index, body, rect, alignment in (
             (first_index, first, first_rect, "right"),
@@ -164,6 +150,15 @@ def generate() -> None:
         subtitle="Singles Top 8 - Four Podiums", date="10/12/2026",
     )
     draft = {"schema_version": 1, "status": "placement_review", "styles": {}}
+    reference_selection = ModeSelection(CreationMode.PODIUM, ModeOptions(
+        event_format=TournamentFormat.SINGLES, entrant_count=8,
+        variant="four_podium", podium_style=PodiumStyle.CUSTOMIZABLE,
+    ))
+    reference_preferences = ModePreferenceRepository().load(reference_selection)
+    fourth = next(tag for tag in reference_preferences.placement_tags if tag.asset_id == "04th.png")
+    with Image.open(PROJECT_ROOT / "formatting_assets/placement_numbers/04th.png") as source:
+        source.thumbnail(fourth.max_size.as_tuple(), Image.Resampling.LANCZOS)
+        number_height = source.height
     for style in (PodiumStyle.LEGACY, PodiumStyle.CUSTOMIZABLE):
         selection = ModeSelection(CreationMode.PODIUM, ModeOptions(
             event_format=TournamentFormat.SINGLES, entrant_count=8,
@@ -183,11 +178,10 @@ def generate() -> None:
         )
         # This is an explicit offline geometry review, like the existing podium
         # preview scripts. Leave scaffold readiness and runtime preferences intact.
-        rows, shared_badges = lower_result_geometry(preferences)
+        rows, shared_badges = lower_result_geometry(preferences, number_height)
         review_preferences = replace(
             preferences,
             text_slots=tuple(placement for placement in preferences.text_slots if placement.field != "entrant.summary"),
-            placement_tags=enlarged_podium_tags(preferences),
         )
         formatted = FormattingAssetRenderer().draw(create_background(background), review_preferences, colors)
         preview = PlacementPreviewContentRenderer(font=PodiumFont.UBUNTU).draw(formatted, request, review_preferences)
@@ -209,11 +203,16 @@ def generate() -> None:
         preview.crop((0, 818, size.width, size.height)).resize(
             (size.width * 2, (size.height - 818) * 2), Image.Resampling.LANCZOS,
         ).convert("RGB").save(OUTPUT / f"{style.value}-lower-results-detail.png")
+        if style is PodiumStyle.CUSTOMIZABLE:
+            preview.crop((0, 650, size.width, 860)).convert("RGB").save(
+                OUTPUT / "customizable-front-number-detail.png",
+            )
         draft["styles"][style.value] = {
             "canvas_size": size.to_dict(), "lower_result_panels": rows,
             "shared_placement_tags": [badge.to_dict() for badge in shared_badges],
             "podium_placement_tags": [tag.to_dict() for tag in review_preferences.placement_tags],
             "shared_placement_tags_above_portraits": True,
+            "shared_placement_number_height": number_height,
             "attribution": {"position": [14, 18], "font_size": 18, "color": "#FFFFFF40"},
         }
         print(output)
