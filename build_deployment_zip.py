@@ -34,6 +34,8 @@ FILES = (
     "mode_preferences.py",
     "models.py",
     "podium_colors.py",
+    "podiums_clapping_renderer.py",
+    "png_animation.py",
     "portrait_pose_labels.py",
     "portrait_assets.py",
     "portrait_crop_adjustment_for_clapping.py",

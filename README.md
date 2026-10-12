@@ -1,5 +1,11 @@
 # melee-podium-template
 
+**Podiums+Clapping** is the Singles Top 8 layout with four podiums and four
+costume-correct clapping portrait panels. Its **Animated** checkbox defaults
+to on and is retained in saved formats and exported JSON. Unchecking it keeps
+the portrait panels as still images. Exact previews and downloads use a
+looping animated PNG when enabled, or a standard PNG when disabled.
+
 ## Local development
 
 Run the Flask API and Vite frontend in separate PowerShell terminals. All commands below start from the repository root.

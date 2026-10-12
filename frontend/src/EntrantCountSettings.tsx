@@ -1,4 +1,4 @@
-import { EntrantCountOption, FormatConfiguration, entrantCountOptions } from "./format";
+import { EntrantCountOption, FormatConfiguration, entrantCountOptions, isPodiumsClapping, selectEntrantCount } from "./format";
 
 interface EntrantCountSettingsProps {
   value: FormatConfiguration;
@@ -9,17 +9,7 @@ export default function EntrantCountSettings({ value, onChange }: EntrantCountSe
   const options = entrantCountOptions(value.selection);
 
   function selectOption(option: EntrantCountOption) {
-    onChange({
-      ...value,
-      selection: {
-        ...value.selection,
-        options: {
-          ...value.selection.options,
-          entrant_count: option.entrant_count,
-          variant: option.variant,
-        },
-      },
-    });
+    onChange(selectEntrantCount(value, option));
   }
 
   return <section className="format-settings-card" aria-labelledby="entrant-count-heading">
@@ -30,5 +20,6 @@ export default function EntrantCountSettings({ value, onChange }: EntrantCountSe
         return <label className="format-choice" key={`${option.entrant_count}-${option.variant ?? "standard"}`}><input type="radio" name="entrant-count" checked={checked} onChange={() => selectOption(option)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{option.label}</strong>{option.detail && <small>{option.detail}</small>}</span></label>;
       })}
     </div></fieldset>}
+    {isPodiumsClapping(value.selection) && <label className="text-setting-check"><input type="checkbox" checked={value.selection.options.animated !== false} onChange={(event) => onChange({ ...value, selection: { ...value.selection, options: { ...value.selection.options, animated: event.target.checked } } })} /><span><strong>Animated</strong><small>Animate the clapping portraits. Turn off to keep the same panels as still images.</small></span></label>}
   </section>;
 }

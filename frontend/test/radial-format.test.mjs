@@ -118,7 +118,7 @@ for (const eventFormat of ["singles", "doubles"]) {
 test("switching Radial layouts selects count and bracket type together", () => {
   const singles = fixture("singles");
   const doubles = radial.selectRadialLayout(singles, "doubles");
-  assert.deepEqual(doubles.selection.options, { event_format: "doubles", entrant_count: 4, variant: null, podium_style: null });
+  assert.deepEqual(doubles.selection.options, { event_format: "doubles", entrant_count: 4, variant: null, podium_style: null, animated: false });
   assert.deepEqual(doubles.image_settings, singles.image_settings);
   assert.deepEqual(doubles.text_settings, singles.text_settings);
   assert.deepEqual(radial.selectRadialLayout(doubles, "singles"), singles);

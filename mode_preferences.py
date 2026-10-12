@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 from pathlib import Path
 from typing import Any, Mapping, Protocol
@@ -407,9 +407,11 @@ class ModePreferenceRepository:
         except json.JSONDecodeError as error:
             raise ValueError(f"Invalid preference JSON: {path}") from error
         preferences = ModePreferences.from_dict(_mapping(raw, "preference file"))
-        if preferences.selection != selection:
+        # Animation changes output playback, not the shared layout geometry.
+        geometry_selection = replace(selection, options=replace(selection.options, animated=preferences.selection.options.animated))
+        if preferences.selection != geometry_selection:
             raise ValueError(f"Preference selection does not match its path: {path}")
-        return preferences
+        return replace(preferences, selection=selection)
 
     def list_preferences(
         self, mode: CreationMode | None = None

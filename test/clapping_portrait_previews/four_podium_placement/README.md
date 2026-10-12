@@ -1,13 +1,20 @@
-# Four-podium clapping portrait placement proposal
+# Podiums+Clapping placement review
 
-Proposed display name: **Top 8 - 4 Podiums + 4 Clapping Portraits**. This names
-both parts of the Top 8 result while the existing `four_podium` selection ID
-continues to identify its saved settings.
+Official display name: **Podiums+Clapping**. The existing `four_podium`
+selection ID continues to identify older saved settings. The default-on
+Animated checkbox is saved as `selection.options.animated`; turning it off
+keeps all four portrait panels as still images.
 
 Render the static layout review with:
 
 ```powershell
 python test/generate/generate_clapping_four_podium_placement.py
+```
+
+Regenerate the runtime still and animated examples with:
+
+```powershell
+python test/generate/generate_podiums_clapping_previews.py
 ```
 
 The Legacy and Customizable PNGs use their own existing podium geometry and
@@ -40,11 +47,14 @@ times. `placement-draft.json` records the proposed rectangles, text widths,
 colors, text anchors, shared-number placements, and example identities separately
 for the two styles.
 
-These are offline review artifacts, using populated scaffold coordinates like
-the existing podium geometry review scripts. No runtime preference readiness
-flags, routes, downloads, or animation behavior are changed. After placement
-review, the same fixed lower-result rectangles can be composited for each GIF
-frame while the rest of the image remains static.
+These placement artifacts use populated scaffold coordinates like the existing
+podium geometry review scripts. Readiness flags remain unchanged. The exact
+frontend render now uses the reviewed panel geometry from
+`preferences/portraits/podiums_clapping.json`. Animated downloads are lossless
+looping APNGs (with a `.png` extension); still downloads are ordinary PNGs.
+Each uses the same character crops, borders, text colors, and rank overlays.
+The `*-podiums-clapping-animated.png` and `*-podiums-clapping-still.png` files
+exercise the runtime renderer for both podium styles.
 
 The same fitting rule now covers all Customizable layouts. To recalibrate their
 existing number placements from the semantic masks, run

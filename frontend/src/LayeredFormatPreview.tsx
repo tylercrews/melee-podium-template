@@ -3,7 +3,7 @@ import { apiUrl, recordDownload } from "./api";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
-import { FormatConfiguration, PixelSize, buildBackgroundPlacement, formatCanvasSize, sizeMultiplierValue } from "./format";
+import { FormatConfiguration, PixelSize, buildBackgroundPlacement, formatCanvasSize, sizeMultiplierValue, isPodiumsClapping } from "./format";
 
 interface FormatPreviewProps {
   format: FormatConfiguration;
@@ -152,7 +152,7 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   const styleLabel = mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
   const layoutLabel = format.selection.options.variant === "four_podium"
-    ? "Top 8 – 4 Podiums"
+    ? "Podiums+Clapping"
     : `Top ${format.selection.options.entrant_count ?? (mode === "radial" && eventFormat === "doubles" ? 4 : 8)}`;
   return {
     foregroundLayers,
@@ -193,7 +193,7 @@ function previewEntrants(entrants: EntrantDraft[], entrantCount: number, include
   });
 }
 
-async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean, logoImage: FormatImageInfo | null): Promise<HTMLImageElement> {
+async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean, logoImage: FormatImageInfo | null, composition?: { background: Blob; overlay: Blob }): Promise<Blob> {
   const entrantCount = format.selection.options.entrant_count ?? (format.selection.mode === "radial" && format.selection.options.event_format === "doubles" ? 4 : 8);
   const config = {
     mode: format.selection.mode,
@@ -201,6 +201,7 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
     event_format: format.selection.options.event_format ?? "singles",
     entrant_count: entrantCount,
     variant: format.selection.options.variant,
+    animated: isPodiumsClapping(format.selection) && format.selection.options.animated !== false,
     transparent: true,
     formatting_asset_colors: format.formatting_asset_colors,
     entrant_text_colors: format.entrant_text_colors,
@@ -224,9 +225,13 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
     entrants: entrantsComplete ? previewEntrants(entrants, entrantCount, format.text_settings.include_seeding) : undefined,
   };
   let init: RequestInit;
-  if (fontAsset?.custom || (format.selection.mode === "radial" && logoImage)) {
+  if (fontAsset?.custom || (format.selection.mode === "radial" && logoImage) || composition) {
     const form = new FormData();
     form.append("config", JSON.stringify(config));
+    if (composition) {
+      form.append("composite_background", composition.background, "background.png");
+      form.append("composite_overlay", composition.overlay, "overlay.png");
+    }
     if (fontAsset?.custom) {
       const fontResponse = await fetch(fontAsset.url);
       if (!fontResponse.ok) throw new Error("Could not load the selected custom font.");
@@ -243,7 +248,11 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
   }
   const response = await fetch(apiUrl("format-preview"), init);
   if (!response.ok) throw new Error("Could not render the configured format preview.");
-  const objectUrl = URL.createObjectURL(await response.blob());
+  return response.blob();
+}
+
+async function decodePreview(blob: Blob): Promise<HTMLImageElement> {
+  const objectUrl = URL.createObjectURL(blob);
   try {
     return await new Promise<HTMLImageElement>((resolve, reject) => {
       const image = new Image();
@@ -343,6 +352,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
   const [exactPreview, setExactPreview] = useState(false);
+  const [animatedPreviewUrl, setAnimatedPreviewUrl] = useState<string | null>(null);
   const [refreshedSignature, setRefreshedSignature] = useState<string | null>(null);
   const renderInFlight = useRef(false);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -351,11 +361,14 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   const previewSignature = JSON.stringify({ format, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null, fontId: fontAsset?.id ?? null, tournament: tournamentComplete ? tournament : null, entrants: entrantsComplete ? entrants.slice(0, format.selection.options.entrant_count ?? 0) : null });
   const needsRefresh = refreshedSignature !== previewSignature;
 
+  useEffect(() => () => { if (animatedPreviewUrl) URL.revokeObjectURL(animatedPreviewUrl); }, [animatedPreviewUrl]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setFailed(false);
     setExactPreview(false);
+    setAnimatedPreviewUrl(null);
     setRefreshedSignature(null);
     const timeout = window.setTimeout(async () => {
       try {
@@ -399,8 +412,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     setRefreshing(true);
     setFailed(false);
     try {
-      const [foreground, background, logo] = await Promise.all([
-        loadConfiguredForeground(format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage),
+      const [background, logo] = await Promise.all([
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);
@@ -409,12 +421,26 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
       const context = target.getContext("2d");
       if (!context) throw new Error("Canvas preview is unavailable.");
       drawBackground(context, format, request.outputSize, background, backgroundImage);
+      const animated = isPodiumsClapping(format.selection) && format.selection.options.animated !== false;
+      let composition: { background: Blob; overlay: Blob } | undefined;
+      if (animated) {
+        const overlay = document.createElement("canvas");
+        overlay.width = target.width;
+        overlay.height = target.height;
+        const overlayContext = overlay.getContext("2d");
+        if (!overlayContext) throw new Error("Canvas preview is unavailable.");
+        drawLogo(overlayContext, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+        composition = { background: await canvasPng(target), overlay: await canvasPng(overlay) };
+      }
+      const foregroundBlob = await loadConfiguredForeground(format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage, composition);
+      const foreground = await decodePreview(foregroundBlob);
       context.drawImage(foreground, 0, 0, request.outputSize.width, request.outputSize.height);
-      if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+      if (!animated && format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+      setAnimatedPreviewUrl(animated ? URL.createObjectURL(foregroundBlob) : null);
       setExactPreview(true);
       setRefreshedSignature(previewSignature);
       if (download) {
-        const blob = await canvasPng(target);
+        const blob = animated ? foregroundBlob : await canvasPng(target);
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = downloadUrl;
@@ -453,10 +479,10 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   }
 
   return <div className="format-preview">
-    <button className="format-preview__frame" type="button" onClick={openExpandedPreview} aria-label="Open a larger format preview"><canvas className="format-preview__canvas" ref={canvas} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Layered format preview: ${request.label}`} />{loading && <span className="format-preview__loading">Updating layers…</span>}</button>
+    <button className="format-preview__frame" type="button" onClick={openExpandedPreview} aria-label="Open a larger format preview"><canvas className="format-preview__canvas" ref={canvas} hidden={Boolean(animatedPreviewUrl)} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Layered format preview: ${request.label}`} />{animatedPreviewUrl && <img className="format-preview__canvas" src={animatedPreviewUrl} alt={`Animated format preview: ${request.label}`} />}{loading && <span className="format-preview__loading">Updating layers…</span>}</button>
     <button className={`button button--outline format-preview__refresh${needsRefresh ? " format-preview__refresh--needed" : ""}`} type="button" onClick={() => void refreshWithSelectedImages()} disabled={refreshing} aria-label={needsRefresh ? "Refresh Format Preview; exact render is available" : "Refresh Format Preview; preview is up to date"}><span>{refreshing ? "Refreshing preview…" : "Refresh Format Preview"}</span>{needsRefresh && !refreshing && <span className="format-preview__refresh-status">Exact render available</span>}</button>
     <p><strong>{exactPreview ? "Exact entrant preview" : "Fast layered preview"}</strong> · {request.label}</p>
     {failed && <span className="format-preview__waiting" role="alert">The preview could not be updated. The previous preview is still shown.</span>}
-    <dialog className="modal format-preview-modal" ref={expandedDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => expandedDialog.current?.close()} aria-label="Close enlarged preview">×</button><canvas className="format-preview-modal__image" ref={expandedCanvas} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Enlarged format preview: ${request.label}`} /></div></dialog>
+    <dialog className="modal format-preview-modal" ref={expandedDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => expandedDialog.current?.close()} aria-label="Close enlarged preview">×</button><canvas className="format-preview-modal__image" ref={expandedCanvas} hidden={Boolean(animatedPreviewUrl)} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Enlarged format preview: ${request.label}`} />{animatedPreviewUrl && <img className="format-preview-modal__image" src={animatedPreviewUrl} alt={`Enlarged animated format preview: ${request.label}`} />}</div></dialog>
   </div>;
 }

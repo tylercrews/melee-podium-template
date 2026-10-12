@@ -1,4 +1,4 @@
-"""Offline static placement proposal for the first animated four-podium layout."""
+"""Offline static placement review for Podiums+Clapping."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ BACKGROUND_ID = "00_Battlefield_5000_5000_resaved.png"
 NAME_COLORS = ("#FB8B00FF", "#00CDC3FF", "#FF00FFFF", "#8D8D8DFF")
 PANEL_SIZE = (68, 104)
 SHARED_BADGE_COPY_GAP = 12
-LAYOUT_REVIEW_NAME = "Top 8 - 4 Podiums + 4 Clapping Portraits"
+LAYOUT_REVIEW_NAME = "Podiums+Clapping"
 
 
 def font(size: int) -> ImageFont.FreeTypeFont:

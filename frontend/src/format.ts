@@ -78,6 +78,7 @@ export interface FormatSelection {
     entrant_count: number | null;
     variant: string | null;
     podium_style: PodiumStyle | null;
+    animated: boolean;
   };
 }
 
@@ -159,6 +160,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
       entrant_count: null,
       variant: null,
       podium_style: null,
+      animated: false,
     },
   },
   header_layout: DEFAULT_HEADER_LAYOUT,
@@ -200,7 +202,7 @@ export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, En
       { entrant_count: 3, variant: null, label: "Top 3" },
       { entrant_count: 4, variant: null, label: "Top 4" },
       { entrant_count: 8, variant: null, label: "Top 8", detail: "Eight podiums" },
-      { entrant_count: 8, variant: "four_podium", label: "Top 8 – 4 Podiums", detail: "Four podiums with lower summaries" },
+      { entrant_count: 8, variant: "four_podium", label: "Podiums+Clapping", detail: "Top 8: four podiums and four clapping portraits" },
     ],
     doubles: [
       { entrant_count: 3, variant: null, label: "Top 3" },
@@ -472,6 +474,17 @@ function normalizeTextSettings(value: unknown): TextSettings {
   };
 }
 
+export function isPodiumsClapping(selection: FormatSelection): boolean {
+  return selection.mode === "podium" && selection.options.event_format === "singles"
+    && selection.options.entrant_count === 8 && selection.options.variant === "four_podium";
+}
+
+export function selectEntrantCount(format: FormatConfiguration, option: EntrantCountOption): FormatConfiguration {
+  const selection = { ...format.selection, options: { ...format.selection.options, entrant_count: option.entrant_count, variant: option.variant } };
+  selection.options.animated = isPodiumsClapping(selection) && (!isPodiumsClapping(format.selection) || format.selection.options.animated !== false);
+  return { ...format, selection };
+}
+
 export function normalizeFormat(value: unknown): FormatConfiguration {
   if (!isObject(value) || value.schema_version !== 1) {
     throw new Error("Format code must be a version 1 format object.");
@@ -498,6 +511,11 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     throw new Error("Radial formats must use Singles Top 8 or Doubles Top 4 without a layout variant.");
   }
   const rawStyle = options.podium_style;
+  const clapping = isPodiumsClapping({ mode, options: options as unknown as FormatSelection["options"] });
+  if (options.animated !== undefined && typeof options.animated !== "boolean") {
+    throw new Error("Animated must be true or false.");
+  }
+  if (options.animated === true && !clapping) throw new Error("Animation is only available for Podiums+Clapping.");
   if (rawStyle !== null && !podiumStyles.has(rawStyle as PodiumStyle)) {
     throw new Error("Format code has an invalid podium style.");
   }
@@ -512,6 +530,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
         event_format: rawEventFormat as EventFormat | null,
         entrant_count: rawEntrantCount === null ? (mode === "radial" && rawEventFormat !== null ? (rawEventFormat === "singles" ? 8 : 4) : null) : Number(rawEntrantCount),
         variant: options.variant as string | null,
+        animated: clapping ? options.animated !== false : false,
         podium_style: rawStyle as PodiumStyle | null,
       },
     },

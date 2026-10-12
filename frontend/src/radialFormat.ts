@@ -12,7 +12,7 @@ export function selectRadialLayout(format: FormatConfiguration, eventFormat: Eve
     ...format,
     selection: {
       mode: "radial",
-      options: { event_format: choice.eventFormat, entrant_count: choice.entrantCount, variant: null, podium_style: null },
+      options: { event_format: choice.eventFormat, entrant_count: choice.entrantCount, variant: null, podium_style: null, animated: false },
     },
   };
 }

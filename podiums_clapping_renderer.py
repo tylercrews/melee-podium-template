@@ -1,0 +1,168 @@
+"""Podiums+Clapping's shared static and animated content stage."""
+
+from dataclasses import dataclass, replace
+from io import BytesIO
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+from background_builder import PixelRect
+from clapping_assets import resolve_clapping_path
+from clapping_portrait_renderer import render_clapping_portrait_frame
+from color_values import format_rgba_hex
+from creation import CreationRequest
+from color_values import format_rgba_hex
+from DrawPodium import ATTRIBUTION_TEXT, _draw_text, _font_to_fit, _load_stock_icon, _temporary_font_settings
+from font_size_adjustments import adjusted_size
+from formatting_assets import draw_placement_tags
+from legacy_podium_content_renderer import LegacyPodiumContentRenderer
+from mode_preferences import ModePreferences, PlacementTagPlacement
+from png_animation import encode_animated_png
+from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustment
+
+
+PROFILE = Path(__file__).resolve().parent / "preferences/portraits/podiums_clapping.json"
+CROPS = Path(__file__).resolve().parent / "preferences/portraits/clapping.json"
+
+
+@dataclass(frozen=True)
+class ClappingPanel:
+    entrant_slot: int
+    rect: PixelRect
+    text_x: int
+    text_max_width: int
+    text_alignment: str
+
+    @classmethod
+    def from_dict(cls, value):
+        panel = cls(value["entrant_slot"], PixelRect(*value["portrait_rect"]),
+                    value["text_x"], value["text_max_width"], value["text_alignment"])
+        if panel.entrant_slot not in range(5, 9) or panel.text_alignment not in {"left", "right"} or panel.text_max_width <= 0:
+            raise ValueError("Invalid Podiums+Clapping panel")
+        return panel
+
+
+@dataclass
+class ClappingTrack:
+    panel: ClappingPanel
+    frames: list[Image.Image]
+    durations: list[int]
+    preview_index: int
+
+
+@dataclass
+class ClappingLayout:
+    base: Image.Image
+    tracks: tuple[ClappingTrack, ...]
+    badges: tuple[PlacementTagPlacement, ...]
+    preferences: ModePreferences
+
+    def frame(self, index: int | None = None) -> Image.Image:
+        canvas = self.base.copy()
+        for track in self.tracks:
+            frame_index = track.preview_index if index is None else index
+            canvas.alpha_composite(track.frames[frame_index], (track.panel.rect.left, track.panel.rect.top))
+        draw_placement_tags(canvas, replace(self.preferences, placement_tags=self.badges))
+        return canvas
+
+    def png(self, animated: bool) -> bytes:
+        if not animated:
+            output = BytesIO()
+            self.frame().save(output, format="PNG")
+            return output.getvalue()
+        durations = self.tracks[0].durations
+        if any(track.durations != durations for track in self.tracks):
+            raise ValueError("Clapping portraits must use synchronized animation frames")
+        bounds = (min(track.panel.rect.left for track in self.tracks),
+                  min(track.panel.rect.top for track in self.tracks),
+                  max(track.panel.rect.right for track in self.tracks),
+                  max(track.panel.rect.bottom for track in self.tracks))
+        patches = ((self.frame(index).crop(bounds), duration) for index, duration in enumerate(durations[1:], 1))
+        return encode_animated_png(self.frame(0), patches, frame_count=len(durations),
+                                   first_duration=durations[0], offset=bounds[:2])
+
+
+class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
+    """Keep the four podiums still and animate the four costume-correct panels."""
+
+    def _draw_attribution(self, canvas, request, mode):
+        ImageDraw.Draw(canvas).text((14, 18), ATTRIBUTION_TEXT,
+                                   font=_font_to_fit(ATTRIBUTION_TEXT, canvas.width - 28, 18, self.font), fill="#FFFFFF40")
+
+    def prepare(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences,
+                *, background: Image.Image | None = None, overlay: Image.Image | None = None) -> ClappingLayout:
+        profile = json.loads(PROFILE.read_text(encoding="utf-8"))["styles"][request.selection.options.podium_style.value]
+        if profile["canvas_size"] != preferences.canvas_size.to_dict():
+            raise ValueError("Podiums+Clapping geometry does not match its canvas")
+        panels = tuple(ClappingPanel.from_dict(row) for row in profile["panels"])
+        if tuple(panel.entrant_slot for panel in panels) != (5, 6, 7, 8) or any(
+            panel.rect.left < 0 or panel.rect.top < 0 or panel.rect.right > canvas.width or panel.rect.bottom > canvas.height
+            for panel in panels
+        ):
+            raise ValueError("Podiums+Clapping panels must fit all four lower entrants inside the canvas")
+        badges = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
+        preferences = replace(preferences, text_slots=tuple(row for row in preferences.text_slots if row.field != "entrant.summary"))
+        base = super().draw(canvas, request, preferences)
+        if background is not None:
+            if background.size != base.size:
+                raise ValueError("Composition background must match the output canvas")
+            composed = background.convert("RGBA")
+            composed.alpha_composite(base)
+            base = composed
+        if overlay is not None:
+            if overlay.size != base.size:
+                raise ValueError("Composition overlay must match the output canvas")
+            base.alpha_composite(overlay.convert("RGBA"))
+        crops = json.loads(CROPS.read_text(encoding="utf-8"))["characters"]
+        tracks = []
+        with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
+            for panel in panels:
+                entrant = request.entrants[panel.entrant_slot - 1]
+                color, metallic = self._default_text_style(request, panel.entrant_slot)
+                if isinstance(color, tuple):
+                    color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
+                if isinstance(color, tuple):
+                    color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
+                self._draw_identity(base, entrant, panel, request, color, metallic)
+                character = entrant.characters[0]
+                adjustment = get_clapping_portrait_adjustment(character.melee_fighter_name)
+                frames, durations = [], []
+                with Image.open(resolve_clapping_path(character)) as source:
+                    for index in range(source.n_frames):
+                        source.seek(index)
+                        frames.append(render_clapping_portrait_frame(source.convert("RGBA"), adjustment,
+                            (panel.rect.width, panel.rect.height), background_color=color, border_width=1,
+                            mirror_horizontally=character.mirror_horizontally))
+                        durations.append(source.info.get("duration", 20))
+                tracks.append(ClappingTrack(panel, frames, durations, crops[character.melee_fighter_name]["preview_frame_index"]))
+        return ClappingLayout(base, tuple(tracks), badges, preferences)
+
+    def draw(self, canvas, request, preferences):
+        return self.prepare(canvas, request, preferences).frame()
+
+    def _draw_identity(self, canvas, entrant, panel, request, color, metallic):
+        draw = ImageDraw.Draw(canvas)
+        top, x = panel.rect.top, panel.text_x
+        seed_text = f"[{entrant.seed}s]" if request.text_settings.include_seeding and entrant.seed is not None else ""
+        seed_size = adjusted_size(17, request.text_settings.seed_font_size_adjustment)
+        icons = [_load_stock_icon(character, size=24) for character in entrant.characters]
+        icons_width = sum(icon.width for icon in icons) + 5 * max(0, len(icons) - 1)
+        seed_width = round(_font_to_fit(seed_text, panel.text_max_width, seed_size, self.font).getlength(seed_text)) if seed_text else 0
+        row_width = icons_width + (12 + seed_width if seed_text else 0)
+        row_x = x - row_width if panel.text_alignment == "right" else x
+        for icon in icons:
+            canvas.alpha_composite(icon, (row_x, top + 17 - icon.height // 2))
+            row_x += icon.width + 5
+        if seed_text:
+            _draw_text(draw, (row_x + 7, top + 20), seed_text, anchor="lm", max_width=panel.text_max_width,
+                       preferred_size=seed_size, font=self.font, fill=color, metallic=metallic)
+        anchor = "rm" if panel.text_alignment == "right" else "lm"
+        sponsor, separator, player = entrant.tag.rpartition("|")
+        if separator:
+            _draw_text(draw, (x, top + 47), sponsor.strip(), anchor=anchor, max_width=panel.text_max_width,
+                       preferred_size=adjusted_size(22, entrant.name_font_size_adjustment), font=self.font, fill=color, metallic=metallic)
+        else:
+            player = entrant.tag
+        _draw_text(draw, (x, top + (82 if separator else 63)), player.strip(), anchor=anchor, max_width=panel.text_max_width,
+                   preferred_size=adjusted_size(46, entrant.name_font_size_adjustment), font=self.font, fill=color, metallic=metallic)

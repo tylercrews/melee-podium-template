@@ -35,7 +35,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       selection: {
         ...selection,
         mode,
-        options: { ...selection.options, entrant_count: mode === "radial" && selection.options.event_format ? (selection.options.event_format === "singles" ? 8 : 4) : null, variant: null, podium_style: mode === "podium" ? selection.options.podium_style : null },
+        options: { ...selection.options, entrant_count: mode === "radial" && selection.options.event_format ? (selection.options.event_format === "singles" ? 8 : 4) : null, variant: null, animated: false, podium_style: mode === "podium" ? selection.options.podium_style : null },
       },
       header_layout: mode === "radial" ? { ...DEFAULT_RADIAL_HEADER_LAYOUT } : value.header_layout,
     });
@@ -50,7 +50,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       onChange(selectRadialLayout(value, event_format));
       return;
     }
-    onChange({ ...value, selection: { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null } } });
+    onChange({ ...value, selection: { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null, animated: false } } });
   }
 
   function assignHeader(position: HeaderPosition, content: HeaderContent) {

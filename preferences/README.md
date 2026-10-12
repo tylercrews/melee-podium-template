@@ -6,6 +6,15 @@ mode includes its required podium style in the path:
 the remaining selection, for example `singles_top_3.json` or
 `singles_top_8_four_podium.json`.
 
+The Singles Top 8 `four_podium` layout is displayed as **Podiums+Clapping**.
+Its stable selection ID and geometry filename preserve older format codes.
+`selection.options.animated` defaults to true for this layout when omitted;
+false keeps the four clapping portrait panels as still images. Both settings
+share geometry. The reviewed lower panels and stacked placement artwork live
+in `portraits/podiums_clapping.json`, separate from per-character crop profiles.
+Exact animated previews and downloads use looping, lossless animated PNGs;
+the unchecked version produces a standard PNG with the same portrait panels.
+
 Files remain marked `ready: false` until their real positions and required
 assets have been extracted and visually reviewed. A file may therefore contain
 partially or fully extracted coordinates while still being unavailable to the

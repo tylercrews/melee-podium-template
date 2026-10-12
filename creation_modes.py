@@ -33,6 +33,7 @@ class ModeOptions:
     entrant_count: int
     variant: str | None = None
     podium_style: PodiumStyle | None = None
+    animated: bool | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.event_format, TournamentFormat):
@@ -56,6 +57,14 @@ class ModeOptions:
             self.podium_style, PodiumStyle
         ):
             raise TypeError("podium_style must be a PodiumStyle or null")
+        clapping = (self.event_format is TournamentFormat.SINGLES and self.entrant_count == 8
+                    and self.variant == "four_podium" and self.podium_style is not None)
+        if self.animated is None:
+            object.__setattr__(self, "animated", clapping)
+        elif not isinstance(self.animated, bool):
+            raise TypeError("animated must be a boolean")
+        if self.animated and not clapping:
+            raise ValueError("Animation is only available for Podiums+Clapping")
 
     @property
     def submode_id(self) -> str:
@@ -85,13 +94,16 @@ class ModeOptions:
         except (TypeError, ValueError) as error:
             choices = ", ".join(item.value for item in PodiumStyle)
             raise ValueError(f"podium_style must be one of: {choices}, or null") from error
-        return cls(event_format, raw_count, raw_variant, podium_style)
+        if "animated" in value and not isinstance(value["animated"], bool):
+            raise TypeError("animated must be a boolean")
+        return cls(event_format, raw_count, raw_variant, podium_style, value.get("animated"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "event_format": self.event_format.value,
             "entrant_count": self.entrant_count,
             "variant": self.variant,
+            "animated": self.animated,
             "podium_style": (
                 self.podium_style.value if self.podium_style is not None else None
             ),

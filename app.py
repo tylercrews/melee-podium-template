@@ -25,7 +25,8 @@ from geometric_formatting_colors import GeometricFormattingColor, GeometricForma
 from radial_palette import radial_palette_color
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
-from format_preview import render_format_preview
+from format_preview import prepare_format_preview, render_format_preview
+from podiums_clapping_renderer import ClappingLayout
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
 from sample_creation_data import sample_tournament
 from firebase_services.fonts import read_font_upload
@@ -577,6 +578,7 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
 def customized_format_preview() -> Any:
     custom_font_bytes = None
     tournament_logo = None
+    composition_images = {}
     if request.mimetype == "multipart/form-data":
         try:
             payload = json.loads(request.form.get("config", ""))
@@ -590,6 +592,12 @@ def customized_format_preview() -> Any:
             logo_bytes, *_details = read_image_upload(logo_upload)
             with Image.open(BytesIO(logo_bytes)) as source:
                 tournament_logo = source.convert("RGBA")
+        for key in ("composite_background", "composite_overlay"):
+            upload = request.files.get(key)
+            if upload is not None:
+                image_bytes, *_details = read_image_upload(upload)
+                with Image.open(BytesIO(image_bytes)) as source:
+                    composition_images[key] = source.convert("RGBA")
     else:
         payload = request.get_json(silent=True)
     if not isinstance(payload, Mapping):
@@ -663,7 +671,11 @@ def customized_format_preview() -> Any:
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
         metadata_rows=tuple(tuple(row) for row in raw_metadata_rows),
     )
-    image = render_format_preview(
+    animated = payload.get("animated")
+    if "animated" in payload and not isinstance(animated, bool):
+        raise ValueError("animated must be a boolean")
+    preview_renderer = prepare_format_preview if creation_mode is CreationMode.PODIUM and variant == "four_podium" else render_format_preview
+    image = preview_renderer(
         style,
         event_format,
         entrant_count,
@@ -680,9 +692,14 @@ def customized_format_preview() -> Any:
         formatting_colors=formatting_colors,
         tournament_logo=tournament_logo,
         logo_scale=logo_scale if tournament_logo is not None else None,
+        animated=animated,
+        **composition_images,
     )
     output = BytesIO()
-    image.save(output, format="PNG")
+    if isinstance(image, ClappingLayout):
+        output.write(image.png(animated is not False))
+    else:
+        image.save(output, format="PNG")
     return Response(
         output.getvalue(),
         mimetype="image/png",

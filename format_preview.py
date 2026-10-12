@@ -23,6 +23,7 @@ from formatting_assets import FormattingAssetRenderer
 from geometric_content_renderer import EyesContentRenderer, SquaresContentRenderer
 from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
+from podiums_clapping_renderer import ClappingLayout, PodiumsClappingContentRenderer
 from mode_preferences import ModePreferenceRepository
 from radial_content_renderer import RadialContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
@@ -62,7 +63,7 @@ SUPPORTED_EYES_LAYOUTS = frozenset(
 )
 
 
-def render_format_preview(
+def prepare_format_preview(
     style: PodiumStyle,
     event_format: TournamentFormat,
     entrant_count: int,
@@ -80,7 +81,10 @@ def render_format_preview(
     formatting_colors: GeometricFormattingColors | None = None,
     tournament_logo: Image.Image | None = None,
     logo_scale: float | None = None,
-) -> Image.Image:
+    animated: bool | None = None,
+    composite_background: Image.Image | None = None,
+    composite_overlay: Image.Image | None = None,
+) -> Image.Image | ClappingLayout:
     """Return a full example render for one supported frontend format."""
 
     if not isinstance(style, PodiumStyle):
@@ -107,6 +111,7 @@ def render_format_preview(
             entrant_count=entrant_count,
             variant=variant,
             podium_style=style if creation_mode is CreationMode.PODIUM else None,
+            animated=animated,
         ),
     )
     preferences = ModePreferenceRepository().load(selection)
@@ -165,6 +170,9 @@ def render_format_preview(
         preferences,
         podium_colors or formatting_colors,
     )
+    if creation_mode is CreationMode.PODIUM and variant == "four_podium":
+        renderer = PodiumsClappingContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+        return renderer.prepare(formatted, request, preferences, background=composite_background, overlay=composite_overlay)
     renderer = (
         LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
         if creation_mode is CreationMode.PODIUM
@@ -175,4 +183,10 @@ def render_format_preview(
         else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
     )
     return renderer.draw(formatted, request, preferences)
+
+
+def render_format_preview(*args, **kwargs) -> Image.Image:
+    """Return a still render for offline reviews and non-animated callers."""
+    result = prepare_format_preview(*args, **kwargs)
+    return result.frame() if isinstance(result, ClappingLayout) else result
 
