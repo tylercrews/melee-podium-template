@@ -1,0 +1,527 @@
+{
+  "schema_version": 1,
+  "reference_directory": "docs/archive/original_gpt_prompt_images/clapping portrait size checks",
+  "characters": {
+    "Captain Falcon": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        158.34,
+        17.59,
+        346.0,
+        316.68
+      ],
+      "preview_frame_index": 12,
+      "reference_file": "00 - cfalcon, fox, sheik.png",
+      "reference_crop": [
+        49,
+        70,
+        150,
+        231
+      ]
+    },
+    "Fox": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        139.46,
+        36.16,
+        304.75,
+        299.59
+      ],
+      "preview_frame_index": 36,
+      "reference_file": "00 - cfalcon, fox, sheik.png",
+      "reference_crop": [
+        386,
+        70,
+        487,
+        231
+      ]
+    },
+    "Sheik": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        172.11,
+        38.25,
+        294.5,
+        233.3
+      ],
+      "preview_frame_index": 18,
+      "reference_file": "00 - cfalcon, fox, sheik.png",
+      "reference_crop": [
+        725,
+        70,
+        826,
+        231
+      ]
+    },
+    "Mario": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        153.41,
+        12.27,
+        349.78,
+        325.23
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "01 - mario, pikachu, bowser.png",
+      "reference_crop": [
+        143,
+        146,
+        244,
+        307
+      ]
+    },
+    "Pikachu": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        90.29,
+        -8.21,
+        352.97,
+        410.43
+      ],
+      "preview_frame_index": 18,
+      "reference_file": "01 - mario, pikachu, bowser.png",
+      "reference_crop": [
+        478,
+        146,
+        579,
+        307
+      ]
+    },
+    "Bowser": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        147.84,
+        60.48,
+        362.88,
+        403.2
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "01 - mario, pikachu, bowser.png",
+      "reference_crop": [
+        815,
+        146,
+        916,
+        307
+      ]
+    },
+    "Peach": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        204.34,
+        43.02,
+        319.05,
+        225.85
+      ],
+      "preview_frame_index": 30,
+      "reference_file": "02 - peach, yoshi, dk.png",
+      "reference_crop": [
+        76,
+        88,
+        177,
+        249
+      ]
+    },
+    "Yoshi": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        137.55,
+        7.24,
+        369.22,
+        376.46
+      ],
+      "preview_frame_index": 18,
+      "reference_file": "02 - peach, yoshi, dk.png",
+      "reference_crop": [
+        411,
+        88,
+        512,
+        249
+      ]
+    },
+    "Donkey Kong": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        158.87,
+        94.14,
+        347.16,
+        394.23
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "02 - peach, yoshi, dk.png",
+      "reference_crop": [
+        748,
+        88,
+        849,
+        249
+      ]
+    },
+    "Ness": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        175.62,
+        41.32,
+        340.91,
+        304.75
+      ],
+      "preview_frame_index": 6,
+      "reference_file": "03 - ness, ice climbers, kirby.png",
+      "reference_crop": [
+        54,
+        58,
+        155,
+        219
+      ]
+    },
+    "Ice Climbers": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        36.26,
+        84.6,
+        229.64,
+        392.8
+      ],
+      "preview_frame_index": 18,
+      "reference_file": "03 - ness, ice climbers, kirby.png",
+      "reference_crop": [
+        389,
+        58,
+        490,
+        219
+      ]
+    },
+    "Kirby": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        128.33,
+        35.65,
+        356.47,
+        399.25
+      ],
+      "preview_frame_index": 36,
+      "reference_file": "03 - ness, ice climbers, kirby.png",
+      "reference_crop": [
+        726,
+        58,
+        827,
+        219
+      ]
+    },
+    "Samus": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        165.05,
+        -19.04,
+        368.19,
+        304.71
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "04 - samus, zelda, link.png",
+      "reference_crop": [
+        54,
+        56,
+        155,
+        217
+      ]
+    },
+    "Zelda": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        222.65,
+        34.79,
+        333.97,
+        212.21
+      ],
+      "preview_frame_index": 0,
+      "reference_file": "04 - samus, zelda, link.png",
+      "reference_crop": [
+        389,
+        56,
+        490,
+        217
+      ]
+    },
+    "Link": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        170.5,
+        20.06,
+        330.98,
+        275.82
+      ],
+      "preview_frame_index": 6,
+      "reference_file": "04 - samus, zelda, link.png",
+      "reference_crop": [
+        726,
+        56,
+        827,
+        217
+      ]
+    },
+    "Ganondorf": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        199.16,
+        13.89,
+        347.36,
+        250.1
+      ],
+      "preview_frame_index": 6,
+      "reference_file": "05 - ganondorf, luigi, drmario.png",
+      "reference_crop": [
+        51,
+        55,
+        152,
+        216
+      ]
+    },
+    "Luigi": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        156.85,
+        7.13,
+        384.99,
+        370.73
+      ],
+      "preview_frame_index": 0,
+      "reference_file": "05 - ganondorf, luigi, drmario.png",
+      "reference_crop": [
+        386,
+        55,
+        487,
+        216
+      ]
+    },
+    "Dr. Mario": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        193.27,
+        49.44,
+        337.1,
+        278.67
+      ],
+      "preview_frame_index": 0,
+      "reference_file": "05 - ganondorf, luigi, drmario.png",
+      "reference_crop": [
+        723,
+        55,
+        824,
+        216
+      ]
+    },
+    "Pichu": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        199.79,
+        159.83,
+        359.63,
+        414.57
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "06 - pichu, jigglypuff, younglink.png",
+      "reference_crop": [
+        52,
+        70,
+        153,
+        231
+      ]
+    },
+    "Jigglypuff": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        92.06,
+        -20.46,
+        419.39,
+        501.23
+      ],
+      "preview_frame_index": 18,
+      "reference_file": "06 - pichu, jigglypuff, younglink.png",
+      "reference_crop": [
+        387,
+        70,
+        488,
+        231
+      ]
+    },
+    "Young Link": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        179.81,
+        -4.99,
+        339.65,
+        249.74
+      ],
+      "preview_frame_index": 12,
+      "reference_file": "06 - pichu, jigglypuff, younglink.png",
+      "reference_crop": [
+        724,
+        70,
+        825,
+        231
+      ]
+    },
+    "Mewtwo": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        95.46,
+        33.69,
+        275.14,
+        320.07
+      ],
+      "preview_frame_index": 0,
+      "reference_file": "07 - mewtwo, gamenwatch, marth.png",
+      "reference_crop": [
+        45,
+        67,
+        146,
+        228
+      ]
+    },
+    "Mr. Game and Watch": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        185.3,
+        44.92,
+        364.99,
+        331.3
+      ],
+      "preview_frame_index": 0,
+      "reference_file": "07 - mewtwo, gamenwatch, marth.png",
+      "reference_crop": [
+        380,
+        67,
+        481,
+        228
+      ]
+    },
+    "Marth": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        218.99,
+        5.62,
+        398.68,
+        291.99
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "07 - mewtwo, gamenwatch, marth.png",
+      "reference_crop": [
+        717,
+        67,
+        818,
+        228
+      ]
+    },
+    "Falco": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        175.16,
+        25.02,
+        375.34,
+        344.06
+      ],
+      "preview_frame_index": 24,
+      "reference_file": "08 - falco, roy, fox.png",
+      "reference_crop": [
+        55,
+        58,
+        156,
+        219
+      ]
+    },
+    "Roy": {
+      "source_size": [
+        512,
+        512
+      ],
+      "source_crop": [
+        222.65,
+        48.02,
+        362.34,
+        270.67
+      ],
+      "preview_frame_index": 0,
+      "reference_file": "08 - falco, roy, fox.png",
+      "reference_crop": [
+        390,
+        58,
+        491,
+        219
+      ]
+    }
+  },
+  "calibration_status": "initial_review"
+}
