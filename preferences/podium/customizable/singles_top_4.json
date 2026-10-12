@@ -66,11 +66,11 @@
       "asset_id": "01st.png",
       "anchor": {
         "x": 241,
-        "y": 739
+        "y": 760
       },
       "max_size": {
-        "width": 155,
-        "height": 132
+        "width": 150,
+        "height": 158
       },
       "z_index": 0
     },
@@ -79,11 +79,11 @@
       "asset_id": "02nd.png",
       "anchor": {
         "x": 735,
-        "y": 764
+        "y": 760
       },
       "max_size": {
-        "width": 72,
-        "height": 56
+        "width": 83,
+        "height": 72
       },
       "z_index": 1
     },
@@ -92,11 +92,11 @@
       "asset_id": "03rd.png",
       "anchor": {
         "x": 1216,
-        "y": 780
+        "y": 777
       },
       "max_size": {
-        "width": 38,
-        "height": 30
+        "width": 56,
+        "height": 44
       },
       "z_index": 2
     },
@@ -105,11 +105,11 @@
       "asset_id": "04th.png",
       "anchor": {
         "x": 1682,
-        "y": 799
+        "y": 795
       },
       "max_size": {
-        "width": 16,
-        "height": 12
+        "width": 29,
+        "height": 23
       },
       "z_index": 3
     }

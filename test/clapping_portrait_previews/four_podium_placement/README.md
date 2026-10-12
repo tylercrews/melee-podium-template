@@ -37,3 +37,10 @@ the existing podium geometry review scripts. No runtime preference readiness
 flags, routes, downloads, or animation behavior are changed. After placement
 review, the same fixed lower-result rectangles can be composited for each GIF
 frame while the rest of the image remains static.
+
+The same fitting rule now covers all Customizable layouts. To recalibrate their
+existing number placements from the semantic masks, run
+`python test/podium_layout_previews/fit_customizable_podium_numbers.py`.
+Numbers are associated with podium slot IDs, including the centered Top 3 winner;
+omitted numbers are not added. The first-place numeral fits the panel while the
+crest ribbon extends beneath it.

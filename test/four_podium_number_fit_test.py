@@ -16,7 +16,7 @@ from mode_preferences import ModePreferenceRepository, PlacementTagPlacement
 from models import TournamentFormat
 from preview_layers import render_podium_layer
 from formatting_assets import draw_placement_tags
-from fit_four_podium_numbers import fit_tags
+from fit_customizable_podium_numbers import fit_tags
 
 
 class FourPodiumNumberFitTests(unittest.TestCase):

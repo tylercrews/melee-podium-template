@@ -1,4 +1,4 @@
-"""Fit Customizable four-podium numerals inside the thick outer front outlines."""
+"""Fit every Customizable Podium layout's numerals inside the thick front outlines."""
 
 from collections import deque
 from dataclasses import replace
@@ -16,7 +16,7 @@ from background_builder import PixelSize
 from creation_modes import PodiumStyle
 from mode_preferences import ModePreferences, PixelPoint
 
-PREFERENCES = ROOT / "preferences/podium/customizable/singles_top_8_four_podium.json"
+PREFERENCE_ROOT = ROOT / "preferences/podium/customizable"
 
 
 def _runs(rows):
@@ -88,11 +88,15 @@ def first_numeral_vertical_bounds(image):
 def fit_tags(preferences):
     if preferences.selection.options.podium_style is not PodiumStyle.CUSTOMIZABLE:
         raise ValueError("Outer-front calibration requires Customizable podium masks")
-    if len(preferences.formatting_assets) != 4 or len(preferences.placement_tags) != 4:
-        raise ValueError("This review calibrates exactly four podium numbers")
-    bodies = sorted(preferences.formatting_assets, key=lambda body: body.destination.left)
+    bodies = {body.slot_id: body for body in preferences.formatting_assets}
     fitted, measurements = [], {}
-    for body, tag in zip(bodies, preferences.placement_tags):
+    for tag in preferences.placement_tags:
+        body_id = tag.slot_id.removesuffix('_placement_tag')
+        if body_id not in bodies:
+            raise ValueError(f"Placement number has no matching podium: {tag.slot_id}")
+        body = bodies[body_id]
+        if body.asset_id == 'flat.png':
+            raise ValueError("Flat podiums must not have placement artwork")
         top, bottom = front_panel_bounds(body, tag.anchor.x)
         with Image.open(ROOT / "formatting_assets/placement_numbers" / tag.asset_id) as source:
             source = source.convert("RGBA")
@@ -117,8 +121,12 @@ def fit_tags(preferences):
 
 
 if __name__ == "__main__":
-    raw = json.loads(PREFERENCES.read_text(encoding="utf-8"))
-    tags, measurements = fit_tags(ModePreferences.from_dict(raw))
-    raw["placement_tags"] = [tag.to_dict() for tag in tags]
-    PREFERENCES.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(measurements, indent=2))
+    updates = []
+    for path in sorted(PREFERENCE_ROOT.glob('*.json')):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        tags, measurements = fit_tags(ModePreferences.from_dict(raw))
+        raw["placement_tags"] = [tag.to_dict() for tag in tags]
+        updates.append((path, raw, measurements))
+    for path, raw, measurements in updates:
+        path.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
+        print(path.name, json.dumps(measurements), flush=True)

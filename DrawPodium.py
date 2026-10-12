@@ -482,7 +482,8 @@ def _draw_text(
         if isinstance(target, Image.Image) and target.mode == "RGBA":
             mask = Image.new("L", target.size)
             mask_draw = ImageDraw.Draw(mask)
-            mask_draw.multiline_text(
+            paint_mask = mask_draw.text if "\n" not in text and anchor[1] in {"t", "b"} else mask_draw.multiline_text
+            paint_mask(
                 position,
                 text,
                 font=loaded_font,
@@ -510,7 +511,8 @@ def _draw_text(
                 target.alpha_composite(layer, (bounds[0], bounds[1]))
             return
 
-    draw.multiline_text(
+    paint_text = draw.text if "\n" not in text and anchor[1] in {"t", "b"} else draw.multiline_text
+    paint_text(
         position,
         text,
         font=loaded_font,
