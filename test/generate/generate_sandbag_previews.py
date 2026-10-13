@@ -24,14 +24,14 @@ def generate():
     output.mkdir(parents=True, exist_ok=True)
     randomizer = random.Random(2026)
     singles = sample_top_8_entrants(randomizer)[:4]
-    for index, (name, pose) in enumerate([("Sandbag", "a"), ("Fox", "e"), ("Mario", "c"), ("Sandbag", "a")]):
+    for index, (name, pose) in enumerate([("Sandbag", "a"), ("Captain Falcon", "b"), ("Samus", "b"), ("Sandbag", "a")]):
         singles[index] = replace(singles[index], tag=name, characters=[Character(name, pose=pose)])
     teams = sample_top_4_teams(randomizer)
     for index, team in enumerate(teams):
-        teams[index] = replace(team, team_name="Sandbag / Mario",
+        teams[index] = replace(team, team_name="Sandbag / Captain Falcon",
             team_color=["red", "green", "blue", "red"][index],
             entrant_1=replace(team.entrant_1, tag="Sandbag", characters=[Character("Sandbag")]),
-            entrant_2=replace(team.entrant_2, tag="Mario", characters=[Character("Mario", pose="c")]))
+            entrant_2=replace(team.entrant_2, tag="Captain Falcon", characters=[Character("Captain Falcon", pose="b")]))
     for style in PodiumStyle:
         for event_format, entrants in [(TournamentFormat.SINGLES, singles), (TournamentFormat.DOUBLES, teams)]:
             preview = render_format_preview(style, event_format, 4, font=PodiumFont.UBUNTU, entrants=entrants)

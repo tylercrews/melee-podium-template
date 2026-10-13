@@ -1780,16 +1780,16 @@
     "Sandbag": {
       "source_size": [
         512,
-        512
+        420
       ],
       "preview_frame_index": 0,
       "placement_profiles": {
         "2": {
           "source_crop": [
             122.667,
-            42.667,
+            -3.333,
             389.333,
-            469.333
+            423.333
           ],
           "calibration": "standing_portrait",
           "zoom_relative_to_3rd": 1.2
@@ -1797,9 +1797,9 @@
         "3": {
           "source_crop": [
             96.0,
-            0.0,
+            -46.0,
             416.0,
-            512.0
+            466.0
           ],
           "calibration": "standing_portrait",
           "zoom_relative_to_3rd": 1.0
@@ -1807,9 +1807,9 @@
         "4": {
           "source_crop": [
             48.208,
-            -76.468,
+            -122.468,
             463.792,
-            588.468
+            542.468
           ],
           "calibration": "standing_portrait",
           "zoom_relative_to_3rd": 0.77

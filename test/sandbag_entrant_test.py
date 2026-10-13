@@ -42,7 +42,7 @@ class SandbagEntrantTest(unittest.TestCase):
         portrait = self.client.get(f"/char_assets/renders/Sandbag/{option['portrait']}")
         self.assertEqual(portrait.status_code, 200)
         with Image.open(BytesIO(portrait.data)) as image:
-            self.assertEqual(image.size, (512, 512))
+            self.assertEqual(image.size, (512, 420))
             self.assertEqual(image.mode, "RGBA")
         portrait.close()
 
