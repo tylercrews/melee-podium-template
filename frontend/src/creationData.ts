@@ -127,7 +127,8 @@ export function ensureEntrantDrafts(current: EntrantDraft[], count: number, even
 }
 
 function importedCharacters(characters: FavoriteCharacter[]): FavoriteCharacter[] {
-  return characters.length ? characters.map((character) => ({ ...character })) : [emptyCharacter()];
+  return characters.length ? characters.map((character) => ({ ...character }))
+    : [{ fighter: "Sandbag", color: "default", pose: "a", mirrorHorizontally: false }];
 }
 
 export function entrantDraftsFromBracket(review: BracketImportReview, eventFormat: EventFormat): EntrantDraft[] {

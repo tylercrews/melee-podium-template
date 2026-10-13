@@ -147,34 +147,30 @@ class BracketImport:
         )
 
     def to_singles_entrants(self) -> tuple[SinglesEntrant, ...]:
-        """Convert verified Melee character data to renderer models.
-
-        Players without a reported character are rejected rather than being
-        rendered with a made-up main.  The UI can ask for those choices before
-        calling this method.
-        """
-        missing = [player.tag for player in self.players if not player.characters or player.placement is None]
+        """Convert placed players, using Sandbag when no character is reported."""
+        missing = [player.tag for player in self.players if player.placement is None]
         if missing:
-            raise ValueError("Character and placement required for: " + ", ".join(missing))
+            raise ValueError("Placement required for: " + ", ".join(missing))
         return tuple(
             SinglesEntrant(
                 tag=player.tag,
                 placement=player.placement,  # type: ignore[arg-type]
                 seed=player.seed,
                 x_handle=player.x_handle,
-                characters=[Character(character.name, color=character.costume) for character in player.characters],
+                characters=[Character(character.name, color=character.costume) for character in player.characters]
+                or [Character("Sandbag")],
             )
             for player in self.players
         )
 
     def to_doubles_teams(
-        self, *, characters_by_member: Mapping[str, list[Character]]
+        self, *, characters_by_member: Mapping[str, list[Character]] | None = None
     ) -> tuple[DoublesTeam, ...]:
         """Convert a verified doubles import to renderable teams.
 
-        Bracket sites do not reliably identify each doubles player's Melee
-        character, so the caller supplies the reviewed character selection for
-        each member.  ``ImportedPlayer.tag`` remains the provider's team name.
+        Reviewed selections take priority over reported characters. A member
+        without either uses Sandbag. ``ImportedPlayer.tag`` remains the
+        provider's team name.
         """
         if self.event_format != TournamentFormat.DOUBLES:
             raise ValueError("This import is not identified as a doubles event")
@@ -184,9 +180,9 @@ class BracketImport:
                 raise ValueError(f"Doubles team {team.tag!r} needs two identified members and a placement")
             members = []
             for member in team.members:
-                characters = characters_by_member.get(member.tag)
-                if not characters:
-                    raise ValueError(f"Character selection required for doubles player {member.tag!r}")
+                characters = (characters_by_member or {}).get(member.tag) or [
+                    Character(character.name, color=character.costume) for character in member.characters
+                ] or [Character("Sandbag")]
                 members.append(Entrant(tag=member.tag, characters=characters, x_handle=member.x_handle))
             teams.append(DoublesTeam(seed=team.seed, placement=team.placement, entrant_1=members[0], entrant_2=members[1], team_name=team.tag))
         return tuple(teams)
