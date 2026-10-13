@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import argparse
+import random
 from pathlib import Path
 
 from PIL import Image
@@ -15,6 +16,7 @@ from podiums_clapping_renderer import ClappingLayout
 from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
 from models import TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
+from sample_creation_data import sample_clapping_top_8_entrants
 
 
 ROOT = Path(__file__).resolve().parent
@@ -46,6 +48,8 @@ def generate_quick_pick_thumbnails(ids: tuple[str, ...] | None = None) -> tuple[
             font=PodiumFont.UBUNTU,
             formatting_colors=colors,
             header_layout={"top_left": "tournament_title", "top_middle": "tournament_logo", "top_right": "metadata"},
+            entrants=sample_clapping_top_8_entrants(random.Random(2026))
+            if mode is CreationMode.PODIUM and pick.get("variant") == "four_podium" else None,
         )
         path = OUTPUT / f"{pick['id']}.webp"
         if isinstance(result, ClappingLayout):
