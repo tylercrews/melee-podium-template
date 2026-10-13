@@ -30,8 +30,9 @@ def generate():
         layout = prepare_format_preview(style, TournamentFormat.SINGLES, 8, "four_podium",
                                         font=PodiumFont.UBUNTU, entrants=entrants, tournament=tournament)
         for animated in (True, False):
-            destination = output / f"{style.value}-podiums-clapping-{'animated' if animated else 'still'}.png"
-            destination.write_bytes(layout.png(animated))
+            extension = "gif" if animated else "png"
+            destination = output / f"{style.value}-podiums-clapping-{'animated' if animated else 'still'}.{extension}"
+            destination.write_bytes(layout.gif() if animated else layout.png())
             print(destination)
 
 

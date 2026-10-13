@@ -696,14 +696,19 @@ def customized_format_preview() -> Any:
         **composition_images,
     )
     output = BytesIO()
+    media_type = "image/png"
     if isinstance(image, ClappingLayout):
-        output.write(image.png(animated is not False))
+        if animated is not False:
+            output.write(image.gif())
+            media_type = "image/gif"
+        else:
+            output.write(image.png())
     else:
         image.save(output, format="PNG")
     return Response(
         output.getvalue(),
-        mimetype="image/png",
-        headers={"Cache-Control": "no-store"},
+        mimetype=media_type,
+        headers={"Cache-Control": "no-store", "Content-Disposition": f"inline; filename=melee-podium.{'gif' if media_type == 'image/gif' else 'png'}"},
     )
 
 

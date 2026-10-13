@@ -52,10 +52,10 @@ for the two styles.
 These placement artifacts use populated scaffold coordinates like the existing
 podium geometry review scripts. Readiness flags remain unchanged. The exact
 frontend render now uses the reviewed panel geometry from
-`preferences/portraits/podiums_clapping.json`. Animated downloads are lossless
-looping APNGs (with a `.png` extension); still downloads are ordinary PNGs.
+`preferences/portraits/podiums_clapping.json`. Animated previews and downloads are
+looping GIFs (with a `.gif` extension); still downloads are ordinary PNGs.
 Each uses the same character crops, borders, text colors, and rank overlays.
-The `*-podiums-clapping-animated.png` and `*-podiums-clapping-still.png` files
+The `*-podiums-clapping-animated.gif` and `*-podiums-clapping-still.png` files
 exercise the runtime renderer for both podium styles.
 
 The same fitting rule now covers all Customizable layouts. To recalibrate their

@@ -24,7 +24,7 @@ from font_size_adjustments import adjusted_size
 from formatting_assets import draw_placement_tags
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferences, PlacementTagPlacement
-from png_animation import encode_animated_png
+from gif_animation import encode_animated_gif
 from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustment
 
 
@@ -87,7 +87,7 @@ class ClappingLayout:
     def durations(self) -> list[int]:
         # Keep the longest native loop's cadence and fit shorter claps to it.
         # Ice Climbers' 25-frame clap can therefore share a cycle with 42-frame
-        # characters without skipping its tail or making a huge multi-cycle PNG.
+        # characters without skipping its tail or making a huge multi-cycle GIF.
         return max(self.tracks, key=lambda track: sum(track.durations)).durations
 
     def frame(self, index: int | None = None) -> Image.Image:
@@ -102,19 +102,14 @@ class ClappingLayout:
         draw_placement_tags(canvas, replace(self.preferences, placement_tags=self.badges))
         return canvas
 
-    def png(self, animated: bool) -> bytes:
-        if not animated:
-            output = BytesIO()
-            self.frame().save(output, format="PNG")
-            return output.getvalue()
-        durations = self.durations
-        bounds = (min(track.panel.rect.left for track in self.tracks),
-                  min(track.panel.rect.top for track in self.tracks),
-                  max(track.panel.rect.right for track in self.tracks),
-                  max(track.panel.rect.bottom for track in self.tracks))
-        patches = ((self.frame(index).crop(bounds), duration) for index, duration in enumerate(durations[1:], 1))
-        return encode_animated_png(self.frame(0), patches, frame_count=len(durations),
-                                   first_duration=durations[0], offset=bounds[:2])
+    def png(self) -> bytes:
+        output = BytesIO()
+        self.frame().save(output, format="PNG")
+        return output.getvalue()
+
+    def gif(self) -> bytes:
+        return encode_animated_gif(self.frame, self.durations,
+                                   palette_samples=(frame for track in self.tracks for frame in track.frames))
 
 
 class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):

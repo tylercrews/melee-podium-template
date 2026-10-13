@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl, recordDownload } from "./api";
+import { previewDownloadName } from "./previewDownload";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
@@ -341,11 +342,6 @@ function canvasPng(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not create the full-resolution PNG.")), "image/png"));
 }
 
-function downloadName(title: string): string {
-  const safeTitle = title.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
-  return `${safeTitle || "melee-podium"}.png`;
-}
-
 export default function LayeredFormatPreview({ format, backgroundImage, logoImage, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete }: FormatPreviewProps) {
   const request = useMemo(() => layerRequest(format, fontAsset), [format, fontAsset]);
   const [loading, setLoading] = useState(false);
@@ -444,7 +440,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = downloadUrl;
-        link.download = downloadName(tournament.title);
+        link.download = previewDownloadName(tournament.title, blob.type);
         link.click();
         window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1_000);
         const stats = await recordDownload();

@@ -12,7 +12,7 @@ Its stable selection ID and geometry filename preserve older format codes.
 false keeps the four clapping portrait panels as still images. Both settings
 share geometry. The reviewed lower panels and stacked placement artwork live
 in `portraits/podiums_clapping.json`, separate from per-character crop profiles.
-Exact animated previews and downloads use looping, lossless animated PNGs;
+Exact animated previews and downloads use looping GIFs;
 the unchecked version produces a standard PNG with the same portrait panels.
 
 `portraits/clapping.json` has independent placement profiles for 2nd, 3rd, and

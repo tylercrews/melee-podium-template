@@ -4,7 +4,7 @@
 costume-correct clapping portrait panels. Its **Animated** checkbox defaults
 to on and is retained in saved formats and exported JSON. Unchecking it keeps
 the portrait panels as still images. Exact previews and downloads use a
-looping animated PNG when enabled, or a standard PNG when disabled.
+looping GIF when enabled, or a standard PNG when disabled.
 
 ## Local development
 

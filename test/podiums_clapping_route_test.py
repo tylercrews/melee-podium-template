@@ -23,9 +23,10 @@ class PodiumsClappingRouteTest(unittest.TestCase):
                     payload["animated"] = animated
                 response = self.client.post("/api/format-preview", json=payload)
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(response.mimetype, "image/png")
+                self.assertEqual(response.mimetype, "image/gif" if animated is None else "image/png")
                 self.assertEqual(response.headers["Cache-Control"], "no-store")
                 with Image.open(BytesIO(response.data)) as image:
+                    self.assertEqual(image.format, "GIF" if animated is None else "PNG")
                     self.assertEqual(image.size, (width, 941))
                     self.assertEqual(image.n_frames, 42 if animated is None else 1)
                     if animated is None:
@@ -51,8 +52,12 @@ class PodiumsClappingRouteTest(unittest.TestCase):
             for index in (0, 18, 41):
                 image.seek(index)
                 frame = image.convert("RGBA")
-                self.assertEqual(frame.getpixel((10, 900)), (18, 52, 86, 255))
-                self.assertEqual(frame.getpixel((155, 30)), (204, 102, 51, 255))
+                background_pixel = frame.getpixel((10, 900))
+                logo_pixel = frame.getpixel((155, 30))
+                self.assertEqual(background_pixel[3], 255)
+                self.assertEqual(logo_pixel[3], 255)
+                self.assertLess(max(abs(a - b) for a, b in zip(background_pixel[:3], (18, 52, 86))), 16)
+                self.assertLess(max(abs(a - b) for a, b in zip(logo_pixel[:3], (204, 102, 51))), 32)
 
     def test_rejects_non_boolean_and_unsupported_animation(self):
         for animated in (None, "false", 1):

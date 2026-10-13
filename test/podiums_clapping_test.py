@@ -11,7 +11,7 @@ from DrawPodium import PodiumFont
 from format_preview import prepare_format_preview
 from mode_preferences import ModePreferenceRepository
 from models import TournamentFormat
-from png_animation import encode_animated_png
+from gif_animation import encode_animated_gif
 from sample_creation_data import sample_clapping_top_8_entrants
 
 
@@ -39,10 +39,14 @@ class PodiumsClappingTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ModeOptions(TournamentFormat.SINGLES, 4, podium_style=PodiumStyle.LEGACY, animated=True)
 
-    def test_apng_replaces_transparent_pixels_preserves_timing_and_loops(self):
-        first = Image.new("RGBA", (8, 6), "#FF000080")
-        patch = Image.new("RGBA", (2, 2), "#00000000")
-        data = encode_animated_png(first, [(patch, 30)], frame_count=2, first_duration=20, offset=(3, 2))
+    def test_gif_clears_moving_transparent_pixels_preserves_timing_and_loops(self):
+        first = Image.new("RGBA", (8, 6), "#00000000")
+        first.putpixel((3, 2), (255, 0, 0, 255))
+        first.putpixel((0, 0), (0, 0, 255, 255))
+        second = first.copy()
+        second.putpixel((3, 2), (0, 0, 0, 0))
+        second.putpixel((5, 2), (255, 0, 0, 255))
+        data = encode_animated_gif(lambda index: (first, second)[index], [20, 30])
         with Image.open(BytesIO(data)) as animation:
             self.assertEqual(animation.n_frames, 2)
             self.assertEqual(animation.info["loop"], 0)
@@ -67,13 +71,20 @@ class PodiumsClappingTest(unittest.TestCase):
         for track in layout.tracks:
             difference.paste("#00000000", track.panel.rect.as_tuple())
         self.assertTrue(all(channel.getbbox() is None for channel in difference.split()))
-        with Image.open(BytesIO(layout.png(True))) as animation:
+        with Image.open(BytesIO(layout.gif())) as animation:
+            self.assertEqual(animation.format, "GIF")
             self.assertEqual(animation.size, (1672, 941))
             self.assertEqual(animation.n_frames, 42)
             self.assertEqual(animation.info["duration"], 20)
+            decoded_first = animation.convert("RGBA")
             animation.seek(18)
-            self.assertEqual(animation.convert("RGBA").tobytes(), later.tobytes())
-        with Image.open(BytesIO(layout.png(False))) as still:
+            decoded_later = animation.convert("RGBA")
+            self.assertNotEqual(decoded_first.tobytes(), decoded_later.tobytes())
+            changes = ImageChops.difference(decoded_first, decoded_later)
+            for track in layout.tracks:
+                changes.paste("#00000000", track.panel.rect.as_tuple())
+            self.assertTrue(all(channel.getbbox() is None for channel in changes.split()))
+        with Image.open(BytesIO(layout.png())) as still:
             self.assertEqual(still.n_frames, 1)
             self.assertEqual(still.convert("RGBA").tobytes(), layout.frame().tobytes())
 
@@ -90,12 +101,12 @@ class PodiumsClappingTest(unittest.TestCase):
         self.assertEqual(set(indices), set(range(25)))
         self.assertEqual(indices[0], 0)
         self.assertEqual(indices[-1], 24)
-        with Image.open(BytesIO(layout.png(True))) as animation:
+        with Image.open(BytesIO(layout.gif())) as animation:
             self.assertEqual(animation.n_frames, 42)
             animation.seek(41)
-            self.assertEqual(animation.convert("RGBA").tobytes(), layout.frame(41).tobytes())
+            self.assertIsNotNone(animation.convert("RGBA").getbbox())
         all_ice = replace(layout, tracks=(ice,))
-        with Image.open(BytesIO(all_ice.png(True))) as animation:
+        with Image.open(BytesIO(all_ice.gif())) as animation:
             self.assertEqual(animation.n_frames, 25)
             self.assertEqual(sum(all_ice.durations), 500)
 
