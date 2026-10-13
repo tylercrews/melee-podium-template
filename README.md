@@ -77,7 +77,14 @@ npm run build
 
 
 TODO LIST:
-* get some melee fonts added in. like the timer one is super clean
+* add a char for random, need it more for online tourneys second request from brooke
+* need assets for at least sandbag, probably giga and the wireframes would be good too, maybe the hands f it why not.
+* top 16 legacy podium and customizable podium - 8 on top and 8 clapping, shift up the podiums a little so you use a little more of the vertical space
+* make it so that when you do a quick pick you're not locked into having no assets
+* make it so you can pick a format and omit players. Like just have empty podiums or slots if you want, and that way anything can be a pr pic
+* make another format similar to the eyes one except it's all chars clapping, with a 1, 2, 3?
+
+* get some melee fonts added in. like the timer one is super clean - at least one more font would go really hard
 
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
