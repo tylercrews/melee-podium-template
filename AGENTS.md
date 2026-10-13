@@ -93,6 +93,8 @@
 
 - Clapping portrait calibration saves independent 2nd-, 3rd-, and 4th-place zoom/crop profiles for all 26 characters in `preferences/portraits/clapping.json`. Current portraits use 3rd-place proportions for every lower result, independently of entrant rank. Match each reference column by its actual placement artwork, since column order varies by character. Keep these crops fixed across animation frames and preserve the reviewed Ice Climbers member composition; retain all three profiles for later explicit selection.
 
+- Podium attribution uses the bottom-left, bottom-middle, or bottom-right candidate with the least overlap, preferring bottom left on ties. Podiums+Clapping measures its actual aligned lower-result text (including font and entrant size adjustments) and reserves portrait/badge bounds before choosing the URL position. Never pin this attribution in the header, where a selected logo can cover it. Still and animated renders share the same resolved footer position.
+
 ## Customizable podium colors
 
 - Clapping GIFs retain their native source timing, including Ice Climbers' 25-frame/500 ms loop. When composing Podiums+Clapping with 42-frame/840 ms characters, map each shorter portrait's frames to the shared clap phase of the longest selected loop. Preserve complete claps and a seamless synchronized cycle; do not reject mixed frame counts. A layout containing only shorter loops retains their native cycle.

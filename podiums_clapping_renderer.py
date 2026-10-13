@@ -14,7 +14,12 @@ from clapping_assets import resolve_clapping_path
 from clapping_portrait_renderer import render_clapping_portrait_frame
 from color_values import format_rgba_hex
 from creation import CreationRequest
-from DrawPodium import ATTRIBUTION_TEXT, _draw_text, _font_to_fit, _load_stock_icon, _temporary_font_settings
+from DrawPodium import (
+    ATTRIBUTION_TEXT, ATTRIBUTION_BOTTOM_MARGIN, ATTRIBUTION_PREFERRED_SIZE,
+    ATTRIBUTION_SIDE_MARGIN, PodiumFont, _draw_text, _text_bounds, _font_to_fit,
+    _load_stock_icon, _temporary_font_settings,
+)
+from footer_attribution import Bounds, FooterPlacement, choose_footer_placement
 from font_size_adjustments import adjusted_size
 from formatting_assets import draw_placement_tags
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
@@ -25,6 +30,19 @@ from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustme
 
 PROFILE = Path(__file__).resolve().parent / "preferences/portraits/podiums_clapping.json"
 CROPS = Path(__file__).resolve().parent / "preferences/portraits/clapping.json"
+
+
+def draw_clapping_attribution(canvas: Image.Image, font: PodiumFont, obstacles: list[Bounds]) -> FooterPlacement:
+    """Use the actual footer text, portrait, and badge bounds instead of the header."""
+    y = canvas.height - ATTRIBUTION_BOTTOM_MARGIN
+    options = {"anchor": "la", "max_width": canvas.width - 2 * ATTRIBUTION_SIDE_MARGIN,
+               "preferred_size": ATTRIBUTION_PREFERRED_SIZE, "font": font}
+    measured = _text_bounds(ImageDraw.Draw(canvas), (0, y), ATTRIBUTION_TEXT, **options)
+    placement = choose_footer_placement(canvas.width, measured, obstacles, side_margin=ATTRIBUTION_SIDE_MARGIN)
+    layer = Image.new("RGBA", canvas.size, "#00000000")
+    _draw_text(ImageDraw.Draw(layer), (placement.origin_x, y), ATTRIBUTION_TEXT, fill="#FFFFFF40", **options)
+    canvas.alpha_composite(layer)
+    return placement
 
 
 @dataclass(frozen=True)
@@ -63,6 +81,7 @@ class ClappingLayout:
     tracks: tuple[ClappingTrack, ...]
     badges: tuple[PlacementTagPlacement, ...]
     preferences: ModePreferences
+    footer_placement: FooterPlacement | None = None
 
     @property
     def durations(self) -> list[int]:
@@ -102,8 +121,9 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
     """Keep the four podiums still and animate the four costume-correct panels."""
 
     def _draw_attribution(self, canvas, request, mode):
-        ImageDraw.Draw(canvas).text((14, 18), ATTRIBUTION_TEXT,
-                                   font=_font_to_fit(ATTRIBUTION_TEXT, canvas.width - 28, 18, self.font), fill="#FFFFFF40")
+        # The parent draws its header before the lower identities exist. Defer
+        # attribution until their actual bounds can participate in the choice.
+        pass
 
     def prepare(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences,
                 *, background: Image.Image | None = None, overlay: Image.Image | None = None) -> ClappingLayout:
@@ -131,15 +151,18 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
             base.alpha_composite(overlay.convert("RGBA"))
         crops = json.loads(CROPS.read_text(encoding="utf-8"))["characters"]
         tracks = []
+        obstacles = [panel.rect.as_tuple() for panel in panels]
+        obstacles.extend((badge.anchor.x - badge.max_size.width // 2,
+                          badge.anchor.y - badge.max_size.height // 2,
+                          badge.anchor.x + badge.max_size.width // 2,
+                          badge.anchor.y + badge.max_size.height // 2) for badge in badges)
         with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
             for panel in panels:
                 entrant = request.entrants[panel.entrant_slot - 1]
                 color, metallic = self._default_text_style(request, panel.entrant_slot)
                 if isinstance(color, tuple):
                     color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
-                if isinstance(color, tuple):
-                    color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
-                self._draw_identity(base, entrant, panel, request, color, metallic)
+                obstacles.extend(self._draw_identity(base, entrant, panel, request, color, metallic))
                 character = entrant.characters[0]
                 adjustment = get_clapping_portrait_adjustment(character.melee_fighter_name)
                 frames, durations = [], []
@@ -151,13 +174,20 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
                             mirror_horizontally=character.mirror_horizontally))
                         durations.append(source.info.get("duration", 20))
                 tracks.append(ClappingTrack(panel, frames, durations, crops[character.melee_fighter_name]["preview_frame_index"]))
-        return ClappingLayout(base, tuple(tracks), badges, preferences)
+            footer = draw_clapping_attribution(base, self.font, obstacles)
+        return ClappingLayout(base, tuple(tracks), badges, preferences, footer)
 
     def draw(self, canvas, request, preferences):
         return self.prepare(canvas, request, preferences).frame()
 
     def _draw_identity(self, canvas, entrant, panel, request, color, metallic):
         draw = ImageDraw.Draw(canvas)
+        obstacles = []
+        def paint(position, text, anchor, preferred_size):
+            options = {"anchor": anchor, "max_width": panel.text_max_width,
+                       "preferred_size": preferred_size, "font": self.font}
+            obstacles.append(_text_bounds(draw, position, text, **options))
+            _draw_text(draw, position, text, fill=color, metallic=metallic, **options)
         top, x = panel.rect.top, panel.text_x
         seed_text = f"[{entrant.seed}s]" if request.text_settings.include_seeding and entrant.seed is not None else ""
         seed_size = adjusted_size(17, request.text_settings.seed_font_size_adjustment)
@@ -170,14 +200,12 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
             canvas.alpha_composite(icon, (row_x, top + 17 - icon.height // 2))
             row_x += icon.width + 5
         if seed_text:
-            _draw_text(draw, (row_x + 7, top + 20), seed_text, anchor="lm", max_width=panel.text_max_width,
-                       preferred_size=seed_size, font=self.font, fill=color, metallic=metallic)
+            paint((row_x + 7, top + 20), seed_text, "lm", seed_size)
         anchor = "rm" if panel.text_alignment == "right" else "lm"
         sponsor, separator, player = entrant.tag.rpartition("|")
         if separator:
-            _draw_text(draw, (x, top + 47), sponsor.strip(), anchor=anchor, max_width=panel.text_max_width,
-                       preferred_size=adjusted_size(22, entrant.name_font_size_adjustment), font=self.font, fill=color, metallic=metallic)
+            paint((x, top + 47), sponsor.strip(), anchor, adjusted_size(22, entrant.name_font_size_adjustment))
         else:
             player = entrant.tag
-        _draw_text(draw, (x, top + (82 if separator else 63)), player.strip(), anchor=anchor, max_width=panel.text_max_width,
-                   preferred_size=adjusted_size(46, entrant.name_font_size_adjustment), font=self.font, fill=color, metallic=metallic)
+        paint((x, top + (82 if separator else 63)), player.strip(), anchor, adjusted_size(46, entrant.name_font_size_adjustment))
+        return obstacles

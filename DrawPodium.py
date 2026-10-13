@@ -21,6 +21,7 @@ from PIL import Image, ImageColor, ImageDraw, ImageFont
 from io import BytesIO
 
 from constants import PODIUM_BOX_COLORS_BY_SLOT
+from footer_attribution import choose_footer_placement
 from models import Character, DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
@@ -601,6 +602,7 @@ def _text_bounds(
         font=loaded_font,
         anchor=anchor,
         align=align,
+        stroke_width=stroke_width,
     )
     return tuple(round(value) for value in bounds)
 
@@ -1204,7 +1206,7 @@ def _attribution_layout(
     font: PodiumFont,
     mode: PodiumMode,
 ) -> tuple[tuple[int, int], str]:
-    """Choose the least-obstructed position across the full footer row."""
+    """Compare bottom left, middle, and right, preferring left on ties."""
     draw = ImageDraw.Draw(canvas)
     y = canvas.height - ATTRIBUTION_BOTTOM_MARGIN
     max_width = canvas.width - 2 * ATTRIBUTION_SIDE_MARGIN
@@ -1222,24 +1224,8 @@ def _attribution_layout(
     rightmost_x = max(leftmost_x, right_edge - measured_bounds[2])
     obstacles = _footer_text_bounds(draw, entrants, font=font, mode=mode)
 
-    def overlap_score(x: int) -> int:
-        attribution_bounds = (
-            measured_bounds[0] + x,
-            measured_bounds[1],
-            measured_bounds[2] + x,
-            measured_bounds[3],
-        )
-        return sum(
-            _box_intersection_area(attribution_bounds, obstacle)
-            for obstacle in obstacles
-        )
-
-    # Search from right to left so an equally good span retains the original
-    # bottom-right placement while allowing any clearer gap along the row.
-    best_x = min(
-        range(rightmost_x, leftmost_x - 1, -1),
-        key=overlap_score,
-    )
+    best_x = choose_footer_placement(canvas.width, measured_bounds, obstacles,
+                                     side_margin=ATTRIBUTION_SIDE_MARGIN).origin_x
     if best_x == rightmost_x:
         return (right_edge, y), "ra"
     return (best_x, y), "la"

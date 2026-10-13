@@ -206,9 +206,17 @@
       "shared_placement_number_height": 23,
       "attribution": {
         "position": [
-          14,
-          18
+          714,
+          911
         ],
+        "anchor": "la",
+        "bounds": [
+          713,
+          913,
+          958,
+          934
+        ],
+        "policy": "least_footer_overlap_left_tie",
         "font_size": 18,
         "color": "#FFFFFF40"
       }
@@ -416,9 +424,17 @@
       "shared_placement_number_height": 23,
       "attribution": {
         "position": [
-          14,
-          18
+          11,
+          911
         ],
+        "anchor": "la",
+        "bounds": [
+          10,
+          913,
+          255,
+          934
+        ],
+        "policy": "least_footer_overlap_left_tie",
         "font_size": 18,
         "color": "#FFFFFF40"
       }

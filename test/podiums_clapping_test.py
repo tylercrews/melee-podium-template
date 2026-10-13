@@ -58,6 +58,10 @@ class PodiumsClappingTest(unittest.TestCase):
         self.assertEqual([track.panel.rect.right for track in layout.tracks[::2]], [424, 1211])
         self.assertEqual([track.panel.rect.left for track in layout.tracks[1::2]], [469, 1243])
         first, later = layout.frame(0), layout.frame(18)
+        self.assertIsNotNone(layout.footer_placement)
+        self.assertGreaterEqual(layout.footer_placement.bounds[1], 900)
+        ink_width = layout.footer_placement.bounds[2] - layout.footer_placement.bounds[0]
+        self.assertIn(layout.footer_placement.bounds[0], (10, (first.width - ink_width) // 2, first.width - 10 - ink_width))
         self.assertNotEqual(first.tobytes(), later.tobytes())
         difference = ImageChops.difference(first, later)
         for track in layout.tracks:

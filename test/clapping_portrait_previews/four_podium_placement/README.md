@@ -41,8 +41,10 @@ their podium edges. The portrait uses the entrant's first selected character/cos
 the reviewed clapping crop, and the same RGBA background as the player-name
 text. The visible lower ranks are 5th, 5th, 7th, and 7th.
 
-The canonical URL is proposed in the upper-left header so it does not overlap
-the lower-result panels. The detail PNGs enlarge the footer uniformly by two
+The canonical URL chooses bottom left, middle, or bottom right based on the
+least overlap with the actual lower-result text, portrait panels, and placement
+artwork. Equal overlap prefers bottom left. Its position stays fixed throughout
+the animation and keeps the header logo clear. The detail PNGs enlarge the footer uniformly by two
 times. `placement-draft.json` records the proposed rectangles, text widths,
 colors, text anchors, shared-number placements, and example identities separately
 for the two styles.

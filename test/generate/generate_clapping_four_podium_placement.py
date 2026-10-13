@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 import sys
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -18,12 +18,11 @@ from background_builder import (
     BUILTIN_BACKGROUND_SIZES, BackgroundRequest, ImagePlacement, PixelRect, PixelSize,
     cover_crop, create_background,
 )
-from clapping_portrait_renderer import render_clapping_portrait
 from creation import CreationRequest
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
-from DrawPodium import ATTRIBUTION_TEXT, PodiumFont, _load_stock_icon
-from formatting_assets import FormattingAssetRenderer, draw_placement_tags
-from legacy_podium_content_renderer import LegacyPodiumContentRenderer
+from DrawPodium import ATTRIBUTION_BOTTOM_MARGIN, PodiumFont
+from formatting_assets import FormattingAssetRenderer
+from podiums_clapping_renderer import PodiumsClappingContentRenderer
 from mode_preferences import ModePreferenceRepository, PixelPoint, PlacementTagPlacement
 from models import TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
@@ -37,26 +36,6 @@ NAME_COLORS = ("#FB8B00FF", "#00CDC3FF", "#FF00FFFF", "#8D8D8DFF")
 PANEL_SIZE = (68, 104)
 SHARED_BADGE_COPY_GAP = 12
 LAYOUT_REVIEW_NAME = "Podiums+Clapping"
-
-
-def font(size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(str(PROJECT_ROOT / "fonts/Ubuntu-Regular.ttf"), size)
-
-
-def fit_font(text: str, preferred: int, width: int) -> ImageFont.FreeTypeFont:
-    size = preferred
-    while size > 11 and font(size).getlength(text) > width:
-        size -= 1
-    return font(size)
-
-
-class PlacementPreviewContentRenderer(LegacyPodiumContentRenderer):
-    """Leave the lower-result band free of the existing footer attribution."""
-
-    def _draw_attribution(self, canvas, request, mode):
-        layer = Image.new("RGBA", canvas.size, "#00000000")
-        ImageDraw.Draw(layer).text((14, 18), ATTRIBUTION_TEXT, font=font(18), fill="#FFFFFF40")
-        canvas.alpha_composite(layer)
 
 
 def portrait_column_edges(preferences, body):
@@ -119,41 +98,6 @@ def lower_result_geometry(preferences, number_height):
     return rows, badges
 
 
-def draw_lower_result(canvas, entrant, rect, text_x, max_width, color, alignment):
-    """Draw a portrait with a left- or right-aligned identity and stock/seed row."""
-
-    left, top, right, bottom = rect
-    character = entrant.characters[0]
-    frame = json.loads((PROJECT_ROOT / "preferences/portraits/clapping.json").read_text())["characters"][character.melee_fighter_name]["preview_frame_index"]
-    portrait = render_clapping_portrait(
-        character, (right - left, bottom - top), background_color=color,
-        frame_index=frame, border_width=1,
-    )
-    canvas.alpha_composite(portrait, (left, top))
-    draw = ImageDraw.Draw(canvas)
-    row_y = top + 17
-    icons = [_load_stock_icon(character, size=24) for character in entrant.characters]
-    seed_text = f"[{entrant.seed}s]" if entrant.seed is not None else ""
-    icons_width = sum(icon.width for icon in icons) + 5 * max(0, len(icons) - 1)
-    row_width = icons_width + (12 + round(font(17).getlength(seed_text)) if seed_text else 0)
-    x = text_x - row_width if alignment == "right" else text_x
-    for icon in icons:
-        canvas.alpha_composite(icon, (x, row_y - icon.height // 2))
-        x += icon.width + 5
-    if seed_text:
-        draw.text((x + 7, row_y + 3), seed_text, font=font(17), anchor="lm", fill=color)
-    anchor = "rm" if alignment == "right" else "lm"
-    sponsor, separator, player = entrant.tag.rpartition("|")
-    if separator:
-        draw.text((text_x, top + 47), sponsor.strip(), font=fit_font(sponsor.strip(), 22, max_width), anchor=anchor, fill=color)
-        name_y = top + 82
-    else:
-        player = entrant.tag
-        name_y = top + 63
-    draw.text((text_x, name_y), player.strip(), font=fit_font(player.strip(), 46, max_width), anchor=anchor, fill=color)
-    assert 0 <= left < right <= canvas.width and 0 <= top < bottom <= canvas.height
-
-
 def generate() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     entrants = sample_clapping_top_8_entrants()
@@ -204,20 +148,15 @@ def generate() -> None:
             text_slots=tuple(placement for placement in preferences.text_slots if placement.field != "entrant.summary"),
         )
         formatted = FormattingAssetRenderer().draw(create_background(background), review_preferences, colors)
-        preview = PlacementPreviewContentRenderer(font=PodiumFont.UBUNTU).draw(formatted, request, review_preferences)
+        layout = PodiumsClappingContentRenderer(font=PodiumFont.UBUNTU).prepare(formatted, request, review_preferences)
+        preview = layout.frame()
         for row in rows:
             entrant = entrants[row["entrant_slot"] - 1]
-            draw_lower_result(
-                preview, entrant, row["portrait_rect"], row["text_x"],
-                row["text_max_width"], row["background_and_name_color"], row["text_alignment"],
-            )
             row.update({
                 "demo_tag": entrant.tag,
                 "demo_character": entrant.characters[0].melee_fighter_name,
                 "demo_costume": entrant.characters[0].color,
             })
-        # The requested shared ranks overlay portraits without affecting geometry.
-        draw_placement_tags(preview, replace(review_preferences, placement_tags=tuple(shared_badges)))
         output = OUTPUT / f"{style.value}-top-8-four-podium-placement.png"
         preview.convert("RGB").save(output)
         preview.crop((0, 818, size.width, size.height)).resize(
@@ -233,7 +172,9 @@ def generate() -> None:
             "podium_placement_tags": [tag.to_dict() for tag in review_preferences.placement_tags],
             "shared_placement_tags_above_portraits": True,
             "shared_placement_number_height": number_height,
-            "attribution": {"position": [14, 18], "font_size": 18, "color": "#FFFFFF40"},
+            "attribution": {"position": [layout.footer_placement.origin_x, size.height - ATTRIBUTION_BOTTOM_MARGIN],
+                            "anchor": "la", "bounds": list(layout.footer_placement.bounds),
+                            "policy": "least_footer_overlap_left_tie", "font_size": 18, "color": "#FFFFFF40"},
         }
         print(output)
     (OUTPUT / "placement-draft.json").write_text(json.dumps(draft, indent=2) + "\n", encoding="utf-8")

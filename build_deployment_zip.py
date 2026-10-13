@@ -27,6 +27,7 @@ FILES = (
     "format_preview.py",
     "formatting_assets.py",
     "font_size_adjustments.py",
+    "footer_attribution.py",
     "geometric_content_renderer.py",
     "geometric_creation.py",
     "geometric_formatting_colors.py",
