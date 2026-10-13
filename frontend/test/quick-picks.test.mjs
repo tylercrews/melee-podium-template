@@ -29,7 +29,7 @@ const { default: LoadStep } = await loadModule("LoadStep.tsx");
 
 test("guests see five accessible thumbnail buttons in the requested order", () => {
   const html = renderToStaticMarkup(createElement(LoadStep, {
-    user: null, hasLoadedFormat: false, onChange() {}, onSignIn() {}, onSkip() {}, onQuickPick() {}, onProceedToBracket() {},
+    user: null, hasLoadedFormat: false, canProceedToBracket: false, onChange() {}, onSignIn() {}, onSkip() {}, onProceedToBracket() {},
   }));
   assert.ok(html.indexOf("load-format-heading") < html.indexOf("quick-picks-heading"));
   assert.ok(html.includes("<h1>Load A Format</h1>"));

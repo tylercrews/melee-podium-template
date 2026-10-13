@@ -34,7 +34,8 @@ export default function ImageBackgroundSettings({ value, backgroundImage, onChan
   useEffect(() => {
     const placement = settings.background_placement;
     if (!backgroundImage) {
-      if (placement) onChange({ ...value, image_settings: { ...settings, background_placement: null } });
+      // A loaded asset may still be waiting for its library metadata. Explicit
+      // deselection is committed by Assets, so hydration must not erase it.
       return;
     }
     if (!outputSize) return;
