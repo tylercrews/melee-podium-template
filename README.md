@@ -77,6 +77,7 @@ npm run build
 
 
 TODO LIST:
+* melee podium.meme watermark on radial images
 * add a char for random, need it more for online tourneys second request from brooke
 * need assets for at least sandbag, probably giga and the wireframes would be good too, maybe the hands f it why not.
 * top 16 legacy podium and customizable podium - 8 on top and 8 clapping, shift up the podiums a little so you use a little more of the vertical space
