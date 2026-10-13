@@ -1,6 +1,7 @@
 [
-  { "id": "podium-singles-top-8", "name": "Podium Top 8 singles", "mode": "podium", "podium_style": "legacy", "event_format": "singles", "entrant_count": 8 },
+  { "id": "podiums-clapping-singles-top-8", "name": "The First Animated Melee Top 8 Template", "mode": "podium", "podium_style": "customizable", "event_format": "singles", "entrant_count": 8, "variant": "four_podium", "animated": true },
   { "id": "podium-doubles-top-4", "name": "This Was The Entire Point Of All Of This", "mode": "podium", "podium_style": "customizable", "event_format": "doubles", "entrant_count": 4 },
   { "id": "squares-singles-top-8", "name": "Just Give Me Top8er", "mode": "squares", "event_format": "singles", "entrant_count": 8 },
+  { "id": "podium-singles-top-8", "name": "Podium Top 8 singles", "mode": "podium", "podium_style": "legacy", "event_format": "singles", "entrant_count": 8 },
   { "id": "squares-doubles-top-4", "name": "Squares Top 4 doubles", "mode": "squares", "event_format": "doubles", "entrant_count": 4 }
 ]

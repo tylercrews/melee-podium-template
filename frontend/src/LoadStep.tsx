@@ -79,7 +79,7 @@ export default function LoadStep({ user, hasLoadedFormat, onChange, onSignIn, on
   }
 
   return <section className="step-content load-step">
-    <div className="step-intro"><div className="step-heading-row"><h1>Load a Format</h1><button className="button button--ghost" type="button" onClick={onSkip}>{hasLoadedFormat ? "Proceed to Assets" : "Skip loading"}</button></div><p>Start with saved settings, import a shared format code, or continue without loading one.</p></div>
+    <div className="step-intro"><div className="step-heading-row"><h1>Load A Format</h1><button className="button button--ghost" type="button" onClick={onSkip}>{hasLoadedFormat ? "Proceed to Assets" : "Skip loading"}</button></div><p>Start with saved settings, import a shared format code, or continue without loading one.</p></div>
     <section className="format-loader" aria-labelledby="load-format-heading">
       <div><span className="eyebrow">Optional starting point</span><h2 id="load-format-heading">Load a previous format</h2></div>
       {user ? <label className="format-select">Saved formats<select value={selectedId} onChange={(event) => loadSavedFormat(event.target.value)} disabled={loading}><option value="">{loading ? "Loading formats…" : "Choose a saved format"}</option>{savedFormats.map((format) => <option value={format.id} key={format.id}>{format.name}</option>)}</select></label> : <div className="format-signin"><p>Sign in to choose from your saved formats.</p><button className="button button--outline" type="button" onClick={onSignIn}>Sign in</button></div>}
@@ -93,7 +93,7 @@ export default function LoadStep({ user, hasLoadedFormat, onChange, onSignIn, on
         setSelectedId("");
         setMessageIsError(false);
         setMessage(`Loaded ${pick.name}. Bracket Import is ready when you are.`);
-      }}><img src={`${import.meta.env.BASE_URL}quick_pick_thumbnails/${pick.id}.webp`} alt={`${pick.mode === "podium" ? (pick.podium_style === "customizable" ? "Customizable Podium" : "Legacy Podium") : "Squares"} ${pick.event_format} Top ${pick.entrant_count} example`} loading="lazy" /><strong>{pick.name}</strong><span>{pick.mode === "podium" ? (pick.podium_style === "customizable" ? "Customizable Podiums" : "Legacy Podiums") : "Squares"} · {pick.event_format === "singles" ? "Singles" : "Doubles"} · Top {pick.entrant_count}</span></button>)}</div>
+      }}><img src={`${import.meta.env.BASE_URL}quick_pick_thumbnails/${pick.id}.webp`} alt={`${pick.animated ? "Animated " : ""}${pick.variant === "four_podium" ? "Podiums+Clapping" : pick.mode === "podium" ? (pick.podium_style === "customizable" ? "Customizable Podium" : "Legacy Podium") : "Squares"} ${pick.event_format} Top ${pick.entrant_count} example`} loading="lazy" /><strong>{pick.name}</strong><span>{pick.variant === "four_podium" ? "Podiums+Clapping" : pick.mode === "podium" ? (pick.podium_style === "customizable" ? "Customizable Podiums" : "Legacy Podiums") : "Squares"} · {pick.event_format === "singles" ? "Singles" : "Doubles"} · Top {pick.entrant_count}</span></button>)}</div>
       {quickPickId && <button className="button button--dark" type="button" onClick={onProceedToBracket}>Continue to Bracket Import</button>}
     </section>
     {message && <p className="inline-message format-message" role={messageIsError ? "alert" : "status"}>{message}</p>}

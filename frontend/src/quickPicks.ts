@@ -15,7 +15,8 @@ export function quickPickFormat(id: string): FormatConfiguration {
       options: {
         event_format: pick.event_format,
         entrant_count: pick.entrant_count,
-        variant: null,
+        variant: pick.variant ?? null,
+        animated: pick.animated ?? false,
         podium_style: pick.podium_style ?? null,
       },
     },
