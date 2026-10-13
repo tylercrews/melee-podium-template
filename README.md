@@ -77,33 +77,27 @@ npm run build
 
 
 TODO LIST:
-* reshuffle the podium+clapping thumbnail, it's all foxes in the bottom lol
-* add the sponsors to the gods for when they peaked like armada had one for sure
 * can create a doubles podiums+clapping template by just expanding down a little to include a second row of clapping
-* fix the gods list to go to top 50 by looking at the top 10 melee players every year and write them down
-* melee podium.meme watermark on radial images
-* add a char for random, need it more for online tourneys second request from brooke
-* need assets for at least sandbag, probably giga and the wireframes would be good too, maybe the hands f it why not.
 * top 16 legacy podium and customizable podium - 8 on top and 8 clapping, shift up the podiums a little so you use a little more of the vertical space
-* make it so that when you do a quick pick you're not locked into having no assets
 * make it so you can pick a format and omit players. Like just have empty podiums or slots if you want, and that way anything can be a pr pic
-* change the radials to have 5s on bottom left and 7s on bottom right together
-* make another format similar to the eyes one except it's all chars clapping, with a 1, 2, 3?
+
+* need to decide an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament. Sandbag is more like null, random should be something different.
 
 * get some melee fonts added in. like the timer one is super clean - at least one more font would go really hard
 
-* split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing? Would be nice for a tag to still get pulled up even if the sponsor changes though.
+* add the sponsors to the gods for when they peaked like armada had one for sure
+* fix the gods list to go to top 50 by looking at the top 10 melee players every year and write them down
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
-* need an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament
 * bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
 
 Maybes/Eventuallies:
-* see if decompiled melee can be used to generate melee assets - would need to be a separate repo. But would be amazing to programmatically create claps, victory screens, and tech roll animations. on top of other things.
+* need assets for giga and the wireframes and the hands
 * add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
 * support for twitter and bluesky handles - need to come up with some place to put them.
 * Stress-test browser memory limits for guest image uploads, then implement safe in-memory tournament-logo and background selection for users who are not signed in.
 * more refinements for portrait position centering and eye positions
+* split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing?
 
 Different Layout Styles One Day:
 * a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s
@@ -113,6 +107,7 @@ Different Layout Styles One Day:
 * long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
 * top8.gg has a really cool type of layout where they have title bar, podium-arranged top 3, then 5 on the bottom. But they do all squares. What if I had a half-and-half layout where the top 3 get their characters on short podiums, then the subsequent players get their characters in boxes underneath.
 * instead of straight up boxes what if you maximized space by having / vs style diagonal split portraits
+* make another format similar to the eyes one except it's all chars clapping, with a 1, 2, 3?
 
 ## Current roadmap
 

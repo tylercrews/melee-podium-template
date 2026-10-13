@@ -17,6 +17,7 @@ from preview_layers import COLOR_LAYER_IDS, HEADER_CONTENTS, HEADER_POSITIONS, _
 from radial_content_renderer import RadialContentRenderer, radial_header_boxes
 from radial_geometry import draw_radial_dividers
 from radial_palette import radial_palette_color
+from radial_watermark import draw_radial_watermark
 from sample_creation_data import sample_top_8_entrants, sample_top_4_teams, sample_tournament
 
 
@@ -44,6 +45,9 @@ def _generate_radial_layout_layers(output_root: Path, event_format: TournamentFo
     draw_placement_tags(labels, preferences)
     save(labels, "radial_labels_doubles.png" if doubles else "radial_labels.png")
 
+    watermark = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
+    draw_radial_watermark(watermark, doubles=doubles, fill="#FFFFFF40")
+    save(watermark, "radial_watermark_doubles.png" if doubles else "radial_watermark.png")
     if not doubles:
         for position, box in radial_header_boxes(preferences).items():
             layer = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")

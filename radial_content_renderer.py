@@ -19,7 +19,9 @@ from geometric_content_renderer import (
 )
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferences
+from models import TournamentFormat
 from radial_geometry import clip_to_section, draw_radial_dividers, radial_sections
+from radial_watermark import draw_radial_watermark
 
 
 DEFAULT_RADIAL_HEADER_LAYOUT = {
@@ -85,6 +87,7 @@ class RadialContentRenderer:
             _draw_result_text(text_layer, request, preferences, self.font)
             _composite_outlined_text(result, text_layer)
             draw_placement_tags(result, preferences)
+        draw_radial_watermark(result, doubles=request.selection.options.event_format is TournamentFormat.DOUBLES)
         return result
 
     def _draw_header(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> None:

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl, recordDownload } from "./api";
 import { previewDownloadName } from "./previewDownload";
+import { drawRadialWatermark } from "./radialWatermark";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
@@ -24,6 +25,7 @@ interface LayerRequest {
   headerUrl: string;
   logoPlaceholderUrl?: string;
   resultLabelsUrl?: string;
+  watermarkUrl?: string;
   label: string;
   logoPosition: "top_left" | "top_middle" | "top_right";
   logoBox: { left: number; top: number; right: number; bottom: number };
@@ -160,6 +162,7 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     headerUrl,
     logoPlaceholderUrl: mode === "radial" ? `${layerRoot}/radial_logos/${logoPosition}.png` : undefined,
     resultLabelsUrl: mode === "radial" ? `${layerRoot}/radial_labels${eventFormat === "doubles" ? "_doubles" : ""}.png` : undefined,
+    watermarkUrl: mode === "radial" ? `${layerRoot}/radial_watermark${eventFormat === "doubles" ? "_doubles" : ""}.png` : undefined,
     label: `${styleLabel} · ${eventLabel} · ${layoutLabel}`,
     logoPosition,
     logoBox: headerBox(format, outputSize, logoPosition),
@@ -368,13 +371,14 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
     setRefreshedSignature(null);
     const timeout = window.setTimeout(async () => {
       try {
-        const [foregrounds, header, background, logo, logoPlaceholder, resultLabels] = await Promise.all([
+        const [foregrounds, header, background, logo, logoPlaceholder, resultLabels, watermark] = await Promise.all([
           Promise.all(request.foregroundLayers.map(async (layer) => ({ ...layer, image: await loadImage(layer.url) }))),
           loadImage(request.headerUrl),
           backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
           logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
           !logoImage && request.logoPlaceholderUrl ? loadImage(request.logoPlaceholderUrl) : Promise.resolve(null),
           request.resultLabelsUrl ? loadImage(request.resultLabelsUrl) : Promise.resolve(null),
+          request.watermarkUrl ? loadImage(request.watermarkUrl) : Promise.resolve(null),
         ]);
         if (cancelled || !canvas.current) return;
         const target = canvas.current;
@@ -392,6 +396,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
         if (resultLabels) context.drawImage(resultLabels, 0, 0, request.outputSize.width, request.outputSize.height);
         if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+        if (watermark) drawRadialWatermark(context, watermark, format.selection.options.event_format === "doubles");
         setLoading(false);
       } catch {
         if (!cancelled) { setFailed(true); setLoading(false); }

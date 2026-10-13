@@ -3,6 +3,7 @@
 from dataclasses import replace
 from io import BytesIO
 from itertools import permutations
+from pathlib import Path
 import json
 import random
 import unittest
@@ -22,6 +23,8 @@ from models import TournamentFormat
 from radial_content_renderer import RadialContentRenderer
 from radial_geometry import clip_to_section, radial_sections
 from radial_palette import radial_palette_color
+from radial_watermark import RADIAL_WATERMARK_BOX, draw_radial_watermark
+from generate_radial_preferences import radial_preferences
 from podium_colors import PodiumColorSelection
 from sample_creation_data import sample_top_8_entrants, sample_tournament
 
@@ -41,12 +44,13 @@ class RadialTests(unittest.TestCase):
             self.assertEqual(len(section.polygon), 3)
             self.assertIn(center, [(section.destination.left + p.x, section.destination.top + p.y) for p in section.polygon])
         self.assertFalse(any(p.field == "entrant.placement" for p in self.preferences.text_slots))
-        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((365, 96), (1710, 48), (68, 165), (1852, 165), (68, 915), (1852, 915), (200, 1028), (1720, 1028))])
+        self.assertEqual(self.preferences, radial_preferences())
+        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((365, 96), (1710, 48), (68, 165), (1852, 165), (68, 915), (200, 1028), (1852, 915), (1720, 1028))])
         self.assertEqual([p.asset_id for p in self.preferences.placement_tags], ["01st.png", "02nd.png", "03rd.png", "04th.png", "05th.png", "05th.png", "07th.png", "07th.png"])
 
     def test_numbers_and_names_have_separate_outer_corner_regions(self):
         names = [p for p in self.preferences.text_slots if p.field == "entrant.tag"]
-        expected_corners = ((936, 14, "ra"), (984, 14, "la"), (18, 518, "ls"), (1902, 518, "rs"), (18, 554, "la"), (1902, 554, "ra"), (936, 1054, "rs"), (984, 1054, "ls"))
+        expected_corners = ((936, 14, "ra"), (984, 14, "la"), (18, 518, "ls"), (1902, 518, "rs"), (18, 554, "la"), (936, 1054, "rs"), (1902, 554, "ra"), (984, 1054, "ls"))
         draw = ImageDraw.Draw(Image.new("RGBA", (1920, 1080)))
         for slot, (number, name, expected) in enumerate(zip(self.preferences.placement_tags, names, expected_corners), 1):
             self.assertEqual((name.anchor.x, name.anchor.y, name.pillow_anchor), expected)
@@ -63,6 +67,54 @@ class RadialTests(unittest.TestCase):
             self.assertGreaterEqual(top, 0)
             self.assertLessEqual(right, 1920)
             self.assertLessEqual(bottom, 1080)
+
+    def test_tied_placements_keep_portraits_names_seeds_and_palettes_on_the_same_side(self):
+        sections = radial_sections(self.preferences)
+        for slot in (5, 6, 7, 8):
+            section = sections[slot]
+            self.assertEqual(section.destination.left, 0 if slot in (5, 6) else 960)
+            self.assertEqual(section.destination.top, 540)
+            portrait = next(p for p in self.preferences.character_slots if p.entrant_slot == slot)
+            self.assertTrue(section.destination.left < portrait.anchor.x < section.destination.right)
+            for field in ("entrant.tag", "entrant.seed"):
+                label = next(p for p in self.preferences.text_slots if p.entrant_slot == slot and p.field == field)
+                if slot in (5, 6):
+                    self.assertLess(label.anchor.x, 960)
+                else:
+                    self.assertGreater(label.anchor.x, 960)
+
+    def test_bottom_right_watermark_clears_badges_and_seeds(self):
+        layer = Image.new("RGBA", (1920, 1080))
+        draw_radial_watermark(layer)
+        bounds = layer.getbbox()
+        left, top, right, bottom = bounds
+        box = RADIAL_WATERMARK_BOX
+        self.assertTrue(box.left <= left < right <= box.right and box.top <= top < bottom <= box.bottom)
+        draw = ImageDraw.Draw(layer)
+        obstacles = [(p.anchor.x - p.max_size.width / 2, p.anchor.y - p.max_size.height / 2, p.anchor.x + p.max_size.width / 2, p.anchor.y + p.max_size.height / 2) for p in self.preferences.placement_tags]
+        for seed in (p for p in self.preferences.text_slots if p.field == "entrant.seed"):
+            value = f"{self.entrants[seed.entrant_slot - 1].seed}s"
+            font = _font_to_fit(value, seed.max_width, seed.preferred_size, PodiumFont.TYROWO)
+            obstacles.append(draw.textbbox((seed.anchor.x, seed.anchor.y), value, font=font, anchor=seed.pillow_anchor, stroke_width=2))
+        for obstacle in obstacles:
+            self.assertTrue(right < obstacle[0] or left > obstacle[2] or bottom < obstacle[1] or top > obstacle[3])
+
+    def test_watermark_chooses_local_contrast_and_blends_once(self):
+        for background, expected in (("#FFFFFFFF", 191), ("#000000FF", 64)):
+            image = Image.new("RGBA", (1920, 1080), background)
+            draw_radial_watermark(image)
+            pixels = list(image.crop(RADIAL_WATERMARK_BOX.as_tuple()).getdata())
+            values = [pixel[0] for pixel in pixels]
+            self.assertEqual(min(values) if background == "#FFFFFFFF" else max(values), expected)
+            self.assertTrue(all(pixel[3] == 255 for pixel in pixels))
+
+    def test_browser_watermark_masks_match_exact_render_geometry(self):
+        root = Path(__file__).resolve().parents[1] / "frontend/public/format_preview_layers"
+        for doubles, filename in ((False, "radial_watermark.png"), (True, "radial_watermark_doubles.png")):
+            layer = Image.new("RGBA", (1920, 1080))
+            draw_radial_watermark(layer, doubles=doubles, fill="#FFFFFF40")
+            with Image.open(root / filename) as saved:
+                self.assertEqual(saved.convert("RGBA").tobytes(), layer.tobytes())
 
     def test_seeds_are_deeper_in_the_same_outer_corner_as_their_numbers(self):
         seeds = [p for p in self.preferences.text_slots if p.field == "entrant.seed"]

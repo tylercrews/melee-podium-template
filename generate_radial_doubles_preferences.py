@@ -6,7 +6,7 @@ from pathlib import Path
 
 from background_builder import PixelRect
 from creation_modes import CreationMode, ModeOptions, ModeSelection
-from generate_radial_preferences import radial_preferences
+from generate_radial_preferences import radial_reference_preferences
 from mode_preferences import FormattingAssetPlacement, ModePreferences, PixelPoint, TextPlacement
 from models import TournamentFormat
 
@@ -15,7 +15,7 @@ RADIAL_TEAM_MEMBERS = ((1, 2), (3, 5), (4, 6), (7, 8))
 
 
 def radial_doubles_preferences() -> ModePreferences:
-    singles = radial_preferences()
+    singles = radial_reference_preferences()
     center = (960, 540)
     polygons = (
         ((0, 0), (1920, 0), center),

@@ -7,7 +7,7 @@ import random
 import unittest
 from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from app import app
 from background_builder import BackgroundRequest
@@ -21,6 +21,10 @@ from models import TournamentFormat
 from radial_content_renderer import RadialContentRenderer
 from radial_geometry import radial_sections
 from sample_creation_data import sample_top_4_teams, sample_tournament
+from generate_radial_preferences import radial_reference_preferences
+from generate_radial_doubles_preferences import radial_doubles_preferences
+from DrawPodium import PodiumFont, _font_to_fit
+from radial_watermark import RADIAL_DOUBLES_WATERMARK_BOX, draw_radial_watermark
 
 
 class RadialDoublesTests(unittest.TestCase):
@@ -35,7 +39,8 @@ class RadialDoublesTests(unittest.TestCase):
     def test_serialized_team_mapping_keeps_all_eight_singles_portrait_positions(self):
         self.assertTrue(self.preferences.ready)
         self.assertEqual(ModePreferences.from_dict(json.loads(json.dumps(self.preferences.to_dict()))), self.preferences)
-        singles = self.repository.load(ModeSelection(CreationMode.RADIAL, ModeOptions(TournamentFormat.SINGLES, 8)))
+        self.assertEqual(self.preferences, radial_doubles_preferences())
+        singles = radial_reference_preferences()
         by_id = {p.slot_id: p for p in self.preferences.character_slots}
         expected = ((1, 1), (1, 2), (2, 1), (3, 1), (2, 2), (3, 2), (4, 1), (4, 2))
         for old, (team, member) in zip(singles.character_slots, expected):
@@ -69,6 +74,27 @@ class RadialDoublesTests(unittest.TestCase):
             corner = (1920, 0) if number.anchor.x > 960 else (0, 1080) if number.anchor.y > 540 else (0, 0)
             distance = lambda point: (point.x - corner[0]) ** 2 + (point.y - corner[1]) ** 2
             self.assertLess(distance(seed.anchor), distance(number.anchor))
+
+    def test_watermark_clears_fourth_place_team_and_both_member_names(self):
+        layer = Image.new("RGBA", (1920, 1080))
+        draw_radial_watermark(layer, doubles=True)
+        bounds = layer.getbbox()
+        left, top, right, bottom = bounds
+        box = RADIAL_DOUBLES_WATERMARK_BOX
+        self.assertTrue(box.left <= left < right <= box.right and box.top <= top < bottom <= box.bottom)
+        team = self.teams[3]
+        draw = ImageDraw.Draw(layer)
+        for slot in (p for p in self.preferences.text_slots if p.entrant_slot == 4):
+            if slot.field == "entrant.team_name":
+                value = team.team_name
+            elif slot.field == "entrant.seed":
+                value = f"{team.seed}s"
+            else:
+                value = (team.entrant_1 if slot.member_slot == 1 else team.entrant_2).tag
+            for font_choice in PodiumFont:
+                font = _font_to_fit(value, slot.max_width, slot.preferred_size + 20, font_choice)
+                obstacle = draw.textbbox((slot.anchor.x, slot.anchor.y), value, font=font, anchor=slot.pillow_anchor, stroke_width=2)
+                self.assertTrue(right < obstacle[0] or left > obstacle[2] or bottom < obstacle[1] or top > obstacle[3])
 
     def test_internal_teammate_seams_have_no_border_and_share_one_palette(self):
         preferences = replace(self.preferences, text_slots=(), placement_tags=())

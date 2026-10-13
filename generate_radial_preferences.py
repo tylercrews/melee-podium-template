@@ -1,6 +1,7 @@
 """Extract the eight Radial sections and anchors from the 1280x720 reference."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from background_builder import PixelRect, PixelSize
@@ -9,7 +10,8 @@ from mode_preferences import CharacterPlacement, FormattingAssetPlacement, ModeP
 from models import TournamentFormat
 
 
-def radial_preferences() -> ModePreferences:
+def radial_reference_preferences() -> ModePreferences:
+    """Keep the original wedge geometry available to the independent Doubles layout."""
     def point(x, y):
         return PixelPoint(round(x * 1.5), round(y * 1.5))
 
@@ -64,6 +66,41 @@ def radial_preferences() -> ModePreferences:
         ModeSelection(CreationMode.RADIAL, ModeOptions(TournamentFormat.SINGLES, 8)),
         PixelSize(1920, 1080), ready=True,
         formatting_assets=tuple(assets), placement_tags=tuple(placement_tags), character_slots=tuple(characters), text_slots=tuple(text),
+    )
+
+
+def radial_preferences() -> ModePreferences:
+    """Group tied fifths on the lower left and tied sevenths on the lower right."""
+    reference = radial_reference_preferences()
+    wedge_slots = (1, 2, 3, 4, 5, 7, 6, 8)
+
+    def remap_id(slot_id):
+        prefix, slot = slot_id.rsplit("_", 1)
+        return f"{prefix}_{wedge_slots[int(slot) - 1]}"
+
+    assets = tuple(
+        replace(p, slot_id=remap_id(p.slot_id)) if p.asset_id == "radial_slice" else p
+        for p in reference.formatting_assets
+    )
+
+    def remap_content(placements):
+        return tuple(sorted((
+            replace(p, slot_id=remap_id(p.slot_id), entrant_slot=wedge_slots[p.entrant_slot - 1])
+            for p in placements
+        ), key=lambda p: p.entrant_slot))
+
+    characters = remap_content(reference.character_slots)
+    text = remap_content(reference.text_slots)
+    numbers = []
+    for p in reference.placement_tags:
+        slot_id = remap_id(p.slot_id)
+        slot = int(slot_id.rsplit("_", 1)[1])
+        rank = (1, 2, 3, 4, 5, 5, 7, 7)[slot - 1]
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(rank, "th")
+        numbers.append(replace(p, slot_id=slot_id, asset_id=f"{rank:02}{suffix}.png"))
+    return replace(
+        reference, formatting_assets=assets, character_slots=characters, text_slots=text,
+        placement_tags=tuple(sorted(numbers, key=lambda p: int(p.slot_id.rsplit("_", 1)[1]))),
     )
 
 
