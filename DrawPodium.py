@@ -23,6 +23,7 @@ from io import BytesIO
 from constants import PODIUM_BOX_COLORS_BY_SLOT
 from footer_attribution import choose_footer_placement
 from models import Character, DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
+from portrait_assets import with_team_color
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
@@ -343,7 +344,7 @@ def _place_characters(
 
 def _character_with_team_color(character: Character, team_color: str | None) -> Character:
     """Apply a doubles color override without mutating the entrant's character."""
-    return character if team_color is None else replace(character, color=team_color)
+    return with_team_color(character, team_color)
 
 
 def _font_settings(font: PodiumFont) -> tuple[Path | BytesIO, int]:
