@@ -77,6 +77,10 @@ npm run build
 
 
 TODO LIST:
+* reshuffle the podium+clapping thumbnail, it's all foxes in the bottom lol
+* add the sponsors to the gods for when they peaked like armada had one for sure
+* can create a doubles podiums+clapping template by just expanding down a little to include a second row of clapping
+* fix the gods list to go to top 50 by looking at the top 10 melee players every year and write them down
 * melee podium.meme watermark on radial images
 * add a char for random, need it more for online tourneys second request from brooke
 * need assets for at least sandbag, probably giga and the wireframes would be good too, maybe the hands f it why not.
