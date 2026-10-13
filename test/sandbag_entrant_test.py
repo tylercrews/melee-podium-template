@@ -1,6 +1,8 @@
 """Sandbag selection, asset previews, and singles/doubles API rendering."""
 
 from io import BytesIO
+from hashlib import sha256
+import json
 from pathlib import Path
 import unittest
 
@@ -10,12 +12,43 @@ from app import app
 from clapping_assets import resolve_clapping_path
 from DrawPodium import _character_with_team_color
 from models import Character
-from portrait_assets import resolve_character_path, with_team_color
+from portrait_assets import load_scaled_portrait, resolve_character_path, with_team_color
+from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustment
 
 
 class SandbagEntrantTest(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
+
+    def test_native_art_is_cropped_losslessly_and_keeps_reviewed_render_height(self):
+        root = Path(__file__).resolve().parents[1]
+        with Image.open(root / "docs/archive/sandbag/sandbag-standing-frame-0001-native-2048-yaw-plus43.png") as source:
+            expected = source.convert("RGBA").crop((0, 184, 2048, 1864))
+        with Image.open(resolve_character_path(Character("Sandbag"))) as portrait:
+            self.assertEqual(portrait.size, expected.size)
+            self.assertEqual(portrait.tobytes(), expected.tobytes())
+        # Top 4 keeps its reviewed ~264px visible height despite the 4x source.
+        scaled = load_scaled_portrait(Character("Sandbag"), 0.26)
+        self.assertAlmostEqual(scaled.getbbox()[3] - scaled.getbbox()[1], 264, delta=2)
+
+    def test_standing_gif_manifest_and_all_three_crops_use_native_dimensions(self):
+        root = Path(__file__).resolve().parents[1]
+        folder = root / "char_assets/animated_renders/clapping"
+        manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
+        for asset in (row for row in manifest["assets"] if row["character"] == "Sandbag"):
+            path = folder / asset["path"]
+            self.assertTrue(path.name.endswith("_standing.gif"))
+            self.assertEqual(sha256(path.read_bytes()).hexdigest(), asset["sha256"])
+            with Image.open(path) as gif:
+                self.assertEqual(gif.size, (2048, 1680))
+                self.assertEqual(gif.size, (asset["width"], asset["height"]))
+                self.assertEqual(gif.n_frames, 1)
+                self.assertEqual(gif.info["duration"], 20)
+                self.assertEqual(gif.info["loop"], 0)
+                self.assertEqual(gif.convert("RGBA").getpixel((0, 0))[3], 0)
+        self.assertFalse(list((folder / "Sandbag").glob("*_clapping.gif")))
+        for placement in (2, 3, 4):
+            self.assertEqual(get_clapping_portrait_adjustment("Sandbag", placement).source_size, (2048, 1680))
 
     def test_team_costumes_are_exact_copies_with_matching_stock_icons(self):
         default = Character("Sandbag")
@@ -42,8 +75,10 @@ class SandbagEntrantTest(unittest.TestCase):
         portrait = self.client.get(f"/char_assets/renders/Sandbag/{option['portrait']}")
         self.assertEqual(portrait.status_code, 200)
         with Image.open(BytesIO(portrait.data)) as image:
-            self.assertEqual(image.size, (512, 420))
+            self.assertEqual(image.size, (2048, 1680))
             self.assertEqual(image.mode, "RGBA")
+            bounds = image.getchannel("A").getbbox()
+            self.assertEqual((bounds[1], bounds[3]), (0, image.height))
         portrait.close()
 
     def test_doubles_applies_team_colors_without_losing_sandbags_other_settings(self):

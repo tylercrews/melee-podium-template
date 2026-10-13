@@ -1779,37 +1779,37 @@
     },
     "Sandbag": {
       "source_size": [
-        512,
-        420
+        2048,
+        1680
       ],
       "preview_frame_index": 0,
       "placement_profiles": {
         "2": {
           "source_crop": [
-            122.667,
-            -3.333,
-            389.333,
-            423.333
+            490.668,
+            -13.332,
+            1557.332,
+            1693.332
           ],
           "calibration": "standing_portrait",
           "zoom_relative_to_3rd": 1.2
         },
         "3": {
           "source_crop": [
-            96.0,
-            -46.0,
-            416.0,
-            466.0
+            384.0,
+            -184.0,
+            1664.0,
+            1864.0
           ],
           "calibration": "standing_portrait",
           "zoom_relative_to_3rd": 1.0
         },
         "4": {
           "source_crop": [
-            48.208,
-            -122.468,
-            463.792,
-            542.468
+            192.832,
+            -489.872,
+            1855.168,
+            2169.872
           ],
           "calibration": "standing_portrait",
           "zoom_relative_to_3rd": 0.77

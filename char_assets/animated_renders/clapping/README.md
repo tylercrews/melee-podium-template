@@ -6,8 +6,13 @@ entries cover all 26 playable characters plus Sandbag.
 
 Sandbag's standing pose comes from `tyro-decomp-anims`. The static portrait is
 `char_assets/renders/Sandbag/00a_default_Sandbag_tyro-decomp-anims_standing.png`.
-The clapping collection uses `Sandbag/00b_default_Sandbag_tyro-decomp-anims_clapping.gif`
-as a compact, transparent one-frame version of that PNG. Its preview frame is
+The clapping collection uses `Sandbag/00b_default_Sandbag_tyro-decomp-anims_standing.gif`
+as a transparent one-frame version of that PNG. Both retain the native source's
+2048-pixel width and are cropped to 1680 pixels tall, removing 184 transparent
+rows at each end. The original source is archived in `docs/archive/sandbag/`;
+`python generate_sandbag_assets.py` rebuilds the PNGs, GIFs, and
+manifest checksums. Its pose ID remains `b` for compatibility, while the filename
+describes its actual standing pose. Its preview frame is
 zero; it stays still while other characters clap and also supports an entirely
 still GIF when all four lower results use Sandbag.
 
