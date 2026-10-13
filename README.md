@@ -82,6 +82,7 @@ TODO LIST:
 * top 16 legacy podium and customizable podium - 8 on top and 8 clapping, shift up the podiums a little so you use a little more of the vertical space
 * make it so that when you do a quick pick you're not locked into having no assets
 * make it so you can pick a format and omit players. Like just have empty podiums or slots if you want, and that way anything can be a pr pic
+* change the radials to have 5s on bottom left and 7s on bottom right together
 * make another format similar to the eyes one except it's all chars clapping, with a 1, 2, 3?
 
 * get some melee fonts added in. like the timer one is super clean - at least one more font would go really hard
