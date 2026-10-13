@@ -1,5 +1,14 @@
 # Clapping portrait crop review
 
+Current portraits use the **3rd-place proportions**. The calibration stores
+independent 2nd-, 3rd-, and 4th-place source windows for all 26 characters,
+measured from their individual three-placement reference images. Higher
+placements use tighter crops. Ice Climbers keeps the reviewed member cutouts
+and offsets across all three variants.
+
+`placement_proportions/2nd-comparison.png`, `3rd-comparison.png`, and
+`4th-comparison.png` are stable review sheets for all three sets.
+
 The actively reviewed Ice Climbers exports live beside this README so they are
 visible to Git and have stable paths: `ice-climbers.gif`, `ice-climbers.png`, and
 `ice-climbers-comparison.png`. The generator refreshes them from the current
@@ -11,6 +20,17 @@ Generate the demo with:
 ```powershell
 python test/generate/generate_clapping_portrait_previews.py
 ```
+
+Generate the saved alternative zooms without replacing the active 3rd-place
+Ice Climbers preview:
+
+```powershell
+python test/generate/generate_clapping_portrait_previews.py --placement 2
+python test/generate/generate_clapping_portrait_previews.py --placement 4
+```
+
+Their GIFs, square previews, and HTML sheets are stored in
+`test/generated/clapping_portraits/placements/2/` and `placements/4/`.
 
 The output is under `test/generated/clapping_portraits/`:
 
@@ -24,12 +44,14 @@ The output is under `test/generated/clapping_portraits/`:
 - `portraits/` contains individual PNGs and animated GIFs. Demo GIFs retain the
   source timing and loop count and redraw each frame to avoid ghosting.
 
-`preferences/portraits/clapping.json` stores the initial, reviewable calibration.
+`preferences/portraits/clapping.json` stores the version 2 calibration, with
+`default_placement: 3` and three `placement_profiles` per character. Each profile
+records its source crop, reference crop and placement, and zoom relative to 3rd.
 `source_crop` is a half-open window in `source_size` coordinates, including
 transparent padding outside the image when required. It stays fixed throughout
 the animation. `preview_frame_index` selects the still used on the sheet; it does
 not limit animated previews. `reference_file` and `reference_crop` identify the
-reference used to calibrate that character. These references are offline review
+reference used to calibrate that placement. These references are offline review
 inputs, not runtime renderer dependencies.
 
 Ice Climbers additionally has serialized `member_layers`: the right member is
@@ -50,4 +72,12 @@ All 134 available character/color choices are covered by the renderer tests.
 python -m unittest discover -s test -p clapping_portrait_test.py
 ```
 
-The Podium layout is unchanged at this review stage.
+Podiums+Clapping uses the default 3rd-place zoom in both its still and animated
+versions. Its portrait panel dimensions, borders, colors, and text positions
+stay the same.
+
+`test/generate/calibrate_clapping_placement_crops.py` produces a draft calibration
+under `tmp/` for future reference updates. It matches each ordinal's actual
+column, fits per-character silhouettes, and uses relative face landmarks for
+Kirby and Jigglypuff's clipped 2nd-place heads. Review the generated comparisons
+before adopting a recalibration.

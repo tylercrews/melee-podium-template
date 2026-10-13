@@ -17,7 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from clapping_assets import resolve_clapping_path
 from clapping_portrait_renderer import render_clapping_portrait, render_clapping_portrait_frame
 from models import Character, MELEE_FIGHTERS
-from portrait_crop_adjustment_for_clapping import CALIBRATION_PATH, get_clapping_portrait_adjustment
+from portrait_crop_adjustment_for_clapping import CALIBRATION_PATH, get_clapping_portrait_adjustment, get_clapping_portrait_profile
 
 
 # The four existing lower-result colors; the label and backing use the same RGBA.
@@ -65,16 +65,18 @@ def _save_ice_climbers_review(
     comparison.convert("RGB").save(review_dir / "ice-climbers-comparison.png")
 
 
-def generate(output_dir: Path) -> tuple[Path, Path, Path]:
+def generate(output_dir: Path, placement: int | None = None) -> tuple[Path, Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     portrait_dir = output_dir / "portraits"
     portrait_dir.mkdir(exist_ok=True)
     preferences = json.loads(CALIBRATION_PATH.read_text(encoding="utf-8"))
+    placement = preferences.get("default_placement", 3) if placement is None else placement
+    placement_label = {2: "2nd", 3: "3rd", 4: "4th"}[placement]
     rows = (len(MELEE_FIGHTERS) + 3) // 4
     sheet = Image.new("RGBA", (1640, 90 + rows * 270), SHEET_BACKGROUND)
     square_sheet = Image.new("RGBA", (1200, 90 + rows * 228), SHEET_BACKGROUND)
     draw, square_draw = ImageDraw.Draw(sheet), ImageDraw.Draw(square_sheet)
-    draw.text((20, 14), "Clapping portrait crop review", font=_font(32), fill="#FFFFFFFF")
+    draw.text((20, 14), f"Clapping portrait crop review - {placement_label} proportions", font=_font(32), fill="#FFFFFFFF")
     draw.text((20, 57), "Game reference / calibrated GIF crop / backing matched to the name color", font=_font(19), fill="#CCD3DEFF")
     square_draw.text((20, 14), "Square portrait comparison", font=_font(30), fill="#FFFFFFFF")
     square_draw.text((20, 55), "Same vertical zoom; wider source window. Background and name use identical RGBA.", font=_font(17), fill="#CCD3DEFF")
@@ -82,16 +84,16 @@ def generate(output_dir: Path) -> tuple[Path, Path, Path]:
 
     for i, fighter in enumerate(MELEE_FIGHTERS):
         character = Character(fighter, color="default")
-        profile = preferences["characters"][fighter]
-        adjustment = get_clapping_portrait_adjustment(fighter)
+        profile = get_clapping_portrait_profile(fighter, placement)
+        adjustment = get_clapping_portrait_adjustment(fighter, placement)
         color = NAME_COLORS[i % len(NAME_COLORS)]
-        reference_color = REFERENCE_GREEN if fighter == "Sheik" else REFERENCE_GRAY
+        reference_color = profile.get("reference_background_color", REFERENCE_GREEN if fighter == "Sheik" else REFERENCE_GRAY)
         slug = fighter.lower().replace(" ", "-").replace(".", "")
         left, top = (i % 4) * 410, 90 + (i // 4) * 270
         draw.text((left + 14, top + 8), fighter, font=_font(20), fill="#FFFFFFFF")
-        gray = render_clapping_portrait(character, background_color=reference_color, frame_index=profile["preview_frame_index"])
-        colored = render_clapping_portrait(character, background_color=color, frame_index=profile["preview_frame_index"])
-        square = render_clapping_portrait(character, (144, 144), background_color=color, frame_index=profile["preview_frame_index"])
+        gray = render_clapping_portrait(character, background_color=reference_color, frame_index=profile["preview_frame_index"], placement=placement)
+        colored = render_clapping_portrait(character, background_color=color, frame_index=profile["preview_frame_index"], placement=placement)
+        square = render_clapping_portrait(character, (144, 144), background_color=color, frame_index=profile["preview_frame_index"], placement=placement)
         with Image.open(PROJECT_ROOT / preferences["reference_directory"] / profile["reference_file"]) as reference_image:
             x1, y1, x2, y2 = profile["reference_crop"]
             reference = reference_image.crop((x1 - 6, y1 - 6, x2 + 6, y2 + 6)).convert("RGBA")
@@ -123,7 +125,7 @@ def generate(output_dir: Path) -> tuple[Path, Path, Path]:
         _save_animation(portrait_dir / f"{slug}-neutral.gif", gray_frames, durations, loop)
         _save_animation(portrait_dir / f"{slug}.gif", colored_frames, durations, loop)
         _save_animation(portrait_dir / f"{slug}-square.gif", square_frames, durations, loop)
-        if fighter == "Ice Climbers":
+        if fighter == "Ice Climbers" and placement == preferences.get("default_placement", 3):
             _save_ice_climbers_review(reference, gray, colored, portrait_dir / f"{slug}.gif")
         cards.append(f'''<article><h2>{html.escape(fighter)}</h2><div class="views">
 <figure><img src="portraits/{slug}-reference.png" width="112" height="172"><figcaption>Game reference</figcaption></figure>
@@ -138,7 +140,10 @@ def generate(output_dir: Path) -> tuple[Path, Path, Path]:
     index_path = output_dir / "index.html"
     sheet.convert("RGB").save(sheet_path)
     square_sheet.convert("RGB").save(square_path)
-    index_path.write_text('''<!doctype html><html lang="en"><meta charset="utf-8">
+    stable_sheets = PROJECT_ROOT / "test/clapping_portrait_previews/placement_proportions"
+    stable_sheets.mkdir(exist_ok=True)
+    (stable_sheets / f"{placement_label}-comparison.png").write_bytes(sheet_path.read_bytes())
+    page = '''<!doctype html><html lang="en"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Clapping portrait review</title>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:28px;background:#15191FFF;color:#FFFFFFFF;font-family:system-ui,sans-serif}
@@ -153,13 +158,18 @@ figure{margin:0}img{display:block}figcaption{font-size:12px;margin-top:8px}.squa
 Each crop stays fixed throughout the full animation. The colored backing and the name use the same color.
 The square alternative keeps the same vertical zoom and widens the source window.</p>
 <p><a href="clapping-portrait-sheet.png">Reference comparison sheet</a> · <a href="clapping-square-sheet.png">Square sheet</a></p></header><main>
-''' + "\n".join(cards) + "</main></html>\n", encoding="utf-8")
+''' + "\n".join(cards) + "</main></html>\n"
+    index_path.write_text(page.replace("Clapping portrait review", f"Clapping portrait review - {placement_label} proportions"), encoding="utf-8")
     return sheet_path, square_path, index_path
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "test/generated/clapping_portraits")
+    parser.add_argument("--placement", type=int, choices=(2, 3, 4), help="Use a saved placement profile; defaults to 3rd.")
+    parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()
-    for output_path in generate(args.output_dir.resolve()):
+    default_output = PROJECT_ROOT / "test/generated/clapping_portraits"
+    if args.placement in (2, 4):
+        default_output /= f"placements/{args.placement}"
+    for output_path in generate((args.output_dir or default_output).resolve(), args.placement):
         print(output_path)

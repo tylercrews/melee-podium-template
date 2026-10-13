@@ -82,11 +82,26 @@ class ClappingPortraitAdjustment:
         )
 
 
-def get_clapping_portrait_adjustment(character_name: str) -> ClappingPortraitAdjustment:
+def get_clapping_portrait_profile(character_name: str, placement: int | None = None) -> dict:
+    """Resolve a saved placement profile; normal callers use the selected default."""
     preferences = json.loads(CALIBRATION_PATH.read_text(encoding="utf-8"))
-    if preferences["schema_version"] != 1:
+    if preferences["schema_version"] not in (1, 2):
         raise ValueError("Unsupported clapping portrait calibration version")
+    selected = preferences.get("default_placement", 3) if placement is None else placement
+    if isinstance(selected, bool) or not isinstance(selected, int) or selected not in (2, 3, 4):
+        raise ValueError("Clapping portrait placement must be 2, 3, or 4")
     try:
-        return ClappingPortraitAdjustment.from_dict(preferences["characters"][character_name])
+        character = preferences["characters"][character_name]
+        if preferences["schema_version"] == 1:
+            if placement is not None and selected != 3:
+                raise ValueError("Legacy clapping calibration has no placement variants")
+            return dict(character)
+        profile = character["placement_profiles"][str(selected)]
+        return {**{key: value for key, value in character.items() if key != "placement_profiles"},
+                **profile, "placement": selected}
     except KeyError as error:
-        raise ValueError(f"Missing clapping crop for {character_name}") from error
+        raise ValueError(f"Missing {selected} placement clapping crop for {character_name}") from error
+
+
+def get_clapping_portrait_adjustment(character_name: str, placement: int | None = None) -> ClappingPortraitAdjustment:
+    return ClappingPortraitAdjustment.from_dict(get_clapping_portrait_profile(character_name, placement))

@@ -88,12 +88,13 @@ def render_clapping_portrait(
     frame_index: int = 0,
     border_color: str = "#808080FF",
     border_width: int = 2,
+    placement: int | None = None,
 ) -> Image.Image:
     """Draw the selected character/costume without using its static portrait pose."""
 
     return render_clapping_portrait_frame(
         load_clapping_frame(character, frame_index),
-        get_clapping_portrait_adjustment(character.melee_fighter_name),
+        get_clapping_portrait_adjustment(character.melee_fighter_name, placement),
         size,
         background_color=background_color,
         border_color=border_color,

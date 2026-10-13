@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 import sys
 import unittest
+from unittest.mock import Mock, patch
 
 from PIL import Image, ImageDraw
 from dataclasses import replace
@@ -18,10 +19,57 @@ from models import Character, MELEE_FIGHTERS
 from portrait_crop_adjustment_for_clapping import (
     CALIBRATION_PATH, ClappingPortraitAdjustment, ClappingPortraitLayer,
     get_clapping_portrait_adjustment,
+    get_clapping_portrait_profile,
 )
 
 
 class ClappingPortraitTests(unittest.TestCase):
+    def test_all_three_placement_profiles_are_saved_and_third_is_the_default(self):
+        preferences = json.loads(CALIBRATION_PATH.read_text())
+        self.assertEqual(preferences["schema_version"], 2)
+        self.assertEqual(preferences["default_placement"], 3)
+        for fighter in MELEE_FIGHTERS:
+            heights = []
+            references = []
+            for placement in (2, 3, 4):
+                with self.subTest(fighter=fighter, placement=placement):
+                    profile = get_clapping_portrait_profile(fighter, placement)
+                    crop = get_clapping_portrait_adjustment(fighter, placement)
+                    self.assertEqual(profile["reference_placement"], placement)
+                    self.assertEqual(ClappingPortraitAdjustment.from_dict(crop.to_dict()), crop)
+                    reference_path = Path(preferences["reference_directory"]) / profile["reference_file"]
+                    self.assertTrue(reference_path.is_file())
+                    references.append(tuple(profile["reference_crop"]))
+                    heights.append(crop.source_crop[3] - crop.source_crop[1])
+            self.assertEqual(len(set(references)), 3)
+            self.assertLess(heights[0], heights[1])
+            self.assertLess(heights[1], heights[2])
+            self.assertEqual(get_clapping_portrait_adjustment(fighter), get_clapping_portrait_adjustment(fighter, 3))
+
+    def test_every_character_renders_each_variant_without_changing_the_default(self):
+        for fighter in MELEE_FIGHTERS:
+            character = Character(fighter, color="default")
+            variants = [render_clapping_portrait(character, background_color="#666666FF", placement=rank)
+                        for rank in (2, 3, 4)]
+            self.assertEqual(len({image.tobytes() for image in variants}), 3)
+            default = render_clapping_portrait(character, background_color="#666666FF")
+            self.assertEqual(default.tobytes(), variants[1].tobytes())
+
+    def test_invalid_placement_profiles_are_rejected(self):
+        for placement in (True, False, 1, 5, "3", 3.0):
+            with self.subTest(placement=placement), self.assertRaises(ValueError):
+                get_clapping_portrait_adjustment("Mario", placement)
+
+    def test_legacy_single_crop_calibrations_remain_readable(self):
+        current = get_clapping_portrait_profile("Mario", 3)
+        expected = get_clapping_portrait_adjustment("Mario", 3)
+        path = Mock()
+        path.read_text.return_value = json.dumps({"schema_version": 1, "characters": {"Mario": current}})
+        with patch("portrait_crop_adjustment_for_clapping.CALIBRATION_PATH", path):
+            self.assertEqual(get_clapping_portrait_adjustment("Mario"), expected)
+            with self.assertRaisesRegex(ValueError, "no placement variants"):
+                get_clapping_portrait_adjustment("Mario", 2)
+
     def test_every_costume_resolves_to_its_manifest_asset_and_renders(self):
         assets = json.loads((CLAPPING_FOLDER / "manifest.json").read_text())["assets"]
         self.assertEqual(len(assets), 134)

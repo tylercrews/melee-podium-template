@@ -15,6 +15,13 @@ in `portraits/podiums_clapping.json`, separate from per-character crop profiles.
 Exact animated previews and downloads use looping, lossless animated PNGs;
 the unchecked version produces a standard PNG with the same portrait panels.
 
+`portraits/clapping.json` has independent placement profiles for 2nd, 3rd, and
+4th for every character. Its selected default is 3rd, used by current clapping
+portraits and Podiums+Clapping. The renderer accepts an explicit `placement`
+argument for the saved alternatives. Placement profiles carry fixed source
+windows, measured reference rectangles, and relative zoom proportions; they
+do not alter podium geometry or static character portrait scales.
+
 Files remain marked `ready: false` until their real positions and required
 assets have been extracted and visually reviewed. A file may therefore contain
 partially or fully extracted coordinates while still being unavailable to the

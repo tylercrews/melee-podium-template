@@ -1,5 +1,6 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "default_placement": 3,
   "reference_directory": "docs/archive/original_gpt_prompt_images/clapping portrait size checks",
   "characters": {
     "Captain Falcon": {
@@ -7,220 +8,737 @@
         512,
         512
       ],
-      "source_crop": [
-        158.34,
-        17.59,
-        346.0,
-        316.68
-      ],
       "preview_frame_index": 12,
-      "reference_file": "old version - grouped pics didnt show different sizing/00 - cfalcon, fox, sheik.png",
-      "reference_crop": [
-        49,
-        70,
-        150,
-        231
-      ]
+      "reference_file": "08 - captain falcon.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            158.939,
+            17.027,
+            349.776,
+            322.367
+          ],
+          "reference_crop": [
+            48,
+            51,
+            149,
+            212
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8957,
+          "zoom_relative_to_3rd": 0.76582,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            175.731,
+            35.965,
+            321.878,
+            269.8
+          ],
+          "reference_crop": [
+            383,
+            51,
+            484,
+            212
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.861,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            193.012,
+            44.59,
+            314.903,
+            239.616
+          ],
+          "reference_crop": [
+            720,
+            51,
+            821,
+            212
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9428,
+          "zoom_relative_to_3rd": 1.19899,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Fox": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        139.46,
-        36.16,
-        304.75,
-        299.59
-      ],
       "preview_frame_index": 36,
-      "reference_file": "old version - grouped pics didnt show different sizing/00 - cfalcon, fox, sheik.png",
-      "reference_crop": [
-        386,
-        70,
-        487,
-        231
-      ]
+      "reference_file": "11 - fox.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            127.738,
+            23.41,
+            335.286,
+            355.486
+          ],
+          "reference_crop": [
+            48,
+            50,
+            149,
+            211
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8169,
+          "zoom_relative_to_3rd": 0.7944,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            141.659,
+            37.097,
+            306.534,
+            300.898
+          ],
+          "reference_crop": [
+            383,
+            50,
+            484,
+            211
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8778,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            161.358,
+            44.222,
+            299.081,
+            264.58
+          ],
+          "reference_crop": [
+            720,
+            50,
+            821,
+            211
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9145,
+          "zoom_relative_to_3rd": 1.19715,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Sheik": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        172.11,
-        38.25,
-        294.5,
-        233.3
-      ],
       "preview_frame_index": 18,
-      "reference_file": "old version - grouped pics didnt show different sizing/00 - cfalcon, fox, sheik.png",
-      "reference_crop": [
-        725,
-        70,
-        826,
-        231
-      ]
+      "reference_file": "17 - sheik.png",
+      "placement_profiles": {
+        "3": {
+          "source_crop": [
+            150.76,
+            14.625,
+            301.378,
+            255.613
+          ],
+          "reference_crop": [
+            51,
+            53,
+            152,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9346,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            169.318,
+            35.625,
+            294.671,
+            236.191
+          ],
+          "reference_crop": [
+            386,
+            53,
+            487,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9639,
+          "zoom_relative_to_3rd": 1.20154,
+          "reference_background_color": "#666666FF"
+        },
+        "4": {
+          "source_crop": [
+            133.47,
+            -1.125,
+            329.352,
+            312.287
+          ],
+          "reference_crop": [
+            723,
+            53,
+            824,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9306,
+          "zoom_relative_to_3rd": 0.76892,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Mario": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        153.41,
-        12.27,
-        349.78,
-        325.23
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/01 - mario, pikachu, bowser.png",
-      "reference_crop": [
-        143,
-        146,
-        244,
-        307
-      ]
+      "reference_file": "02 - mario.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            135.449,
+            -10.043,
+            388.551,
+            394.92
+          ],
+          "reference_crop": [
+            48,
+            51,
+            149,
+            212
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9407,
+          "zoom_relative_to_3rd": 0.76742,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            155.292,
+            13.02,
+            349.527,
+            323.795
+          ],
+          "reference_crop": [
+            383,
+            51,
+            484,
+            212
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.932,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            177.288,
+            44.332,
+            339.485,
+            303.848
+          ],
+          "reference_crop": [
+            720,
+            51,
+            821,
+            212
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9505,
+          "zoom_relative_to_3rd": 1.19752,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Pikachu": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        90.29,
-        -8.21,
-        352.97,
-        410.43
-      ],
       "preview_frame_index": 18,
-      "reference_file": "old version - grouped pics didnt show different sizing/01 - mario, pikachu, bowser.png",
-      "reference_crop": [
-        478,
-        146,
-        579,
-        307
-      ]
+      "reference_file": "21 - pikachu.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            64.337,
+            -17.398,
+            400.459,
+            520.398
+          ],
+          "reference_crop": [
+            48,
+            48,
+            149,
+            209
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9038,
+          "zoom_relative_to_3rd": 0.76505,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            92.877,
+            20.29,
+            350.027,
+            431.73
+          ],
+          "reference_crop": [
+            383,
+            48,
+            484,
+            209
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8718,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            124.821,
+            42.04,
+            328.143,
+            367.355
+          ],
+          "reference_crop": [
+            720,
+            48,
+            821,
+            209
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.914,
+          "zoom_relative_to_3rd": 1.26474,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Bowser": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        147.84,
-        60.48,
-        362.88,
-        403.2
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/01 - mario, pikachu, bowser.png",
-      "reference_crop": [
-        815,
-        146,
-        916,
-        307
-      ]
+      "reference_file": "04 - bowser.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            92.633,
+            -23.708,
+            419.812,
+            499.779
+          ],
+          "reference_crop": [
+            49,
+            50,
+            150,
+            211
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9327,
+          "zoom_relative_to_3rd": 0.77708,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            155.871,
+            67.605,
+            362.797,
+            398.685
+          ],
+          "reference_crop": [
+            384,
+            50,
+            485,
+            211
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9555,
+          "zoom_relative_to_3rd": 1.22868,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            118.46,
+            34.417,
+            372.703,
+            441.207
+          ],
+          "reference_crop": [
+            721,
+            50,
+            822,
+            211
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.923,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Peach": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        204.34,
-        43.02,
-        319.05,
-        225.85
-      ],
       "preview_frame_index": 30,
-      "reference_file": "old version - grouped pics didnt show different sizing/02 - peach, yoshi, dk.png",
-      "reference_crop": [
-        76,
-        88,
-        177,
-        249
-      ]
+      "reference_file": "05 - peach.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            171.675,
+            4.208,
+            347.516,
+            285.552
+          ],
+          "reference_crop": [
+            49,
+            53,
+            150,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9591,
+          "zoom_relative_to_3rd": 0.77724,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            203.559,
+            44.52,
+            316.872,
+            225.82
+          ],
+          "reference_crop": [
+            384,
+            53,
+            485,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9581,
+          "zoom_relative_to_3rd": 1.20613,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            185.365,
+            22.958,
+            322.035,
+            241.629
+          ],
+          "reference_crop": [
+            721,
+            53,
+            822,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9615,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Yoshi": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        137.55,
-        7.24,
-        369.22,
-        376.46
-      ],
       "preview_frame_index": 18,
-      "reference_file": "old version - grouped pics didnt show different sizing/02 - peach, yoshi, dk.png",
-      "reference_crop": [
-        411,
-        88,
-        512,
-        249
-      ]
+      "reference_file": "06 - yoshi.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            114.212,
+            -32.135,
+            409.057,
+            439.617
+          ],
+          "reference_crop": [
+            45,
+            48,
+            146,
+            209
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8612,
+          "zoom_relative_to_3rd": 0.76602,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            138.459,
+            12.115,
+            364.316,
+            373.486
+          ],
+          "reference_crop": [
+            380,
+            48,
+            481,
+            209
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8686,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            164.175,
+            37.99,
+            352.24,
+            338.895
+          ],
+          "reference_crop": [
+            717,
+            48,
+            818,
+            209
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8519,
+          "zoom_relative_to_3rd": 1.20095,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Donkey Kong": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        158.87,
-        94.14,
-        347.16,
-        394.23
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/02 - peach, yoshi, dk.png",
-      "reference_crop": [
-        748,
-        88,
-        849,
-        249
-      ]
+      "reference_file": "07 - dk.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            167.34,
+            113.64,
+            343.036,
+            394.755
+          ],
+          "reference_crop": [
+            45,
+            48,
+            146,
+            209
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8557,
+          "zoom_relative_to_3rd": 0.77769,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            198.053,
+            156.015,
+            311.124,
+            336.928
+          ],
+          "reference_crop": [
+            380,
+            48,
+            481,
+            209
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8917,
+          "zoom_relative_to_3rd": 1.20843,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            180.517,
+            131.452,
+            317.154,
+            350.072
+          ],
+          "reference_crop": [
+            717,
+            48,
+            818,
+            209
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8748,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Ness": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        175.62,
-        41.32,
-        340.91,
-        304.75
-      ],
       "preview_frame_index": 6,
-      "reference_file": "old version - grouped pics didnt show different sizing/03 - ness, ice climbers, kirby.png",
-      "reference_crop": [
-        54,
-        58,
-        155,
-        219
-      ]
+      "reference_file": "12 - ness.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            131.365,
+            -14.367,
+            388.056,
+            396.339
+          ],
+          "reference_crop": [
+            49,
+            53,
+            150,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9524,
+          "zoom_relative_to_3rd": 0.76902,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            152.879,
+            8.32,
+            350.279,
+            324.16
+          ],
+          "reference_crop": [
+            384,
+            53,
+            485,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9712,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            176.186,
+            39.07,
+            341.657,
+            303.824
+          ],
+          "reference_crop": [
+            721,
+            53,
+            822,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9851,
+          "zoom_relative_to_3rd": 1.19296,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Ice Climbers": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        32.88,
-        79.21,
-        233.02,
-        398.19
-      ],
       "preview_frame_index": 18,
-      "reference_file": "old version - grouped pics didnt show different sizing/03 - ness, ice climbers, kirby.png",
-      "reference_crop": [
-        389,
-        58,
-        490,
-        219
-      ],
+      "reference_file": "13 - ice climbers.png",
+      "placement_profiles": {
+        "2": {
+          "source_crop": [
+            61.261,
+            132.647,
+            189.198,
+            337.347
+          ],
+          "reference_crop": [
+            46,
+            53,
+            147,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9771,
+          "zoom_relative_to_3rd": 1.20041,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            45.308,
+            109.96,
+            198.886,
+            355.684
+          ],
+          "reference_crop": [
+            381,
+            53,
+            482,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9655,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "4": {
+          "source_crop": [
+            33.485,
+            75.272,
+            235.563,
+            398.597
+          ],
+          "reference_crop": [
+            718,
+            53,
+            819,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9522,
+          "zoom_relative_to_3rd": 0.75999,
+          "reference_background_color": "#666666FF"
+        }
+      },
       "member_layers": [
         {
           "source_crop": [
@@ -255,301 +773,1009 @@
         512,
         512
       ],
-      "source_crop": [
-        128.33,
-        35.65,
-        356.47,
-        399.25
-      ],
       "preview_frame_index": 36,
-      "reference_file": "old version - grouped pics didnt show different sizing/03 - ness, ice climbers, kirby.png",
-      "reference_crop": [
-        726,
-        58,
-        827,
-        219
-      ]
+      "reference_file": "14 - kirby.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            113.687,
+            42.962,
+            385.031,
+            477.112
+          ],
+          "reference_crop": [
+            48,
+            50,
+            149,
+            211
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8708,
+          "zoom_relative_to_3rd": 0.75376,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            132.733,
+            88.525,
+            337.261,
+            415.77
+          ],
+          "reference_crop": [
+            383,
+            50,
+            484,
+            211
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.965,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            153.769,
+            113.297,
+            330.419,
+            395.938
+          ],
+          "reference_crop": [
+            720,
+            50,
+            821,
+            211
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_eye_proportions",
+          "silhouette_overlap": null,
+          "zoom_relative_to_3rd": 1.15781,
+          "reference_zoom_ratio": 1.15781,
+          "reference_eye_overlap": 0.4746,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Samus": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        165.05,
-        -19.04,
-        368.19,
-        304.71
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/04 - samus, zelda, link.png",
-      "reference_crop": [
-        54,
-        56,
-        155,
-        217
-      ]
+      "reference_file": "15 - samus.png",
+      "placement_profiles": {
+        "3": {
+          "source_crop": [
+            183.368,
+            14.523,
+            335.221,
+            257.487
+          ],
+          "reference_crop": [
+            42,
+            53,
+            143,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9819,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            201.935,
+            47.898,
+            330.051,
+            252.884
+          ],
+          "reference_crop": [
+            377,
+            53,
+            478,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9788,
+          "zoom_relative_to_3rd": 1.18527,
+          "reference_background_color": "#666666FF"
+        },
+        "4": {
+          "source_crop": [
+            165.69,
+            -12.29,
+            363.854,
+            304.772
+          ],
+          "reference_crop": [
+            714,
+            53,
+            815,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9591,
+          "zoom_relative_to_3rd": 0.7663,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Zelda": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        222.65,
-        34.79,
-        333.97,
-        212.21
-      ],
       "preview_frame_index": 0,
-      "reference_file": "old version - grouped pics didnt show different sizing/04 - samus, zelda, link.png",
-      "reference_crop": [
-        389,
-        56,
-        490,
-        217
-      ]
+      "reference_file": "16 - zelda.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            196.478,
+            -14.898,
+            367.486,
+            258.714
+          ],
+          "reference_crop": [
+            46,
+            47,
+            147,
+            208
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9564,
+          "zoom_relative_to_3rd": 0.77556,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            222.118,
+            34.977,
+            333.79,
+            213.654
+          ],
+          "reference_crop": [
+            381,
+            47,
+            482,
+            208
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9564,
+          "zoom_relative_to_3rd": 1.18763,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            206.932,
+            18.852,
+            339.558,
+            231.054
+          ],
+          "reference_crop": [
+            718,
+            47,
+            819,
+            208
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9618,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Link": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        170.5,
-        20.06,
-        330.98,
-        275.82
-      ],
       "preview_frame_index": 6,
-      "reference_file": "old version - grouped pics didnt show different sizing/04 - samus, zelda, link.png",
-      "reference_crop": [
-        726,
-        56,
-        827,
-        217
-      ]
+      "reference_file": "18 - link.png",
+      "placement_profiles": {
+        "2": {
+          "source_crop": [
+            196.635,
+            44.248,
+            326.826,
+            252.553
+          ],
+          "reference_crop": [
+            386,
+            47,
+            487,
+            208
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9387,
+          "zoom_relative_to_3rd": 1.20172,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            170.932,
+            21.747,
+            327.384,
+            272.071
+          ],
+          "reference_crop": [
+            723,
+            47,
+            824,
+            208
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9355,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "4": {
+          "source_crop": [
+            147.522,
+            3.935,
+            351.193,
+            329.809
+          ],
+          "reference_crop": [
+            51,
+            47,
+            152,
+            208
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9261,
+          "zoom_relative_to_3rd": 0.76816,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Ganondorf": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        199.16,
-        13.89,
-        347.36,
-        250.1
-      ],
       "preview_frame_index": 6,
-      "reference_file": "old version - grouped pics didnt show different sizing/05 - ganondorf, luigi, drmario.png",
-      "reference_crop": [
-        51,
-        55,
-        152,
-        216
-      ]
+      "reference_file": "09 - ganondorf.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            181.318,
+            -5.047,
+            371.656,
+            299.494
+          ],
+          "reference_crop": [
+            45,
+            53,
+            146,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9325,
+          "zoom_relative_to_3rd": 0.73585,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            201.939,
+            19.515,
+            341.998,
+            243.61
+          ],
+          "reference_crop": [
+            380,
+            53,
+            481,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.947,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            218.893,
+            40.89,
+            334.188,
+            225.362
+          ],
+          "reference_crop": [
+            717,
+            53,
+            818,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9397,
+          "zoom_relative_to_3rd": 1.21479,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Luigi": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        156.85,
-        7.13,
-        384.99,
-        370.73
-      ],
       "preview_frame_index": 0,
-      "reference_file": "old version - grouped pics didnt show different sizing/05 - ganondorf, luigi, drmario.png",
-      "reference_crop": [
-        386,
-        55,
-        487,
-        216
-      ]
+      "reference_file": "03 - luigi.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            158.365,
+            13.692,
+            380.174,
+            368.587
+          ],
+          "reference_crop": [
+            43,
+            50,
+            144,
+            211
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9598,
+          "zoom_relative_to_3rd": 0.77579,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            176.567,
+            27.38,
+            348.645,
+            302.704
+          ],
+          "reference_crop": [
+            378,
+            50,
+            479,
+            211
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9726,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            197.099,
+            53.817,
+            340.418,
+            283.128
+          ],
+          "reference_crop": [
+            715,
+            50,
+            816,
+            211
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9771,
+          "zoom_relative_to_3rd": 1.20066,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Dr. Mario": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        193.27,
-        49.44,
-        337.1,
-        278.67
-      ],
       "preview_frame_index": 0,
-      "reference_file": "old version - grouped pics didnt show different sizing/05 - ganondorf, luigi, drmario.png",
-      "reference_crop": [
-        723,
-        55,
-        824,
-        216
-      ]
+      "reference_file": "01 - dr mario.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            157.199,
+            6.877,
+            380.077,
+            363.482
+          ],
+          "reference_crop": [
+            48,
+            56,
+            149,
+            217
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9137,
+          "zoom_relative_to_3rd": 0.76369,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            193.549,
+            52.44,
+            336.017,
+            280.388
+          ],
+          "reference_crop": [
+            383,
+            56,
+            484,
+            217
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9726,
+          "zoom_relative_to_3rd": 1.19473,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            173.265,
+            27.127,
+            343.475,
+            299.463
+          ],
+          "reference_crop": [
+            720,
+            56,
+            821,
+            217
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9316,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Pichu": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        199.79,
-        159.83,
-        359.63,
-        414.57
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/06 - pichu, jigglypuff, younglink.png",
-      "reference_crop": [
-        52,
-        70,
-        153,
-        231
-      ]
+      "reference_file": "20 - pichu.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            150.101,
+            66.83,
+            399.174,
+            465.348
+          ],
+          "reference_crop": [
+            48,
+            53,
+            149,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8832,
+          "zoom_relative_to_3rd": 0.76711,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            173.937,
+            124.205,
+            365.004,
+            429.912
+          ],
+          "reference_crop": [
+            383,
+            53,
+            484,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9367,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            196.433,
+            159.455,
+            355.77,
+            414.394
+          ],
+          "reference_crop": [
+            720,
+            53,
+            821,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9309,
+          "zoom_relative_to_3rd": 1.19914,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Jigglypuff": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        92.06,
-        -20.46,
-        419.39,
-        501.23
-      ],
       "preview_frame_index": 18,
-      "reference_file": "old version - grouped pics didnt show different sizing/06 - pichu, jigglypuff, younglink.png",
-      "reference_crop": [
-        387,
-        70,
-        488,
-        231
-      ]
+      "reference_file": "22 - jigglypuff.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            96.315,
+            -12.398,
+            418.744,
+            503.489
+          ],
+          "reference_crop": [
+            51,
+            54,
+            152,
+            215
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9343,
+          "zoom_relative_to_3rd": 0.69138,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            115.255,
+            67.852,
+            338.175,
+            424.526
+          ],
+          "reference_crop": [
+            386,
+            54,
+            487,
+            215
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8945,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            143.581,
+            107.729,
+            325.15,
+            398.239
+          ],
+          "reference_crop": [
+            723,
+            54,
+            824,
+            215
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_eye_proportions",
+          "silhouette_overlap": null,
+          "zoom_relative_to_3rd": 1.22775,
+          "reference_zoom_ratio": 1.22775,
+          "reference_eye_overlap": 0.855,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Young Link": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        179.81,
-        -4.99,
-        339.65,
-        249.74
-      ],
       "preview_frame_index": 12,
-      "reference_file": "old version - grouped pics didnt show different sizing/06 - pichu, jigglypuff, younglink.png",
-      "reference_crop": [
-        724,
-        70,
-        825,
-        231
-      ]
+      "reference_file": "19 - young link.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            152.171,
+            -39.865,
+            360.072,
+            292.776
+          ],
+          "reference_crop": [
+            51,
+            50,
+            152,
+            211
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9584,
+          "zoom_relative_to_3rd": 0.76471,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            202.698,
+            30.26,
+            333.112,
+            238.921
+          ],
+          "reference_crop": [
+            386,
+            50,
+            487,
+            211
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9711,
+          "zoom_relative_to_3rd": 1.21907,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            177.876,
+            -6.678,
+            336.859,
+            247.695
+          ],
+          "reference_crop": [
+            723,
+            50,
+            824,
+            211
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9539,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Mewtwo": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        95.46,
-        33.69,
-        275.14,
-        320.07
-      ],
       "preview_frame_index": 0,
-      "reference_file": "old version - grouped pics didnt show different sizing/07 - mewtwo, gamenwatch, marth.png",
-      "reference_crop": [
-        45,
-        67,
-        146,
-        228
-      ]
+      "reference_file": "23 - mewtwo.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            34.862,
+            -6.81,
+            310.891,
+            434.836
+          ],
+          "reference_crop": [
+            43,
+            48,
+            144,
+            209
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8966,
+          "zoom_relative_to_3rd": 0.77166,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            67.098,
+            6.127,
+            280.099,
+            346.929
+          ],
+          "reference_crop": [
+            378,
+            48,
+            479,
+            209
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9521,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            97.344,
+            34.815,
+            275.22,
+            319.416
+          ],
+          "reference_crop": [
+            715,
+            48,
+            816,
+            209
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9524,
+          "zoom_relative_to_3rd": 1.19747,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Mr. Game and Watch": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        185.3,
-        44.92,
-        364.99,
-        331.3
-      ],
       "preview_frame_index": 0,
-      "reference_file": "old version - grouped pics didnt show different sizing/07 - mewtwo, gamenwatch, marth.png",
-      "reference_crop": [
-        380,
-        67,
-        481,
-        228
-      ]
+      "reference_file": "24 - mr game and watch.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            120.977,
+            -40.392,
+            407.572,
+            418.159
+          ],
+          "reference_crop": [
+            49,
+            48,
+            150,
+            209
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8378,
+          "zoom_relative_to_3rd": 0.74197,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            156.942,
+            21.67,
+            369.588,
+            361.902
+          ],
+          "reference_crop": [
+            384,
+            48,
+            485,
+            209
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9598,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            186.003,
+            45.858,
+            364.128,
+            330.857
+          ],
+          "reference_crop": [
+            721,
+            48,
+            822,
+            209
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9699,
+          "zoom_relative_to_3rd": 1.1938,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Marth": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        218.99,
-        5.62,
-        398.68,
-        291.99
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/07 - mewtwo, gamenwatch, marth.png",
-      "reference_crop": [
-        717,
-        67,
-        818,
-        228
-      ]
+      "reference_file": "25 - marth.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            219.846,
+            6.37,
+            399.585,
+            293.953
+          ],
+          "reference_crop": [
+            46,
+            44,
+            147,
+            205
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9409,
+          "zoom_relative_to_3rd": 0.76839,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            247.998,
+            34.87,
+            386.108,
+            255.845
+          ],
+          "reference_crop": [
+            381,
+            44,
+            482,
+            205
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9699,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            272.456,
+            61.12,
+            387.893,
+            245.819
+          ],
+          "reference_crop": [
+            718,
+            44,
+            819,
+            205
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9704,
+          "zoom_relative_to_3rd": 1.19641,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Falco": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        175.16,
-        25.02,
-        375.34,
-        344.06
-      ],
       "preview_frame_index": 24,
-      "reference_file": "old version - grouped pics didnt show different sizing/08 - falco, roy, fox.png",
-      "reference_crop": [
-        55,
-        58,
-        156,
-        219
-      ]
+      "reference_file": "10 - falco.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            174.833,
+            24.457,
+            374.67,
+            344.197
+          ],
+          "reference_crop": [
+            46,
+            50,
+            147,
+            211
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9065,
+          "zoom_relative_to_3rd": 0.76042,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            187.337,
+            54.457,
+            339.297,
+            297.593
+          ],
+          "reference_crop": [
+            381,
+            50,
+            482,
+            211
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9388,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            201.789,
+            84.082,
+            328.38,
+            286.627
+          ],
+          "reference_crop": [
+            718,
+            50,
+            819,
+            211
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.953,
+          "zoom_relative_to_3rd": 1.2004,
+          "reference_background_color": "#666666FF"
+        }
+      }
     },
     "Roy": {
       "source_size": [
         512,
         512
       ],
-      "source_crop": [
-        222.65,
-        48.02,
-        362.34,
-        270.67
-      ],
       "preview_frame_index": 0,
-      "reference_file": "old version - grouped pics didnt show different sizing/08 - falco, roy, fox.png",
-      "reference_crop": [
-        390,
-        58,
-        491,
-        219
-      ]
+      "reference_file": "26 - roy.png",
+      "placement_profiles": {
+        "4": {
+          "source_crop": [
+            163.569,
+            4.708,
+            378.898,
+            349.234
+          ],
+          "reference_crop": [
+            43,
+            53,
+            144,
+            214
+          ],
+          "reference_placement": 4,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.8076,
+          "zoom_relative_to_3rd": 0.76906,
+          "reference_background_color": "#666666FF"
+        },
+        "3": {
+          "source_crop": [
+            194.476,
+            22.708,
+            360.077,
+            287.668
+          ],
+          "reference_crop": [
+            378,
+            53,
+            479,
+            214
+          ],
+          "reference_placement": 3,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9071,
+          "zoom_relative_to_3rd": 1.0,
+          "reference_background_color": "#666666FF"
+        },
+        "2": {
+          "source_crop": [
+            224.29,
+            46.708,
+            362.668,
+            268.112
+          ],
+          "reference_crop": [
+            715,
+            53,
+            816,
+            214
+          ],
+          "reference_placement": 2,
+          "calibration": "reference_silhouette",
+          "silhouette_overlap": 0.9364,
+          "zoom_relative_to_3rd": 1.19673,
+          "reference_background_color": "#666666FF"
+        }
+      }
     }
-  },
-  "calibration_status": "initial_review"
+  }
 }

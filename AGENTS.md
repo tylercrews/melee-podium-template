@@ -91,6 +91,8 @@
 
 - Podiums+Clapping is the official display name of the existing `four_podium` Singles Top 8 selection; preserve that identifier and geometry filenames for saved-format compatibility. Its Animated checkbox defaults to true, serializes in `selection.options.animated`, and restores false explicitly. Turning animation off keeps the four portrait panels as still images. Both versions share reviewed geometry in `preferences/portraits/podiums_clapping.json`; exact animated previews and downloads preserve every synchronized source frame in a looping lossless APNG, with a standard PNG for still output. Compose the selected background and logo before encoding animation rather than flattening the download through browser canvas.
 
+- Clapping portrait calibration saves independent 2nd-, 3rd-, and 4th-place zoom/crop profiles for all 26 characters in `preferences/portraits/clapping.json`. Current portraits use 3rd-place proportions for every lower result, independently of entrant rank. Match each reference column by its actual placement artwork, since column order varies by character. Keep these crops fixed across animation frames and preserve the reviewed Ice Climbers member composition; retain all three profiles for later explicit selection.
+
 ## Customizable podium colors
 
 - Clapping GIFs retain their native source timing, including Ice Climbers' 25-frame/500 ms loop. When composing Podiums+Clapping with 42-frame/840 ms characters, map each shorter portrait's frames to the shared clap phase of the longest selected loop. Preserve complete claps and a seamless synchronized cycle; do not reject mixed frame counts. A layout containing only shorter loops retains their native cycle.
