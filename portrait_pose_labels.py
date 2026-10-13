@@ -3,6 +3,7 @@
 # Keep labels separate from the filename pose IDs (such as "a" and "b") so
 # changing copy does not require migrating assets, saved favorites, or scales.
 POSE_LABELS = {
+    "Sandbag": {"a": "Standing"},
     "Bowser": {"a": "Standing Upright", "b": "Archived - Char Select Portrait - Crouched", "c": "Victory B - Flex"},
     "Captain Falcon": {"a": "Archived Standing Foot Back", "b": "Char Select Portrait - Salute", "c": "Victory B - Talk To The Hand", "d": "Victory Y - Shirt Rip", "e": "Victory X - High Kick"},
     "Donkey Kong": {"a": "Fist Pump", "b": "Char Select Portrait - Kung Fu", "c": "Victory B - Flex"},

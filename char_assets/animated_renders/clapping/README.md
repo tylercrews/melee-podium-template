@@ -1,8 +1,15 @@
 # Clapping animations
 
-This collection contains 123 supplied animated GIFs and 11 byte-identical
-default-costume aliases. Its 134 entries cover every character/color selection
-in `char_assets/renders/` for all 26 playable characters.
+This collection contains 123 supplied animated GIFs, 11 byte-identical
+default-costume aliases, and Sandbag's single-frame standing GIF. Its 135
+entries cover all 26 playable characters plus Sandbag.
+
+Sandbag's standing pose comes from `tyro-decomp-anims`. The static portrait is
+`char_assets/renders/Sandbag/00a_default_Sandbag_tyro-decomp-anims_standing.png`.
+The clapping collection uses `Sandbag/00b_default_Sandbag_tyro-decomp-anims_clapping.gif`
+as a compact, transparent one-frame version of that PNG. Its preview frame is
+zero; it stays still while other characters clap and also supports an entirely
+still GIF when all four lower results use Sandbag.
 
 The current batch contains lighting-corrected 512x512 GIFs exported from
 higher-resolution originals, with the corrected Mr. Game and Watch outlines.

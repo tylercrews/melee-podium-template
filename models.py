@@ -36,6 +36,10 @@ MELEE_FIGHTERS = (
     "Zelda",
 )
 
+# Extra portrait subjects are usable in images without changing the playable
+# roster used by bracket providers and their costume mappings.
+SUPPORTED_PORTRAIT_CHARACTERS = (*MELEE_FIGHTERS, "Sandbag")
+
 
 class TournamentFormat(StrEnum):
     """Whether an event is singles or the supported two-player doubles format."""
@@ -112,8 +116,8 @@ class Character:
     def __post_init__(self) -> None:
         if not isinstance(self.mirror_horizontally, bool):
             raise TypeError("Character mirror_horizontally must be a boolean")
-        if self.melee_fighter_name not in MELEE_FIGHTERS:
-            choices = ", ".join(MELEE_FIGHTERS)
+        if self.melee_fighter_name not in SUPPORTED_PORTRAIT_CHARACTERS:
+            choices = ", ".join(SUPPORTED_PORTRAIT_CHARACTERS)
             raise ValueError(
                 f"Unknown Melee fighter {self.melee_fighter_name!r}. "
                 f"Expected one of: {choices}"

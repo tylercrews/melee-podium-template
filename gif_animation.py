@@ -22,9 +22,9 @@ def encode_animated_gif(frame_at: Callable[[int], Image.Image], durations: Seque
     and podiums steady. Transparent GIFs restore the canvas between frames so a
     moving character cannot leave an opaque trail behind it.
     """
-    if len(durations) < 2 or any(isinstance(duration, bool) or not isinstance(duration, int)
+    if not durations or any(isinstance(duration, bool) or not isinstance(duration, int)
                                 or duration <= 0 or duration % 10 for duration in durations):
-        raise ValueError("GIF durations must be positive multiples of 10 ms for at least two frames")
+        raise ValueError("GIF durations must be positive multiples of 10 ms for at least one frame")
     first = frame_at(0).convert("RGBA")
     sample = _rgb_on_matte(first)
     samples = []

@@ -15,7 +15,7 @@ from clapping_assets import CLAPPING_FOLDER, load_clapping_frame, resolve_clappi
 from clapping_frame_compositor import compose_clapping_member_layers
 from clapping_portrait_renderer import render_clapping_portrait, render_clapping_portrait_frame
 from color_values import parse_rgba_hex
-from models import Character, MELEE_FIGHTERS
+from models import Character, MELEE_FIGHTERS, SUPPORTED_PORTRAIT_CHARACTERS
 from portrait_crop_adjustment_for_clapping import (
     CALIBRATION_PATH, ClappingPortraitAdjustment, ClappingPortraitLayer,
     get_clapping_portrait_adjustment,
@@ -71,8 +71,9 @@ class ClappingPortraitTests(unittest.TestCase):
                 get_clapping_portrait_adjustment("Mario", 2)
 
     def test_every_costume_resolves_to_its_manifest_asset_and_renders(self):
-        assets = json.loads((CLAPPING_FOLDER / "manifest.json").read_text())["assets"]
-        self.assertEqual(len(assets), 134)
+        manifest = json.loads((CLAPPING_FOLDER / "manifest.json").read_text())
+        assets = manifest["assets"]
+        self.assertEqual(len(assets), manifest["asset_count"])
         for asset in assets:
             with self.subTest(fighter=asset["character"], color=asset["color"]):
                 character = Character(asset["character"], color=asset["color"], pose="a")
@@ -90,8 +91,8 @@ class ClappingPortraitTests(unittest.TestCase):
 
     def test_all_characters_have_round_trippable_fixed_windows(self):
         profiles = json.loads(CALIBRATION_PATH.read_text())["characters"]
-        self.assertEqual(set(profiles), set(MELEE_FIGHTERS))
-        for fighter in MELEE_FIGHTERS:
+        self.assertEqual(set(profiles), set(SUPPORTED_PORTRAIT_CHARACTERS))
+        for fighter in SUPPORTED_PORTRAIT_CHARACTERS:
             crop = get_clapping_portrait_adjustment(fighter)
             restored = ClappingPortraitAdjustment.from_dict(json.loads(json.dumps(crop.to_dict())))
             self.assertEqual(crop, restored)

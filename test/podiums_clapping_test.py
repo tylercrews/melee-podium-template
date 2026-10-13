@@ -10,12 +10,38 @@ from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont
 from format_preview import prepare_format_preview
 from mode_preferences import ModePreferenceRepository
-from models import TournamentFormat
+from models import Character, TournamentFormat
 from gif_animation import encode_animated_gif
 from sample_creation_data import sample_clapping_top_8_entrants
 
 
 class PodiumsClappingTest(unittest.TestCase):
+    def test_standing_sandbag_works_with_clapping_characters_and_alone(self):
+        entrants = sample_clapping_top_8_entrants()
+        sandbag = Character("Sandbag")
+        # Exercise the regular standing PNG on a podium as well as the GIF panel.
+        entrants[0] = replace(entrants[0], characters=[sandbag])
+        entrants[4] = replace(entrants[4], characters=[sandbag])
+        for style in PodiumStyle:
+            with self.subTest(style=style):
+                layout = prepare_format_preview(style, TournamentFormat.SINGLES, 8, "four_podium",
+                                                font=PodiumFont.UBUNTU, transparent=True, entrants=entrants)
+                track = layout.tracks[0]
+                self.assertEqual(len(track.frames), 1)
+                self.assertEqual(track.preview_index, 0)
+                self.assertEqual({track.frame_index_at(i * 20, 840) for i in range(42)}, {0})
+                self.assertEqual(len(layout.durations), 42)
+                self.assertEqual(layout.frame(0).crop(track.panel.rect.as_tuple()).tobytes(),
+                                 layout.frame(18).crop(track.panel.rect.as_tuple()).tobytes())
+                with Image.open(BytesIO(layout.gif())) as animation:
+                    self.assertGreater(animation.n_frames, 1)
+                still_layout = replace(layout, tracks=tuple(replace(row, frames=track.frames,
+                    durations=track.durations, preview_index=0) for row in layout.tracks))
+                with Image.open(BytesIO(still_layout.gif())) as still:
+                    self.assertEqual(still.n_frames, 1)
+                with Image.open(BytesIO(still_layout.png())) as still:
+                    self.assertEqual(still.size, layout.base.size)
+
     def test_backward_compatible_selection_and_shared_geometry(self):
         repository = ModePreferenceRepository()
         for style in PodiumStyle:

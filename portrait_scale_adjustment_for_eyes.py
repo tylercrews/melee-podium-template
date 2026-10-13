@@ -50,6 +50,7 @@ class EyePortraitAdjustment:
 # The point is the visual center between the visible eyes.  Helmet visors and
 # Mr. Game & Watch's head center are used for characters without visible eyes.
 EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
+    "Sandbag": {"a": EyePortraitAdjustment(264, 216, 1.0)},
     "Bowser": {
         "a": EyePortraitAdjustment(180, 297, 1.00),
         "c": EyePortraitAdjustment(600, 130, 1.05),
