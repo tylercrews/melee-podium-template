@@ -9,6 +9,13 @@ from sample_creation_data import (
     SAMPLE_TEAM_COLORS,
     SAMPLE_TOP_8_ENTRANT_POOL,
     SAMPLE_TOP_25_ENTRANT_POOL,
+    SAMPLE_TOP_16_ENTRANT_POOL,
+    SAMPLE_TOP_32_ENTRANT_POOL,
+    sample_doubles_teams,
+    sample_top_16_entrants,
+    sample_top_32_entrants,
+    sample_top_8_teams,
+    sample_top_16_teams,
     sample_clapping_top_8_entrants,
     sample_singles_entrants,
     sample_top_4_teams,
@@ -62,14 +69,14 @@ class SampleCreationDataTest(unittest.TestCase):
         self.assertEqual(
             actual,
             {
-                "C9 | Mang0": [("Fox", "default"), ("Falco", "default")],
-                "Armada": [("Peach", "default")],
-                "GG | PPMD": [("Falco", "green"), ("Marth", "default")],
+                "C9 | Mang0": [("Fox", "red"), ("Falco", "default")],
+                "[A] | Armada": [("Peach", "default"), ("Fox", "red")],
+                "EG | PPMD": [("Falco", "green"), ("Marth", "default")],
                 "Cody": [("Fox", "green")],
-                "Zain": [("Marth", "red")],
-                "Mew2King": [("Sheik", "green"), ("Marth", "black")],
+                "GG | Zain": [("Marth", "red")],
+                "FOX MVG | Mew2King": [("Sheik", "red"), ("Marth", "black"), ("Fox", "green")],
                 "Liquid | Hungrybox": [("Jigglypuff", "green")],
-                "TSM | Leffen": [("Fox", "default")],
+                "TSM | Leffen": [("Fox", "default"), ("Sheik", "white")],
             },
         )
 
@@ -152,6 +159,72 @@ class SampleCreationDataTest(unittest.TestCase):
         teams[0].entrant_1.characters.clear()
 
         self.assertTrue(all(entrant.characters for entrant in SAMPLE_TOP_8_ENTRANT_POOL))
+
+    def test_expanded_rosters_preserve_original_eight_and_rapmonster(self):
+        original = {entrant.tag for entrant in SAMPLE_TOP_8_ENTRANT_POOL}
+        self.assertIn("TSM | Leffen", original)
+        self.assertNotIn("Envy | Wizzrobe", original)
+        expected_additions = [
+            "Axe", "Wizzrobe", "aMSa", "S2J", "Plup", "Lucky", "n0ne", "SFAT",
+            "Fiction", "Shroomed", "moky", "Trif", "Colbol", "PewPewU", "Westballz",
+            "lloD", "ChuDat", "Spark", "Ice", "Ginger", "Swedish Delight", "KJH", "Jmook",
+        ]
+        for count, pool, helper in (
+            (16, SAMPLE_TOP_16_ENTRANT_POOL, sample_top_16_entrants),
+            (32, SAMPLE_TOP_32_ENTRANT_POOL, sample_top_32_entrants),
+        ):
+            with self.subTest(count=count):
+                self.assertEqual(len(pool), count)
+                self.assertEqual(len({entrant.tag for entrant in pool}), count)
+                self.assertEqual(pool[:8], SAMPLE_TOP_8_ENTRANT_POOL)
+                self.assertEqual(pool[8].tag, "RapMonster")
+                self.assertEqual(pool[8].characters[0].color, "blue")
+                additions = [entrant.tag.rsplit("|", 1)[-1].strip() for entrant in pool[9:]]
+                self.assertEqual(additions, expected_additions[:count - 9])
+                for seed in range(8):
+                    results = helper(random.Random(seed))
+                    self.assertEqual({entrant.tag for entrant in results}, {entrant.tag for entrant in pool})
+                    self.assertEqual([entrant.placement for entrant in results], list(range(1, count + 1)))
+                    self.assertEqual(sorted(entrant.seed for entrant in results), list(range(1, count + 1)))
+                    self.assertTrue(original <= {entrant.tag for entrant in results})
+        self.assertEqual(SAMPLE_TOP_16_ENTRANT_POOL, SAMPLE_TOP_32_ENTRANT_POOL[:16])
+
+    def test_expanded_doubles_pair_every_selected_player_exactly_once(self):
+        for count, pool, helper in (
+            (8, SAMPLE_TOP_16_ENTRANT_POOL, sample_top_8_teams),
+            (16, SAMPLE_TOP_32_ENTRANT_POOL, sample_top_16_teams),
+        ):
+            with self.subTest(count=count):
+                teams = helper(random.Random(42))
+                self.assertEqual(teams, helper(random.Random(42)))
+                members = [member for team in teams for member in (team.entrant_1, team.entrant_2)]
+                self.assertCountEqual([member.tag for member in members], [entrant.tag for entrant in pool])
+                self.assertEqual(len({member.tag for member in members}), count * 2)
+                self.assertEqual([team.placement for team in teams], list(range(1, count + 1)))
+                self.assertEqual(sorted(team.seed for team in teams), list(range(1, count + 1)))
+                self.assertTrue(all(team.team_color in SAMPLE_TEAM_COLORS for team in teams))
+                self.assertGreater(len({team.team_color for team in teams}), 1)
+                self.assertNotEqual(teams, helper(random.Random(43)))
+                teams[0].entrant_1.characters.clear()
+                self.assertTrue(all(entrant.characters for entrant in pool))
+
+    def test_extended_character_costumes_resolve_to_real_assets(self):
+        from portrait_assets import resolve_character_path
+        for entrant in SAMPLE_TOP_32_ENTRANT_POOL:
+            for character in entrant.characters:
+                with self.subTest(player=entrant.tag, character=character):
+                    self.assertIsNone(character.pose)
+                    self.assertTrue(resolve_character_path(character).is_file())
+
+    def test_extended_helpers_reject_unsupported_counts_and_unsorted_placements(self):
+        for count in (True, 0, -1, 33, 2.5):
+            with self.subTest(count=count), self.assertRaises(ValueError):
+                sample_singles_entrants(count)
+        for count in (True, 0, -1, 17, 2.5):
+            with self.subTest(count=count), self.assertRaises(ValueError):
+                sample_doubles_teams(count)
+        with self.assertRaises(ValueError):
+            sample_singles_entrants(3, placements=(2, 1, 3))
 
     def test_sample_tournament_populates_every_field(self) -> None:
         tournament = sample_tournament()

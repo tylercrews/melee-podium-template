@@ -1,4 +1,4 @@
-# Historic and Average Melee Rankings
+# Historic and Aggregate Melee Rankings
 
 Source tables checked on October 13, 2026. This document covers the annual global Melee Top 100 lists from 2013 through 2025, plus Summer 2026 as **Current rankings**.
 
@@ -1283,59 +1283,91 @@ These source-table tags resolve to the same player and are combined before summi
 | [Uncle Mojo](https://www.ssbwiki.com/Smasher:Uncle_mojo) | Mojo, Uncle Mojo |
 | [Vegas Matt](https://www.ssbwiki.com/Smasher:Vegas_Matt) | Kurv, Kürv, Vegas Matt |
 
+## Sample rosters and historical sponsors
+
+The original eight stay Mang0, Armada, PPMD, Cody, Zain, Mew2King, Hungrybox, and **Leffen**. These sample fixtures represent prominent career-era identities, rather than present-day sponsorships. Cody deliberately has no sponsor prefix.
+
+| Player | Sample tag | Representative career era and sponsor reference |
+| --- | --- | --- |
+| Mang0 | `C9 \| Mang0` | Cloud9, including his 2014 championship season and 2021 major wins. [Career and signing history](https://www.ssbwiki.com/Smasher:Mang0). |
+| Armada | `[A] \| Armada` | Alliance during his 2015-2016 No. 1 seasons. [Career and signing history](https://www.ssbwiki.com/Smasher:Armada). |
+| PPMD | `EG \| PPMD` | Evil Geniuses during his Apex 2015 win. [Career history](https://www.ssbwiki.com/Smasher:PPMD); [2014 article by EG PPMD](https://www.cyberpowerpc.com/blog/mentally-dealing-with-large-talent-pool-intimidation/). |
+| Cody | `Cody` | Unsponsored in the samples, as requested; the scoreboard combines Cody Schwab and iBDW. |
+| Zain | `GG \| Zain` | Golden Guardians during his 2022 No. 1 season. [Career and signing history](https://www.ssbwiki.com/Smasher:Zain). |
+| Mew2King | `FOX MVG \| Mew2King` | Echo Fox and Most Valuable Gaming during his 2017-2018 major-title period, including Smash Summit 6. [Career and signing history](https://www.ssbwiki.com/Smasher:Mew2King). |
+| Hungrybox | `Liquid \| Hungrybox` | Team Liquid during his 2017-2019 No. 1 seasons. [Team Liquid career timeline](https://teamliquid.com/articles/a-timeline-10-years-of-liquid-hungrybox). |
+| Leffen | `TSM \| Leffen` | TSM during his EVO 2018 championship. [Career and signing history](https://www.ssbwiki.com/Smasher:Leffen). |
+
+**RapMonster is the ninth fixed member** for both expanded rosters, independently of scoreboard rank. His sample uses blue Luigi, observed in [GOML 2026 grand finals against lloD](https://www.youtube.com/watch?v=CpA-aFcFtdg). The remaining places use scoreboard order after excluding the original eight and RapMonster:
+
+| Roster | Additional players in aggregate-score order |
+| --- | --- |
+| Singles Top 16 / Doubles Top 8 | Axe, Wizzrobe, aMSa, S2J, Plup, Lucky, n0ne |
+| Singles Top 32 / Doubles Top 16 | All seven above, then SFAT, Fiction, Shroomed, moky, Trif, Colbol, PewPewU, Westballz, lloD, ChuDat, Spark, Ice, Ginger, Swedish Delight, KJH, Jmook |
+
+`sample_creation_data.py` exposes `sample_top_16_entrants`, `sample_top_32_entrants`, `sample_top_8_teams`, and `sample_top_16_teams`. Each call retains the roster membership, randomizes result order and unique seeds, and returns results in placement order. Doubles pairs every selected player exactly once and chooses each team's color independently. The samples select representative mains and secondaries from the character history below; they do not add every historical counterpick to each rendered lineup. Existing Top 8, Top 4 doubles, Top 25, and clapping-demo helpers remain available.
+
+## Character and costume research
+
+Checked October 13, 2026. The scoreboard's character lists take the **union of each player's character icons across every included ranking table**, so former mains and listed secondaries remain visible. Mang0's historical Jigglypuff and Armada's historical Young Link are additionally labeled because those established characters predate the annual-ranking period. Spark's canonical profile identifies Sheik. Generic ranking stock-icon colors are not evidence of a player's chosen costume.
+
+Each character/color link points to a tournament broadcast, the player's demonstration or statement, or a historical community reference. Footage colors are visual identifications from the linked source, associated with the player through the match overlay, character-selection screen, or results screen. S2J's blue Falco is demonstrated in his Falco combo guide. The community references are the [historical costume survey](https://www.reddit.com/r/SSBM/comments/kzcg94/best_players_by_character_color/) and [iconic-costume discussion](https://www.reddit.com/r/SSBM/comments/j6gumj/most_iconic_character_costumes/), used for the explicitly linked historical choices. These are **representative observed costumes**, not an exhaustive list of every costume used throughout a career; multiple colors are listed where the checked evidence establishes them. Costume evidence can come from outside the scoring years and does not change points or roster ordering.
+
+Color names match this repository's asset labels: Fox `red` looks orange, Fox `blue` looks lavender, Captain Falcon `white` is the pink suit, Samus `black` is brown and `blue` is purple, and Jigglypuff `white` wears the crown. `default` means the original costume (for example blue Marth, pink Peach, or green Luigi), not an unknown color. These are character-costume identifiers, separate from RGBA formatting colors. Doubles applies its independently selected team color through the existing renderer.
+
 ## Rankings Scoreboard
 
 Top 50 players by total calculated score across all included editions. Current rankings contributes to the total; its points are also shown separately for clarity. A dash in that column means the player is not in its published Top 30.
 
-| Position | Player | Total score | Editions ranked (of 12) | Average score (all 12) | Average listed rank | Best listed rank | Current rankings score |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | [Hungrybox](https://www.ssbwiki.com/Smasher:Hungrybox) | 1,170 | 12 | 97.50 | 3.50 | 1 | 98 |
-| 2 | [Axe](https://www.ssbwiki.com/Smasher:Axe) | 1,081 | 12 | 90.08 | 10.92 | 4 | 81 |
-| 3 | [Wizzrobe](https://www.ssbwiki.com/Smasher:Wizzrobe) | 977 | 11 | 81.42 | 12.18 | 2 | 99 |
-| 4 | [Mang0](https://www.ssbwiki.com/Smasher:Mang0) | 976 | 10 | 81.33 | 3.40 | 1 | — |
-| 5 | [aMSa](https://www.ssbwiki.com/Smasher:AMSa) | 879 | 11 | 73.25 | 21.09 | 2 | — |
-| 6 | [S2J](https://www.ssbwiki.com/Smasher:S2J) | 850 | 10 | 70.83 | 16.00 | 10 | — |
-| 7 | [Plup](https://www.ssbwiki.com/Smasher:Plup) | 823 | 9 | 68.58 | 9.56 | 4 | — |
-| 8 | [Zain](https://www.ssbwiki.com/Smasher:Zain) | 802 | 9 | 66.83 | 11.89 | 1 | 100 |
-| 9 | [Lucky](https://www.ssbwiki.com/Smasher:Lucky) | 775 | 10 | 64.58 | 23.50 | 12 | — |
-| 10 | [Leffen](https://www.ssbwiki.com/Smasher:Leffen) | 762 | 8 | 63.50 | 5.75 | 2 | — |
-| 11 | [n0ne](https://www.ssbwiki.com/Smasher:N0ne) | 735 | 10 | 61.25 | 27.50 | 15 | 77 |
-| 12 | [SFAT](https://www.ssbwiki.com/Smasher:SFAT) | 697 | 8 | 58.08 | 13.88 | 7 | — |
-| 13 | [Fiction](https://www.ssbwiki.com/Smasher:Fiction) | 695 | 9 | 57.92 | 23.78 | 12 | 79 |
-| 14 | [Mew2King](https://www.ssbwiki.com/Smasher:Mew2King) | 671 | 7 | 55.92 | 5.14 | 3 | — |
-| 15 | [Shroomed](https://www.ssbwiki.com/Smasher:Shroomed) | 650 | 8 | 54.17 | 19.75 | 7 | — |
-| 16 | [moky](https://www.ssbwiki.com/Smasher:Moky) | 616 | 8 | 51.33 | 24.00 | 4 | 97 |
-| 17 | [Trif](https://www.ssbwiki.com/Smasher:Trif) | 609 | 8 | 50.75 | 24.88 | 11 | — |
-| 18 | [Colbol](https://www.ssbwiki.com/Smasher:Colbol) | 603 | 9 | 50.25 | 34.00 | 10 | — |
-| 19 | [Armada](https://www.ssbwiki.com/Smasher:Armada) | 596 | 6 | 49.67 | 1.67 | 1 | — |
-| 20 | [PewPewU](https://www.ssbwiki.com/Smasher:PewPewU) | 594 | 7 | 49.50 | 16.14 | 12 | — |
-| 21 | [Westballz](https://www.ssbwiki.com/Smasher:Westballz) | 588 | 7 | 49.00 | 17.00 | 8 | — |
-| 22 | [Cody Schwab](https://www.ssbwiki.com/Smasher:Cody_Schwab) | 571 | 7 | 47.58 | 19.43 | 1 | — |
-| 22 | [lloD](https://www.ssbwiki.com/Smasher:LloD) | 571 | 8 | 47.58 | 29.62 | 10 | — |
-| 24 | [ChuDat](https://www.ssbwiki.com/Smasher:ChuDat) | 554 | 8 | 46.17 | 31.75 | 11 | — |
-| 25 | [Spark](https://www.ssbwiki.com/Smasher:Spark_(Melee)) | 553 | 8 | 46.08 | 31.88 | 14 | 84 |
-| 26 | [Ice](https://www.ssbwiki.com/Smasher:Ice) | 527 | 7 | 43.92 | 25.71 | 13 | — |
-| 27 | [Ginger](https://www.ssbwiki.com/Smasher:Ginger) | 517 | 7 | 43.08 | 27.14 | 15 | 86 |
-| 28 | [Swedish Delight](https://www.ssbwiki.com/Smasher:Swedish_Delight) | 496 | 7 | 41.33 | 30.14 | 11 | — |
-| 29 | [KJH](https://www.ssbwiki.com/Smasher:KJH) | 490 | 8 | 40.83 | 39.75 | 25 | — |
-| 30 | [Jmook](https://www.ssbwiki.com/Smasher:Jmook) | 476 | 5 | 39.67 | 5.80 | 3 | 93 |
-| 31 | [HugS](https://www.ssbwiki.com/Smasher:HugS) | 473 | 7 | 39.42 | 33.43 | 20 | — |
-| 32 | [Hax$](https://www.ssbwiki.com/Smasher:Hax) | 471 | 6 | 39.25 | 22.50 | 6 | — |
-| 33 | [Magi](https://www.ssbwiki.com/Smasher:Magi) | 468 | 7 | 39.00 | 34.14 | 14 | 87 |
-| 34 | [La Luna](https://www.ssbwiki.com/Smasher:La_Luna) | 461 | 7 | 38.42 | 35.14 | 19 | — |
-| 35 | [Gahtzu](https://www.ssbwiki.com/Smasher:Gahtzu) | 458 | 10 | 38.17 | 55.20 | 27 | — |
-| 36 | [Joshman](https://www.ssbwiki.com/Smasher:Joshman) | 449 | 5 | 37.42 | 11.20 | 4 | 96 |
-| 37 | [Aklo](https://www.ssbwiki.com/Smasher:Aklo) | 441 | 5 | 36.75 | 12.80 | 8 | 85 |
-| 38 | [Duck](https://www.ssbwiki.com/Smasher:Duck) | 428 | 6 | 35.67 | 29.67 | 14 | — |
-| 39 | [Soonsay](https://www.ssbwiki.com/Smasher:Soonsay) | 425 | 6 | 35.42 | 30.17 | 12 | 89 |
-| 40 | [Salt](https://www.ssbwiki.com/Smasher:Salt) | 424 | 5 | 35.33 | 16.20 | 6 | 95 |
-| 41 | [Bladewise](https://www.ssbwiki.com/Smasher:Bladewise) | 416 | 7 | 34.67 | 41.57 | 33 | — |
-| 42 | [Nintendude](https://www.ssbwiki.com/Smasher:Nintendude) | 412 | 7 | 34.33 | 42.14 | 17 | — |
-| 43 | [Krudo](https://www.ssbwiki.com/Smasher:Krudo) | 407 | 5 | 33.92 | 19.60 | 9 | 92 |
-| 44 | [Professor Pro](https://www.ssbwiki.com/Smasher:Professor_Pro) | 397 | 7 | 33.08 | 44.29 | 24 | — |
-| 45 | [Eddy Mexico](https://www.ssbwiki.com/Smasher:Eddy_Mexico) | 390 | 8 | 32.50 | 52.25 | 31 | — |
-| 46 | [KirbyKaze](https://www.ssbwiki.com/Smasher:KirbyKaze) | 388 | 5 | 32.33 | 23.40 | 9 | — |
-| 47 | [SDJ](https://www.ssbwiki.com/Smasher:SDJ) | 377 | 5 | 31.42 | 25.60 | 8 | 88 |
-| 48 | [KoDoRiN](https://www.ssbwiki.com/Smasher:KoDoRiN) | 373 | 5 | 31.08 | 26.40 | 11 | 82 |
-| 49 | [Zamu](https://www.ssbwiki.com/Smasher:Zamu) | 367 | 6 | 30.58 | 39.83 | 22 | — |
-| 50 | [MacD](https://www.ssbwiki.com/Smasher:MacD) | 359 | 5 | 29.92 | 29.20 | 15 | — |
+| Position | Player | Total score | Editions ranked (of 12) | Average score (all 12) | Average listed rank | Best listed rank | Current rankings score | Characters and representative costume colors |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | [Hungrybox](https://www.ssbwiki.com/Smasher:Hungrybox) | 1,170 | 12 | 97.50 | 3.50 | 1 | 98 | [Jigglypuff (green)](https://www.youtube.com/watch?v=Lf913_gZqaA) |
+| 2 | [Axe](https://www.ssbwiki.com/Smasher:Axe) | 1,081 | 12 | 90.08 | 10.92 | 4 | 81 | [Pikachu (blue)](https://www.youtube.com/watch?v=2HAuqjiu7ak); [Falco (default)](https://www.youtube.com/watch?v=Wh5lDth5Auw); [Young Link (blue)](https://www.youtube.com/watch?v=iH9a9YtUeaU); [Marth (default)](https://www.youtube.com/watch?v=imCyAQMqlC4); [Fox (blue)](https://www.youtube.com/watch?v=7ph1kRvKq2o) |
+| 3 | [Wizzrobe](https://www.ssbwiki.com/Smasher:Wizzrobe) | 977 | 11 | 81.42 | 12.18 | 2 | 99 | [Captain Falcon (default)](https://www.youtube.com/watch?v=lVc9iuR8jlk) |
+| 4 | [Mang0](https://www.ssbwiki.com/Smasher:Mang0) | 976 | 10 | 81.33 | 3.40 | 1 | — | [Fox (red)](https://www.youtube.com/watch?v=BLKt8gO58dE); [Falco (default)](https://www.youtube.com/watch?v=OroxP8TOf0g); [Marth (default)](https://www.youtube.com/watch?v=CrvVWGCctk4); [Captain Falcon (green)](https://www.youtube.com/watch?v=8ChScusJNs4); [Mario (default)](https://www.youtube.com/watch?v=2ZVofoswgXY); [Dr. Mario (black)](https://www.youtube.com/watch?v=paCfRxnMBMI); [Jigglypuff (white/crown; historical)](https://www.reddit.com/r/SSBM/comments/j6gumj/most_iconic_character_costumes/) |
+| 5 | [aMSa](https://www.ssbwiki.com/Smasher:AMSa) | 879 | 11 | 73.25 | 21.09 | 2 | — | [Yoshi (red)](https://note.com/amsayoshi/n/n775a5cf24c43); [Falco (green)](https://www.youtube.com/watch?v=Vn65qTR5CHM) |
+| 6 | [S2J](https://www.ssbwiki.com/Smasher:S2J) | 850 | 10 | 70.83 | 16.00 | 10 | — | [Captain Falcon (default)](https://www.youtube.com/watch?v=IY9d6NQP_Jc); [Falco (blue)](https://www.youtube.com/watch?v=1tdU2TStQKQ) |
+| 7 | [Plup](https://www.ssbwiki.com/Smasher:Plup) | 823 | 9 | 68.58 | 9.56 | 4 | — | Samus (black/brown [historical](https://www.reddit.com/r/SSBM/comments/kzcg94/best_players_by_character_color/); green [footage](https://www.youtube.com/watch?v=7Vj41nvVnz8)); [Sheik (white)](https://www.youtube.com/watch?v=PXSXiC0A0J0); [Fox (green)](https://www.youtube.com/watch?v=bibIYwMltK0); [Luigi (default)](https://www.youtube.com/watch?v=LV2cn9tvHtw) |
+| 8 | [Zain](https://www.ssbwiki.com/Smasher:Zain) | 802 | 9 | 66.83 | 11.89 | 1 | 100 | [Marth (red)](https://www.youtube.com/watch?v=ThbkmXeLqa4) |
+| 9 | [Lucky](https://www.ssbwiki.com/Smasher:Lucky) | 775 | 10 | 64.58 | 23.50 | 12 | — | [Fox (red)](https://www.youtube.com/watch?v=EmeGifsOg-E); [Captain Falcon (black/gray suit)](https://www.youtube.com/watch?v=DOmEcF55CIs); [Marth (red)](https://www.youtube.com/watch?v=bvIOyOwDEq8) |
+| 10 | [Leffen](https://www.ssbwiki.com/Smasher:Leffen) | 762 | 8 | 63.50 | 5.75 | 2 | — | [Fox (default)](https://www.youtube.com/watch?v=LEZvQ50UFhE); [Sheik (white)](https://www.youtube.com/watch?v=ynTyxSWrg_A) |
+| 11 | [n0ne](https://www.ssbwiki.com/Smasher:N0ne) | 735 | 10 | 61.25 | 27.50 | 15 | 77 | [Captain Falcon (black)](https://www.youtube.com/watch?v=EuHoleziyWo); [Ganondorf (default)](https://www.youtube.com/watch?v=ELHfreCi_Lw) |
+| 12 | [SFAT](https://www.ssbwiki.com/Smasher:SFAT) | 697 | 8 | 58.08 | 13.88 | 7 | — | [Fox (red)](https://www.reddit.com/r/SSBM/comments/kzcg94/best_players_by_character_color/) |
+| 13 | [Fiction](https://www.ssbwiki.com/Smasher:Fiction) | 695 | 9 | 57.92 | 23.78 | 12 | 79 | [Fox (blue)](https://www.youtube.com/watch?v=BQ2g98jWB4E); [Marth (red)](https://www.youtube.com/watch?v=DGi_IlPAgAQ); [Falco (default)](https://www.youtube.com/watch?v=utdjk_2F-s8); [Sheik (white)](https://www.youtube.com/watch?v=pCBHSzmPXco); [Peach (green)](https://www.youtube.com/watch?v=Mfa75qD1fqQ) |
+| 14 | [Mew2King](https://www.ssbwiki.com/Smasher:Mew2King) | 671 | 7 | 55.92 | 5.14 | 3 | — | [Sheik (red)](https://www.youtube.com/watch?v=h6rRec-IJxY); [Marth (black)](https://www.youtube.com/watch?v=BLKt8gO58dE); [Fox (green)](https://www.youtube.com/watch?v=xXiqlxcEeXA); [Peach (green)](https://www.youtube.com/watch?v=jqj38X8qyLA) |
+| 15 | [Shroomed](https://www.ssbwiki.com/Smasher:Shroomed) | 650 | 8 | 54.17 | 19.75 | 7 | — | [Dr. Mario (black)](https://www.youtube.com/watch?v=rnhHid3rI9A); [Sheik (red)](https://www.youtube.com/watch?v=mtZwJygA48U); [Marth (red)](https://www.youtube.com/watch?v=jLg-lm7PRd4) |
+| 16 | [moky](https://www.ssbwiki.com/Smasher:Moky) | 616 | 8 | 51.33 | 24.00 | 4 | 97 | [Fox (blue)](https://www.youtube.com/watch?v=dOC6-BtkdB0) |
+| 17 | [Trif](https://www.ssbwiki.com/Smasher:Trif) | 609 | 8 | 50.75 | 24.88 | 11 | — | [Peach (green)](https://www.youtube.com/watch?v=eKA3OibZdIE) |
+| 18 | [Colbol](https://www.ssbwiki.com/Smasher:Colbol) | 603 | 9 | 50.25 | 34.00 | 10 | — | [Fox (default)](https://www.youtube.com/watch?v=ebTMrVGg3qY); [Marth (green)](https://www.youtube.com/watch?v=93_ia6D3mMA) |
+| 19 | [Armada](https://www.ssbwiki.com/Smasher:Armada) | 596 | 6 | 49.67 | 1.67 | 1 | — | [Peach (default)](https://www.youtube.com/watch?v=8iGB_5LFBAE); [Fox (red)](https://www.youtube.com/watch?v=cMsFl4n7Kz4); [Young Link (white; historical)](https://www.youtube.com/watch?v=8twwXHDIVBc) |
+| 20 | [PewPewU](https://www.ssbwiki.com/Smasher:PewPewU) | 594 | 7 | 49.50 | 16.14 | 12 | — | [Marth (default)](https://www.youtube.com/watch?v=pJ4-5n3Y2B4); [Fox (red)](https://www.youtube.com/watch?v=LYEG_5iW150) |
+| 21 | [Westballz](https://www.ssbwiki.com/Smasher:Westballz) | 588 | 7 | 49.00 | 17.00 | 8 | — | [Falco (red)](https://www.youtube.com/watch?v=kn6n0cbzJtQ); [Fox (blue)](https://www.youtube.com/watch?v=nVZe4gP4qpk); [Captain Falcon (red)](https://www.youtube.com/watch?v=gaFYNYP8K4U) |
+| 22 | [Cody Schwab](https://www.ssbwiki.com/Smasher:Cody_Schwab) | 571 | 7 | 47.58 | 19.43 | 1 | — | [Fox (green)](https://www.youtube.com/watch?v=0q4sDfsuFlc) |
+| 22 | [lloD](https://www.ssbwiki.com/Smasher:LloD) | 571 | 8 | 47.58 | 29.62 | 10 | — | Peach (green [historical](https://www.reddit.com/r/SSBM/comments/kzcg94/best_players_by_character_color/); white [footage](https://www.youtube.com/watch?v=CpA-aFcFtdg)) |
+| 24 | [ChuDat](https://www.ssbwiki.com/Smasher:ChuDat) | 554 | 8 | 46.17 | 31.75 | 11 | — | [Ice Climbers (default)](https://www.youtube.com/watch?v=Myrn0myQUDg) |
+| 25 | [Spark](https://www.ssbwiki.com/Smasher:Spark_(Melee)) | 553 | 8 | 46.08 | 31.88 | 14 | 84 | [Sheik (white)](https://www.youtube.com/watch?v=1R6gyCBNm4E) |
+| 26 | [Ice](https://www.ssbwiki.com/Smasher:Ice) | 527 | 7 | 43.92 | 25.71 | 13 | — | [Sheik (white)](https://www.youtube.com/watch?v=YTv05aoV-1k); [Marth (black)](https://www.youtube.com/watch?v=UFtwcZU2LxY); [Fox (default)](https://www.youtube.com/watch?v=yRzZz7Jb-eo) |
+| 27 | [Ginger](https://www.ssbwiki.com/Smasher:Ginger) | 517 | 7 | 43.08 | 27.14 | 15 | 86 | [Falco (blue)](https://www.youtube.com/watch?v=MIldqJLgLgw) |
+| 28 | [Swedish Delight](https://www.ssbwiki.com/Smasher:Swedish_Delight) | 496 | 7 | 41.33 | 30.14 | 11 | — | [Sheik (default)](https://www.youtube.com/watch?v=1LPXiH88gfc); [Peach (default)](https://www.youtube.com/watch?v=mdeMDYvTweI) |
+| 29 | [KJH](https://www.ssbwiki.com/Smasher:KJH) | 490 | 8 | 40.83 | 39.75 | 25 | — | [Fox (green)](https://www.youtube.com/watch?v=R3Rp_DS3eso); [Falco (blue)](https://www.youtube.com/watch?v=560W4OfVEbs) |
+| 30 | [Jmook](https://www.ssbwiki.com/Smasher:Jmook) | 476 | 5 | 39.67 | 5.80 | 3 | 93 | [Sheik (white)](https://www.youtube.com/watch?v=oX1VGCmN-KI) |
+| 31 | [HugS](https://www.ssbwiki.com/Smasher:HugS) | 473 | 7 | 39.42 | 33.43 | 20 | — | [Samus (pink)](https://www.youtube.com/watch?v=cBH7ry1KHYw) |
+| 32 | [Hax$](https://www.ssbwiki.com/Smasher:Hax) | 471 | 6 | 39.25 | 22.50 | 6 | — | [Captain Falcon (white/pink suit)](https://www.ssbwiki.com/Smasher:Hax); [Fox (blue)](https://www.youtube.com/watch?v=TlcbXUa2nIc) |
+| 33 | [Magi](https://www.ssbwiki.com/Smasher:Magi) | 468 | 7 | 39.00 | 34.14 | 14 | 87 | [Falco (default)](https://www.youtube.com/watch?v=LJS6ZHH6EcQ) |
+| 34 | [La Luna](https://www.ssbwiki.com/Smasher:La_Luna) | 461 | 7 | 38.42 | 35.14 | 19 | — | [Marth (white)](https://www.youtube.com/watch?v=Kq4NCK5Vo9U) |
+| 35 | [Gahtzu](https://www.ssbwiki.com/Smasher:Gahtzu) | 458 | 10 | 38.17 | 55.20 | 27 | — | [Captain Falcon (red)](https://www.youtube.com/watch?v=uRQalkDYKLA) |
+| 36 | [Joshman](https://www.ssbwiki.com/Smasher:Joshman) | 449 | 5 | 37.42 | 11.20 | 4 | 96 | [Fox (red)](https://www.youtube.com/watch?v=M4YSQShgYTc); [Sheik (white)](https://www.youtube.com/watch?v=TxIApoMW-WA) |
+| 37 | [Aklo](https://www.ssbwiki.com/Smasher:Aklo) | 441 | 5 | 36.75 | 12.80 | 8 | 85 | [Fox (blue)](https://www.youtube.com/watch?v=DcNJL-v0hQk); [Link (black)](https://www.youtube.com/watch?v=15HuYdhTOk0) |
+| 38 | [Duck](https://www.ssbwiki.com/Smasher:Duck) | 428 | 6 | 35.67 | 29.67 | 14 | — | [Samus (blue/purple suit)](https://www.youtube.com/watch?v=yzt5W7xhzTc) |
+| 39 | [Soonsay](https://www.ssbwiki.com/Smasher:Soonsay) | 425 | 6 | 35.42 | 30.17 | 12 | 89 | [Fox (default)](https://www.youtube.com/watch?v=DcplhYA61jI) |
+| 40 | [Salt](https://www.ssbwiki.com/Smasher:Salt) | 424 | 5 | 35.33 | 16.20 | 6 | 95 | [Captain Falcon (default)](https://www.youtube.com/watch?v=19L7KJHQwC4); [Falco (default)](https://www.youtube.com/watch?v=Lq3oUuH8Xx8) |
+| 41 | [Bladewise](https://www.ssbwiki.com/Smasher:Bladewise) | 416 | 7 | 34.67 | 41.57 | 33 | — | [Peach (blue)](https://www.youtube.com/watch?v=ihcxCTlA860) |
+| 42 | [Nintendude](https://www.ssbwiki.com/Smasher:Nintendude) | 412 | 7 | 34.33 | 42.14 | 17 | — | [Ice Climbers (red)](https://www.youtube.com/watch?v=Z4w6T4T3-q4); [Peach (default)](https://www.youtube.com/watch?v=cZ5l3vXKFH0); [Marth (black)](https://www.youtube.com/watch?v=AFRicnnyr6Q) |
+| 43 | [Krudo](https://www.ssbwiki.com/Smasher:Krudo) | 407 | 5 | 33.92 | 19.60 | 9 | 92 | [Sheik (blue)](https://www.youtube.com/watch?v=1I9qUVLzuOg) |
+| 44 | [Professor Pro](https://www.ssbwiki.com/Smasher:Professor_Pro) | 397 | 7 | 33.08 | 44.29 | 24 | — | [Fox (green)](https://www.youtube.com/watch?v=v1ZxX7Rk_DE) |
+| 45 | [Eddy Mexico](https://www.ssbwiki.com/Smasher:Eddy_Mexico) | 390 | 8 | 32.50 | 52.25 | 31 | — | [Luigi (default)](https://www.youtube.com/watch?v=m9RQn6rO0gg) |
+| 46 | [KirbyKaze](https://www.ssbwiki.com/Smasher:KirbyKaze) | 388 | 5 | 32.33 | 23.40 | 9 | — | [Sheik (green, white)](https://www.reddit.com/r/SSBM/comments/kzcg94/best_players_by_character_color/); [Peach (green)](https://www.youtube.com/watch?v=V5S7TFOSIOQ) |
+| 47 | [SDJ](https://www.ssbwiki.com/Smasher:SDJ) | 377 | 5 | 31.42 | 25.60 | 8 | 88 | [Jigglypuff (default)](https://www.youtube.com/watch?v=fLEC-Ynpd9g) |
+| 48 | [KoDoRiN](https://www.ssbwiki.com/Smasher:KoDoRiN) | 373 | 5 | 31.08 | 26.40 | 11 | 82 | [Marth (green)](https://www.youtube.com/watch?v=2_S-KM0qyeo) |
+| 49 | [Zamu](https://www.ssbwiki.com/Smasher:Zamu) | 367 | 6 | 30.58 | 39.83 | 22 | — | [Fox (red)](https://www.youtube.com/watch?v=JwzRLzZPUWo) |
+| 50 | [MacD](https://www.ssbwiki.com/Smasher:MacD) | 359 | 5 | 29.92 | 29.20 | 15 | — | [Peach (white)](https://www.youtube.com/watch?v=unctxx002mc) |
