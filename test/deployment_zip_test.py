@@ -1,6 +1,7 @@
 """Release packaging always builds the current frontend before archiving it."""
 
 from pathlib import Path
+import ast
 import subprocess
 from tempfile import TemporaryDirectory
 import unittest
@@ -11,6 +12,21 @@ import build_deployment_zip as deployment
 
 
 class DeploymentZipTest(unittest.TestCase):
+    def test_local_runtime_imports_are_included_in_the_archive(self):
+        packaged = set(deployment.FILES)
+        for filename in deployment.FILES:
+            if not filename.endswith(".py"):
+                continue
+            tree = ast.parse((deployment.ROOT / filename).read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                modules = [node.module] if isinstance(node, ast.ImportFrom) and node.module else (
+                    [alias.name for alias in node.names] if isinstance(node, ast.Import) else []
+                )
+                for module in modules:
+                    dependency = module.split(".")[0] + ".py"
+                    if (deployment.ROOT / dependency).is_file():
+                        self.assertIn(dependency, packaged, f"{filename} imports {dependency}")
+
     def test_frontend_build_runs_in_frontend_directory(self):
         with patch.object(deployment.shutil, "which", return_value="npm.cmd"), patch.object(
             deployment.subprocess, "run"
