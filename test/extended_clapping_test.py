@@ -11,7 +11,8 @@ from PIL import Image, ImageChops
 
 from app import app
 from background_builder import BackgroundRequest
-from creation import CreationPipeline, CreationRequest
+from creation import CreationPipeline, CreationRequest, TextSettings
+from clapping_colors import TOP16_PLAYER_COLOR_SLOTS, resolve_clapping_podium_colors
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont
 from extended_clapping_renderer import DoublesClappingContentRenderer, SinglesTop16ClappingContentRenderer
@@ -131,6 +132,48 @@ class ExtendedClappingTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "fit every lower entrant"):
                 InvalidRenderer().prepare(Image.new("RGBA", preferences.canvas_size.as_tuple()), request, preferences)
 
+    def test_revised_labels_and_badges_follow_portrait_geometry(self):
+        for style in PodiumStyle:
+            renderer = DoublesClappingContentRenderer()
+            selection = ModeSelection(CreationMode.PODIUM, ModeOptions(TournamentFormat.DOUBLES, 8, "four_podium", style))
+            profile = renderer._profile(type("Request", (), {"selection": selection})())
+            for label in profile["team_names"]:
+                panels = [row for row in profile["panels"] if row["entrant_slot"] == label["entrant_slot"]]
+                self.assertEqual(panels[0]["portrait_rect"][1], 925)
+                self.assertGreater(label["anchor"]["y"], max(row["portrait_rect"][3] for row in panels))
+            selection = ModeSelection(CreationMode.PODIUM, ModeOptions(TournamentFormat.SINGLES, 16, "clapping", style))
+            profile = SinglesTop16ClappingContentRenderer()._profile(type("Request", (), {"selection": selection})())
+            for panel, badge in zip(profile["panels"], profile["placement_tags"], strict=True):
+                self.assertEqual(badge["anchor"]["x"], panel["portrait_rect"][2] + 20)
+                self.assertEqual(badge["anchor"]["y"], panel["portrait_rect"][3] + 12)
+
+    def test_top16_player_palette_groups_ties_and_legacy_lower_colors_reverse(self):
+        from app import _custom_preview_colors
+        source = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        teams = sample_singles_entrants(16, random.Random(16))
+        for style in PodiumStyle:
+            selection = ModeSelection(CreationMode.PODIUM, ModeOptions(TournamentFormat.SINGLES, 16, "clapping", style))
+            preferences = ModePreferenceRepository().load(selection)
+            colors = resolve_clapping_podium_colors(selection, source) if style is PodiumStyle.CUSTOMIZABLE else None
+            request = CreationRequest(selection, BackgroundRequest(preferences.canvas_size), teams,
+                                      sample_tournament(), podium_colors=colors)
+            actual = [SinglesTop16ClappingContentRenderer._default_text_style(request, slot)[0] for slot in range(1, 17)]
+            if style is PodiumStyle.CUSTOMIZABLE:
+                expected = [source.color_for_slot(slot).resolve().text_color for slot in TOP16_PLAYER_COLOR_SLOTS]
+                self.assertEqual(actual, expected)
+            else:
+                self.assertEqual(actual[8:], actual[:8][::-1])
+            override = replace(request, text_settings=TextSettings(entrant_text_color_mode="pick_1", entrant_text_colors=("#12345678",)))
+            self.assertEqual(SinglesTop16ClappingContentRenderer._default_text_style(override, 16), ("#12345678", False))
+        api_colors = _custom_preview_colors({"mode": "premade", "preset": "smash_player_colors", "colors": [],
+                    "preset_transparency": {"main_color": 50, "face_color": 25, "base_color": 75}}, 16, "clapping")
+        for slot, source_slot in enumerate(TOP16_PLAYER_COLOR_SLOTS, start=1):
+            actual = api_colors.color_for_slot(slot).resolve()
+            original = source.color_for_slot(source_slot).resolve()
+            self.assertEqual(actual.main_color, original.main_color[:7] + "80")
+            self.assertEqual(actual.face_color, original.face_color[:7] + "BF")
+            self.assertEqual(actual.base_color, original.base_color[:7] + "40")
+
     def test_new_canvas_composition_is_retained_in_every_gif_frame(self):
         def upload(image):
             buffer = BytesIO()
@@ -149,13 +192,23 @@ class ExtendedClappingTest(unittest.TestCase):
             })
             self.assertEqual(response.status_code, 200)
             with Image.open(BytesIO(response.data)) as image:
+                reference_pixels = {}
                 for index in (0, 18, 41):
                     image.seek(index)
                     frame = image.convert("RGBA")
-                    for point, expected in (((800, height - 4), (18, 52, 86)), ((710, 30), (204, 102, 51))):
+                    # The footer can now choose the middle after team labels move.
+                    # Sample the clear gap between the two lower result groups.
+                    for point, expected in (((836, height - 100), (18, 52, 86)), ((710, 30), (204, 102, 51))):
                         actual = frame.getpixel(point)
                         self.assertEqual(actual[3], 255)
-                        self.assertLess(max(abs(a - b) for a, b in zip(actual[:3], expected)), 32)
+                        # GIF indexing can shift a rare logo color more in one
+                        # channel; check aggregate color error and exact stability.
+                        self.assertLess(sum((a - b) ** 2 for a, b in zip(actual[:3], expected)), 3 * 32 ** 2,
+                                        f"{event_format} frame {index}, pixel {point}: {actual}")
+                        if index == 0:
+                            reference_pixels[point] = actual
+                        else:
+                            self.assertEqual(actual, reference_pixels[point])
 
 
 if __name__ == "__main__":

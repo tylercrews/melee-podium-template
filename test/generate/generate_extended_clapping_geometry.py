@@ -30,17 +30,17 @@ def generate():
             for member in (1, 2):
                 row = deepcopy(panel)
                 row["member_slot"] = member
-                row["portrait_rect"][1] = 1000 + (member - 1) * 122
+                row["portrait_rect"][1] = 925 + (member - 1) * 122
                 row["portrait_rect"][3] = row["portrait_rect"][1] + 104
                 profile["panels"].append(row)
-            # Keep the heading centered over the full text/portrait block.
+            # Center the team label beneath both member rows, like the podium labels.
             left = panel["text_x"] - panel["text_max_width"] if panel["text_alignment"] == "right" else panel["portrait_rect"][0]
             right = panel["portrait_rect"][2] if panel["text_alignment"] == "right" else panel["text_x"] + panel["text_max_width"]
             profile["team_names"].append({"entrant_slot": panel["entrant_slot"],
-                "anchor": {"x": (left + right) // 2, "y": 925}, "max_width": right - left,
+                "anchor": {"x": (left + right) // 2, "y": 1180}, "max_width": right - left,
                 "pillow_anchor": "ma", "preferred_size": 34})
         for index, badge in enumerate(profile["placement_tags"]):
-            badge["anchor"]["y"] = 1070 + (index % 2) * 80
+            badge["anchor"]["y"] = 995 + (index % 2) * 80
         layouts["doubles_top_8_four_podium"][style] = profile
 
         singles = json.loads((folder / "singles_top_8.json").read_text())
@@ -77,8 +77,8 @@ def generate():
                 "text_max_width": right - left - 61, "text_alignment": "left", "identity_scale": 0.7})
             profile["placement_tags"].append({"slot_id": f"entrant_{index + 9}_placement_tag",
                 "asset_id": "09th.png" if index < 4 else "13th.png",
-                "anchor": {"x": (left + right) // 2, "y": 821},
-                "max_size": {"width": 48, "height": 32}, "z_index": 200 + index})
+                "anchor": {"x": left + 52 + 20, "y": 942},
+                "max_size": {"width": 42, "height": 24}, "z_index": 200 + index})
         layouts["singles_top_16_clapping"][style] = profile
     write_json(ROOT / "preferences/portraits/extended_clapping.json", {"schema_version": 1, "layouts": layouts})
 

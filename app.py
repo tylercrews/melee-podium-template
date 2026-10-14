@@ -403,6 +403,10 @@ def _custom_preview_colors(
                 tuple(source.color_for_slot(slot) for slot in range(1, 9)),
                 color_count,
             )
+            if entrant_count == 16 and variant == "clapping":
+                from clapping_colors import top16_player_colors
+                colors = top16_player_colors(colors)
+                color_count = 16
         elif preset == "olympic_medals":
             source = PodiumColorConfiguration.from_preset(PodiumColorPreset.MEDALS)
             medal_colors = tuple(

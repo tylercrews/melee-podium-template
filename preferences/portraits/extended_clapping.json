@@ -12,9 +12,9 @@
             "entrant_slot": 5,
             "portrait_rect": [
               356,
-              1000,
+              925,
               424,
-              1104
+              1029
             ],
             "text_x": 342,
             "text_max_width": 284,
@@ -25,9 +25,9 @@
             "entrant_slot": 5,
             "portrait_rect": [
               356,
-              1122,
+              1047,
               424,
-              1226
+              1151
             ],
             "text_x": 342,
             "text_max_width": 284,
@@ -38,9 +38,9 @@
             "entrant_slot": 6,
             "portrait_rect": [
               469,
-              1000,
+              925,
               537,
-              1104
+              1029
             ],
             "text_x": 551,
             "text_max_width": 271,
@@ -51,9 +51,9 @@
             "entrant_slot": 6,
             "portrait_rect": [
               469,
-              1122,
+              1047,
               537,
-              1226
+              1151
             ],
             "text_x": 551,
             "text_max_width": 271,
@@ -64,9 +64,9 @@
             "entrant_slot": 7,
             "portrait_rect": [
               1143,
-              1000,
+              925,
               1211,
-              1104
+              1029
             ],
             "text_x": 1129,
             "text_max_width": 271,
@@ -77,9 +77,9 @@
             "entrant_slot": 7,
             "portrait_rect": [
               1143,
-              1122,
+              1047,
               1211,
-              1226
+              1151
             ],
             "text_x": 1129,
             "text_max_width": 271,
@@ -90,9 +90,9 @@
             "entrant_slot": 8,
             "portrait_rect": [
               1243,
-              1000,
+              925,
               1311,
-              1104
+              1029
             ],
             "text_x": 1325,
             "text_max_width": 251,
@@ -103,9 +103,9 @@
             "entrant_slot": 8,
             "portrait_rect": [
               1243,
-              1122,
+              1047,
               1311,
-              1226
+              1151
             ],
             "text_x": 1325,
             "text_max_width": 251,
@@ -119,7 +119,7 @@
             "asset_id": "05th.png",
             "anchor": {
               "x": 446,
-              "y": 1070
+              "y": 995
             },
             "max_size": {
               "width": 32,
@@ -132,7 +132,7 @@
             "asset_id": "05th.png",
             "anchor": {
               "x": 446,
-              "y": 1150
+              "y": 1075
             },
             "max_size": {
               "width": 32,
@@ -145,7 +145,7 @@
             "asset_id": "07th.png",
             "anchor": {
               "x": 1227,
-              "y": 1070
+              "y": 995
             },
             "max_size": {
               "width": 26,
@@ -158,7 +158,7 @@
             "asset_id": "07th.png",
             "anchor": {
               "x": 1227,
-              "y": 1150
+              "y": 1075
             },
             "max_size": {
               "width": 26,
@@ -172,7 +172,7 @@
             "entrant_slot": 5,
             "anchor": {
               "x": 241,
-              "y": 925
+              "y": 1180
             },
             "max_width": 366,
             "pillow_anchor": "ma",
@@ -182,7 +182,7 @@
             "entrant_slot": 6,
             "anchor": {
               "x": 645,
-              "y": 925
+              "y": 1180
             },
             "max_width": 353,
             "pillow_anchor": "ma",
@@ -192,7 +192,7 @@
             "entrant_slot": 7,
             "anchor": {
               "x": 1034,
-              "y": 925
+              "y": 1180
             },
             "max_width": 353,
             "pillow_anchor": "ma",
@@ -202,7 +202,7 @@
             "entrant_slot": 8,
             "anchor": {
               "x": 1409,
-              "y": 925
+              "y": 1180
             },
             "max_width": 333,
             "pillow_anchor": "ma",
@@ -220,9 +220,9 @@
             "entrant_slot": 5,
             "portrait_rect": [
               411,
-              1000,
+              925,
               479,
-              1104
+              1029
             ],
             "text_x": 397,
             "text_max_width": 370,
@@ -233,9 +233,9 @@
             "entrant_slot": 5,
             "portrait_rect": [
               411,
-              1122,
+              1047,
               479,
-              1226
+              1151
             ],
             "text_x": 397,
             "text_max_width": 370,
@@ -246,9 +246,9 @@
             "entrant_slot": 6,
             "portrait_rect": [
               533,
-              1000,
+              925,
               601,
-              1104
+              1029
             ],
             "text_x": 615,
             "text_max_width": 347,
@@ -259,9 +259,9 @@
             "entrant_slot": 6,
             "portrait_rect": [
               533,
-              1122,
+              1047,
               601,
-              1226
+              1151
             ],
             "text_x": 615,
             "text_max_width": 347,
@@ -272,9 +272,9 @@
             "entrant_slot": 7,
             "portrait_rect": [
               1369,
-              1000,
+              925,
               1437,
-              1104
+              1029
             ],
             "text_x": 1355,
             "text_max_width": 339,
@@ -285,9 +285,9 @@
             "entrant_slot": 7,
             "portrait_rect": [
               1369,
-              1122,
+              1047,
               1437,
-              1226
+              1151
             ],
             "text_x": 1355,
             "text_max_width": 339,
@@ -298,9 +298,9 @@
             "entrant_slot": 8,
             "portrait_rect": [
               1491,
-              1000,
+              925,
               1559,
-              1104
+              1029
             ],
             "text_x": 1573,
             "text_max_width": 319,
@@ -311,9 +311,9 @@
             "entrant_slot": 8,
             "portrait_rect": [
               1491,
-              1122,
+              1047,
               1559,
-              1226
+              1151
             ],
             "text_x": 1573,
             "text_max_width": 319,
@@ -327,7 +327,7 @@
             "asset_id": "05th.png",
             "anchor": {
               "x": 506,
-              "y": 1070
+              "y": 995
             },
             "max_size": {
               "width": 32,
@@ -340,7 +340,7 @@
             "asset_id": "05th.png",
             "anchor": {
               "x": 506,
-              "y": 1150
+              "y": 1075
             },
             "max_size": {
               "width": 32,
@@ -353,7 +353,7 @@
             "asset_id": "07th.png",
             "anchor": {
               "x": 1464,
-              "y": 1070
+              "y": 995
             },
             "max_size": {
               "width": 26,
@@ -366,7 +366,7 @@
             "asset_id": "07th.png",
             "anchor": {
               "x": 1464,
-              "y": 1150
+              "y": 1075
             },
             "max_size": {
               "width": 26,
@@ -380,7 +380,7 @@
             "entrant_slot": 5,
             "anchor": {
               "x": 253,
-              "y": 925
+              "y": 1180
             },
             "max_width": 452,
             "pillow_anchor": "ma",
@@ -390,7 +390,7 @@
             "entrant_slot": 6,
             "anchor": {
               "x": 747,
-              "y": 925
+              "y": 1180
             },
             "max_width": 429,
             "pillow_anchor": "ma",
@@ -400,7 +400,7 @@
             "entrant_slot": 7,
             "anchor": {
               "x": 1226,
-              "y": 925
+              "y": 1180
             },
             "max_width": 421,
             "pillow_anchor": "ma",
@@ -410,7 +410,7 @@
             "entrant_slot": 8,
             "anchor": {
               "x": 1691,
-              "y": 925
+              "y": 1180
             },
             "max_width": 401,
             "pillow_anchor": "ma",
@@ -536,12 +536,12 @@
             "slot_id": "entrant_9_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 104,
-              "y": 821
+              "x": 84,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 200
           },
@@ -549,12 +549,12 @@
             "slot_id": "entrant_10_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 313,
-              "y": 821
+              "x": 293,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 201
           },
@@ -562,12 +562,12 @@
             "slot_id": "entrant_11_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 522,
-              "y": 821
+              "x": 502,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 202
           },
@@ -575,12 +575,12 @@
             "slot_id": "entrant_12_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 731,
-              "y": 821
+              "x": 711,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 203
           },
@@ -588,12 +588,12 @@
             "slot_id": "entrant_13_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 940,
-              "y": 821
+              "x": 920,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 204
           },
@@ -601,12 +601,12 @@
             "slot_id": "entrant_14_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1149,
-              "y": 821
+              "x": 1129,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 205
           },
@@ -614,12 +614,12 @@
             "slot_id": "entrant_15_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1358,
-              "y": 821
+              "x": 1338,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 206
           },
@@ -627,12 +627,12 @@
             "slot_id": "entrant_16_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1567,
-              "y": 821
+              "x": 1547,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 207
           }
@@ -754,12 +754,12 @@
             "slot_id": "entrant_9_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 120,
-              "y": 821
+              "x": 84,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 200
           },
@@ -767,12 +767,12 @@
             "slot_id": "entrant_10_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 360,
-              "y": 821
+              "x": 324,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 201
           },
@@ -780,12 +780,12 @@
             "slot_id": "entrant_11_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 600,
-              "y": 821
+              "x": 564,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 202
           },
@@ -793,12 +793,12 @@
             "slot_id": "entrant_12_placement_tag",
             "asset_id": "09th.png",
             "anchor": {
-              "x": 840,
-              "y": 821
+              "x": 804,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 203
           },
@@ -806,12 +806,12 @@
             "slot_id": "entrant_13_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1080,
-              "y": 821
+              "x": 1044,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 204
           },
@@ -819,12 +819,12 @@
             "slot_id": "entrant_14_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1320,
-              "y": 821
+              "x": 1284,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 205
           },
@@ -832,12 +832,12 @@
             "slot_id": "entrant_15_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1560,
-              "y": 821
+              "x": 1524,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 206
           },
@@ -845,12 +845,12 @@
             "slot_id": "entrant_16_placement_tag",
             "asset_id": "13th.png",
             "anchor": {
-              "x": 1800,
-              "y": 821
+              "x": 1764,
+              "y": 942
             },
             "max_size": {
-              "width": 48,
-              "height": 32
+              "width": 42,
+              "height": 24
             },
             "z_index": 207
           }

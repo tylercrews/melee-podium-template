@@ -7,11 +7,13 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
+from clapping_colors import top16_player_colors, legacy_top16_text_slot
 from extended_clapping_renderer import PROFILE
 from formatting_assets import FormattingAssetRenderer, draw_placement_tags
 from mode_preferences import ModePreferenceRepository, PlacementTagPlacement
 from models import TournamentFormat
 from preview_layers import _customizable_colors
+from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 
 
 EXTENDED_CLAPPING_LAYOUTS = {
@@ -26,18 +28,28 @@ def render_extended_clapping_layer(style, layout_id, color_id=None):
     preferences = ModePreferenceRepository().load(selection)
     canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     colors = _customizable_colors(color_id or "smash_player_colors", 8) if style is PodiumStyle.CUSTOMIZABLE else None
+    top16 = layout_id == "singles_top_16_clapping"
+    if top16 and style is PodiumStyle.CUSTOMIZABLE and color_id in {None, "smash_player_colors"}:
+        colors = top16_player_colors(colors)
     result = FormattingAssetRenderer().draw(canvas, preferences, colors)
     profile = json.loads(PROFILE.read_text(encoding="utf-8"))["layouts"][layout_id][style.value]
     draw = ImageDraw.Draw(result)
     for panel in profile["panels"]:
+        slot = panel["entrant_slot"]
+        if top16 and style is PodiumStyle.LEGACY:
+            slot = legacy_top16_text_slot(slot)
+        elif not (top16 and colors is not None and len(colors.colors) == 16):
+            slot = (slot - 1) % 8 + 1
+        palette = colors or PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
+        text_color = palette.color_for_slot(slot).resolve().text_color
         left, top, right, bottom = panel["portrait_rect"]
-        draw.rectangle((left, top, right - 1, bottom - 1), fill="#8E95AF40", outline="#D8DCE8CC", width=2)
+        draw.rectangle((left, top, right - 1, bottom - 1), fill=f"{text_color[:7]}40", outline=text_color, width=2)
         x = panel["text_x"]
         size = min(110, panel["text_max_width"])
         start = x - size if panel["text_alignment"] == "right" else x
         for offset, inset in ((20, 12), (48, 24), (76, 0)):
             y = top + round(offset * panel.get("identity_scale", 1))
-            draw.line((start + inset, y, start + size, y), fill="#D8DCE8CC", width=5)
+            draw.line((start + inset, y, start + size, y), fill=text_color, width=5)
     for row in profile.get("team_names", []):
         x, y = row["anchor"]["x"], row["anchor"]["y"]
         draw.line((x - 80, y + 20, x + 80, y + 20), fill="#D8DCE8CC", width=7)

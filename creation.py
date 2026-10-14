@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from PIL import Image
 
@@ -14,6 +14,7 @@ from background_builder import (
     create_background,
 )
 from color_values import normalize_rgba_hex
+from clapping_colors import resolve_clapping_podium_colors
 from content_renderer import ContentRenderer
 from font_size_adjustments import validate_font_size_adjustment
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
@@ -210,6 +211,7 @@ class CreationPipeline:
     def create(self, request: CreationRequest) -> Image.Image:
         mode_preferences = self.preferences.load(request.selection)
         self._validate_preferences(request, mode_preferences)
+        request = replace(request, podium_colors=resolve_clapping_podium_colors(request.selection, request.podium_colors))
 
         background = create_background(
             request.background,

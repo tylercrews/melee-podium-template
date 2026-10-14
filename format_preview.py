@@ -17,6 +17,7 @@ from background_builder import (
 )
 from creation import CreationRequest
 from creation import TextSettings
+from clapping_colors import resolve_clapping_podium_colors
 from DrawPodium import PodiumFont
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
@@ -153,6 +154,7 @@ def prepare_format_preview(
         if creation_mode is CreationMode.PODIUM and style is PodiumStyle.CUSTOMIZABLE
         else None
     )
+    podium_colors = resolve_clapping_podium_colors(selection, podium_colors)
     if creation_mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL} and formatting_colors is None:
         raise ValueError("Eyes, Squares, and Radial previews require formatting colors")
     request = CreationRequest(

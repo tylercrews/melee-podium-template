@@ -8,10 +8,13 @@ from random import choice
 from PIL import ImageDraw
 
 from color_values import format_rgba_hex
+from clapping_colors import legacy_top16_text_slot, TOP16_PLAYER_COLOR_SLOTS
+from creation_modes import PodiumStyle
 from DrawPodium import _character_with_team_color, _draw_text, _text_bounds, _wrap_text
 from font_size_adjustments import adjusted_size
 from models import SinglesEntrant, TournamentFormat
 from podiums_clapping_renderer import PodiumsClappingContentRenderer
+from podium_colors import PodiumColorConfiguration, PodiumColorMode, PodiumColorPreset
 
 
 PROFILE = Path(__file__).resolve().parent / "preferences/portraits/extended_clapping.json"
@@ -37,12 +40,6 @@ class ExtendedClappingContentRenderer(PodiumsClappingContentRenderer):
                 teams.append(replace(team, team_color=None, entrant_1=members[0], entrant_2=members[1]))
             request = replace(request, entrants=teams)
         return super().prepare(canvas, request, preferences, **kwargs)
-
-    @staticmethod
-    def _default_text_style(request, entrant_slot):
-        if request.text_settings.entrant_text_color_mode == "match_podium":
-            entrant_slot = (entrant_slot - 1) % 8 + 1
-        return PodiumsClappingContentRenderer._default_text_style(request, entrant_slot)
 
     @staticmethod
     def _default_text_style(request, entrant_slot):
@@ -81,7 +78,7 @@ class DoublesClappingContentRenderer(ExtendedClappingContentRenderer):
                 color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
             options = dict(anchor=row["pillow_anchor"], max_width=row["max_width"],
                            preferred_size=adjusted_size(row["preferred_size"], team.team_name_font_size_adjustment),
-                           font=self.font)
+                           font=self.font, vertical_center_lines=2)
             position = (row["anchor"]["x"], row["anchor"]["y"])
             text = _wrap_text(team.team_name, row["max_width"], options["preferred_size"], self.font)
             if text.count("\n") > 1:
@@ -92,5 +89,18 @@ class DoublesClappingContentRenderer(ExtendedClappingContentRenderer):
 
 
 class SinglesTop16ClappingContentRenderer(ExtendedClappingContentRenderer):
+    @staticmethod
+    def _default_text_style(request, entrant_slot):
+        if request.text_settings.entrant_text_color_mode == "match_podium":
+            if request.selection.options.podium_style is PodiumStyle.LEGACY:
+                entrant_slot = legacy_top16_text_slot(entrant_slot)
+            elif isinstance(request.podium_colors, PodiumColorConfiguration):
+                colors = request.podium_colors
+                if colors.mode is PodiumColorMode.PRESET and colors.preset is PodiumColorPreset.LEGACY:
+                    entrant_slot = TOP16_PLAYER_COLOR_SLOTS[entrant_slot - 1]
+                elif colors.mode is PodiumColorMode.PRESET or len(colors.colors) < 16:
+                    entrant_slot = (entrant_slot - 1) % 8 + 1
+        return PodiumsClappingContentRenderer._default_text_style(request, entrant_slot)
+
     def _panel_keys(self):
         return tuple((slot, None) for slot in range(9, 17))
