@@ -77,8 +77,6 @@ npm run build
 
 
 TODO LIST:
-* can create a doubles podiums+clapping template by just expanding down a little to include a second row of clapping
-* top 16 legacy podium and customizable podium - 8 on top and 8 clapping, shift up the podiums a little so you use a little more of the vertical space
 * make it so you can pick a format and omit players. Like just have empty podiums or slots if you want, and that way anything can be a pr pic
 
 * need to decide an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament. Sandbag is more like null, random should be something different.
