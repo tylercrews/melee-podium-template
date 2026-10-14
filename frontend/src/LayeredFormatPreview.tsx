@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl, recordDownload } from "./api";
 import { previewDownloadName } from "./previewDownload";
 import { drawRadialWatermark } from "./radialWatermark";
+import { drawPodiumPreviewFooter, podiumHeaderWithoutFooter } from "./podiumPreviewFooter";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
@@ -394,12 +395,14 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         }
         if (format.selection.mode === "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
         if (logoPlaceholder) context.drawImage(logoPlaceholder, 0, 0, request.outputSize.width, request.outputSize.height);
-        const headerLayer = logo && format.selection.mode !== "radial" ? headerWithoutPlaceholder(header, request.logoBox) : header;
+        let headerLayer: CanvasImageSource = logo && format.selection.mode !== "radial" ? headerWithoutPlaceholder(header, request.logoBox) : header;
+        if (isPodiumsClapping(format.selection)) headerLayer = podiumHeaderWithoutFooter(headerLayer, header.naturalWidth, header.naturalHeight);
         const headerHeight = format.selection.mode === "podium" ? 941 : request.outputSize.height;
         context.drawImage(tintedHeader(headerLayer, request.outputSize.width, headerHeight, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
         if (resultLabels) context.drawImage(resultLabels, 0, 0, request.outputSize.width, request.outputSize.height);
         if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
         if (watermark) drawRadialWatermark(context, watermark, format.selection.options.event_format === "doubles");
+        if (isPodiumsClapping(format.selection)) drawPodiumPreviewFooter(context, header, request.outputSize);
         setLoading(false);
       } catch {
         if (!cancelled) { setFailed(true); setLoading(false); }

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
 from itertools import permutations
 from pathlib import Path
 
@@ -12,7 +11,7 @@ from background_builder import BackgroundRequest, PixelSize
 from creation import CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont, PodiumMode
-from formatting_assets import FormattingAssetRenderer, draw_placement_tags
+from formatting_assets import FormattingAssetRenderer
 from geometric_content_renderer import (
     EyesContentRenderer,
     SquaresContentRenderer,
@@ -262,6 +261,9 @@ def _customizable_colors(layer_id: str, asset_count: int) -> PodiumColorConfigur
 
 
 def render_podium_layer(style: PodiumStyle, layout_id: str, color_id: str | None = None) -> Image.Image:
+    if layout_id == "top_8_four_podiums":
+        from clapping_preview_layers import render_extended_clapping_layer
+        return render_extended_clapping_layer(style, "singles_top_8_four_podium", color_id)
     entrant_count, variant = LAYOUTS[layout_id]
     selection = ModeSelection(
         CreationMode.PODIUM,
@@ -278,19 +280,7 @@ def render_podium_layer(style: PodiumStyle, layout_id: str, color_id: str | None
     if style is PodiumStyle.CUSTOMIZABLE:
         asset_count = 4 if variant == "four_podium" else entrant_count
         colors = _customizable_colors(color_id or "smash_player_colors", asset_count)
-    formatting_preferences = replace(preferences, placement_tags=()) if variant == "four_podium" else preferences
-    result = FormattingAssetRenderer().draw(canvas, formatting_preferences, colors)
-    if variant == "four_podium":
-        draw = ImageDraw.Draw(result)
-        for placement in preferences.text_slots:
-            if placement.field != "entrant.summary":
-                continue
-            x, y = placement.anchor.x, placement.anchor.y
-            half_width = min(70, placement.max_width // 2)
-            draw.line((x - half_width, y - 8, x + half_width, y - 8), fill="#D8DCE8CC", width=7)
-            draw.line((x - half_width + 18, y + 10, x + half_width - 18, y + 10), fill="#8E95AFCC", width=6)
-        draw_placement_tags(result, preferences)
-    return result
+    return FormattingAssetRenderer().draw(canvas, preferences, colors)
 
 
 def render_square_layer(layout_id: str, color_id: str) -> Image.Image:
@@ -445,7 +435,7 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
     outputs.extend(generate_square_preview_layers(output_root))
     outputs.extend(generate_eye_preview_layers(output_root))
     from clapping_preview_layers import generate_extended_clapping_layers
-    outputs.extend(generate_extended_clapping_layers(output_root))
+    outputs.extend(generate_extended_clapping_layers(output_root, include_top8=False))
     from radial_preview_layers import generate_radial_preview_layers
     outputs.extend(generate_radial_preview_layers(output_root))
     return outputs

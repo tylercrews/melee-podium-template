@@ -31,7 +31,7 @@ if __name__ == "__main__":
         help="Regenerate only Eyes preset and header layers.",
     )
     parser.add_argument("--radial-only", action="store_true", help="Regenerate only Radial slice and center-header layers.")
-    parser.add_argument("--extended-clapping-only", action="store_true", help="Regenerate only Doubles Top 8 and Singles Top 16 clapping layers.")
+    parser.add_argument("--extended-clapping-only", action="store_true", help="Regenerate all Singles and Doubles clapping preview layers.")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent / "frontend" / "public" / "format_preview_layers"
     if sum((args.squares_only, args.eyes_only, args.eyes_colors_only, args.radial_only, args.extended_clapping_only)) > 1:

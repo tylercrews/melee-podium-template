@@ -9,10 +9,11 @@ from PIL import Image, ImageDraw
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from clapping_colors import top16_player_colors, legacy_top16_text_slot
 from extended_clapping_renderer import PROFILE
+from podiums_clapping_renderer import PROFILE as TOP8_PROFILE
 from formatting_assets import FormattingAssetRenderer, draw_placement_tags
 from mode_preferences import ModePreferenceRepository, PlacementTagPlacement
 from models import TournamentFormat
-from preview_layers import _customizable_colors
+from preview_layers import _customizable_colors, _repeat_colors
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 
 
@@ -20,19 +21,28 @@ EXTENDED_CLAPPING_LAYOUTS = {
     "doubles_top_8_four_podium": (TournamentFormat.DOUBLES, 8, "four_podium"),
     "singles_top_16_clapping": (TournamentFormat.SINGLES, 16, "clapping"),
 }
+CLAPPING_LAYOUTS = {
+    "singles_top_8_four_podium": (TournamentFormat.SINGLES, 8, "four_podium"),
+    **EXTENDED_CLAPPING_LAYOUTS,
+}
 
 
 def render_extended_clapping_layer(style, layout_id, color_id=None):
-    event_format, count, variant = EXTENDED_CLAPPING_LAYOUTS[layout_id]
+    event_format, count, variant = CLAPPING_LAYOUTS[layout_id]
     selection = ModeSelection(CreationMode.PODIUM, ModeOptions(event_format, count, variant, style))
     preferences = ModePreferenceRepository().load(selection)
     canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     colors = _customizable_colors(color_id or "smash_player_colors", 8) if style is PodiumStyle.CUSTOMIZABLE else None
+    if colors is not None and variant == "four_podium" and color_id == "rainbow":
+        four_colors = _customizable_colors("rainbow", 4)
+        colors = _repeat_colors(tuple(four_colors.color_for_slot(slot) for slot in range(1, 5)), 8)
     top16 = layout_id == "singles_top_16_clapping"
     if top16 and style is PodiumStyle.CUSTOMIZABLE and color_id in {None, "smash_player_colors"}:
         colors = top16_player_colors(colors)
     result = FormattingAssetRenderer().draw(canvas, preferences, colors)
-    profile = json.loads(PROFILE.read_text(encoding="utf-8"))["layouts"][layout_id][style.value]
+    profile = (json.loads(TOP8_PROFILE.read_text(encoding="utf-8"))["styles"][style.value]
+               if layout_id == "singles_top_8_four_podium"
+               else json.loads(PROFILE.read_text(encoding="utf-8"))["layouts"][layout_id][style.value])
     draw = ImageDraw.Draw(result)
     for panel in profile["panels"]:
         slot = panel["entrant_slot"]
@@ -58,13 +68,14 @@ def render_extended_clapping_layer(style, layout_id, color_id=None):
     return result
 
 
-def generate_extended_clapping_layers(output_root: Path):
+def generate_extended_clapping_layers(output_root: Path, *, include_top8: bool = True):
     paths = []
-    for layout_id in EXTENDED_CLAPPING_LAYOUTS:
+    for layout_id in (CLAPPING_LAYOUTS if include_top8 else EXTENDED_CLAPPING_LAYOUTS):
+        asset_layout_id = "top_8_four_podiums" if layout_id == "singles_top_8_four_podium" else layout_id
         for style in PodiumStyle:
             for color_id in ((None,) if style is PodiumStyle.LEGACY else ("smash_player_colors", "olympic_medals", "rainbow", "custom_red")):
                 path = output_root / "podiums" / style.value / (
-                    f"{layout_id}.png" if color_id is None else f"{layout_id}/{color_id}.png")
+                    f"{asset_layout_id}.png" if color_id is None else f"{asset_layout_id}/{color_id}.png")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 render_extended_clapping_layer(style, layout_id, color_id).save(path, optimize=True)
                 paths.append(path)

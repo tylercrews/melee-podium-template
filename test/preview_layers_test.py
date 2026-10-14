@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from PIL import Image
+import json
 
 from preview_layers import (
     HEADER_CONTENTS,
@@ -24,6 +25,19 @@ LAYER_ROOT = PROJECT_ROOT / "frontend" / "public" / "format_preview_layers"
 
 
 class PreviewLayerTests(unittest.TestCase):
+    def test_top8_clapping_layers_show_calibrated_portrait_boxes_and_text_guides(self):
+        profile = json.loads((PROJECT_ROOT / "preferences/portraits/podiums_clapping.json").read_text())
+        for style in ("legacy", "customizable"):
+            path = LAYER_ROOT / "podiums" / style / (
+                "top_8_four_podiums.png" if style == "legacy" else "top_8_four_podiums/smash_player_colors.png")
+            with Image.open(path) as layer:
+                for panel in profile["styles"][style]["panels"]:
+                    left, top, right, bottom = panel["portrait_rect"]
+                    self.assertEqual(layer.getpixel((left, top))[3], 255)
+                    self.assertEqual(layer.getpixel(((left + right) // 2, (top + bottom) // 2))[3], 64)
+                    text_x = panel["text_x"] - 55 if panel["text_alignment"] == "right" else panel["text_x"] + 55
+                    self.assertEqual(layer.getpixel((text_x, top + 76))[3], 255)
+
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
         self.assertEqual(len(files), 323)
