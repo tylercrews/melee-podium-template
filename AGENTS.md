@@ -189,6 +189,8 @@
 
 ## Maintenance
 
+- The footer's `Tyro` link opens a contact dialog styled like Thank Yous and Shoutouts, for bugs and feature requests. Show Bluesky `@tyrowo.com` linked to its profile, Discord `@tyrowo` as a handle, and `tylerpcrews@gmail.com` as a mailto link; support the close button, Escape, and backdrop dismissal.
+
 - The lower Radial Singles fifth-place badge (`number_6`) shifts 12 pixels right to center x=212 on the 1920px canvas, clearing its diagonal divider. Keep this calibrated anchor in the preference generator, cached numbering layers, exact renders, and the Radial Quick Pick thumbnail.
 
 - Entrants may set tournament-specific `omit_entrant` or `omit_placement` flags (both false by default). The Entrants UI labels these `Intentionally omit entrant` and `Omit placement / HM`; omission keeps editable data intact, disables and strikes through the entrant's controls, and exempts the slot from required-field validation. Completely omitted singles/team slots leave their formatting assets, portraits, names, seeds, and badges blank in every mode, PNG, and GIF. Placement-only omission hides canonical number artwork while retaining the entrant's other content. Preserve slot geometry and the remaining numbering; never compact/reorder entrants or save these flags as format geometry or favorites. Exact previews honor these flags even when other entrant data is unfinished.

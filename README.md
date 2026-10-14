@@ -87,7 +87,6 @@ TODO LIST:
 
 Maybes/Eventuallies:
 * need assets for giga and the wireframes and the hands
-* add a contact section if anyone encounters errors or something - later once version is more stable and I know there's less to do
 * support for twitter and bluesky handles - need to come up with some place to put them.
 * Stress-test browser memory limits for guest image uploads, then implement safe in-memory tournament-logo and background selection for users who are not signed in.
 * more refinements for portrait position centering and eye positions

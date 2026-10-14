@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import ContactDialog from "./ContactDialog";
 
 interface FooterProps {
   renderCount: number | null;
@@ -7,6 +8,7 @@ interface FooterProps {
 function Footer({ renderCount }: FooterProps) {
   const count = renderCount?.toLocaleString() ?? "0";
   const [isShoutoutsOpen, setIsShoutoutsOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const shoutoutsDialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -28,9 +30,14 @@ function Footer({ renderCount }: FooterProps) {
         </button>
         {" "}●{" "}
          <span aria-label="love">{"\u{1F495}"} </span> 
-        -Tyler "Tyro" Crews
+        -Tyler "<a href="#tyro-contact-dialog" aria-haspopup="dialog" aria-controls="tyro-contact-dialog" onClick={(event) => {
+          event.preventDefault();
+          setIsContactOpen(true);
+        }}>Tyro</a>" Crews
         </div>
       </footer>
+
+      {isContactOpen && <ContactDialog onClose={() => setIsContactOpen(false)} />}
 
       {isShoutoutsOpen && (
         <dialog ref={shoutoutsDialogRef} className="shoutouts-dialog" aria-labelledby="shoutouts-title" onClose={() => setIsShoutoutsOpen(false)} onClick={(event) => {
