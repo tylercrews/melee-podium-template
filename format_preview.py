@@ -30,6 +30,7 @@ from extended_clapping_renderer import DoublesClappingContentRenderer, SinglesTo
 from clapping_grid_renderer import ClappingGridContentRenderer
 from clapping_grid_layouts import GRID_LAYOUTS, GRID_VARIANTS
 from entrant_visibility import apply_visibility, visible_preferences
+from layout_text_defaults import layout_text_defaults
 from mode_preferences import ModePreferenceRepository
 from radial_content_renderer import RadialContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
@@ -126,7 +127,7 @@ def prepare_format_preview(
         ),
     )
     preferences = ModePreferenceRepository().load(selection)
-    text_settings = text_settings or TextSettings(use_tournament_placing=default_tournament_placing(selection))
+    text_settings = text_settings or TextSettings(**layout_text_defaults(selection))
     preferences = numbered_preferences(preferences, text_settings.use_tournament_placing)
     output_size = preferences.canvas_size
     if transparent:

@@ -29,6 +29,7 @@ from format_preview import prepare_format_preview, render_format_preview
 from podiums_clapping_renderer import ClappingLayout
 from clapping_grid_layouts import GRID_VARIANTS
 from entrant_visibility import visibility_flags
+from layout_text_defaults import layout_text_defaults
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
 from sample_creation_data import sample_tournament
 from firebase_services.fonts import read_font_upload
@@ -537,6 +538,9 @@ def _preview_tournament(value: Any, event_format: TournamentFormat) -> Tournamen
         subtitle=_optional_text(source, "subtitle"),
         event=_optional_text(source, "event"),
         date=_optional_text(source, "date") or str(fallback.date),
+        date_range_start=_optional_text(source, "date_range_start"),
+        date_range_end=_optional_text(source, "date_range_end"),
+        **{f"free_text_{index}": _optional_text(source, f"free_text_{index}") for index in range(1, 5)},
         entrants_count=entrants_count or fallback.entrants_count,
         link=_optional_text(source, "link"),
         location=_optional_text(source, "location"),
@@ -663,11 +667,15 @@ def customized_format_preview() -> Any:
     else:
         raise ValueError("A selected custom font file is required for preview")
     entrant_text_color_mode, entrant_text_colors, entrant_text_metallic = _entrant_text_colors(payload.get("entrant_text_colors"))
+    from creation_modes import ModeOptions, ModeSelection
+    preview_selection = ModeSelection(creation_mode, ModeOptions(event_format, entrant_count, variant,
+                                     style if creation_mode is CreationMode.PODIUM else None))
+    content_defaults = layout_text_defaults(preview_selection)
     raw_metadata_rows = raw_text_settings.get("metadata_rows")
     if raw_metadata_rows is None:
         raw_metadata_fields = raw_text_settings.get(
             "metadata_fields",
-            ("tournament_link", "event", "date", "entrants_count"),
+            tuple(row[0] for row in content_defaults["metadata_rows"]),
         )
         if not isinstance(raw_metadata_fields, (list, tuple)):
             raise ValueError("metadata_fields must be an array")
@@ -676,10 +684,6 @@ def customized_format_preview() -> Any:
         not isinstance(row, (list, tuple)) for row in raw_metadata_rows
     ):
         raise ValueError("metadata_rows must be an array of arrays")
-    from placement_numbering import default_tournament_placing
-    from creation_modes import ModeOptions, ModeSelection
-    preview_selection = ModeSelection(creation_mode, ModeOptions(event_format, entrant_count, variant,
-                                     style if creation_mode is CreationMode.PODIUM else None))
     text_settings = TextSettings(
         heading_color=raw_text_settings.get("heading_color", "#FFFFFFFF"),
         heading_metallic=raw_text_settings.get("heading_metallic", False),
@@ -691,8 +695,8 @@ def customized_format_preview() -> Any:
         subtitle_font_size_adjustment=raw_text_settings.get("subtitle_font_size_adjustment", 0),
         seed_font_size_adjustment=raw_text_settings.get("seed_font_size_adjustment", 0),
         metadata_row_font_size_adjustments=tuple(raw_text_settings.get("metadata_row_font_size_adjustments", ())),
-        include_seeding=raw_text_settings.get("include_seeding", True),
-        use_tournament_placing=raw_text_settings.get("use_tournament_placing", default_tournament_placing(preview_selection)),
+        include_seeding=raw_text_settings.get("include_seeding", content_defaults["include_seeding"]),
+        use_tournament_placing=raw_text_settings.get("use_tournament_placing", content_defaults["use_tournament_placing"]),
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
         metadata_rows=tuple(tuple(row) for row in raw_metadata_rows),
     )

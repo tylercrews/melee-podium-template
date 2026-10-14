@@ -56,6 +56,7 @@ from DrawPodium import (
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
 from entrant_visibility import validation_entrants
+from metadata_content import metadata_values
 from podium_colors import podium_color_for_slot
 
 
@@ -622,19 +623,9 @@ class LegacyPodiumContentRenderer:
         tournament = request.tournament
         selected = request.text_settings.metadata_rows
         assert selected is not None
-        count_label = "Teams" if tournament.event_format is TournamentFormat.DOUBLES else "Entrants"
-        values = {
-            "event": (tournament.event, 34),
-            "date": (str(tournament.date), 28),
-            "entrants_count": (f"{tournament.entrants_count} {count_label}", 24),
-            "tournament_link": (tournament.link, 18),
-            "tournament_location": (tournament.location, 18),
-            "stream_link": (tournament.stream_link, 18),
-            "vod_link": (tournament.vod_link, 18),
-            "to_x_account": (tournament.organizer_x_account, 18),
-            "to_twitch_account": (tournament.organizer_twitch_account, 18),
-            "to_bluesky_account": (tournament.organizer_bluesky_account, 18),
-        }
+        sizes = {"event": 34, "date": 28, "date_range": 28, "entrants_count": 24,
+                 **{f"free_text_{index}": 28 for index in range(1, 5)}}
+        values = {field: (value, sizes.get(field, 18)) for field, value in metadata_values(tournament).items()}
         return [
             [
                 (str(values[field][0]), adjusted_size(values[field][1] if preferred_size is None else preferred_size, request.text_settings.metadata_row_font_size_adjustments[index]))
@@ -657,15 +648,15 @@ class LegacyPodiumContentRenderer:
         width = canvas.width
         title_max_width = width * 2 // 3
         is_doubles = request.tournament.event_format is TournamentFormat.DOUBLES
-        for field in _metadata_layout(
-            request.tournament,
-            font=self.font,
-            width=width,
-            is_doubles=is_doubles,
-        ):
-            field["fill"] = request.text_settings.heading_color
-            field["metallic"] = request.text_settings.heading_metallic
-            draw_text(draw, **field)
+        if request.text_settings.metadata_fields == ("tournament_link", "event", "date", "entrants_count"):
+            for field in _metadata_layout(request.tournament, font=self.font, width=width, is_doubles=is_doubles):
+                field["fill"] = request.text_settings.heading_color
+                field["metallic"] = request.text_settings.heading_metallic
+                draw_text(draw, **field)
+        else:
+            (x, y), anchor, max_width, _alignment = _header_geometry("top_right", width)
+            for row in self._metadata_items(request):
+                y += self._draw_joined_metadata_row(canvas, request, row, x=x, y=y, anchor=anchor, max_width=max_width)
 
         title_right_aligned = mode.layout_count != 3 and not center_title
         draw_text(

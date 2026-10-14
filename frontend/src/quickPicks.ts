@@ -1,5 +1,5 @@
 import catalog from "./quickPicks.json";
-import { EMPTY_FORMAT, FormatConfiguration, buildBackgroundPlacement, defaultTournamentPlacing, formatCanvasSize, normalizeFormat } from "./format";
+import { EMPTY_FORMAT, FormatConfiguration, buildBackgroundPlacement, defaultTextSettings, formatCanvasSize, normalizeFormat } from "./format";
 
 export const QUICK_PICKS = catalog;
 const BATTLEFIELD_ID = "builtin:00_Battlefield_5000_5000_resaved.png";
@@ -31,7 +31,7 @@ export function quickPickFormat(id: string): FormatConfiguration {
     header_layout: { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" },
     text_settings: { ...EMPTY_FORMAT.text_settings, font_asset_id: "provided:ubuntu" },
   });
-  format.text_settings.use_tournament_placing = defaultTournamentPlacing(format.selection);
+  format.text_settings = { ...defaultTextSettings(format.selection), font_asset_id: "provided:ubuntu" };
   const output = formatCanvasSize(format)!;
   const source = { width: 5000, height: 5000 };
   // Fill the canvas without stretching; serialize the resolved scale and crop.

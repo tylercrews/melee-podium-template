@@ -5,6 +5,7 @@ from datetime import date
 from enum import StrEnum
 
 from font_size_adjustments import validate_font_size_adjustment
+from metadata_content import validate_date_range
 
 
 MELEE_FIGHTERS = (
@@ -81,9 +82,20 @@ class Tournament:
     organizer_twitch_account: str | None = None
     organizer_bluesky_account: str | None = None
     event_format: TournamentFormat = TournamentFormat.UNKNOWN
+    date_range_start: str | date | None = None
+    date_range_end: str | date | None = None
+    free_text_1: str | None = None
+    free_text_2: str | None = None
+    free_text_3: str | None = None
+    free_text_4: str | None = None
 
     def __post_init__(self) -> None:
         _validate_text(self.title, "Tournament title")
+        validate_date_range(self.date_range_start, self.date_range_end)
+        for index in range(1, 5):
+            value = getattr(self, f"free_text_{index}")
+            if value is not None:
+                _validate_text(value, f"Free Text Field {index}")
         if self.subtitle is not None:
             _validate_text(self.subtitle, "Tournament subtitle")
         if self.event is not None:

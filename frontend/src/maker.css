@@ -827,6 +827,14 @@ body {
   .tournament-field--wide { grid-column: 1; }
 }
 .entrant-visibility-controls { display: grid; gap: .5rem; margin-bottom: 1rem; }
+.tournament-date-range { grid-column: 1 / -1; border: 0; padding: 0; margin: 0; min-width: 0; }
+.tournament-date-range legend { margin-bottom: .75rem; }
+.tournament-date-range__fields { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: .75rem; }
+.tournament-date-range__fields > span { padding-bottom: .7rem; }
+@media (max-width: 420px) {
+  .tournament-date-range__fields { grid-template-columns: 1fr; }
+  .tournament-date-range__fields > span { text-align: center; padding: 0; }
+}
 .entrant-visibility-controls .choice { display: flex; align-items: center; gap: .5rem; }
 .entrant-visibility-controls input[type="checkbox"] { width: auto; }
 .entrant-details { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 1rem; }

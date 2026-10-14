@@ -1,5 +1,6 @@
 import { METADATA_FIELD_DETAILS, TournamentDetails } from "./creationData";
 import { MetadataField } from "./format";
+import DateRangeFields from "./DateRangeFields";
 
 interface TournamentStepProps {
   value: TournamentDetails;
@@ -27,6 +28,8 @@ export default function TournamentStep({ value, selectedFields, complete, onChan
     <section className="tournament-settings-card" aria-labelledby="selected-metadata-heading">
       <div className="tournament-settings-card__heading"><span className="eyebrow">Format selection</span><h2 id="selected-metadata-heading">Selected metadata</h2><p>Only fields enabled in Content Selections appear here. Imported values can still be edited.</p></div>
       {selectedFields.length ? <div className="tournament-field-grid">{selectedFields.map((field) => {
+        if (field === "date_range") return <DateRangeFields key={field} start={value.dateRangeStart} end={value.dateRangeEnd}
+          onStartChange={(nextValue) => update("dateRangeStart", nextValue)} onEndChange={(nextValue) => update("dateRangeEnd", nextValue)} />;
         const details = METADATA_FIELD_DETAILS[field];
         return <label className={`field${details.type === "url" ? " tournament-field--wide" : ""}`} key={field}>{details.label}<input type={details.type ?? "text"} min={details.type === "number" ? 1 : undefined} value={value[details.key]} onChange={(event) => update(details.key, event.target.value)} placeholder={details.placeholder} required /></label>;
       })}</div> : <div className="tournament-settings-card__empty">No metadata fields are enabled. You can continue with the title alone.</div>}

@@ -1,4 +1,5 @@
 import { CLAPPING_GRID_LAYOUTS, clappingGridLayout, clappingGridVariant } from "./clappingGrid";
+import { isPrLayout, layoutTextDefaults, transitionLayoutTextSettings } from "./layoutTextDefaults";
 
 export type CreationMode = "podium" | "eyes" | "squares" | "radial";
 export type EventFormat = "singles" | "doubles";
@@ -10,7 +11,7 @@ export type BackgroundSizeOption = SizeMultiplier | "scale_to_width" | "scale_to
 export type FormattingColorSelectionMode = "premade" | "pick_1" | "pick_2" | "pick_all";
 export type EntrantTextColorSelectionMode = "match_podium" | "pick_1" | "pick_2" | "pick_all";
 export type FormattingColorPreset = "smash_player_colors" | "olympic_medals" | "rainbow";
-export type MetadataField = "event" | "date" | "entrants_count" | "tournament_link" | "tournament_location" | "stream_link" | "vod_link" | "to_x_account" | "to_twitch_account" | "to_bluesky_account";
+export type MetadataField = "event" | "date" | "date_range" | "entrants_count" | "tournament_link" | "tournament_location" | "stream_link" | "vod_link" | "to_x_account" | "to_twitch_account" | "to_bluesky_account" | "free_text_1" | "free_text_2" | "free_text_3" | "free_text_4";
 
 export interface FormattingAssetColor {
   main_color: string;
@@ -142,7 +143,7 @@ export const DEFAULT_ENTRANT_TEXT_COLORS: EntrantTextColors = {
   metallic: [],
 };
 
-export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "entrants_count", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"];
+export const ALL_METADATA_FIELDS: MetadataField[] = ["tournament_link", "event", "date", "date_range", "entrants_count", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account", "free_text_1", "free_text_2", "free_text_3", "free_text_4"];
 export const MAX_METADATA_ROWS = 5;
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
@@ -452,8 +453,8 @@ function normalizeEntrantTextColors(value: unknown): EntrantTextColors {
   return { mode, colors, metallic: rawMetallic as boolean[] };
 }
 
-function normalizeTextSettings(value: unknown, defaultTournamentPlacing = true): TextSettings {
-  if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, use_tournament_placing: defaultTournamentPlacing, metadata_rows: DEFAULT_TEXT_SETTINGS.metadata_rows.map((row) => [...row]) };
+function normalizeTextSettings(value: unknown, defaults = DEFAULT_TEXT_SETTINGS): TextSettings {
+  if (value === undefined) return { ...defaults, metadata_rows: defaults.metadata_rows.map((row) => [...row]), metadata_row_font_size_adjustments: [...defaults.metadata_row_font_size_adjustments] };
   if (isObject(value) && value.use_tournament_placing !== undefined && typeof value.use_tournament_placing !== "boolean") {
     throw new Error("Tournament bracket placing must be true or false.");
   }
@@ -462,7 +463,7 @@ function normalizeTextSettings(value: unknown, defaultTournamentPlacing = true):
   }
   const legacyFields = value.metadata_fields;
   const rawRows = value.metadata_rows ?? (
-    Array.isArray(legacyFields) ? legacyFields.map((field) => [field]) : undefined
+    Array.isArray(legacyFields) ? legacyFields.map((field) => [field]) : defaults.metadata_rows
   );
   if (!Array.isArray(rawRows) || rawRows.length > MAX_METADATA_ROWS || rawRows.some((row) => !Array.isArray(row) || row.length === 0)) {
     throw new Error(`Format code metadata must use at most ${MAX_METADATA_ROWS} non-empty rows.`);
@@ -485,8 +486,8 @@ function normalizeTextSettings(value: unknown, defaultTournamentPlacing = true):
     heading_metallic: value.heading_metallic === true,
     font_asset_id: fontAssetId,
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
-    include_seeding: value.include_seeding !== false,
-    use_tournament_placing: value.use_tournament_placing === undefined ? defaultTournamentPlacing : value.use_tournament_placing === true,
+    include_seeding: value.include_seeding === undefined ? defaults.include_seeding : value.include_seeding !== false,
+    use_tournament_placing: value.use_tournament_placing === undefined ? defaults.use_tournament_placing : value.use_tournament_placing === true,
     title_font_size_adjustment: adjustment(value.title_font_size_adjustment),
     subtitle_font_size_adjustment: adjustment(value.subtitle_font_size_adjustment),
     seed_font_size_adjustment: adjustment(value.seed_font_size_adjustment),
@@ -507,14 +508,15 @@ export function isPodiumsClapping(selection: FormatSelection): boolean {
 export function selectEntrantCount(format: FormatConfiguration, option: EntrantCountOption): FormatConfiguration {
   const selection = { ...format.selection, options: { ...format.selection.options, entrant_count: option.entrant_count, variant: option.variant } };
   selection.options.animated = isPodiumsClapping(selection) && (!isPodiumsClapping(format.selection) || format.selection.options.animated !== false);
-  const previousDefault = defaultTournamentPlacing(format.selection);
-  const nextDefault = defaultTournamentPlacing(selection);
-  return { ...format, selection, text_settings: { ...format.text_settings,
-    use_tournament_placing: previousDefault === nextDefault ? format.text_settings.use_tournament_placing : nextDefault } };
+  return { ...format, selection, text_settings: transitionLayoutTextSettings(format.text_settings, format.selection, selection) };
 }
 
 export function defaultTournamentPlacing(selection: FormatSelection): boolean {
-  return !(selection.mode === "eyes" && [10, 15, 20, 25].includes(selection.options.entrant_count ?? 0)) && !clappingGridLayout(selection);
+  return !isPrLayout(selection);
+}
+
+export function defaultTextSettings(selection: FormatSelection): TextSettings {
+  return layoutTextDefaults(DEFAULT_TEXT_SETTINGS, selection);
 }
 
 function normalizeBracketImportSettings(value: unknown): BracketImportSettings {
@@ -582,7 +584,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     image_settings: normalizeImageSettings(value.image_settings),
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
     entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors),
-    text_settings: normalizeTextSettings(value.text_settings, defaultTournamentPlacing(rawSelection)),
+    text_settings: normalizeTextSettings(value.text_settings, defaultTextSettings(rawSelection)),
     bracket_import_settings: normalizeBracketImportSettings(value.bracket_import_settings),
   };
 }

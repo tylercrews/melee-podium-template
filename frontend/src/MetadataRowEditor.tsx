@@ -12,6 +12,11 @@ interface MetadataRowEditorProps {
 const labels: Record<MetadataField, string> = {
   event: "Event name",
   date: "Date",
+  date_range: "Date (Range)",
+  free_text_1: "Free Text Field 1",
+  free_text_2: "Free Text Field 2",
+  free_text_3: "Free Text Field 3",
+  free_text_4: "Free Text Field 4",
   entrants_count: "Entrant or team count",
   tournament_link: "Tournament link",
   tournament_location: "Tournament location",

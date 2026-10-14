@@ -29,10 +29,10 @@ from mode_preferences import (
 )
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorInput, PodiumColorSelection
+from metadata_content import METADATA_FIELDS
 
 
 EntrantResult = SinglesEntrant | DoublesTeam
-METADATA_FIELDS = frozenset({"event", "date", "entrants_count", "tournament_link", "tournament_location", "stream_link", "vod_link", "to_x_account", "to_twitch_account", "to_bluesky_account"})
 MAX_METADATA_ROWS = 5
 
 

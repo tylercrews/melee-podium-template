@@ -8,6 +8,7 @@ import RgbaColorPicker from "./RgbaColorPicker";
 import MetadataRowEditor from "./MetadataRowEditor";
 import FontSizeSlider from "./FontSizeSlider";
 import { clappingGridLayout } from "./clappingGrid";
+import { transitionLayoutTextSettings } from "./layoutTextDefaults";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -31,22 +32,24 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   const { selection } = value;
 
   function updateMode(mode: CreationMode) {
+    const nextSelection: FormatConfiguration["selection"] = {
+      mode,
+      options: { ...selection.options, entrant_count: mode === "radial" && selection.options.event_format ? (selection.options.event_format === "singles" ? 8 : 4) : null, variant: null, animated: false, podium_style: mode === "podium" ? selection.options.podium_style : null },
+    };
     onChange({
       ...value,
-      selection: {
-        ...selection,
-        mode,
-        options: { ...selection.options, entrant_count: mode === "radial" && selection.options.event_format ? (selection.options.event_format === "singles" ? 8 : 4) : null, variant: null, animated: false, podium_style: mode === "podium" ? selection.options.podium_style : null },
-      },
+      selection: nextSelection,
+      text_settings: transitionLayoutTextSettings(value.text_settings, selection, nextSelection),
       header_layout: mode === "radial" ? { ...DEFAULT_RADIAL_HEADER_LAYOUT } : value.header_layout,
     });
   }
 
   function updateStyle(podium_style: PodiumStyle) {
     const clearGrid = clappingGridLayout(selection) && podium_style === "legacy";
-    onChange({ ...value, text_settings: clearGrid ? { ...value.text_settings, use_tournament_placing: true } : value.text_settings,
-      selection: { ...selection, options: { ...selection.options, podium_style,
-      ...(clearGrid ? { entrant_count: null, variant: null, animated: false } : {}) } } });
+    const nextSelection = { ...selection, options: { ...selection.options, podium_style,
+      ...(clearGrid ? { entrant_count: null, variant: null, animated: false } : {}) } };
+    onChange({ ...value, selection: nextSelection,
+      text_settings: transitionLayoutTextSettings(value.text_settings, selection, nextSelection) });
   }
 
   function updateEventFormat(event_format: EventFormat) {
@@ -54,7 +57,9 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       onChange(selectRadialLayout(value, event_format));
       return;
     }
-    onChange({ ...value, selection: { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null, animated: false } } });
+    const nextSelection = { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null, animated: false } };
+    onChange({ ...value, selection: nextSelection,
+      text_settings: transitionLayoutTextSettings(value.text_settings, selection, nextSelection) });
   }
 
   function assignHeader(position: HeaderPosition, content: HeaderContent) {

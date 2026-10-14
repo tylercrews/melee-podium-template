@@ -7,6 +7,12 @@ export interface TournamentDetails {
   subtitle: string;
   event: string;
   date: string;
+  dateRangeStart: string;
+  dateRangeEnd: string;
+  freeText1: string;
+  freeText2: string;
+  freeText3: string;
+  freeText4: string;
   entrantsCount: string;
   tournamentLink: string;
   streamLink: string;
@@ -58,6 +64,12 @@ export function emptyTournamentDetails(): TournamentDetails {
     subtitle: "",
     event: "",
     date: "",
+    dateRangeStart: "",
+    dateRangeEnd: "",
+    freeText1: "",
+    freeText2: "",
+    freeText3: "",
+    freeText4: "",
     entrantsCount: "",
     tournamentLink: "",
     streamLink: "",
@@ -89,6 +101,11 @@ export function mergeImportedTournament(current: TournamentDetails, review: Brac
 export const METADATA_FIELD_DETAILS: Record<MetadataField, { label: string; key: keyof TournamentDetails; type?: "date" | "number" | "url"; placeholder: string }> = {
   event: { label: "Event", key: "event", placeholder: "Melee Singles" },
   date: { label: "Date", key: "date", type: "date", placeholder: "" },
+  date_range: { label: "Date (Range)", key: "dateRangeStart", type: "date", placeholder: "" },
+  free_text_1: { label: "Free Text Field 1", key: "freeText1", placeholder: "Enter any text" },
+  free_text_2: { label: "Free Text Field 2", key: "freeText2", placeholder: "Enter any text" },
+  free_text_3: { label: "Free Text Field 3", key: "freeText3", placeholder: "Enter any text" },
+  free_text_4: { label: "Free Text Field 4", key: "freeText4", placeholder: "Enter any text" },
   entrants_count: { label: "Entrant count", key: "entrantsCount", type: "number", placeholder: "64" },
   tournament_link: { label: "Tournament link", key: "tournamentLink", type: "url", placeholder: "https://start.gg/…" },
   tournament_location: { label: "Tournament location", key: "location", placeholder: "Venue, city, state/country" },
@@ -102,9 +119,17 @@ export const METADATA_FIELD_DETAILS: Record<MetadataField, { label: string; key:
 export function isTournamentComplete(value: TournamentDetails, selectedFields: MetadataField[]): boolean {
   if (!value.title.trim()) return false;
   return selectedFields.every((field) => {
+    if (field === "date_range") return validDateRange(value.dateRangeStart, value.dateRangeEnd);
     const fieldValue = value[METADATA_FIELD_DETAILS[field].key];
     return field === "entrants_count" ? Number(fieldValue) > 0 : fieldValue.trim().length > 0;
   });
+}
+
+export function validDateRange(start: string, end: string): boolean {
+  const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+    && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+  return validDate(start) && validDate(end) && start <= end;
 }
 
 function placementForIndex(index: number, count: number): number {

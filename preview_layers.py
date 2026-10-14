@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw
 
 from background_builder import BackgroundRequest, PixelSize
 from creation import CreationRequest, TextSettings
+from layout_text_defaults import layout_text_defaults
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont, PodiumMode
 from formatting_assets import FormattingAssetRenderer
@@ -113,7 +114,7 @@ def _boxed_logo_placeholder(canvas: Image.Image, box: tuple[int, int, int, int])
     draw.line((right - 12, top + 12, left + 12, bottom - 12), fill=color, width=5)
 
 
-def render_header_layer(font: PodiumFont, header_layout: dict[str, str]) -> Image.Image:
+def render_header_layer(font: PodiumFont, header_layout: dict[str, str], *, text_settings: TextSettings | None = None) -> Image.Image:
     selection = ModeSelection(
         CreationMode.PODIUM,
         ModeOptions(
@@ -129,7 +130,7 @@ def render_header_layer(font: PodiumFont, header_layout: dict[str, str]) -> Imag
         entrants=sample_top_8_entrants()[:3],
         tournament=sample_tournament(TournamentFormat.SINGLES),
         header_layout=header_layout,
-        text_settings=TextSettings(),
+        text_settings=text_settings or TextSettings(),
     )
     renderer = LegacyPodiumContentRenderer(font=font)
     renderer._draw_assigned_tournament_text(canvas, request, PodiumMode.SINGLES_TOP_3)
@@ -199,7 +200,7 @@ def render_eye_header_layer(
         tournament=sample_tournament(event_format),
         formatting_colors=GeometricFormattingColors.one("#E53935FF"),
         header_layout=header_layout,
-        text_settings=TextSettings(),
+        text_settings=TextSettings(**layout_text_defaults(selection)),
     )
     EyesContentRenderer(font=font)._draw_header(canvas, request, preferences)
     logo_position = next(
@@ -412,7 +413,9 @@ def generate_square_preview_layers(output_root: Path) -> list[Path]:
 
 
 def generate_preview_layers(output_root: Path) -> list[Path]:
+    from pr_preview_layers import generate_pr_preview_layers
     outputs: list[Path] = []
+    outputs.extend(generate_pr_preview_layers(output_root, include_eyes=False))
     header_root = output_root / "headers"
     for font in PodiumFont:
         for contents in permutations(HEADER_CONTENTS):

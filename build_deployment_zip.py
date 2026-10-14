@@ -41,6 +41,8 @@ FILES = (
     "geometric_formatting_colors.py",
     "gif_animation.py",
     "legacy_podium_content_renderer.py",
+    "layout_text_defaults.py",
+    "metadata_content.py",
     "mode_preferences.py",
     "models.py",
     "podium_colors.py",

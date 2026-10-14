@@ -40,14 +40,14 @@ class PreviewLayerTests(unittest.TestCase):
 
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
-        self.assertEqual(len(files), 435)
+        self.assertEqual(len(files), 453)
         self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers").rglob("*.png"))), 76)
         self.assertTrue((LAYER_ROOT / "radial_watermark.png").is_file())
         self.assertTrue((LAYER_ROOT / "radial_watermark_doubles.png").is_file())
         self.assertEqual(len(tuple((LAYER_ROOT / "radial_headers").rglob("*.png"))), 36)
         self.assertEqual(len(tuple((LAYER_ROOT / "radial_logos").rglob("*.png"))), 3)
         self.assertEqual(len(tuple((LAYER_ROOT / "radial").rglob("*.png"))), 8)
-        self.assertEqual(len(tuple((LAYER_ROOT / "headers").rglob("*.png"))), 18)
+        self.assertEqual(len(tuple((LAYER_ROOT / "headers").rglob("*.png"))), 36)
         self.assertEqual(len(tuple((LAYER_ROOT / "square_headers").rglob("*.png"))), 36)
         self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "legacy").rglob("*.png"))), 6)
         self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "customizable").rglob("*.png"))), 60)

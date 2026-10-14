@@ -5,6 +5,7 @@ import { drawRadialWatermark } from "./radialWatermark";
 import { drawPodiumPreviewFooter, podiumHeaderWithoutFooter } from "./podiumPreviewFooter";
 import { placementNumberPreviewPath } from "./placementNumbering";
 import { clappingGridLayout, clappingGridVariant } from "./clappingGrid";
+import { isPrLayout } from "./layoutTextDefaults";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
@@ -154,7 +155,7 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   } else if (style === "customizable") {
     const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "custom_red";
     foregroundLayers = [{ url: `${layerRoot}/podiums/customizable/${layout}/${colorId}.png` }];
-    headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
+    headerUrl = `${layerRoot}/headers/${isPrLayout(format.selection) ? "pr/" : ""}${fontId}/${headerPermutationId(format)}.png`;
   } else {
     foregroundLayers = [{ url: `${layerRoot}/podiums/legacy/${layout}.png` }];
     headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
@@ -228,6 +229,12 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
       subtitle: tournament.subtitle.trim() || null,
       event: tournament.event.trim() || null,
       date: tournament.date || null,
+      date_range_start: format.text_settings.metadata_rows.flat().includes("date_range") ? tournament.dateRangeStart || null : null,
+      date_range_end: format.text_settings.metadata_rows.flat().includes("date_range") ? tournament.dateRangeEnd || null : null,
+      free_text_1: tournament.freeText1?.trim() || null,
+      free_text_2: tournament.freeText2?.trim() || null,
+      free_text_3: tournament.freeText3?.trim() || null,
+      free_text_4: tournament.freeText4?.trim() || null,
       entrants_count: Number(tournament.entrantsCount) || null,
       link: tournament.tournamentLink.trim() || null,
       location: tournament.location.trim() || null,

@@ -16,7 +16,7 @@ export default function ContactDialog({ onClose }: ContactDialogProps) {
   }}>
     <div className="shoutouts-dialog__content">
       <div className="shoutouts-dialog__heading">
-        <h2 id="tyro-contact-title">Bugs and feature requests</h2>
+        <h2 id="tyro-contact-title">Contact Me</h2>
         <button type="button" aria-label="Close contact information" onClick={onClose}>
           <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M6 6 18 18M18 6 6 18" /></svg>
         </button>

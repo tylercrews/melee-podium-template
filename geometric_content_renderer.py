@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw
 from background_builder import PixelRect
 from creation import CreationRequest
 from font_size_adjustments import adjusted_size, result_text_adjustment
+from metadata_content import metadata_values
 from creation_modes import CreationMode
 from DrawPodium import (
     ATTRIBUTION_TEXT,
@@ -46,23 +47,7 @@ def _open_logo(value: LogoInput) -> Image.Image | None:
 
 def _metadata_lines(request: CreationRequest) -> list[str]:
     tournament = request.tournament
-    count_label = (
-        "Teams"
-        if tournament.event_format is TournamentFormat.DOUBLES
-        else "Entrants"
-    )
-    values: Mapping[str, Any] = {
-        "event": tournament.event,
-        "date": tournament.date,
-        "entrants_count": f"{tournament.entrants_count} {count_label}",
-        "tournament_link": tournament.link,
-        "tournament_location": tournament.location,
-        "stream_link": tournament.stream_link,
-        "vod_link": tournament.vod_link,
-        "to_x_account": tournament.organizer_x_account,
-        "to_twitch_account": tournament.organizer_twitch_account,
-        "to_bluesky_account": tournament.organizer_bluesky_account,
-    }
+    values = metadata_values(tournament)
     rows = request.text_settings.metadata_rows
     assert rows is not None
     return [

@@ -19,7 +19,7 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          V7.4 10/14/2026 
+          V7.5 10/14/2026 
           {" "}●{" "}
           {count} created
           {" "}●{" "}
@@ -30,10 +30,10 @@ function Footer({ renderCount }: FooterProps) {
         </button>
         {" "}●{" "}
          <span aria-label="love">{"\u{1F495}"} </span> 
-        -Tyler "<a href="#tyro-contact-dialog" aria-haspopup="dialog" aria-controls="tyro-contact-dialog" onClick={(event) => {
+        -Tyler <a href="#tyro-contact-dialog" aria-haspopup="dialog" aria-controls="tyro-contact-dialog" onClick={(event) => {
           event.preventDefault();
           setIsContactOpen(true);
-        }}>Tyro</a>" Crews
+        }}>"Tyro"</a> Crews
         </div>
       </footer>
 
