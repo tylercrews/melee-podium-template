@@ -1,6 +1,7 @@
 """Generate reusable transparent layers for the browser Format preview."""
 
 from __future__ import annotations
+from dataclasses import replace
 
 from itertools import permutations
 from pathlib import Path
@@ -280,7 +281,7 @@ def render_podium_layer(style: PodiumStyle, layout_id: str, color_id: str | None
     if style is PodiumStyle.CUSTOMIZABLE:
         asset_count = 4 if variant == "four_podium" else entrant_count
         colors = _customizable_colors(color_id or "smash_player_colors", asset_count)
-    return FormattingAssetRenderer().draw(canvas, preferences, colors)
+    return FormattingAssetRenderer().draw(canvas, replace(preferences, placement_tags=()), colors)
 
 
 def render_square_layer(layout_id: str, color_id: str) -> Image.Image:
@@ -304,7 +305,7 @@ def render_square_layer(layout_id: str, color_id: str) -> Image.Image:
         )
     )
     canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
-    return FormattingAssetRenderer().draw(canvas, preferences, colors)
+    return FormattingAssetRenderer().draw(canvas, replace(preferences, placement_tags=()), colors)
 
 
 def render_eye_layer(layout_id: str, color_id: str) -> Image.Image:
@@ -325,7 +326,7 @@ def render_eye_layer(layout_id: str, color_id: str) -> Image.Image:
         )
     )
     canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
-    return FormattingAssetRenderer().draw(canvas, preferences, colors)
+    return FormattingAssetRenderer().draw(canvas, replace(preferences, placement_tags=()), colors)
 
 
 def generate_eye_preview_layers(output_root: Path) -> list[Path]:
@@ -436,6 +437,8 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
     outputs.extend(generate_eye_preview_layers(output_root))
     from clapping_preview_layers import generate_extended_clapping_layers
     outputs.extend(generate_extended_clapping_layers(output_root, include_top8=False))
+    from placement_preview_layers import generate_placement_number_layers
+    outputs.extend(generate_placement_number_layers(output_root))
     from radial_preview_layers import generate_radial_preview_layers
     outputs.extend(generate_radial_preview_layers(output_root))
     return outputs

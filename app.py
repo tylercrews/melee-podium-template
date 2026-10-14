@@ -660,6 +660,10 @@ def customized_format_preview() -> Any:
         not isinstance(row, (list, tuple)) for row in raw_metadata_rows
     ):
         raise ValueError("metadata_rows must be an array of arrays")
+    from placement_numbering import default_tournament_placing
+    from creation_modes import ModeOptions, ModeSelection
+    preview_selection = ModeSelection(creation_mode, ModeOptions(event_format, entrant_count, variant,
+                                     style if creation_mode is CreationMode.PODIUM else None))
     text_settings = TextSettings(
         heading_color=raw_text_settings.get("heading_color", "#FFFFFFFF"),
         heading_metallic=raw_text_settings.get("heading_metallic", False),
@@ -672,6 +676,7 @@ def customized_format_preview() -> Any:
         seed_font_size_adjustment=raw_text_settings.get("seed_font_size_adjustment", 0),
         metadata_row_font_size_adjustments=tuple(raw_text_settings.get("metadata_row_font_size_adjustments", ())),
         include_seeding=raw_text_settings.get("include_seeding", True),
+        use_tournament_placing=raw_text_settings.get("use_tournament_placing", default_tournament_placing(preview_selection)),
         replace_base_urls_with_icons=raw_text_settings.get("replace_base_urls_with_icons", True),
         metadata_rows=tuple(tuple(row) for row in raw_metadata_rows),
     )

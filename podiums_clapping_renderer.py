@@ -26,6 +26,7 @@ from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferences, PlacementTagPlacement
 from gif_animation import encode_animated_gif
 from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustment
+from placement_numbering import number_placement_tags
 
 
 PROFILE = Path(__file__).resolve().parent / "preferences/portraits/podiums_clapping.json"
@@ -148,7 +149,8 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
             for panel in panels
         ):
             raise ValueError("Podiums+Clapping panels must fit every lower entrant inside the canvas")
-        badges = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
+        badges = number_placement_tags(tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"]),
+                                      request.text_settings.use_tournament_placing)
         preferences = replace(preferences, text_slots=tuple(row for row in preferences.text_slots if row.field != "entrant.summary"))
         base = super().draw(canvas, request, preferences)
         if background is not None:

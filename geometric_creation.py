@@ -9,6 +9,7 @@ from PIL import Image
 
 from background_builder import BackgroundRequest
 from creation import CreationPipeline, CreationRequest, TextSettings
+from placement_numbering import default_tournament_placing
 from creation_modes import CreationMode, ModeOptions, ModeSelection
 from DrawPodium import PodiumFont
 from geometric_content_renderer import EyesContentRenderer, LogoInput, SquaresContentRenderer
@@ -66,7 +67,7 @@ def draw_geometric_template(
         size=preferences.canvas_size,
         fill_color=fill_color,
     )
-    settings = text_settings or TextSettings()
+    settings = text_settings or TextSettings(use_tournament_placing=default_tournament_placing(selection))
     request = CreationRequest(
         selection=selection,
         background=background,

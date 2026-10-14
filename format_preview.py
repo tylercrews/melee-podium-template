@@ -18,6 +18,7 @@ from background_builder import (
 from creation import CreationRequest
 from creation import TextSettings
 from clapping_colors import resolve_clapping_podium_colors
+from placement_numbering import default_tournament_placing, numbered_preferences
 from DrawPodium import PodiumFont
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
@@ -120,6 +121,8 @@ def prepare_format_preview(
         ),
     )
     preferences = ModePreferenceRepository().load(selection)
+    text_settings = text_settings or TextSettings(use_tournament_placing=default_tournament_placing(selection))
+    preferences = numbered_preferences(preferences, text_settings.use_tournament_placing)
     output_size = preferences.canvas_size
     if transparent:
         background = BackgroundRequest(size=output_size)
@@ -165,7 +168,7 @@ def prepare_format_preview(
         podium_colors=podium_colors,
         formatting_colors=formatting_colors,
         header_layout=header_layout,
-        text_settings=text_settings or TextSettings(),
+        text_settings=text_settings,
     )
     # Format previews intentionally use the preview rendering path while these
     # reviewed preference files remain marked ready:false. Production creation

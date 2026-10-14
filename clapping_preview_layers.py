@@ -39,7 +39,7 @@ def render_extended_clapping_layer(style, layout_id, color_id=None):
     top16 = layout_id == "singles_top_16_clapping"
     if top16 and style is PodiumStyle.CUSTOMIZABLE and color_id in {None, "smash_player_colors"}:
         colors = top16_player_colors(colors)
-    result = FormattingAssetRenderer().draw(canvas, preferences, colors)
+    result = FormattingAssetRenderer().draw(canvas, replace(preferences, placement_tags=()), colors)
     profile = (json.loads(TOP8_PROFILE.read_text(encoding="utf-8"))["styles"][style.value]
                if layout_id == "singles_top_8_four_podium"
                else json.loads(PROFILE.read_text(encoding="utf-8"))["layouts"][layout_id][style.value])
@@ -63,8 +63,6 @@ def render_extended_clapping_layer(style, layout_id, color_id=None):
     for row in profile.get("team_names", []):
         x, y = row["anchor"]["x"], row["anchor"]["y"]
         draw.line((x - 80, y + 20, x + 80, y + 20), fill="#D8DCE8CC", width=7)
-    badges = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
-    draw_placement_tags(result, replace(preferences, placement_tags=badges))
     return result
 
 

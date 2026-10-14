@@ -46,6 +46,7 @@ export interface TextSettings {
   seed_font_size_adjustment: number;
   metadata_row_font_size_adjustments: number[];
   include_seeding: boolean;
+  use_tournament_placing: boolean;
   replace_base_urls_with_icons: boolean;
   metadata_rows: MetadataField[][];
 }
@@ -152,6 +153,7 @@ export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   seed_font_size_adjustment: 0,
   metadata_row_font_size_adjustments: [0, 0, 0, 0],
   include_seeding: true,
+  use_tournament_placing: true,
   replace_base_urls_with_icons: true,
   metadata_rows: [["tournament_link"], ["event"], ["date"], ["entrants_count"]],
 };
@@ -443,8 +445,11 @@ function normalizeEntrantTextColors(value: unknown): EntrantTextColors {
   return { mode, colors, metallic: rawMetallic as boolean[] };
 }
 
-function normalizeTextSettings(value: unknown): TextSettings {
-  if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, metadata_rows: DEFAULT_TEXT_SETTINGS.metadata_rows.map((row) => [...row]) };
+function normalizeTextSettings(value: unknown, defaultTournamentPlacing = true): TextSettings {
+  if (value === undefined) return { ...DEFAULT_TEXT_SETTINGS, use_tournament_placing: defaultTournamentPlacing, metadata_rows: DEFAULT_TEXT_SETTINGS.metadata_rows.map((row) => [...row]) };
+  if (isObject(value) && value.use_tournament_placing !== undefined && typeof value.use_tournament_placing !== "boolean") {
+    throw new Error("Tournament bracket placing must be true or false.");
+  }
   if (!isObject(value) || (value.heading_color !== undefined && (typeof value.heading_color !== "string" || !rgbaColor.test(value.heading_color))) || (value.heading_metallic !== undefined && typeof value.heading_metallic !== "boolean") || typeof value.font_asset_id !== "string" || !value.font_asset_id.trim() || !Number.isInteger(value.font_size_adjustment) || Number(value.font_size_adjustment) < -20 || Number(value.font_size_adjustment) > 20 || (value.include_seeding !== undefined && typeof value.include_seeding !== "boolean") || (value.replace_base_urls_with_icons !== undefined && typeof value.replace_base_urls_with_icons !== "boolean")) {
     throw new Error("Format code has invalid text settings.");
   }
@@ -474,6 +479,7 @@ function normalizeTextSettings(value: unknown): TextSettings {
     font_asset_id: fontAssetId,
     font_size_adjustment: fontAssetId.startsWith("provided:") ? 0 : Number(value.font_size_adjustment),
     include_seeding: value.include_seeding !== false,
+    use_tournament_placing: value.use_tournament_placing === undefined ? defaultTournamentPlacing : value.use_tournament_placing === true,
     title_font_size_adjustment: adjustment(value.title_font_size_adjustment),
     subtitle_font_size_adjustment: adjustment(value.subtitle_font_size_adjustment),
     seed_font_size_adjustment: adjustment(value.seed_font_size_adjustment),
@@ -493,7 +499,14 @@ export function isPodiumsClapping(selection: FormatSelection): boolean {
 export function selectEntrantCount(format: FormatConfiguration, option: EntrantCountOption): FormatConfiguration {
   const selection = { ...format.selection, options: { ...format.selection.options, entrant_count: option.entrant_count, variant: option.variant } };
   selection.options.animated = isPodiumsClapping(selection) && (!isPodiumsClapping(format.selection) || format.selection.options.animated !== false);
-  return { ...format, selection };
+  const previousDefault = defaultTournamentPlacing(format.selection);
+  const nextDefault = defaultTournamentPlacing(selection);
+  return { ...format, selection, text_settings: { ...format.text_settings,
+    use_tournament_placing: previousDefault === nextDefault ? format.text_settings.use_tournament_placing : nextDefault } };
+}
+
+export function defaultTournamentPlacing(selection: FormatSelection): boolean {
+  return !(selection.mode === "eyes" && [10, 15, 20, 25].includes(selection.options.entrant_count ?? 0));
 }
 
 function normalizeBracketImportSettings(value: unknown): BracketImportSettings {
@@ -557,7 +570,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     image_settings: normalizeImageSettings(value.image_settings),
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
     entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors),
-    text_settings: normalizeTextSettings(value.text_settings),
+    text_settings: normalizeTextSettings(value.text_settings, !(mode === "eyes" && [10, 15, 20, 25].includes(Number(rawEntrantCount)))),
     bracket_import_settings: normalizeBracketImportSettings(value.bracket_import_settings),
   };
 }

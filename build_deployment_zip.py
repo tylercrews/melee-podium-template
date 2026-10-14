@@ -40,6 +40,7 @@ FILES = (
     "mode_preferences.py",
     "models.py",
     "podium_colors.py",
+    "placement_numbering.py",
     "podiums_clapping_renderer.py",
     "portrait_pose_labels.py",
     "portrait_assets.py",

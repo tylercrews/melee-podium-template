@@ -15,6 +15,7 @@ from background_builder import (
 )
 from color_values import normalize_rgba_hex
 from clapping_colors import resolve_clapping_podium_colors
+from placement_numbering import numbered_preferences
 from content_renderer import ContentRenderer
 from font_size_adjustments import validate_font_size_adjustment
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
@@ -47,6 +48,7 @@ class TextSettings:
     seed_font_size_adjustment: int = 0
     metadata_row_font_size_adjustments: tuple[int, ...] = ()
     include_seeding: bool = True
+    use_tournament_placing: bool = True
     replace_base_urls_with_icons: bool = True
     metadata_fields: tuple[str, ...] = ("tournament_link", "event", "date", "entrants_count")
     metadata_rows: tuple[tuple[str, ...], ...] | None = None
@@ -76,6 +78,8 @@ class TextSettings:
             raise TypeError("replace_base_urls_with_icons must be a boolean")
         if not isinstance(self.include_seeding, bool):
             raise TypeError("include_seeding must be a boolean")
+        if not isinstance(self.use_tournament_placing, bool):
+            raise TypeError("use_tournament_placing must be a boolean")
         rows = (
             tuple((field,) for field in self.metadata_fields)
             if self.metadata_rows is None
@@ -211,6 +215,7 @@ class CreationPipeline:
     def create(self, request: CreationRequest) -> Image.Image:
         mode_preferences = self.preferences.load(request.selection)
         self._validate_preferences(request, mode_preferences)
+        mode_preferences = numbered_preferences(mode_preferences, request.text_settings.use_tournament_placing)
         request = replace(request, podium_colors=resolve_clapping_podium_colors(request.selection, request.podium_colors))
 
         background = create_background(
