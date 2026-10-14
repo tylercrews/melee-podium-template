@@ -12,11 +12,15 @@ from formatting_assets import draw_placement_tags
 from mode_preferences import ModePreferenceRepository, PlacementTagPlacement
 from models import TournamentFormat
 from placement_numbering import numbered_preferences
+from clapping_grid_layouts import GRID_VARIANTS
+from clapping_grid_renderer import grid_profile
 
 
 def preview_selections():
     for style in PodiumStyle:
         for event_format, count, variant in sorted(SUPPORTED_LAYOUTS, key=str):
+            if variant in GRID_VARIANTS and style is PodiumStyle.LEGACY:
+                continue
             yield ModeSelection(CreationMode.PODIUM, ModeOptions(event_format, count, variant, style))
     for mode, layouts in ((CreationMode.EYES, SUPPORTED_EYES_LAYOUTS), (CreationMode.SQUARES, SUPPORTED_SQUARE_LAYOUTS),
                           (CreationMode.RADIAL, ((TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 4, None)))):
@@ -26,10 +30,10 @@ def preview_selections():
 
 def render_placement_number_layer(selection, use_tournament_placing):
     preferences = ModePreferenceRepository().load(selection)
-    if selection.mode is CreationMode.PODIUM and selection.options.variant in {"clapping", "four_podium"}:
+    if selection.mode is CreationMode.PODIUM and selection.options.variant in {"clapping", "four_podium", *GRID_VARIANTS}:
         from podiums_clapping_renderer import PROFILE as TOP8_PROFILE
         from extended_clapping_renderer import PROFILE
-        profile = (json.loads(TOP8_PROFILE.read_text(encoding="utf-8"))["styles"][selection.options.podium_style.value]
+        profile = (grid_profile(selection) if selection.options.variant in GRID_VARIANTS else json.loads(TOP8_PROFILE.read_text(encoding="utf-8"))["styles"][selection.options.podium_style.value]
                    if selection.submode_id == "singles_top_8_four_podium"
                    else json.loads(PROFILE.read_text(encoding="utf-8"))["layouts"][selection.submode_id][selection.options.podium_style.value])
         lower = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
@@ -40,9 +44,11 @@ def render_placement_number_layer(selection, use_tournament_placing):
     return layer
 
 
-def generate_placement_number_layers(root: Path):
+def generate_placement_number_layers(root: Path, *, grid_only: bool = False):
     outputs = []
     for selection in preview_selections():
+        if grid_only and selection.options.variant not in GRID_VARIANTS:
+            continue
         folder = root / "placement_numbers" / selection.mode.value
         if selection.options.podium_style is not None:
             folder /= selection.options.podium_style.value

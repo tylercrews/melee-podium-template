@@ -16,6 +16,7 @@ from background_builder import (
 from color_values import normalize_rgba_hex
 from clapping_colors import resolve_clapping_podium_colors
 from placement_numbering import numbered_preferences
+from entrant_visibility import visible_preferences
 from content_renderer import ContentRenderer
 from font_size_adjustments import validate_font_size_adjustment
 from creation_modes import CreationMode, ModeSelection, PodiumStyle
@@ -216,6 +217,7 @@ class CreationPipeline:
         mode_preferences = self.preferences.load(request.selection)
         self._validate_preferences(request, mode_preferences)
         mode_preferences = numbered_preferences(mode_preferences, request.text_settings.use_tournament_placing)
+        mode_preferences = visible_preferences(mode_preferences, request.entrants)
         request = replace(request, podium_colors=resolve_clapping_podium_colors(request.selection, request.podium_colors))
 
         background = create_background(

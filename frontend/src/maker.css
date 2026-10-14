@@ -826,3 +826,11 @@ body {
   .tournament-field-grid, .entrant-team-fields, .entrant-team-members { grid-template-columns: 1fr; }
   .tournament-field--wide { grid-column: 1; }
 }
+.entrant-visibility-controls { display: grid; gap: .5rem; margin-bottom: 1rem; }
+.entrant-visibility-controls .choice { display: flex; align-items: center; gap: .5rem; }
+.entrant-visibility-controls input[type="checkbox"] { width: auto; }
+.entrant-details { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 1rem; }
+.entrant-card--omitted .entrant-details { opacity: .5; text-decoration: line-through; }
+.entrant-card--omitted > legend { opacity: .5; text-decoration: line-through; }
+.entrant-card--omitted .entrant-details input,
+.entrant-card--omitted .entrant-details select { text-decoration: line-through; }

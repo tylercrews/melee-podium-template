@@ -7,6 +7,7 @@ import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
 import RgbaColorPicker from "./RgbaColorPicker";
 import MetadataRowEditor from "./MetadataRowEditor";
 import FontSizeSlider from "./FontSizeSlider";
+import { clappingGridLayout } from "./clappingGrid";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -42,7 +43,10 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   }
 
   function updateStyle(podium_style: PodiumStyle) {
-    onChange({ ...value, selection: { ...selection, options: { ...selection.options, podium_style } } });
+    const clearGrid = clappingGridLayout(selection) && podium_style === "legacy";
+    onChange({ ...value, text_settings: clearGrid ? { ...value.text_settings, use_tournament_placing: true } : value.text_settings,
+      selection: { ...selection, options: { ...selection.options, podium_style,
+      ...(clearGrid ? { entrant_count: null, variant: null, animated: false } : {}) } } });
   }
 
   function updateEventFormat(event_format: EventFormat) {

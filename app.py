@@ -27,6 +27,8 @@ from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, 
 from portrait_pose_labels import POSE_LABELS
 from format_preview import prepare_format_preview, render_format_preview
 from podiums_clapping_renderer import ClappingLayout
+from clapping_grid_layouts import GRID_VARIANTS
+from entrant_visibility import visibility_flags
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset, PodiumColorSelection
 from sample_creation_data import sample_tournament
 from firebase_services.fonts import read_font_upload
@@ -373,6 +375,8 @@ def _custom_preview_colors(
     *,
     color_count: int = 8,
 ) -> PodiumColorConfiguration:
+    if variant in GRID_VARIANTS:
+        color_count = entrant_count
     if not isinstance(value, Mapping):
         raise ValueError("Formatting asset colors must be an object")
     mode = value.get("mode")
@@ -418,7 +422,7 @@ def _custom_preview_colors(
             )
             colors = PodiumColorConfiguration.per_podium(*medal_colors)
         elif preset == "rainbow":
-            asset_count = 4 if variant == "four_podium" else entrant_count
+            asset_count = 3 if variant in GRID_VARIANTS else 4 if variant == "four_podium" else entrant_count
             colors = _rainbow_preview_colors(asset_count, color_count)
         else:
             raise ValueError("Unknown formatting color preset")
@@ -552,9 +556,16 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
         raise ValueError("preview entrants must be an array")
     if event_format is TournamentFormat.DOUBLES:
         teams: list[DoublesTeam] = []
-        for item in value:
+        for index, item in enumerate(value):
             source = _json_object(item, "preview doubles team")
+            flags = visibility_flags(source)
+            if flags["omit_entrant"]:
+                member = Entrant(tag="", characters=[], omit_entrant=True)
+                teams.append(DoublesTeam(team_name="", entrant_1=member, entrant_2=member,
+                                        placement=index + 1, seed=None, **flags))
+                continue
             teams.append(DoublesTeam(
+                **flags,
                 team_name=_required_text(source, "team_name"),
                 team_name_font_size_adjustment=source.get("team_name_font_size_adjustment", 0),
                 seed=_optional_positive_int(source, "seed"),
@@ -565,10 +576,15 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
             ))
         return teams
     entrants: list[SinglesEntrant] = []
-    for item in value:
+    for index, item in enumerate(value):
         source = _json_object(item, "preview singles entrant")
+        flags = visibility_flags(source)
+        if flags["omit_entrant"]:
+            entrants.append(SinglesEntrant(tag="", characters=[], seed=None, placement=index + 1, **flags))
+            continue
         entrant = _entrant(source)
         entrants.append(SinglesEntrant(
+            **flags,
             tag=entrant.tag,
             name_font_size_adjustment=entrant.name_font_size_adjustment,
             characters=entrant.characters,
@@ -683,7 +699,7 @@ def customized_format_preview() -> Any:
     animated = payload.get("animated")
     if "animated" in payload and not isinstance(animated, bool):
         raise ValueError("animated must be a boolean")
-    preview_renderer = prepare_format_preview if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping"} else render_format_preview
+    preview_renderer = prepare_format_preview if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping", *GRID_VARIANTS} else render_format_preview
     image = preview_renderer(
         style,
         event_format,
@@ -702,6 +718,7 @@ def customized_format_preview() -> Any:
         tournament_logo=tournament_logo,
         logo_scale=logo_scale if tournament_logo is not None else None,
         animated=animated,
+        entrant_visibility=payload.get("entrant_visibility"),
         **composition_images,
     )
     output = BytesIO()

@@ -1,0 +1,2435 @@
+{
+  "schema_version": 1,
+  "layouts": {
+    "singles_top_7_clapping_grid_4": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1150
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            499,
+            920,
+            593,
+            1062
+          ],
+          "text_x": 607,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            964,
+            920,
+            1058,
+            1062
+          ],
+          "text_x": 1072,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            1429,
+            920,
+            1523,
+            1062
+          ],
+          "text_x": 1537,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 619,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1549,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        }
+      ]
+    },
+    "singles_top_8_clapping_grid_5": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1150
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            406,
+            920,
+            500,
+            1062
+          ],
+          "text_x": 514,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            778,
+            920,
+            872,
+            1062
+          ],
+          "text_x": 886,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            1150,
+            920,
+            1244,
+            1062
+          ],
+          "text_x": 1258,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            1522,
+            920,
+            1616,
+            1062
+          ],
+          "text_x": 1630,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 526,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 898,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1270,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 1642,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        }
+      ]
+    },
+    "singles_top_9_clapping_grid_6": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1150
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            344,
+            920,
+            438,
+            1062
+          ],
+          "text_x": 452,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            654,
+            920,
+            748,
+            1062
+          ],
+          "text_x": 762,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            964,
+            920,
+            1058,
+            1062
+          ],
+          "text_x": 1072,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            1274,
+            920,
+            1368,
+            1062
+          ],
+          "text_x": 1382,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            1584,
+            920,
+            1678,
+            1062
+          ],
+          "text_x": 1692,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 464,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 774,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 1394,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 1704,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        }
+      ]
+    },
+    "singles_top_11_clapping_grid_4": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1340
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            499,
+            920,
+            593,
+            1062
+          ],
+          "text_x": 607,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            964,
+            920,
+            1058,
+            1062
+          ],
+          "text_x": 1072,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            1429,
+            920,
+            1523,
+            1062
+          ],
+          "text_x": 1537,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            34,
+            1110,
+            128,
+            1252
+          ],
+          "text_x": 142,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            499,
+            1110,
+            593,
+            1252
+          ],
+          "text_x": 607,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 10,
+          "portrait_rect": [
+            964,
+            1110,
+            1058,
+            1252
+          ],
+          "text_x": 1072,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 11,
+          "portrait_rect": [
+            1429,
+            1110,
+            1523,
+            1252
+          ],
+          "text_x": 1537,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 619,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1549,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 619,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        },
+        {
+          "slot_id": "entrant_10_placement_tag",
+          "asset_id": "10th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 206
+        },
+        {
+          "slot_id": "entrant_11_placement_tag",
+          "asset_id": "11th.png",
+          "anchor": {
+            "x": 1549,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 207
+        }
+      ]
+    },
+    "singles_top_13_clapping_grid_5": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1340
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            406,
+            920,
+            500,
+            1062
+          ],
+          "text_x": 514,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            778,
+            920,
+            872,
+            1062
+          ],
+          "text_x": 886,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            1150,
+            920,
+            1244,
+            1062
+          ],
+          "text_x": 1258,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            1522,
+            920,
+            1616,
+            1062
+          ],
+          "text_x": 1630,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            34,
+            1110,
+            128,
+            1252
+          ],
+          "text_x": 142,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 10,
+          "portrait_rect": [
+            406,
+            1110,
+            500,
+            1252
+          ],
+          "text_x": 514,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 11,
+          "portrait_rect": [
+            778,
+            1110,
+            872,
+            1252
+          ],
+          "text_x": 886,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 12,
+          "portrait_rect": [
+            1150,
+            1110,
+            1244,
+            1252
+          ],
+          "text_x": 1258,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 13,
+          "portrait_rect": [
+            1522,
+            1110,
+            1616,
+            1252
+          ],
+          "text_x": 1630,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 526,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 898,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1270,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 1642,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        },
+        {
+          "slot_id": "entrant_10_placement_tag",
+          "asset_id": "10th.png",
+          "anchor": {
+            "x": 526,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 206
+        },
+        {
+          "slot_id": "entrant_11_placement_tag",
+          "asset_id": "11th.png",
+          "anchor": {
+            "x": 898,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 207
+        },
+        {
+          "slot_id": "entrant_12_placement_tag",
+          "asset_id": "12th.png",
+          "anchor": {
+            "x": 1270,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 208
+        },
+        {
+          "slot_id": "entrant_13_placement_tag",
+          "asset_id": "13th.png",
+          "anchor": {
+            "x": 1642,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 209
+        }
+      ]
+    },
+    "singles_top_15_clapping_grid_6": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1340
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            344,
+            920,
+            438,
+            1062
+          ],
+          "text_x": 452,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            654,
+            920,
+            748,
+            1062
+          ],
+          "text_x": 762,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            964,
+            920,
+            1058,
+            1062
+          ],
+          "text_x": 1072,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            1274,
+            920,
+            1368,
+            1062
+          ],
+          "text_x": 1382,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            1584,
+            920,
+            1678,
+            1062
+          ],
+          "text_x": 1692,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 10,
+          "portrait_rect": [
+            34,
+            1110,
+            128,
+            1252
+          ],
+          "text_x": 142,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 11,
+          "portrait_rect": [
+            344,
+            1110,
+            438,
+            1252
+          ],
+          "text_x": 452,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 12,
+          "portrait_rect": [
+            654,
+            1110,
+            748,
+            1252
+          ],
+          "text_x": 762,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 13,
+          "portrait_rect": [
+            964,
+            1110,
+            1058,
+            1252
+          ],
+          "text_x": 1072,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 14,
+          "portrait_rect": [
+            1274,
+            1110,
+            1368,
+            1252
+          ],
+          "text_x": 1382,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 15,
+          "portrait_rect": [
+            1584,
+            1110,
+            1678,
+            1252
+          ],
+          "text_x": 1692,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 464,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 774,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 1394,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 1704,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        },
+        {
+          "slot_id": "entrant_10_placement_tag",
+          "asset_id": "10th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 206
+        },
+        {
+          "slot_id": "entrant_11_placement_tag",
+          "asset_id": "11th.png",
+          "anchor": {
+            "x": 464,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 207
+        },
+        {
+          "slot_id": "entrant_12_placement_tag",
+          "asset_id": "12th.png",
+          "anchor": {
+            "x": 774,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 208
+        },
+        {
+          "slot_id": "entrant_13_placement_tag",
+          "asset_id": "13th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 209
+        },
+        {
+          "slot_id": "entrant_14_placement_tag",
+          "asset_id": "14th.png",
+          "anchor": {
+            "x": 1394,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 210
+        },
+        {
+          "slot_id": "entrant_15_placement_tag",
+          "asset_id": "15th.png",
+          "anchor": {
+            "x": 1704,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 211
+        }
+      ]
+    },
+    "singles_top_15_clapping_grid_4": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1530
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            499,
+            920,
+            593,
+            1062
+          ],
+          "text_x": 607,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            964,
+            920,
+            1058,
+            1062
+          ],
+          "text_x": 1072,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            1429,
+            920,
+            1523,
+            1062
+          ],
+          "text_x": 1537,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            34,
+            1110,
+            128,
+            1252
+          ],
+          "text_x": 142,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            499,
+            1110,
+            593,
+            1252
+          ],
+          "text_x": 607,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 10,
+          "portrait_rect": [
+            964,
+            1110,
+            1058,
+            1252
+          ],
+          "text_x": 1072,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 11,
+          "portrait_rect": [
+            1429,
+            1110,
+            1523,
+            1252
+          ],
+          "text_x": 1537,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 12,
+          "portrait_rect": [
+            34,
+            1300,
+            128,
+            1442
+          ],
+          "text_x": 142,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 13,
+          "portrait_rect": [
+            499,
+            1300,
+            593,
+            1442
+          ],
+          "text_x": 607,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 14,
+          "portrait_rect": [
+            964,
+            1300,
+            1058,
+            1442
+          ],
+          "text_x": 1072,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 15,
+          "portrait_rect": [
+            1429,
+            1300,
+            1523,
+            1442
+          ],
+          "text_x": 1537,
+          "text_max_width": 339,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 619,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1549,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 619,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        },
+        {
+          "slot_id": "entrant_10_placement_tag",
+          "asset_id": "10th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 206
+        },
+        {
+          "slot_id": "entrant_11_placement_tag",
+          "asset_id": "11th.png",
+          "anchor": {
+            "x": 1549,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 207
+        },
+        {
+          "slot_id": "entrant_12_placement_tag",
+          "asset_id": "12th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 208
+        },
+        {
+          "slot_id": "entrant_13_placement_tag",
+          "asset_id": "13th.png",
+          "anchor": {
+            "x": 619,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 209
+        },
+        {
+          "slot_id": "entrant_14_placement_tag",
+          "asset_id": "14th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 210
+        },
+        {
+          "slot_id": "entrant_15_placement_tag",
+          "asset_id": "15th.png",
+          "anchor": {
+            "x": 1549,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 211
+        }
+      ]
+    },
+    "singles_top_18_clapping_grid_5": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1530
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            406,
+            920,
+            500,
+            1062
+          ],
+          "text_x": 514,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            778,
+            920,
+            872,
+            1062
+          ],
+          "text_x": 886,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            1150,
+            920,
+            1244,
+            1062
+          ],
+          "text_x": 1258,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            1522,
+            920,
+            1616,
+            1062
+          ],
+          "text_x": 1630,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            34,
+            1110,
+            128,
+            1252
+          ],
+          "text_x": 142,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 10,
+          "portrait_rect": [
+            406,
+            1110,
+            500,
+            1252
+          ],
+          "text_x": 514,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 11,
+          "portrait_rect": [
+            778,
+            1110,
+            872,
+            1252
+          ],
+          "text_x": 886,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 12,
+          "portrait_rect": [
+            1150,
+            1110,
+            1244,
+            1252
+          ],
+          "text_x": 1258,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 13,
+          "portrait_rect": [
+            1522,
+            1110,
+            1616,
+            1252
+          ],
+          "text_x": 1630,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 14,
+          "portrait_rect": [
+            34,
+            1300,
+            128,
+            1442
+          ],
+          "text_x": 142,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 15,
+          "portrait_rect": [
+            406,
+            1300,
+            500,
+            1442
+          ],
+          "text_x": 514,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 16,
+          "portrait_rect": [
+            778,
+            1300,
+            872,
+            1442
+          ],
+          "text_x": 886,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 17,
+          "portrait_rect": [
+            1150,
+            1300,
+            1244,
+            1442
+          ],
+          "text_x": 1258,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 18,
+          "portrait_rect": [
+            1522,
+            1300,
+            1616,
+            1442
+          ],
+          "text_x": 1630,
+          "text_max_width": 246,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 526,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 898,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1270,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 1642,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        },
+        {
+          "slot_id": "entrant_10_placement_tag",
+          "asset_id": "10th.png",
+          "anchor": {
+            "x": 526,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 206
+        },
+        {
+          "slot_id": "entrant_11_placement_tag",
+          "asset_id": "11th.png",
+          "anchor": {
+            "x": 898,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 207
+        },
+        {
+          "slot_id": "entrant_12_placement_tag",
+          "asset_id": "12th.png",
+          "anchor": {
+            "x": 1270,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 208
+        },
+        {
+          "slot_id": "entrant_13_placement_tag",
+          "asset_id": "13th.png",
+          "anchor": {
+            "x": 1642,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 209
+        },
+        {
+          "slot_id": "entrant_14_placement_tag",
+          "asset_id": "14th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 210
+        },
+        {
+          "slot_id": "entrant_15_placement_tag",
+          "asset_id": "15th.png",
+          "anchor": {
+            "x": 526,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 211
+        },
+        {
+          "slot_id": "entrant_16_placement_tag",
+          "asset_id": "16th.png",
+          "anchor": {
+            "x": 898,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 212
+        },
+        {
+          "slot_id": "entrant_17_placement_tag",
+          "asset_id": "17th.png",
+          "anchor": {
+            "x": 1270,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 213
+        },
+        {
+          "slot_id": "entrant_18_placement_tag",
+          "asset_id": "18th.png",
+          "anchor": {
+            "x": 1642,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 214
+        }
+      ]
+    },
+    "singles_top_21_clapping_grid_6": {
+      "canvas_size": {
+        "width": 1920,
+        "height": 1530
+      },
+      "panels": [
+        {
+          "entrant_slot": 4,
+          "portrait_rect": [
+            34,
+            920,
+            128,
+            1062
+          ],
+          "text_x": 142,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 5,
+          "portrait_rect": [
+            344,
+            920,
+            438,
+            1062
+          ],
+          "text_x": 452,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 6,
+          "portrait_rect": [
+            654,
+            920,
+            748,
+            1062
+          ],
+          "text_x": 762,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 7,
+          "portrait_rect": [
+            964,
+            920,
+            1058,
+            1062
+          ],
+          "text_x": 1072,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 8,
+          "portrait_rect": [
+            1274,
+            920,
+            1368,
+            1062
+          ],
+          "text_x": 1382,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 9,
+          "portrait_rect": [
+            1584,
+            920,
+            1678,
+            1062
+          ],
+          "text_x": 1692,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 10,
+          "portrait_rect": [
+            34,
+            1110,
+            128,
+            1252
+          ],
+          "text_x": 142,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 11,
+          "portrait_rect": [
+            344,
+            1110,
+            438,
+            1252
+          ],
+          "text_x": 452,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 12,
+          "portrait_rect": [
+            654,
+            1110,
+            748,
+            1252
+          ],
+          "text_x": 762,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 13,
+          "portrait_rect": [
+            964,
+            1110,
+            1058,
+            1252
+          ],
+          "text_x": 1072,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 14,
+          "portrait_rect": [
+            1274,
+            1110,
+            1368,
+            1252
+          ],
+          "text_x": 1382,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 15,
+          "portrait_rect": [
+            1584,
+            1110,
+            1678,
+            1252
+          ],
+          "text_x": 1692,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 16,
+          "portrait_rect": [
+            34,
+            1300,
+            128,
+            1442
+          ],
+          "text_x": 142,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 17,
+          "portrait_rect": [
+            344,
+            1300,
+            438,
+            1442
+          ],
+          "text_x": 452,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 18,
+          "portrait_rect": [
+            654,
+            1300,
+            748,
+            1442
+          ],
+          "text_x": 762,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 19,
+          "portrait_rect": [
+            964,
+            1300,
+            1058,
+            1442
+          ],
+          "text_x": 1072,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 20,
+          "portrait_rect": [
+            1274,
+            1300,
+            1368,
+            1442
+          ],
+          "text_x": 1382,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        },
+        {
+          "entrant_slot": 21,
+          "portrait_rect": [
+            1584,
+            1300,
+            1678,
+            1442
+          ],
+          "text_x": 1692,
+          "text_max_width": 184,
+          "text_alignment": "left",
+          "identity_scale": 0.85
+        }
+      ],
+      "placement_tags": [
+        {
+          "slot_id": "entrant_4_placement_tag",
+          "asset_id": "04th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 200
+        },
+        {
+          "slot_id": "entrant_5_placement_tag",
+          "asset_id": "05th.png",
+          "anchor": {
+            "x": 464,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 201
+        },
+        {
+          "slot_id": "entrant_6_placement_tag",
+          "asset_id": "06th.png",
+          "anchor": {
+            "x": 774,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 202
+        },
+        {
+          "slot_id": "entrant_7_placement_tag",
+          "asset_id": "07th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 203
+        },
+        {
+          "slot_id": "entrant_8_placement_tag",
+          "asset_id": "08th.png",
+          "anchor": {
+            "x": 1394,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 204
+        },
+        {
+          "slot_id": "entrant_9_placement_tag",
+          "asset_id": "09th.png",
+          "anchor": {
+            "x": 1704,
+            "y": 1070
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 205
+        },
+        {
+          "slot_id": "entrant_10_placement_tag",
+          "asset_id": "10th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 206
+        },
+        {
+          "slot_id": "entrant_11_placement_tag",
+          "asset_id": "11th.png",
+          "anchor": {
+            "x": 464,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 207
+        },
+        {
+          "slot_id": "entrant_12_placement_tag",
+          "asset_id": "12th.png",
+          "anchor": {
+            "x": 774,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 208
+        },
+        {
+          "slot_id": "entrant_13_placement_tag",
+          "asset_id": "13th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 209
+        },
+        {
+          "slot_id": "entrant_14_placement_tag",
+          "asset_id": "14th.png",
+          "anchor": {
+            "x": 1394,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 210
+        },
+        {
+          "slot_id": "entrant_15_placement_tag",
+          "asset_id": "15th.png",
+          "anchor": {
+            "x": 1704,
+            "y": 1260
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 211
+        },
+        {
+          "slot_id": "entrant_16_placement_tag",
+          "asset_id": "16th.png",
+          "anchor": {
+            "x": 154,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 212
+        },
+        {
+          "slot_id": "entrant_17_placement_tag",
+          "asset_id": "17th.png",
+          "anchor": {
+            "x": 464,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 213
+        },
+        {
+          "slot_id": "entrant_18_placement_tag",
+          "asset_id": "18th.png",
+          "anchor": {
+            "x": 774,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 214
+        },
+        {
+          "slot_id": "entrant_19_placement_tag",
+          "asset_id": "19th.png",
+          "anchor": {
+            "x": 1084,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 215
+        },
+        {
+          "slot_id": "entrant_20_placement_tag",
+          "asset_id": "20th.png",
+          "anchor": {
+            "x": 1394,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 216
+        },
+        {
+          "slot_id": "entrant_21_placement_tag",
+          "asset_id": "21st.png",
+          "anchor": {
+            "x": 1704,
+            "y": 1450
+          },
+          "max_size": {
+            "width": 66,
+            "height": 40
+          },
+          "z_index": 217
+        }
+      ]
+    }
+  }
+}

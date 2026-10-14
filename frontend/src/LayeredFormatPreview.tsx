@@ -3,6 +3,8 @@ import { apiUrl, recordDownload } from "./api";
 import { previewDownloadName } from "./previewDownload";
 import { drawRadialWatermark } from "./radialWatermark";
 import { drawPodiumPreviewFooter, podiumHeaderWithoutFooter } from "./podiumPreviewFooter";
+import { placementNumberPreviewPath } from "./placementNumbering";
+import { clappingGridLayout, clappingGridVariant } from "./clappingGrid";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
@@ -51,6 +53,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 function layoutId(format: FormatConfiguration): string {
+  const grid = clappingGridLayout(format.selection);
+  if (grid) return `singles_top_${grid.entrant_count}_${clappingGridVariant(grid.columns)}`;
   if (isPodiumsClapping(format.selection) && format.selection.options.entrant_count === 16) return "singles_top_16_clapping";
   if (isPodiumsClapping(format.selection) && format.selection.options.event_format === "doubles") return "doubles_top_8_four_podium";
   if (format.selection.options.variant === "four_podium") return "top_8_four_podiums";
@@ -164,7 +168,7 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     foregroundLayers,
     headerUrl,
     logoPlaceholderUrl: mode === "radial" ? `${layerRoot}/radial_logos/${logoPosition}.png` : undefined,
-    resultLabelsUrl: mode === "radial" ? `${layerRoot}/radial_labels${eventFormat === "doubles" ? "_doubles" : ""}.png` : undefined,
+    resultLabelsUrl: `${layerRoot}/${placementNumberPreviewPath(format)}`,
     watermarkUrl: mode === "radial" ? `${layerRoot}/radial_watermark${eventFormat === "doubles" ? "_doubles" : ""}.png` : undefined,
     label: `${styleLabel} · ${eventLabel} · ${layoutLabel}`,
     logoPosition,
@@ -184,12 +188,16 @@ function previewCharacter(character: FavoriteCharacter) {
 
 function previewEntrants(entrants: EntrantDraft[], entrantCount: number, includeSeeding: boolean) {
   return entrants.slice(0, entrantCount).map((entrant) => entrant.kind === "singles" ? {
+    omit_entrant: entrant.omitEntrant === true,
+    omit_placement: entrant.omitPlacement === true,
     tag: entrant.tag.trim(),
     name_font_size_adjustment: entrant.nameFontSizeAdjustment ?? 0,
     seed: includeSeeding && entrant.seed ? Number(entrant.seed) : null,
     placement: entrant.placement,
     characters: entrant.characters.map(previewCharacter),
   } : {
+    omit_entrant: entrant.omitEntrant === true,
+    omit_placement: entrant.omitPlacement === true,
     team_name: entrant.teamName.trim(),
     team_name_font_size_adjustment: entrant.teamNameFontSizeAdjustment ?? 0,
     seed: includeSeeding && entrant.seed ? Number(entrant.seed) : null,
@@ -230,6 +238,8 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
       organizer_bluesky_account: tournament.toBlueskyAccount.trim() || null,
     } : undefined,
     entrants: entrantsComplete ? previewEntrants(entrants, entrantCount, format.text_settings.include_seeding) : undefined,
+    entrant_visibility: entrantsComplete ? undefined : entrants.slice(0, entrantCount).map((entrant) => ({
+      omit_entrant: entrant.omitEntrant === true, omit_placement: entrant.omitPlacement === true })),
   };
   let init: RequestInit;
   if (fontAsset?.custom || (format.selection.mode === "radial" && logoImage) || composition) {
@@ -360,7 +370,8 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   const canvas = useRef<HTMLCanvasElement>(null);
   const expandedDialog = useRef<HTMLDialogElement>(null);
   const expandedCanvas = useRef<HTMLCanvasElement>(null);
-  const previewSignature = JSON.stringify({ format, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null, fontId: fontAsset?.id ?? null, tournament: tournamentComplete ? tournament : null, entrants: entrantsComplete ? entrants.slice(0, format.selection.options.entrant_count ?? 0) : null });
+  const previewSignature = JSON.stringify({ format, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null, fontId: fontAsset?.id ?? null, tournament: tournamentComplete ? tournament : null, entrants: entrantsComplete ? entrants.slice(0, format.selection.options.entrant_count ?? 0) : null,
+    visibility: entrants.slice(0, format.selection.options.entrant_count ?? 0).map((entrant) => [entrant.omitEntrant === true, entrant.omitPlacement === true]) });
   const needsRefresh = refreshedSignature !== previewSignature;
 
   useEffect(() => () => { if (animatedPreviewUrl) URL.revokeObjectURL(animatedPreviewUrl); }, [animatedPreviewUrl]);

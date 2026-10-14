@@ -8,6 +8,7 @@ import re
 from typing import Any, Mapping
 
 from models import TournamentFormat
+from clapping_grid_layouts import GRID_VARIANTS, grid_layout
 
 
 _VARIANT_ID = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
@@ -57,10 +58,17 @@ class ModeOptions:
             self.podium_style, PodiumStyle
         ):
             raise TypeError("podium_style must be a PodiumStyle or null")
+        if self.variant is not None and self.variant.startswith("clapping_grid_") and (
+            self.podium_style is not PodiumStyle.CUSTOMIZABLE
+            or self.event_format is not TournamentFormat.SINGLES
+            or grid_layout(self.entrant_count, self.variant) is None
+        ):
+            raise ValueError("Clapping grids require a supported Customizable Singles layout")
         clapping = self.podium_style is not None and (
             (self.entrant_count == 8 and self.variant == "four_podium")
             or (self.event_format is TournamentFormat.SINGLES
                 and self.entrant_count == 16 and self.variant == "clapping")
+            or self.variant in GRID_VARIANTS
         )
         if self.animated is None:
             object.__setattr__(self, "animated", clapping)

@@ -6,12 +6,14 @@ import FontSizeSlider from "./FontSizeSlider";
 import { DoublesFavoritePicker, SinglesFavoritePicker } from "./FavoritePicker";
 import { FavoriteDoublesTeam, FavoriteSinglesEntrant, FavoritesData, newFavoriteId, normalizedFavoriteTag, parseAlternateSpellings } from "./favorites";
 import { EventFormat } from "./format";
+import { placementRank } from "./placementNumbering";
 
 interface EntrantsStepProps {
   value: EntrantDraft[];
   count: number;
   eventFormat: EventFormat;
   includeSeeding: boolean;
+  useTournamentPlacing?: boolean;
   complete: boolean;
   fighters: FighterOption[];
   favorites: FavoritesData;
@@ -29,7 +31,7 @@ function favoriteMember(favorite: FavoriteSinglesEntrant): EntrantMemberDraft {
   return { tag: favorite.tag, characters: favorite.characters.map((character) => ({ ...character })), xHandle: "", country: "" };
 }
 
-export default function EntrantsStep({ value, count, eventFormat, includeSeeding, complete, fighters, favorites, onChange, onFavoritesChange, onProceed }: EntrantsStepProps) {
+export default function EntrantsStep({ value, count, eventFormat, includeSeeding, useTournamentPlacing = true, complete, fighters, favorites, onChange, onFavoritesChange, onProceed }: EntrantsStepProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const favoriteDialogRef = useRef<HTMLDialogElement>(null);
   const [showErrors, setShowErrors] = useState(false);
@@ -141,8 +143,13 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
 
   return <section className={`step-content entrants-step${showErrors ? " entrants-step--show-errors" : ""}`} ref={sectionRef}>
     <div className="step-intro"><div className="step-heading-row"><h1>{eventFormat === "singles" ? `Top ${count} Entrants` : `Top ${count} Teams`}</h1><button className="button button--ghost" type="button" onClick={validateOrGenerate}>{complete ? "Download Full Resolution Image" : "Finish filling out entrant information."}</button></div><p>Review imported results or enter each placement manually. Character colors and poses come from the renderer.</p></div>
-    <div className="entrant-grid entrant-grid--maker">{displayed.map((entrant, index) => <fieldset className="entrant-card entrant-card--maker" key={`${entrant.kind}-${index}`}>
-      <legend>{ordinal(entrant.placement)}</legend>
+    <div className="entrant-grid entrant-grid--maker">{displayed.map((entrant, index) => <fieldset className={`entrant-card entrant-card--maker${entrant.omitEntrant ? " entrant-card--omitted" : ""}`} key={`${entrant.kind}-${index}`}>
+      <legend>{ordinal(placementRank(index + 1, useTournamentPlacing))}</legend>
+      <div className="entrant-visibility-controls">
+        <label className="choice"><input type="checkbox" checked={entrant.omitEntrant === true} onChange={(event) => update(index, { ...entrant, omitEntrant: event.target.checked })} />Intentionally omit entrant</label>
+        <label className="choice"><input type="checkbox" checked={entrant.omitPlacement === true} disabled={entrant.omitEntrant === true} onChange={(event) => update(index, { ...entrant, omitPlacement: event.target.checked })} />Omit placement / HM</label>
+      </div>
+      <fieldset className="entrant-details" disabled={entrant.omitEntrant === true}>
       {entrant.kind === "singles" ? <>
         <SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applySinglesFavorite(index, favorite)} />
         <FontSizeSlider label="Player name size adjustment" value={entrant.nameFontSizeAdjustment ?? 0} onChange={(nameFontSizeAdjustment) => update(index, { ...entrant, nameFontSizeAdjustment })} />
@@ -158,6 +165,7 @@ export default function EntrantsStep({ value, count, eventFormat, includeSeeding
         <div className="entrant-team-members"><fieldset className="entrant-card entrant-member-card"><legend>Entrant 1</legend><SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyMemberFavorite(index, "entrant1", favorite)} /><EntrantCharacterEditor tag={entrant.entrant1.tag} tagLabel="Entrant 1 tag" tagPlaceholder={`Player 1 · Team ${index + 1}`} characters={entrant.entrant1.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, tag } })} onChange={(characters) => update(index, { ...entrant, entrant1: { ...entrant.entrant1, characters } })} /></fieldset><fieldset className="entrant-card entrant-member-card"><legend>Entrant 2</legend><SinglesFavoritePicker favorites={favorites.singles} onChoose={(favorite) => applyMemberFavorite(index, "entrant2", favorite)} /><EntrantCharacterEditor tag={entrant.entrant2.tag} tagLabel="Entrant 2 tag" tagPlaceholder={`Player 2 · Team ${index + 1}`} characters={entrant.entrant2.characters} fighters={fighters} onTagChange={(tag) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, tag } })} onChange={(characters) => update(index, { ...entrant, entrant2: { ...entrant.entrant2, characters } })} /></fieldset></div>
         <button className="button button--outline entrant-favorite-button" type="button" onClick={() => openFavoriteDialog(index, entrant)}>{favorites.doubles.some((favorite) => favorite.team_name.trim().toLocaleLowerCase() === entrant.teamName.trim().toLocaleLowerCase()) ? "Update Favorited Team" : "Save As Favorited Team"}</button>
       </>}
+      </fieldset>
     </fieldset>)}</div>
     <dialog className="modal favorite-save-modal" ref={favoriteDialogRef} onClose={() => setFavoriteTarget(null)} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><form className="modal__content" onSubmit={saveFavorite}><button className="modal__close" type="button" onClick={() => favoriteDialogRef.current?.close()} aria-label="Close">×</button><span className="eyebrow">Save reusable entrant data</span><h2>{favoriteTarget?.kind === "doubles" ? "Save favorited team" : "Save favorited entrant"}</h2><p>Review the output name and add alternate spellings that may appear in imported brackets.</p><label className="field">{favoriteTarget?.kind === "doubles" ? "Team name" : "Canonical output name"}<input value={favoriteTag} onChange={(event) => setFavoriteTag(event.target.value)} required /></label>{favoriteTarget?.kind === "singles" ? <><label className="field favorite-alternate-field">Alternate spellings<textarea value={alternateSpellings} onChange={(event) => setAlternateSpellings(event.target.value)} placeholder="BUSTA, BU$TA" /><small>Comma-separated spellings that should match this entrant. Sponsors and capitalization are ignored during matching.</small></label><label className="choice"><input type="checkbox" checked={primaryFavorite} onChange={(event) => setPrimaryFavorite(event.target.checked)} /> Use this as the primary favorite when multiple saved versions match</label></> : favoriteEntrant?.kind === "doubles" ? <div className="favorite-team-alternates"><label className="field favorite-alternate-field"><span>{favoriteEntrant.entrant1.tag} alternate spellings</span><textarea value={alternateSpellings} onChange={(event) => setAlternateSpellings(event.target.value)} placeholder="BUSTA, BU$TA" /><small>Comma-separated spellings for entrant 1.</small></label><label className="field favorite-alternate-field"><span>{favoriteEntrant.entrant2.tag} alternate spellings</span><textarea value={secondAlternateSpellings} onChange={(event) => setSecondAlternateSpellings(event.target.value)} placeholder="BUSTA, BU$TA" /><small>Comma-separated spellings for entrant 2.</small></label></div> : null}<div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => favoriteDialogRef.current?.close()}>Cancel</button><button className="button button--dark" type="submit">{favoriteTarget && ((favoriteTarget.kind === "singles" && findSinglesFavorite(favoriteEntrant?.kind === "singles" ? favoriteEntrant.tag : "")) || (favoriteTarget.kind === "doubles" && favorites.doubles.some((favorite) => favorite.team_name.trim().toLocaleLowerCase() === favoriteTag.trim().toLocaleLowerCase()))) ? "Update favorite" : "Save favorite"}</button></div></form></dialog>
   </section>;

@@ -314,6 +314,9 @@ class ModePreferences:
     character_slots: tuple[CharacterPlacement, ...] = ()
     text_slots: tuple[TextPlacement, ...] = ()
     schema_version: int = PREFERENCE_SCHEMA_VERSION
+    # Render-only state; never save tournament-specific omissions as geometry.
+    omitted_entrant_slots: tuple[int, ...] = ()
+    full_formatting_assets: tuple[FormattingAssetPlacement, ...] | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != PREFERENCE_SCHEMA_VERSION:

@@ -9,8 +9,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 async function loadTypescript(name) {
-  const source = readFileSync(new URL(`../src/${name}`, import.meta.url), "utf8");
-  const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
+  const compiled = buildSync({ entryPoints: [fileURLToPath(new URL(`../src/${name}`, import.meta.url))], bundle: true,
+    platform: "node", format: "esm", write: false }).outputFiles[0].text;
   return import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 }
 

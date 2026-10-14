@@ -3,14 +3,16 @@
 from dataclasses import replace
 import re
 
-from background_builder import PixelPoint, PixelSize
+from background_builder import PixelSize
 from creation_modes import CreationMode, PodiumStyle
-from mode_preferences import PlacementTagPlacement
+from clapping_grid_layouts import GRID_VARIANTS
+from mode_preferences import PixelPoint, PlacementTagPlacement
 
 
 def default_tournament_placing(selection):
-    return not (selection.mode is CreationMode.EYES
-                and selection.options.entrant_count in {10, 15, 20, 25})
+    return not ((selection.mode is CreationMode.EYES
+                 and selection.options.entrant_count in {10, 15, 20, 25})
+                or (selection.mode is CreationMode.PODIUM and selection.options.variant in GRID_VARIANTS))
 
 
 def placement_rank(slot, use_tournament_placing=True):

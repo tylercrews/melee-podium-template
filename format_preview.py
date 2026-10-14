@@ -27,6 +27,9 @@ from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from podiums_clapping_renderer import ClappingLayout, PodiumsClappingContentRenderer
 from extended_clapping_renderer import DoublesClappingContentRenderer, SinglesTop16ClappingContentRenderer
+from clapping_grid_renderer import ClappingGridContentRenderer
+from clapping_grid_layouts import GRID_LAYOUTS, GRID_VARIANTS
+from entrant_visibility import apply_visibility, visible_preferences
 from mode_preferences import ModePreferenceRepository
 from radial_content_renderer import RadialContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
@@ -51,6 +54,7 @@ SUPPORTED_LAYOUTS = frozenset(
         (TournamentFormat.DOUBLES, 3, None),
         (TournamentFormat.DOUBLES, 4, None),
         (TournamentFormat.DOUBLES, 8, "four_podium"),
+        *((TournamentFormat.SINGLES, row["entrant_count"], f"clapping_grid_{row['columns']}") for row in GRID_LAYOUTS),
     }
 )
 SUPPORTED_SQUARE_LAYOUTS = frozenset(
@@ -90,6 +94,7 @@ def prepare_format_preview(
     animated: bool | None = None,
     composite_background: Image.Image | None = None,
     composite_overlay: Image.Image | None = None,
+    entrant_visibility: list[dict] | None = None,
 ) -> Image.Image | ClappingLayout:
     """Return a full example render for one supported frontend format."""
 
@@ -152,6 +157,8 @@ def prepare_format_preview(
         if len(entrants) < entrant_count or any(not isinstance(entrant, expected_type) for entrant in entrants[:entrant_count]):
             raise ValueError("Preview entrants do not match the selected layout")
         entrants = entrants[:entrant_count]
+    entrants = apply_visibility(entrants, entrant_visibility)
+    preferences = visible_preferences(preferences, entrants)
     podium_colors = (
         podium_colors or PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)
         if creation_mode is CreationMode.PODIUM and style is PodiumStyle.CUSTOMIZABLE
@@ -179,9 +186,10 @@ def prepare_format_preview(
         preferences,
         podium_colors or formatting_colors,
     )
-    if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping"}:
+    if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping", *GRID_VARIANTS}:
         renderer_type = (
-            DoublesClappingContentRenderer if event_format is TournamentFormat.DOUBLES
+            ClappingGridContentRenderer if variant in GRID_VARIANTS
+            else DoublesClappingContentRenderer if event_format is TournamentFormat.DOUBLES
             else SinglesTop16ClappingContentRenderer if entrant_count == 16
             else PodiumsClappingContentRenderer
         )

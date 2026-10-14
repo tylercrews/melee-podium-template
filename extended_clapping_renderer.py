@@ -53,12 +53,16 @@ class ExtendedClappingContentRenderer(PodiumsClappingContentRenderer):
         count = 4 if request.selection.options.event_format is TournamentFormat.DOUBLES else 8
         selection = replace(request.selection, options=replace(request.selection.options,
                             entrant_count=count, variant=None, animated=False))
+        text_settings = request.text_settings
+        if text_settings.entrant_text_color_mode == "pick_all":
+            text_settings = replace(text_settings, entrant_text_colors=text_settings.entrant_text_colors[:count],
+                                    entrant_text_metallic=text_settings.entrant_text_metallic[:count])
         return super()._draw_with_font(canvas, replace(request, selection=selection,
-                                      entrants=request.entrants[:count]), preferences)
+                                      entrants=request.entrants[:count], text_settings=text_settings), preferences)
 
 
 class DoublesClappingContentRenderer(ExtendedClappingContentRenderer):
-    def _panel_keys(self):
+    def _panel_keys(self, request):
         return tuple((slot, member) for slot in range(5, 9) for member in (1, 2))
 
     def _panel_subject(self, request, panel):
@@ -73,6 +77,8 @@ class DoublesClappingContentRenderer(ExtendedClappingContentRenderer):
         draw = ImageDraw.Draw(base)
         for row in profile["team_names"]:
             team = request.entrants[row["entrant_slot"] - 1]
+            if team.omit_entrant:
+                continue
             color, metallic = self._default_text_style(request, row["entrant_slot"])
             if isinstance(color, tuple):
                 color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
@@ -102,5 +108,5 @@ class SinglesTop16ClappingContentRenderer(ExtendedClappingContentRenderer):
                     entrant_slot = (entrant_slot - 1) % 8 + 1
         return PodiumsClappingContentRenderer._default_text_style(request, entrant_slot)
 
-    def _panel_keys(self):
+    def _panel_keys(self, request):
         return tuple((slot, None) for slot in range(9, 17))

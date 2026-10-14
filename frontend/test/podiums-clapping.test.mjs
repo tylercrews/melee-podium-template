@@ -8,8 +8,8 @@ import { buildSync } from "esbuild";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-const source = readFileSync(new URL("../src/format.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
+const compiled = buildSync({ entryPoints: [fileURLToPath(new URL("../src/format.ts", import.meta.url))],
+  bundle: true, platform: "node", format: "esm", write: false }).outputFiles[0].text;
 const formats = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 const component = buildSync({ entryPoints: [fileURLToPath(new URL("../src/EntrantCountSettings.tsx", import.meta.url))], bundle: true, platform: "node", format: "cjs", write: false, jsx: "automatic", external: ["react", "react/jsx-runtime"] });
 const module = { exports: {} };

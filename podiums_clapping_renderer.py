@@ -27,6 +27,7 @@ from mode_preferences import ModePreferences, PlacementTagPlacement
 from gif_animation import encode_animated_gif
 from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustment
 from placement_numbering import number_placement_tags
+from entrant_visibility import visible_placement_tags
 
 
 PROFILE = Path(__file__).resolve().parent / "preferences/portraits/podiums_clapping.json"
@@ -61,7 +62,7 @@ class ClappingPanel:
         panel = cls(value["entrant_slot"], PixelRect(*value["portrait_rect"]),
                     value["text_x"], value["text_max_width"], value["text_alignment"],
                     value.get("member_slot"), value.get("identity_scale", 1.0))
-        if (panel.entrant_slot not in range(5, 17) or panel.text_alignment not in {"left", "right"}
+        if (panel.entrant_slot not in range(4, 22) or panel.text_alignment not in {"left", "right"}
                 or panel.text_max_width <= 0 or panel.member_slot not in {None, 1, 2}
                 or not 0 < panel.identity_scale <= 1):
             raise ValueError("Invalid Podiums+Clapping panel")
@@ -94,7 +95,7 @@ class ClappingLayout:
         # Keep the longest native loop's cadence and fit shorter claps to it.
         # Ice Climbers' 25-frame clap can therefore share a cycle with 42-frame
         # characters without skipping its tail or making a huge multi-cycle GIF.
-        return max(self.tracks, key=lambda track: sum(track.durations)).durations
+        return max(self.tracks, key=lambda track: sum(track.durations)).durations if self.tracks else [20]
 
     def frame(self, index: int | None = None) -> Image.Image:
         canvas = self.base.copy()
@@ -129,7 +130,7 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
     def _profile(self, request):
         return json.loads(PROFILE.read_text(encoding="utf-8"))["styles"][request.selection.options.podium_style.value]
 
-    def _panel_keys(self):
+    def _panel_keys(self, request):
         return tuple((slot, None) for slot in range(5, 9))
 
     def _panel_subject(self, request, panel):
@@ -144,13 +145,15 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
         if profile["canvas_size"] != preferences.canvas_size.to_dict():
             raise ValueError("Podiums+Clapping geometry does not match its canvas")
         panels = tuple(ClappingPanel.from_dict(row) for row in profile["panels"])
-        if tuple((panel.entrant_slot, panel.member_slot) for panel in panels) != self._panel_keys() or any(
+        if tuple((panel.entrant_slot, panel.member_slot) for panel in panels) != self._panel_keys(request) or any(
             panel.rect.left < 0 or panel.rect.top < 0 or panel.rect.right > canvas.width or panel.rect.bottom > canvas.height
             for panel in panels
         ):
             raise ValueError("Podiums+Clapping panels must fit every lower entrant inside the canvas")
         badges = number_placement_tags(tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"]),
                                       request.text_settings.use_tournament_placing)
+        badges = visible_placement_tags(badges, request.entrants)
+        panels = tuple(panel for panel in panels if not request.entrants[panel.entrant_slot - 1].omit_entrant)
         preferences = replace(preferences, text_slots=tuple(row for row in preferences.text_slots if row.field != "entrant.summary"))
         base = super().draw(canvas, request, preferences)
         if background is not None:

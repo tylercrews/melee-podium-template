@@ -55,6 +55,7 @@ from DrawPodium import (
 )
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
+from entrant_visibility import validation_entrants
 from podium_colors import podium_color_for_slot
 
 
@@ -154,7 +155,7 @@ class LegacyPodiumContentRenderer:
             raise ValueError("LegacyPodiumContentRenderer requires podium mode")
 
         mode = PodiumMode(selection.submode_id)
-        _validate_placements(request.entrants, selection.options.entrant_count)
+        _validate_placements(validation_entrants(request.entrants), selection.options.entrant_count)
         result = canvas.convert("RGBA")
         is_doubles = selection.options.event_format is TournamentFormat.DOUBLES
         assigned_header = request.header_layout is not None

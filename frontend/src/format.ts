@@ -1,3 +1,5 @@
+import { CLAPPING_GRID_LAYOUTS, clappingGridLayout, clappingGridVariant } from "./clappingGrid";
+
 export type CreationMode = "podium" | "eyes" | "squares" | "radial";
 export type EventFormat = "singles" | "doubles";
 export type PodiumStyle = "legacy" | "customizable";
@@ -212,6 +214,9 @@ export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, En
       { entrant_count: 8, variant: null, label: "Top 8", detail: "Eight podiums" },
       { entrant_count: 8, variant: "four_podium", label: "Podiums+Clapping", detail: "Top 8: four podiums and four clapping portraits" },
       { entrant_count: 16, variant: "clapping", label: "Top 16 + Clapping", detail: "Eight podiums and eight small clapping portraits" },
+      ...CLAPPING_GRID_LAYOUTS.map((layout) => ({ entrant_count: layout.entrant_count,
+        variant: clappingGridVariant(layout.columns), label: `PR Top ${layout.entrant_count} + Clapping${layout.entrant_count === 15 ? ` (${layout.rows} rows)` : ""}`,
+        detail: `Three podiums and ${layout.rows} ${layout.rows === 1 ? "row" : "rows"} of ${layout.columns} clapping portraits` })),
     ],
     doubles: [
       { entrant_count: 3, variant: null, label: "Top 3" },
@@ -238,7 +243,8 @@ export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, En
 
 export function entrantCountOptions(selection: FormatSelection): EntrantCountOption[] {
   return selection.options.event_format
-    ? FORMAT_ENTRANT_OPTIONS[selection.mode][selection.options.event_format]
+    ? FORMAT_ENTRANT_OPTIONS[selection.mode][selection.options.event_format].filter((option) =>
+      !option.variant?.startsWith("clapping_grid_") || selection.options.podium_style === "customizable")
     : [];
 }
 
@@ -250,6 +256,7 @@ export function hasValidEntrantCount(selection: FormatSelection): boolean {
 }
 
 export function formattingAssetCount(format: FormatConfiguration): number {
+  if (clappingGridLayout(format.selection)) return 3;
   if (format.selection.mode === "podium" && format.selection.options.variant === "four_podium") return 4;
   if (format.selection.mode === "podium" && format.selection.options.variant === "clapping") return 8;
   return format.selection.options.entrant_count ?? (format.selection.mode === "podium" ? 3 : 1);
@@ -493,6 +500,7 @@ export function isPodiumsClapping(selection: FormatSelection): boolean {
   return selection.mode === "podium" && (
     (selection.options.event_format !== null && selection.options.entrant_count === 8 && selection.options.variant === "four_podium")
     || (selection.options.event_format === "singles" && selection.options.entrant_count === 16 && selection.options.variant === "clapping")
+    || !!clappingGridLayout(selection)
   );
 }
 
@@ -506,7 +514,7 @@ export function selectEntrantCount(format: FormatConfiguration, option: EntrantC
 }
 
 export function defaultTournamentPlacing(selection: FormatSelection): boolean {
-  return !(selection.mode === "eyes" && [10, 15, 20, 25].includes(selection.options.entrant_count ?? 0));
+  return !(selection.mode === "eyes" && [10, 15, 20, 25].includes(selection.options.entrant_count ?? 0)) && !clappingGridLayout(selection);
 }
 
 function normalizeBracketImportSettings(value: unknown): BracketImportSettings {
@@ -543,6 +551,10 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     throw new Error("Radial formats must use Singles Top 8 or Doubles Top 4 without a layout variant.");
   }
   const rawStyle = options.podium_style;
+  const rawSelection = { mode, options: options as unknown as FormatSelection["options"] };
+  if (typeof options.variant === "string" && options.variant.startsWith("clapping_grid_") && !clappingGridLayout(rawSelection)) {
+    throw new Error("Clapping grids require a supported Customizable Singles layout.");
+  }
   const clapping = isPodiumsClapping({ mode, options: options as unknown as FormatSelection["options"] });
   if (options.animated !== undefined && typeof options.animated !== "boolean") {
     throw new Error("Animated must be true or false.");
@@ -570,7 +582,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     image_settings: normalizeImageSettings(value.image_settings),
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
     entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors),
-    text_settings: normalizeTextSettings(value.text_settings, !(mode === "eyes" && [10, 15, 20, 25].includes(Number(rawEntrantCount)))),
+    text_settings: normalizeTextSettings(value.text_settings, defaultTournamentPlacing(rawSelection)),
     bracket_import_settings: normalizeBracketImportSettings(value.bracket_import_settings),
   };
 }
@@ -638,6 +650,8 @@ export function formatCanvasSize(format: FormatConfiguration): PixelSize | null 
     return null;
   }
   if (format.selection.mode !== "podium") return null;
+  const grid = clappingGridLayout(format.selection);
+  if (grid) return { width: 1920, height: grid.height };
   const height = isPodiumsClapping(format.selection)
     ? (format.selection.options.event_format === "doubles" ? 1280 : format.selection.options.entrant_count === 16 ? 1000 : 941)
     : 941;

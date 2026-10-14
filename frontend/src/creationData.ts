@@ -26,6 +26,8 @@ export interface EntrantMemberDraft {
 }
 
 export interface SinglesEntrantDraft extends EntrantMemberDraft {
+  omitEntrant?: boolean;
+  omitPlacement?: boolean;
   kind: "singles";
   placement: number;
   seed: string;
@@ -33,6 +35,8 @@ export interface SinglesEntrantDraft extends EntrantMemberDraft {
 }
 
 export interface DoublesEntrantDraft {
+  omitEntrant?: boolean;
+  omitPlacement?: boolean;
   teamNameFontSizeAdjustment?: number;
   kind: "doubles";
   placement: number;
@@ -170,6 +174,8 @@ export function areEntrantsComplete(entrants: EntrantDraft[], count: number, eve
   const visible = entrants.slice(0, count);
   if (visible.length !== count) return false;
   return visible.every((entrant) => {
+    if (entrant.kind !== eventFormat) return false;
+    if (entrant.omitEntrant) return true;
     if (includeSeeding && !(Number(entrant.seed) > 0)) return false;
     return eventFormat === "singles"
       ? entrant.kind === "singles" && memberComplete(entrant)

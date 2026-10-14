@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -691,7 +691,8 @@ def _squares_header_boxes(
 ) -> dict[str, tuple[PixelRect, str]]:
     """Return three bottom header regions using the Podium assignment keys."""
 
-    cards = _card_rectangles(preferences)
+    cards = _card_rectangles(replace(preferences, formatting_assets=preferences.full_formatting_assets)
+                             if preferences.full_formatting_assets is not None else preferences)
     if not cards:
         raise ValueError("Squares layouts require at least one card")
     left = min(card.left for card in cards.values())

@@ -15,6 +15,7 @@ from mode_preferences import (
     TextPlacement,
 )
 from models import TournamentFormat
+from clapping_grid_layouts import grid_layout
 
 
 class ModePreferencesTest(unittest.TestCase):
@@ -148,7 +149,7 @@ class ModePreferencesTest(unittest.TestCase):
         self.assertEqual(
             counts,
             {
-                CreationMode.PODIUM: 16,
+                CreationMode.PODIUM: 25,
                 CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
                 CreationMode.RADIAL: 2,
@@ -161,7 +162,7 @@ class ModePreferencesTest(unittest.TestCase):
         )
         self.assertEqual(
             podium_styles,
-            {PodiumStyle.LEGACY: 8, PodiumStyle.CUSTOMIZABLE: 8},
+            {PodiumStyle.LEGACY: 8, PodiumStyle.CUSTOMIZABLE: 17},
         )
         for item in preferences:
             reviewed_layout = (
@@ -186,6 +187,8 @@ class ModePreferencesTest(unittest.TestCase):
             extended_clapping = item.selection.mode is CreationMode.PODIUM and item.selection.submode_id in {
                 "doubles_top_8_four_podium", "singles_top_16_clapping"
             }
+            grid = grid_layout(item.selection.options.entrant_count, item.selection.options.variant)
+            extended_clapping = extended_clapping or grid is not None
             self.assertEqual(item.ready, reviewed_layout or extended_clapping)
             if (
                 item.selection.mode is CreationMode.EYES
@@ -209,7 +212,7 @@ class ModePreferencesTest(unittest.TestCase):
                 if item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
                 else PixelSize(1672, 1280 if item.selection.submode_id == "doubles_top_8_four_podium" else 1000 if item.selection.submode_id == "singles_top_16_clapping" else 941),
             )
-            self.assertEqual(item.canvas_size, expected_canvas)
+            self.assertEqual(item.canvas_size, PixelSize(1920, grid["height"]) if grid else expected_canvas)
             extracted_legacy = (
                 item.selection.mode is CreationMode.PODIUM
                 and item.selection.options.podium_style is PodiumStyle.LEGACY

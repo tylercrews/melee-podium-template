@@ -15,7 +15,7 @@ def radial_sections(preferences: ModePreferences) -> dict[int, FormattingAssetPl
         for item in preferences.formatting_assets
         if item.asset_id == "radial_slice"
     }
-    if set(sections) != set(range(1, preferences.selection.options.entrant_count + 1)):
+    if set(sections) != set(range(1, preferences.selection.options.entrant_count + 1)) - set(preferences.omitted_entrant_slots):
         raise ValueError("Radial requires one polygon section per entrant")
     if any(not section.polygon for section in sections.values()):
         raise ValueError("Radial sections require polygon vertices")
