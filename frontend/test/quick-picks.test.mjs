@@ -27,32 +27,37 @@ const { QUICK_PICKS, quickPickFormat } = await loadModule("quickPicks.ts");
 const { isFormatComplete, parseFormatCode, formatCode, formatCanvasSize } = await loadModule("format.ts");
 const { default: LoadStep } = await loadModule("LoadStep.tsx");
 
-test("guests see five accessible thumbnail buttons in the requested order", () => {
+test("guests see eight accessible thumbnail buttons in the requested order", () => {
   const html = renderToStaticMarkup(createElement(LoadStep, {
     user: null, hasLoadedFormat: false, canProceedToBracket: false, onChange() {}, onSignIn() {}, onSkip() {}, onProceedToBracket() {},
   }));
   assert.ok(html.indexOf("load-format-heading") < html.indexOf("quick-picks-heading"));
   assert.ok(html.includes("<h1>Load A Format</h1>"));
-  assert.equal((html.match(/class="quick-pick"/g) ?? []).length, 5);
+  assert.equal((html.match(/class="quick-pick"/g) ?? []).length, 8);
   for (const pick of QUICK_PICKS) {
     assert.ok(html.includes(pick.name));
     assert.ok(html.includes(`/quick_pick_thumbnails/${pick.id}.webp`));
   }
   const buttons = html.match(/<button\b[^>]*class="quick-pick"[^>]*>/g) ?? [];
-  assert.equal(buttons.length, 5);
+  assert.equal(buttons.length, 8);
   assert.ok(buttons.every((button) => !button.includes("disabled=")));
+  assert.ok(html.includes('alt="Eyes singles Top 8 example"'));
+  assert.ok(html.includes('alt="Radial singles Top 8 example"'));
+  assert.ok(html.includes('alt="Animated Podiums+Clapping singles Top 11 example"'));
   assert.deepEqual(QUICK_PICKS.map(({ id }) => id), [
     "podiums-clapping-singles-top-8", "podium-doubles-top-4", "squares-singles-top-8",
     "podium-singles-top-8", "squares-doubles-top-4",
+    "podiums-clapping-pr-top-11", "eyes-singles-top-8", "radial-singles-top-8",
   ]);
   for (let index = 1; index < QUICK_PICKS.length; index++) {
     assert.ok(html.indexOf(QUICK_PICKS[index - 1].name) < html.indexOf(QUICK_PICKS[index].name));
   }
 });
 
-test("all five Quick Picks load complete editable formats with their own thumbnails", () => {
+test("all eight Quick Picks load complete editable formats with their own thumbnails", () => {
   assert.deepEqual(QUICK_PICKS.map(({ mode, event_format, entrant_count }) => [mode, event_format, entrant_count]), [
     ["podium", "singles", 8], ["podium", "doubles", 4], ["squares", "singles", 8], ["podium", "singles", 8], ["squares", "doubles", 4],
+    ["podium", "singles", 11], ["eyes", "singles", 8], ["radial", "singles", 8],
   ]);
   assert.equal(QUICK_PICKS[2].name, "Just Give Me Top8er");
   for (const pick of QUICK_PICKS) {
@@ -80,10 +85,30 @@ test("the first animated Quick Pick loads Podiums+Clapping and remains editable 
   assert.equal(format.selection.options.animated, true);
   format.selection.options.animated = false;
   assert.equal(parseFormatCode(formatCode(format)).selection.options.animated, false);
-  for (const pick of QUICK_PICKS.slice(1)) {
+  for (const pick of QUICK_PICKS.filter((item) => !item.animated)) {
     assert.equal(quickPickFormat(pick.id).selection.options.animated, false);
     assert.equal(quickPickFormat(pick.id).selection.options.variant, null);
   }
+});
+
+test("new PR Quick Pick uses three podiums, eight animated portraits, and sequential numbers", () => {
+  const pick = QUICK_PICKS[5];
+  assert.equal(pick.name, "MeleePodium Also Has Some PR Settings");
+  const format = quickPickFormat(pick.id);
+  assert.equal(format.selection.options.entrant_count, 11);
+  assert.equal(format.selection.options.variant, "clapping_grid_4");
+  assert.equal(format.selection.options.podium_style, "customizable");
+  assert.equal(format.selection.options.animated, true);
+  assert.equal(format.text_settings.use_tournament_placing, false);
+  assert.deepEqual(formatCanvasSize(format), { width: 1920, height: 1340 });
+  for (const pick of QUICK_PICKS.slice(6)) {
+    assert.equal(quickPickFormat(pick.id).text_settings.use_tournament_placing, true);
+  }
+  format.selection.options.animated = false;
+  format.text_settings.use_tournament_placing = true;
+  const loaded = parseFormatCode(formatCode(format));
+  assert.equal(loaded.selection.options.animated, false);
+  assert.equal(loaded.text_settings.use_tournament_placing, true);
 });
 
 test("editing one Quick Pick does not change another load or shared defaults", () => {

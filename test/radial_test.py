@@ -45,7 +45,19 @@ class RadialTests(unittest.TestCase):
             self.assertIn(center, [(section.destination.left + p.x, section.destination.top + p.y) for p in section.polygon])
         self.assertFalse(any(p.field == "entrant.placement" for p in self.preferences.text_slots))
         self.assertEqual(self.preferences, radial_preferences())
-        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((365, 96), (1710, 48), (68, 165), (1852, 165), (68, 915), (200, 1028), (1852, 915), (1720, 1028))])
+        self.assertEqual([p.anchor for p in self.preferences.placement_tags], [PixelPoint(x, y) for x, y in ((365, 96), (1710, 48), (68, 165), (1852, 165), (68, 915), (212, 1028), (1852, 915), (1720, 1028))])
+
+    def test_lower_fifth_number_clears_the_diagonal_divider(self):
+        from PIL import ImageChops
+        from formatting_assets import draw_placement_tags
+        from radial_geometry import draw_radial_dividers
+        badge = next(tag for tag in self.preferences.placement_tags if tag.slot_id == "number_6")
+        layer = Image.new("RGBA", self.preferences.canvas_size.as_tuple())
+        draw_placement_tags(layer, replace(self.preferences, placement_tags=(badge,)))
+        borders = Image.new("RGBA", layer.size)
+        draw_radial_dividers(borders, self.preferences)
+        overlap = ImageChops.multiply(layer.getchannel("A"), borders.getchannel("A"))
+        self.assertIsNone(overlap.point(lambda value: 255 if value > 16 else 0).getbbox())
         self.assertEqual([p.asset_id for p in self.preferences.placement_tags], ["01st.png", "02nd.png", "03rd.png", "04th.png", "05th.png", "05th.png", "07th.png", "07th.png"])
 
     def test_numbers_and_names_have_separate_outer_corner_regions(self):

@@ -77,7 +77,6 @@ npm run build
 
 
 TODO LIST:
-* make it so you can pick a format and omit players. Like just have empty podiums or slots if you want, and that way anything can be a pr pic
 
 * need to decide an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament. Sandbag is more like null, random should be something different.
 
@@ -85,7 +84,6 @@ TODO LIST:
 
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
-* bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
 
 Maybes/Eventuallies:
 * need assets for giga and the wireframes and the hands
@@ -96,8 +94,7 @@ Maybes/Eventuallies:
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing?
 
 Different Layout Styles One Day:
-* a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s
-* once we have placement numbers rendered instead of static assets, create an alternate counting mode where it puts 1-8 (5th 6th 7th 8th instead of 5th 5th 7th 7th) so that people can use it for PRs as well. Or maybe a top 10 pr mode.
+* a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s -- ended up using this idea to do podiums + clapping instead, which I like a lot more I think. Keeping this idea for a second just in case I reconsider
 * flying v with first place centered
 * long portraits like the character select screen
 * long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses

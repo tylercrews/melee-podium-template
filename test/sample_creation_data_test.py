@@ -74,7 +74,7 @@ class SampleCreationDataTest(unittest.TestCase):
                 "EG | PPMD": [("Falco", "green"), ("Marth", "default")],
                 "Cody": [("Fox", "green")],
                 "GG | Zain": [("Marth", "red")],
-                "FOX MVG | Mew2King": [("Sheik", "red"), ("Marth", "black"), ("Fox", "green")],
+                "Mew2King": [("Sheik", "red"), ("Marth", "black"), ("Fox", "green")],
                 "Liquid | Hungrybox": [("Jigglypuff", "green")],
                 "TSM | Leffen": [("Fox", "default"), ("Sheik", "white")],
             },

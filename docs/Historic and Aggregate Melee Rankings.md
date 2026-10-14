@@ -1285,7 +1285,7 @@ These source-table tags resolve to the same player and are combined before summi
 
 ## Sample rosters and historical sponsors
 
-The original eight stay Mang0, Armada, PPMD, Cody, Zain, Mew2King, Hungrybox, and **Leffen**. These sample fixtures represent prominent career-era identities, rather than present-day sponsorships. Cody deliberately has no sponsor prefix.
+The original eight stay Mang0, Armada, PPMD, Cody, Zain, Mew2King, Hungrybox, and **Leffen**. These sample fixtures represent prominent career-era identities, rather than present-day sponsorships. Cody and Mew2King deliberately have no sponsor prefix.
 
 | Player | Sample tag | Representative career era and sponsor reference |
 | --- | --- | --- |
@@ -1294,7 +1294,7 @@ The original eight stay Mang0, Armada, PPMD, Cody, Zain, Mew2King, Hungrybox, an
 | PPMD | `EG \| PPMD` | Evil Geniuses during his Apex 2015 win. [Career history](https://www.ssbwiki.com/Smasher:PPMD); [2014 article by EG PPMD](https://www.cyberpowerpc.com/blog/mentally-dealing-with-large-talent-pool-intimidation/). |
 | Cody | `Cody` | Unsponsored in the samples, as requested; the scoreboard combines Cody Schwab and iBDW. |
 | Zain | `GG \| Zain` | Golden Guardians during his 2022 No. 1 season. [Career and signing history](https://www.ssbwiki.com/Smasher:Zain). |
-| Mew2King | `FOX MVG \| Mew2King` | Echo Fox and Most Valuable Gaming during his 2017-2018 major-title period, including Smash Summit 6. [Career and signing history](https://www.ssbwiki.com/Smasher:Mew2King). |
+| Mew2King | `Mew2King` | No sponsor prefix in the samples, as requested. |
 | Hungrybox | `Liquid \| Hungrybox` | Team Liquid during his 2017-2019 No. 1 seasons. [Team Liquid career timeline](https://teamliquid.com/articles/a-timeline-10-years-of-liquid-hungrybox). |
 | Leffen | `TSM \| Leffen` | TSM during his EVO 2018 championship. [Career and signing history](https://www.ssbwiki.com/Smasher:Leffen). |
 

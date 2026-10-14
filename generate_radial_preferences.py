@@ -97,7 +97,11 @@ def radial_preferences() -> ModePreferences:
         slot = int(slot_id.rsplit("_", 1)[1])
         rank = (1, 2, 3, 4, 5, 5, 7, 7)[slot - 1]
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(rank, "th")
-        numbers.append(replace(p, slot_id=slot_id, asset_id=f"{rank:02}{suffix}.png"))
+        number = replace(p, slot_id=slot_id, asset_id=f"{rank:02}{suffix}.png")
+        if slot == 6:
+            # Clear the lower-left diagonal without moving names or seeds.
+            number = replace(number, anchor=replace(number.anchor, x=number.anchor.x + 12))
+        numbers.append(number)
     return replace(
         reference, formatting_assets=assets, character_slots=characters, text_slots=text,
         placement_tags=tuple(sorted(numbers, key=lambda p: int(p.slot_id.rsplit("_", 1)[1]))),

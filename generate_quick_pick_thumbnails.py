@@ -33,10 +33,11 @@ def generate_quick_pick_thumbnails(ids: tuple[str, ...] | None = None) -> tuple[
             continue
         mode = CreationMode(pick["mode"])
         colors = GeometricFormattingColors(tuple(
-            GeometricFormattingColor(color.base_color, color.main_color)
+            GeometricFormattingColor(color.base_color, color.main_color) if mode is CreationMode.SQUARES
+            else GeometricFormattingColor(color.main_color, color.base_color)
             for slot in range(1, pick["entrant_count"] + 1)
             for color in (controller_colors.color_for_slot(slot).resolve(),)
-        )) if mode is CreationMode.SQUARES else None
+        )) if mode in {CreationMode.SQUARES, CreationMode.EYES, CreationMode.RADIAL} else None
         renderer = prepare_format_preview if pick.get("animated") else render_format_preview
         result = renderer(
             PodiumStyle(pick.get("podium_style", "legacy")),

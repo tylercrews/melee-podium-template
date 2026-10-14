@@ -1,8 +1,16 @@
 import catalog from "./quickPicks.json";
-import { EMPTY_FORMAT, FormatConfiguration, buildBackgroundPlacement, formatCanvasSize, normalizeFormat } from "./format";
+import { EMPTY_FORMAT, FormatConfiguration, buildBackgroundPlacement, defaultTournamentPlacing, formatCanvasSize, normalizeFormat } from "./format";
 
 export const QUICK_PICKS = catalog;
 const BATTLEFIELD_ID = "builtin:00_Battlefield_5000_5000_resaved.png";
+
+export function quickPickLayoutLabel(pick: typeof QUICK_PICKS[number]): string {
+  if (pick.mode === "podium") {
+    if (pick.variant === "four_podium" || pick.variant?.startsWith("clapping_grid_")) return "Podiums+Clapping";
+    return pick.podium_style === "customizable" ? "Customizable Podiums" : "Legacy Podiums";
+  }
+  return pick.mode === "eyes" ? "Eyes" : pick.mode === "radial" ? "Radial" : "Squares";
+}
 
 /** Return independent, serializable settings through the saved-format boundary. */
 export function quickPickFormat(id: string): FormatConfiguration {
@@ -23,6 +31,7 @@ export function quickPickFormat(id: string): FormatConfiguration {
     header_layout: { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" },
     text_settings: { ...EMPTY_FORMAT.text_settings, font_asset_id: "provided:ubuntu" },
   });
+  format.text_settings.use_tournament_placing = defaultTournamentPlacing(format.selection);
   const output = formatCanvasSize(format)!;
   const source = { width: 5000, height: 5000 };
   // Fill the canvas without stretching; serialize the resolved scale and crop.
