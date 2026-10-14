@@ -10,6 +10,7 @@ from preview_layers import (
     generate_square_preview_layers,
 )
 from radial_preview_layers import generate_radial_preview_layers
+from clapping_preview_layers import generate_extended_clapping_layers
 
 
 if __name__ == "__main__":
@@ -30,12 +31,15 @@ if __name__ == "__main__":
         help="Regenerate only Eyes preset and header layers.",
     )
     parser.add_argument("--radial-only", action="store_true", help="Regenerate only Radial slice and center-header layers.")
+    parser.add_argument("--extended-clapping-only", action="store_true", help="Regenerate only Doubles Top 8 and Singles Top 16 clapping layers.")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent / "frontend" / "public" / "format_preview_layers"
-    if sum((args.squares_only, args.eyes_only, args.eyes_colors_only, args.radial_only)) > 1:
+    if sum((args.squares_only, args.eyes_only, args.eyes_colors_only, args.radial_only, args.extended_clapping_only)) > 1:
         parser.error("Choose only one mode-specific generation flag.")
     generator = (
-        generate_radial_preview_layers
+        generate_extended_clapping_layers
+        if args.extended_clapping_only
+        else generate_radial_preview_layers
         if args.radial_only
         else
         generate_square_preview_layers

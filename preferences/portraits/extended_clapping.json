@@ -1,0 +1,861 @@
+{
+  "schema_version": 1,
+  "layouts": {
+    "doubles_top_8_four_podium": {
+      "legacy": {
+        "canvas_size": {
+          "width": 1672,
+          "height": 1280
+        },
+        "panels": [
+          {
+            "entrant_slot": 5,
+            "portrait_rect": [
+              356,
+              1000,
+              424,
+              1104
+            ],
+            "text_x": 342,
+            "text_max_width": 284,
+            "text_alignment": "right",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 5,
+            "portrait_rect": [
+              356,
+              1122,
+              424,
+              1226
+            ],
+            "text_x": 342,
+            "text_max_width": 284,
+            "text_alignment": "right",
+            "member_slot": 2
+          },
+          {
+            "entrant_slot": 6,
+            "portrait_rect": [
+              469,
+              1000,
+              537,
+              1104
+            ],
+            "text_x": 551,
+            "text_max_width": 271,
+            "text_alignment": "left",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 6,
+            "portrait_rect": [
+              469,
+              1122,
+              537,
+              1226
+            ],
+            "text_x": 551,
+            "text_max_width": 271,
+            "text_alignment": "left",
+            "member_slot": 2
+          },
+          {
+            "entrant_slot": 7,
+            "portrait_rect": [
+              1143,
+              1000,
+              1211,
+              1104
+            ],
+            "text_x": 1129,
+            "text_max_width": 271,
+            "text_alignment": "right",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 7,
+            "portrait_rect": [
+              1143,
+              1122,
+              1211,
+              1226
+            ],
+            "text_x": 1129,
+            "text_max_width": 271,
+            "text_alignment": "right",
+            "member_slot": 2
+          },
+          {
+            "entrant_slot": 8,
+            "portrait_rect": [
+              1243,
+              1000,
+              1311,
+              1104
+            ],
+            "text_x": 1325,
+            "text_max_width": 251,
+            "text_alignment": "left",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 8,
+            "portrait_rect": [
+              1243,
+              1122,
+              1311,
+              1226
+            ],
+            "text_x": 1325,
+            "text_max_width": 251,
+            "text_alignment": "left",
+            "member_slot": 2
+          }
+        ],
+        "placement_tags": [
+          {
+            "slot_id": "lower_pair_1_entrant_5_placement_tag",
+            "asset_id": "05th.png",
+            "anchor": {
+              "x": 446,
+              "y": 1070
+            },
+            "max_size": {
+              "width": 32,
+              "height": 23
+            },
+            "z_index": 200
+          },
+          {
+            "slot_id": "lower_pair_1_entrant_6_placement_tag",
+            "asset_id": "05th.png",
+            "anchor": {
+              "x": 446,
+              "y": 1150
+            },
+            "max_size": {
+              "width": 32,
+              "height": 23
+            },
+            "z_index": 201
+          },
+          {
+            "slot_id": "lower_pair_2_entrant_7_placement_tag",
+            "asset_id": "07th.png",
+            "anchor": {
+              "x": 1227,
+              "y": 1070
+            },
+            "max_size": {
+              "width": 26,
+              "height": 23
+            },
+            "z_index": 202
+          },
+          {
+            "slot_id": "lower_pair_2_entrant_8_placement_tag",
+            "asset_id": "07th.png",
+            "anchor": {
+              "x": 1227,
+              "y": 1150
+            },
+            "max_size": {
+              "width": 26,
+              "height": 23
+            },
+            "z_index": 203
+          }
+        ],
+        "team_names": [
+          {
+            "entrant_slot": 5,
+            "anchor": {
+              "x": 241,
+              "y": 925
+            },
+            "max_width": 366,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          },
+          {
+            "entrant_slot": 6,
+            "anchor": {
+              "x": 645,
+              "y": 925
+            },
+            "max_width": 353,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          },
+          {
+            "entrant_slot": 7,
+            "anchor": {
+              "x": 1034,
+              "y": 925
+            },
+            "max_width": 353,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          },
+          {
+            "entrant_slot": 8,
+            "anchor": {
+              "x": 1409,
+              "y": 925
+            },
+            "max_width": 333,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          }
+        ]
+      },
+      "customizable": {
+        "canvas_size": {
+          "width": 1920,
+          "height": 1280
+        },
+        "panels": [
+          {
+            "entrant_slot": 5,
+            "portrait_rect": [
+              411,
+              1000,
+              479,
+              1104
+            ],
+            "text_x": 397,
+            "text_max_width": 370,
+            "text_alignment": "right",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 5,
+            "portrait_rect": [
+              411,
+              1122,
+              479,
+              1226
+            ],
+            "text_x": 397,
+            "text_max_width": 370,
+            "text_alignment": "right",
+            "member_slot": 2
+          },
+          {
+            "entrant_slot": 6,
+            "portrait_rect": [
+              533,
+              1000,
+              601,
+              1104
+            ],
+            "text_x": 615,
+            "text_max_width": 347,
+            "text_alignment": "left",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 6,
+            "portrait_rect": [
+              533,
+              1122,
+              601,
+              1226
+            ],
+            "text_x": 615,
+            "text_max_width": 347,
+            "text_alignment": "left",
+            "member_slot": 2
+          },
+          {
+            "entrant_slot": 7,
+            "portrait_rect": [
+              1369,
+              1000,
+              1437,
+              1104
+            ],
+            "text_x": 1355,
+            "text_max_width": 339,
+            "text_alignment": "right",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 7,
+            "portrait_rect": [
+              1369,
+              1122,
+              1437,
+              1226
+            ],
+            "text_x": 1355,
+            "text_max_width": 339,
+            "text_alignment": "right",
+            "member_slot": 2
+          },
+          {
+            "entrant_slot": 8,
+            "portrait_rect": [
+              1491,
+              1000,
+              1559,
+              1104
+            ],
+            "text_x": 1573,
+            "text_max_width": 319,
+            "text_alignment": "left",
+            "member_slot": 1
+          },
+          {
+            "entrant_slot": 8,
+            "portrait_rect": [
+              1491,
+              1122,
+              1559,
+              1226
+            ],
+            "text_x": 1573,
+            "text_max_width": 319,
+            "text_alignment": "left",
+            "member_slot": 2
+          }
+        ],
+        "placement_tags": [
+          {
+            "slot_id": "lower_pair_1_entrant_5_placement_tag",
+            "asset_id": "05th.png",
+            "anchor": {
+              "x": 506,
+              "y": 1070
+            },
+            "max_size": {
+              "width": 32,
+              "height": 23
+            },
+            "z_index": 200
+          },
+          {
+            "slot_id": "lower_pair_1_entrant_6_placement_tag",
+            "asset_id": "05th.png",
+            "anchor": {
+              "x": 506,
+              "y": 1150
+            },
+            "max_size": {
+              "width": 32,
+              "height": 23
+            },
+            "z_index": 201
+          },
+          {
+            "slot_id": "lower_pair_2_entrant_7_placement_tag",
+            "asset_id": "07th.png",
+            "anchor": {
+              "x": 1464,
+              "y": 1070
+            },
+            "max_size": {
+              "width": 26,
+              "height": 23
+            },
+            "z_index": 202
+          },
+          {
+            "slot_id": "lower_pair_2_entrant_8_placement_tag",
+            "asset_id": "07th.png",
+            "anchor": {
+              "x": 1464,
+              "y": 1150
+            },
+            "max_size": {
+              "width": 26,
+              "height": 23
+            },
+            "z_index": 203
+          }
+        ],
+        "team_names": [
+          {
+            "entrant_slot": 5,
+            "anchor": {
+              "x": 253,
+              "y": 925
+            },
+            "max_width": 452,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          },
+          {
+            "entrant_slot": 6,
+            "anchor": {
+              "x": 747,
+              "y": 925
+            },
+            "max_width": 429,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          },
+          {
+            "entrant_slot": 7,
+            "anchor": {
+              "x": 1226,
+              "y": 925
+            },
+            "max_width": 421,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          },
+          {
+            "entrant_slot": 8,
+            "anchor": {
+              "x": 1691,
+              "y": 925
+            },
+            "max_width": 401,
+            "pillow_anchor": "ma",
+            "preferred_size": 34
+          }
+        ]
+      }
+    },
+    "singles_top_16_clapping": {
+      "legacy": {
+        "canvas_size": {
+          "width": 1672,
+          "height": 1000
+        },
+        "panels": [
+          {
+            "entrant_slot": 9,
+            "portrait_rect": [
+              12,
+              850,
+              64,
+              930
+            ],
+            "text_x": 73,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 10,
+            "portrait_rect": [
+              221,
+              850,
+              273,
+              930
+            ],
+            "text_x": 282,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 11,
+            "portrait_rect": [
+              430,
+              850,
+              482,
+              930
+            ],
+            "text_x": 491,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 12,
+            "portrait_rect": [
+              639,
+              850,
+              691,
+              930
+            ],
+            "text_x": 700,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 13,
+            "portrait_rect": [
+              848,
+              850,
+              900,
+              930
+            ],
+            "text_x": 909,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 14,
+            "portrait_rect": [
+              1057,
+              850,
+              1109,
+              930
+            ],
+            "text_x": 1118,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 15,
+            "portrait_rect": [
+              1266,
+              850,
+              1318,
+              930
+            ],
+            "text_x": 1327,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 16,
+            "portrait_rect": [
+              1475,
+              850,
+              1527,
+              930
+            ],
+            "text_x": 1536,
+            "text_max_width": 124,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          }
+        ],
+        "placement_tags": [
+          {
+            "slot_id": "entrant_9_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 104,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 200
+          },
+          {
+            "slot_id": "entrant_10_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 313,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 201
+          },
+          {
+            "slot_id": "entrant_11_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 522,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 202
+          },
+          {
+            "slot_id": "entrant_12_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 731,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 203
+          },
+          {
+            "slot_id": "entrant_13_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 940,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 204
+          },
+          {
+            "slot_id": "entrant_14_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1149,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 205
+          },
+          {
+            "slot_id": "entrant_15_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1358,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 206
+          },
+          {
+            "slot_id": "entrant_16_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1567,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 207
+          }
+        ]
+      },
+      "customizable": {
+        "canvas_size": {
+          "width": 1920,
+          "height": 1000
+        },
+        "panels": [
+          {
+            "entrant_slot": 9,
+            "portrait_rect": [
+              12,
+              850,
+              64,
+              930
+            ],
+            "text_x": 73,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 10,
+            "portrait_rect": [
+              252,
+              850,
+              304,
+              930
+            ],
+            "text_x": 313,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 11,
+            "portrait_rect": [
+              492,
+              850,
+              544,
+              930
+            ],
+            "text_x": 553,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 12,
+            "portrait_rect": [
+              732,
+              850,
+              784,
+              930
+            ],
+            "text_x": 793,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 13,
+            "portrait_rect": [
+              972,
+              850,
+              1024,
+              930
+            ],
+            "text_x": 1033,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 14,
+            "portrait_rect": [
+              1212,
+              850,
+              1264,
+              930
+            ],
+            "text_x": 1273,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 15,
+            "portrait_rect": [
+              1452,
+              850,
+              1504,
+              930
+            ],
+            "text_x": 1513,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          },
+          {
+            "entrant_slot": 16,
+            "portrait_rect": [
+              1692,
+              850,
+              1744,
+              930
+            ],
+            "text_x": 1753,
+            "text_max_width": 155,
+            "text_alignment": "left",
+            "identity_scale": 0.7
+          }
+        ],
+        "placement_tags": [
+          {
+            "slot_id": "entrant_9_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 120,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 200
+          },
+          {
+            "slot_id": "entrant_10_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 360,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 201
+          },
+          {
+            "slot_id": "entrant_11_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 600,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 202
+          },
+          {
+            "slot_id": "entrant_12_placement_tag",
+            "asset_id": "09th.png",
+            "anchor": {
+              "x": 840,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 203
+          },
+          {
+            "slot_id": "entrant_13_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1080,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 204
+          },
+          {
+            "slot_id": "entrant_14_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1320,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 205
+          },
+          {
+            "slot_id": "entrant_15_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1560,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 206
+          },
+          {
+            "slot_id": "entrant_16_placement_tag",
+            "asset_id": "13th.png",
+            "anchor": {
+              "x": 1800,
+              "y": 821
+            },
+            "max_size": {
+              "width": 48,
+              "height": 32
+            },
+            "z_index": 207
+          }
+        ]
+      }
+    }
+  }
+}

@@ -57,8 +57,11 @@ class ModeOptions:
             self.podium_style, PodiumStyle
         ):
             raise TypeError("podium_style must be a PodiumStyle or null")
-        clapping = (self.event_format is TournamentFormat.SINGLES and self.entrant_count == 8
-                    and self.variant == "four_podium" and self.podium_style is not None)
+        clapping = self.podium_style is not None and (
+            (self.entrant_count == 8 and self.variant == "four_podium")
+            or (self.event_format is TournamentFormat.SINGLES
+                and self.entrant_count == 16 and self.variant == "clapping")
+        )
         if self.animated is None:
             object.__setattr__(self, "animated", clapping)
         elif not isinstance(self.animated, bool):

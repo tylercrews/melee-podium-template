@@ -104,6 +104,7 @@ export function isTournamentComplete(value: TournamentDetails, selectedFields: M
 }
 
 function placementForIndex(index: number, count: number): number {
+  if (count === 16) return [1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13][index] ?? index + 1;
   return count >= 8 ? [1, 2, 3, 4, 5, 5, 7, 7][index] ?? index + 1 : index + 1;
 }
 

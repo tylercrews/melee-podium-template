@@ -148,7 +148,7 @@ class ModePreferencesTest(unittest.TestCase):
         self.assertEqual(
             counts,
             {
-                CreationMode.PODIUM: 12,
+                CreationMode.PODIUM: 16,
                 CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
                 CreationMode.RADIAL: 2,
@@ -161,7 +161,7 @@ class ModePreferencesTest(unittest.TestCase):
         )
         self.assertEqual(
             podium_styles,
-            {PodiumStyle.LEGACY: 6, PodiumStyle.CUSTOMIZABLE: 6},
+            {PodiumStyle.LEGACY: 8, PodiumStyle.CUSTOMIZABLE: 8},
         )
         for item in preferences:
             reviewed_layout = (
@@ -183,7 +183,10 @@ class ModePreferencesTest(unittest.TestCase):
                     "singles_top_25",
                 }
             )
-            self.assertEqual(item.ready, reviewed_layout)
+            extended_clapping = item.selection.mode is CreationMode.PODIUM and item.selection.submode_id in {
+                "doubles_top_8_four_podium", "singles_top_16_clapping"
+            }
+            self.assertEqual(item.ready, reviewed_layout or extended_clapping)
             if (
                 item.selection.mode is CreationMode.EYES
                 and item.selection.options.entrant_count in {10, 15, 16, 20, 25}
@@ -202,9 +205,9 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.RADIAL: PixelSize(1920, 1080),
             }.get(
                 item.selection.mode,
-                PixelSize(1920, 941)
+                PixelSize(1920, 1280 if item.selection.submode_id == "doubles_top_8_four_podium" else 1000 if item.selection.submode_id == "singles_top_16_clapping" else 941)
                 if item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
-                else PixelSize(1672, 941),
+                else PixelSize(1672, 1280 if item.selection.submode_id == "doubles_top_8_four_podium" else 1000 if item.selection.submode_id == "singles_top_16_clapping" else 941),
             )
             self.assertEqual(item.canvas_size, expected_canvas)
             extracted_legacy = (
@@ -250,7 +253,7 @@ class ModePreferencesTest(unittest.TestCase):
                         else item.selection.options.entrant_count
                     )
                 )
-                self.assertEqual(len(item.placement_tags), expected_tag_count)
+                self.assertEqual(len(item.placement_tags), len(item.formatting_assets) if extended_clapping else expected_tag_count)
             self.assertEqual(
                 ModePreferenceRepository().load(item.selection),
                 item,

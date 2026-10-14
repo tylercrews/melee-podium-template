@@ -24,6 +24,7 @@ from geometric_content_renderer import EyesContentRenderer, SquaresContentRender
 from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from podiums_clapping_renderer import ClappingLayout, PodiumsClappingContentRenderer
+from extended_clapping_renderer import DoublesClappingContentRenderer, SinglesTop16ClappingContentRenderer
 from mode_preferences import ModePreferenceRepository
 from radial_content_renderer import RadialContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
@@ -31,6 +32,7 @@ from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 from sample_creation_data import (
     sample_singles_entrants,
     sample_top_4_teams,
+    sample_top_8_teams,
     sample_top_8_entrants,
     sample_tournament,
 )
@@ -43,8 +45,10 @@ SUPPORTED_LAYOUTS = frozenset(
         (TournamentFormat.SINGLES, 4, None),
         (TournamentFormat.SINGLES, 8, None),
         (TournamentFormat.SINGLES, 8, "four_podium"),
+        (TournamentFormat.SINGLES, 16, "clapping"),
         (TournamentFormat.DOUBLES, 3, None),
         (TournamentFormat.DOUBLES, 4, None),
+        (TournamentFormat.DOUBLES, 8, "four_podium"),
     }
 )
 SUPPORTED_SQUARE_LAYOUTS = frozenset(
@@ -137,7 +141,7 @@ def prepare_format_preview(
                 else sample_singles_entrants(entrant_count, randomizer)
             )
             if event_format is TournamentFormat.SINGLES
-            else sample_top_4_teams(randomizer)[:entrant_count]
+            else (sample_top_8_teams(randomizer) if entrant_count == 8 else sample_top_4_teams(randomizer)[:entrant_count])
         )
     else:
         expected_type = SinglesEntrant if event_format is TournamentFormat.SINGLES else DoublesTeam
@@ -170,8 +174,13 @@ def prepare_format_preview(
         preferences,
         podium_colors or formatting_colors,
     )
-    if creation_mode is CreationMode.PODIUM and variant == "four_podium":
-        renderer = PodiumsClappingContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+    if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping"}:
+        renderer_type = (
+            DoublesClappingContentRenderer if event_format is TournamentFormat.DOUBLES
+            else SinglesTop16ClappingContentRenderer if entrant_count == 16
+            else PodiumsClappingContentRenderer
+        )
+        renderer = renderer_type(font=font, custom_font_bytes=custom_font_bytes)
         return renderer.prepare(formatted, request, preferences, background=composite_background, overlay=composite_overlay)
     renderer = (
         LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes)

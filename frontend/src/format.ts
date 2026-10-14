@@ -209,10 +209,12 @@ export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, En
       { entrant_count: 4, variant: null, label: "Top 4" },
       { entrant_count: 8, variant: null, label: "Top 8", detail: "Eight podiums" },
       { entrant_count: 8, variant: "four_podium", label: "Podiums+Clapping", detail: "Top 8: four podiums and four clapping portraits" },
+      { entrant_count: 16, variant: "clapping", label: "Top 16 + Clapping", detail: "Eight podiums and eight small clapping portraits" },
     ],
     doubles: [
       { entrant_count: 3, variant: null, label: "Top 3" },
       { entrant_count: 4, variant: null, label: "Top 4" },
+      { entrant_count: 8, variant: "four_podium", label: "Podiums+Clapping", detail: "Top 8 teams: four podiums and two stacked portraits per lower team" },
     ],
   },
   eyes: {
@@ -247,6 +249,7 @@ export function hasValidEntrantCount(selection: FormatSelection): boolean {
 
 export function formattingAssetCount(format: FormatConfiguration): number {
   if (format.selection.mode === "podium" && format.selection.options.variant === "four_podium") return 4;
+  if (format.selection.mode === "podium" && format.selection.options.variant === "clapping") return 8;
   return format.selection.options.entrant_count ?? (format.selection.mode === "podium" ? 3 : 1);
 }
 
@@ -481,8 +484,10 @@ function normalizeTextSettings(value: unknown): TextSettings {
 }
 
 export function isPodiumsClapping(selection: FormatSelection): boolean {
-  return selection.mode === "podium" && selection.options.event_format === "singles"
-    && selection.options.entrant_count === 8 && selection.options.variant === "four_podium";
+  return selection.mode === "podium" && (
+    (selection.options.event_format !== null && selection.options.entrant_count === 8 && selection.options.variant === "four_podium")
+    || (selection.options.event_format === "singles" && selection.options.entrant_count === 16 && selection.options.variant === "clapping")
+  );
 }
 
 export function selectEntrantCount(format: FormatConfiguration, option: EntrantCountOption): FormatConfiguration {
@@ -620,8 +625,11 @@ export function formatCanvasSize(format: FormatConfiguration): PixelSize | null 
     return null;
   }
   if (format.selection.mode !== "podium") return null;
-  if (format.selection.options.podium_style === "customizable") return { width: 1920, height: 941 };
-  if (format.selection.options.podium_style === "legacy") return { width: 1672, height: 941 };
+  const height = isPodiumsClapping(format.selection)
+    ? (format.selection.options.event_format === "doubles" ? 1280 : format.selection.options.entrant_count === 16 ? 1000 : 941)
+    : 941;
+  if (format.selection.options.podium_style === "customizable") return { width: 1920, height };
+  if (format.selection.options.podium_style === "legacy") return { width: 1672, height };
   return null;
 }
 

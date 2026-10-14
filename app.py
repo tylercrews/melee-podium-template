@@ -674,7 +674,7 @@ def customized_format_preview() -> Any:
     animated = payload.get("animated")
     if "animated" in payload and not isinstance(animated, bool):
         raise ValueError("animated must be a boolean")
-    preview_renderer = prepare_format_preview if creation_mode is CreationMode.PODIUM and variant == "four_podium" else render_format_preview
+    preview_renderer = prepare_format_preview if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping"} else render_format_preview
     image = preview_renderer(
         style,
         event_format,

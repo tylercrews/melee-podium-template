@@ -52,12 +52,17 @@ class ClappingPanel:
     text_x: int
     text_max_width: int
     text_alignment: str
+    member_slot: int | None = None
+    identity_scale: float = 1.0
 
     @classmethod
     def from_dict(cls, value):
         panel = cls(value["entrant_slot"], PixelRect(*value["portrait_rect"]),
-                    value["text_x"], value["text_max_width"], value["text_alignment"])
-        if panel.entrant_slot not in range(5, 9) or panel.text_alignment not in {"left", "right"} or panel.text_max_width <= 0:
+                    value["text_x"], value["text_max_width"], value["text_alignment"],
+                    value.get("member_slot"), value.get("identity_scale", 1.0))
+        if (panel.entrant_slot not in range(5, 17) or panel.text_alignment not in {"left", "right"}
+                or panel.text_max_width <= 0 or panel.member_slot not in {None, 1, 2}
+                or not 0 < panel.identity_scale <= 1):
             raise ValueError("Invalid Podiums+Clapping panel")
         return panel
 
@@ -120,17 +125,29 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
         # attribution until their actual bounds can participate in the choice.
         pass
 
+    def _profile(self, request):
+        return json.loads(PROFILE.read_text(encoding="utf-8"))["styles"][request.selection.options.podium_style.value]
+
+    def _panel_keys(self):
+        return tuple((slot, None) for slot in range(5, 9))
+
+    def _panel_subject(self, request, panel):
+        return request.entrants[panel.entrant_slot - 1]
+
+    def _draw_panel_headings(self, base, request, profile):
+        return []
+
     def prepare(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences,
                 *, background: Image.Image | None = None, overlay: Image.Image | None = None) -> ClappingLayout:
-        profile = json.loads(PROFILE.read_text(encoding="utf-8"))["styles"][request.selection.options.podium_style.value]
+        profile = self._profile(request)
         if profile["canvas_size"] != preferences.canvas_size.to_dict():
             raise ValueError("Podiums+Clapping geometry does not match its canvas")
         panels = tuple(ClappingPanel.from_dict(row) for row in profile["panels"])
-        if tuple(panel.entrant_slot for panel in panels) != (5, 6, 7, 8) or any(
+        if tuple((panel.entrant_slot, panel.member_slot) for panel in panels) != self._panel_keys() or any(
             panel.rect.left < 0 or panel.rect.top < 0 or panel.rect.right > canvas.width or panel.rect.bottom > canvas.height
             for panel in panels
         ):
-            raise ValueError("Podiums+Clapping panels must fit all four lower entrants inside the canvas")
+            raise ValueError("Podiums+Clapping panels must fit every lower entrant inside the canvas")
         badges = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
         preferences = replace(preferences, text_slots=tuple(row for row in preferences.text_slots if row.field != "entrant.summary"))
         base = super().draw(canvas, request, preferences)
@@ -152,8 +169,9 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
                           badge.anchor.x + badge.max_size.width // 2,
                           badge.anchor.y + badge.max_size.height // 2) for badge in badges)
         with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
+            obstacles.extend(self._draw_panel_headings(base, request, profile))
             for panel in panels:
-                entrant = request.entrants[panel.entrant_slot - 1]
+                entrant = self._panel_subject(request, panel)
                 color, metallic = self._default_text_style(request, panel.entrant_slot)
                 if isinstance(color, tuple):
                     color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
@@ -184,23 +202,25 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
             obstacles.append(_text_bounds(draw, position, text, **options))
             _draw_text(draw, position, text, fill=color, metallic=metallic, **options)
         top, x = panel.rect.top, panel.text_x
+        scale = panel.identity_scale
+        offset = lambda value: round(value * scale)
         seed_text = f"[{entrant.seed}s]" if request.text_settings.include_seeding and entrant.seed is not None else ""
-        seed_size = adjusted_size(17, request.text_settings.seed_font_size_adjustment)
-        icons = [_load_stock_icon(character, size=24) for character in entrant.characters]
+        seed_size = adjusted_size(offset(17), request.text_settings.seed_font_size_adjustment)
+        icons = [_load_stock_icon(character, size=offset(24)) for character in entrant.characters]
         icons_width = sum(icon.width for icon in icons) + 5 * max(0, len(icons) - 1)
         seed_width = round(_font_to_fit(seed_text, panel.text_max_width, seed_size, self.font).getlength(seed_text)) if seed_text else 0
         row_width = icons_width + (12 + seed_width if seed_text else 0)
         row_x = x - row_width if panel.text_alignment == "right" else x
         for icon in icons:
-            canvas.alpha_composite(icon, (row_x, top + 17 - icon.height // 2))
+            canvas.alpha_composite(icon, (row_x, top + offset(17) - icon.height // 2))
             row_x += icon.width + 5
         if seed_text:
-            paint((row_x + 7, top + 20), seed_text, "lm", seed_size)
+            paint((row_x + 7, top + offset(20)), seed_text, "lm", seed_size)
         anchor = "rm" if panel.text_alignment == "right" else "lm"
         sponsor, separator, player = entrant.tag.rpartition("|")
         if separator:
-            paint((x, top + 47), sponsor.strip(), anchor, adjusted_size(22, entrant.name_font_size_adjustment))
+            paint((x, top + offset(47)), sponsor.strip(), anchor, adjusted_size(offset(22), entrant.name_font_size_adjustment))
         else:
             player = entrant.tag
-        paint((x, top + (82 if separator else 63)), player.strip(), anchor, adjusted_size(46, entrant.name_font_size_adjustment))
+        paint((x, top + offset(82 if separator else 63)), player.strip(), anchor, adjusted_size(offset(46), entrant.name_font_size_adjustment))
         return obstacles

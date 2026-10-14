@@ -58,11 +58,13 @@ class CustomizablePreferencesTest(unittest.TestCase):
             item.selection.submode_id: item
             for item in all_preferences
             if item.selection.options.podium_style is PodiumStyle.CUSTOMIZABLE
+            and item.selection.submode_id in EXPECTED_ASSETS
         }
         cls.legacy = {
             item.selection.submode_id: item
             for item in all_preferences
             if item.selection.options.podium_style is PodiumStyle.LEGACY
+            and item.selection.submode_id in EXPECTED_ASSETS
         }
         cls.asset_folder = (
             Path(__file__).resolve().parents[1]

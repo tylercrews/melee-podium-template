@@ -22,6 +22,7 @@ class LegacyPreferencesTest(unittest.TestCase):
                 CreationMode.PODIUM
             )
             if item.selection.options.podium_style is PodiumStyle.LEGACY
+            and item.selection.submode_id not in {"doubles_top_8_four_podium", "singles_top_16_clapping"}
         }
 
     def test_every_legacy_layout_keeps_the_old_output_size(self) -> None:

@@ -72,3 +72,28 @@ test("imports reject malformed animation values and animation on other layouts",
   value.selection.options.animated = true;
   assert.throws(() => formats.normalizeFormat(value), /only available/);
 });
+
+test("extended clapping choices restore animation, canvas size, and correct control counts", () => {
+  for (const style of ["legacy", "customizable"]) {
+    for (const [eventFormat, count, variant, height, assets] of [
+      ["doubles", 8, "four_podium", 1280, 4],
+      ["singles", 16, "clapping", 1000, 8],
+    ]) {
+      const value = fixture(style);
+      value.selection.options.event_format = eventFormat;
+      value.selection.options.variant = null;
+      const option = formats.entrantCountOptions(value.selection).find((row) => row.entrant_count === count && row.variant === variant);
+      assert.ok(option);
+      const selected = formats.selectEntrantCount(value, option);
+      assert.equal(selected.selection.options.animated, true);
+      assert.equal(formats.formattingAssetCount(selected), assets);
+      assert.deepEqual(formats.formatCanvasSize(selected), { width: style === "legacy" ? 1672 : 1920, height });
+      const loaded = formats.parseFormatCode(formats.formatCode(selected));
+      assert.equal(formats.isPodiumsClapping(loaded.selection), true);
+      const html = renderToStaticMarkup(createElement(EntrantCountSettings, { value: loaded, onChange() {} }));
+      assert.ok(html.includes("Animate the clapping portraits"));
+      loaded.selection.options.animated = false;
+      assert.equal(formats.parseFormatCode(formats.formatCode(loaded)).selection.options.animated, false);
+    }
+  }
+});

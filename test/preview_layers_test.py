@@ -26,7 +26,7 @@ LAYER_ROOT = PROJECT_ROOT / "frontend" / "public" / "format_preview_layers"
 class PreviewLayerTests(unittest.TestCase):
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
-        self.assertEqual(len(files), 313)
+        self.assertEqual(len(files), 323)
         self.assertTrue((LAYER_ROOT / "radial_watermark.png").is_file())
         self.assertTrue((LAYER_ROOT / "radial_watermark_doubles.png").is_file())
         self.assertEqual(len(tuple((LAYER_ROOT / "radial_headers").rglob("*.png"))), 36)
@@ -34,8 +34,8 @@ class PreviewLayerTests(unittest.TestCase):
         self.assertEqual(len(tuple((LAYER_ROOT / "radial").rglob("*.png"))), 8)
         self.assertEqual(len(tuple((LAYER_ROOT / "headers").rglob("*.png"))), 18)
         self.assertEqual(len(tuple((LAYER_ROOT / "square_headers").rglob("*.png"))), 36)
-        self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "legacy").rglob("*.png"))), 4)
-        self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "customizable").rglob("*.png"))), 16)
+        self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "legacy").rglob("*.png"))), 6)
+        self.assertEqual(len(tuple((LAYER_ROOT / "podiums" / "customizable").rglob("*.png"))), 24)
         self.assertEqual(len(tuple((LAYER_ROOT / "squares").rglob("*.png"))), 12)
         self.assertEqual(len(tuple((LAYER_ROOT / "eye_headers").rglob("*.png"))), 144)
         self.assertEqual(len(tuple((LAYER_ROOT / "eyes").rglob("*.png"))), 32)
@@ -49,6 +49,10 @@ class PreviewLayerTests(unittest.TestCase):
                     {
                         (1672, 941),
                         (1920, 941),
+                        (1672, 1280),
+                        (1920, 1280),
+                        (1672, 1000),
+                        (1920, 1000),
                         (1920, 1080),
                         (1080, 1920),
                         (1920, 1542),

@@ -17,6 +17,17 @@ const sandbag = { fighter: "Sandbag", color: "default", pose: "a", mirrorHorizon
 const emptyFavorites = { version: 1, singles: [], doubles: [] };
 const fox = { fighter: "Fox", color: "blue", pose: "e", mirrorHorizontally: true };
 
+test("Top 16 drafts use tournament ties and retain edits while resizing", () => {
+  const drafts = ensureEntrantDrafts([], 16, "singles");
+  assert.deepEqual(drafts.map((row) => row.placement), [1, 2, 3, 4, 5, 5, 7, 7, 9, 9, 9, 9, 13, 13, 13, 13]);
+  drafts[15].tag = "Retained player";
+  const smaller = ensureEntrantDrafts(drafts, 8, "singles");
+  assert.equal(smaller.length, 16);
+  assert.equal(ensureEntrantDrafts(smaller, 16, "singles")[15].tag, "Retained player");
+  assert.deepEqual(ensureEntrantDrafts([], 10, "singles").slice(8).map((row) => row.placement), [9, 10]);
+  assert.deepEqual(ensureEntrantDrafts([], 8, "doubles").map((row) => row.placement), [1, 2, 3, 4, 5, 5, 7, 7]);
+});
+
 function source(entrants, eventFormat = "singles") {
   return normalizeBracketImport({ provider: "start.gg", tournament: { title: "Weekly", event_format: eventFormat }, entrants });
 }

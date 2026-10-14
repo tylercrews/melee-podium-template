@@ -50,6 +50,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 function layoutId(format: FormatConfiguration): string {
+  if (isPodiumsClapping(format.selection) && format.selection.options.entrant_count === 16) return "singles_top_16_clapping";
+  if (isPodiumsClapping(format.selection) && format.selection.options.event_format === "doubles") return "doubles_top_8_four_podium";
   if (format.selection.options.variant === "four_podium") return "top_8_four_podiums";
   const entrantCount = format.selection.options.entrant_count
     ?? (format.selection.options.event_format === "doubles" ? 3 : 8);
@@ -154,8 +156,8 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
   }
   const styleLabel = mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
-  const layoutLabel = format.selection.options.variant === "four_podium"
-    ? "Podiums+Clapping"
+  const layoutLabel = isPodiumsClapping(format.selection)
+    ? `Podiums+Clapping · Top ${format.selection.options.entrant_count}`
     : `Top ${format.selection.options.entrant_count ?? (mode === "radial" && eventFormat === "doubles" ? 4 : 8)}`;
   return {
     foregroundLayers,
@@ -393,7 +395,8 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         if (format.selection.mode === "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
         if (logoPlaceholder) context.drawImage(logoPlaceholder, 0, 0, request.outputSize.width, request.outputSize.height);
         const headerLayer = logo && format.selection.mode !== "radial" ? headerWithoutPlaceholder(header, request.logoBox) : header;
-        context.drawImage(tintedHeader(headerLayer, request.outputSize.width, request.outputSize.height, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
+        const headerHeight = format.selection.mode === "podium" ? 941 : request.outputSize.height;
+        context.drawImage(tintedHeader(headerLayer, request.outputSize.width, headerHeight, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
         if (resultLabels) context.drawImage(resultLabels, 0, 0, request.outputSize.width, request.outputSize.height);
         if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
         if (watermark) drawRadialWatermark(context, watermark, format.selection.options.event_format === "doubles");
