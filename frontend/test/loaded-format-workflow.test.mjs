@@ -101,11 +101,14 @@ for (const source of ["quick", "saved", "code"]) {
       await load(app, source, format);
       assert.equal(button(app, "4Bracket Import").props.disabled, false);
       assert.equal(button(app, "5Tournament").props.disabled, false);
+      assert.equal(button(app, "4Bracket Import").props.className, "step-tab step-tab--available");
+      assert.equal(button(app, "5Tournament").props.className, "step-tab step-tab--available");
       assert.ok(button(app, "Proceed to Bracket Import"));
       const actions = app.root.findAllByType("button").filter(node => text(node) === "Continue to Bracket Import");
       assert.equal(actions.length, 2);
       await click(actions[1]);
       assert.equal(app.root.findByType("test-BracketStep").props.entrantCount, 8);
+      assert.equal(button(app, "4Bracket Import").props.className, "step-tab step-tab--current");
       await click(app.root.findAllByType("button").find(node => text(node).endsWith("Load")));
       await click(button(app, "Proceed to Bracket Import"));
       assert.ok(app.root.findByType("test-BracketStep"));
@@ -167,6 +170,7 @@ test("incomplete format imports keep Bracket Import locked", async () => {
   try {
     await load(app, "code", EMPTY_FORMAT);
     assert.equal(button(app, "4Bracket Import").props.disabled, true);
+    assert.equal(button(app, "4Bracket Import").props.className, "step-tab step-tab--locked");
     assert.ok(button(app, "Proceed to Assets"));
     await click(button(app, "Continue to Assets"));
     assert.ok(button(app, "Skip optional images"));

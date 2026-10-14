@@ -1,6 +1,8 @@
 """Create a cPanel-compatible deployment ZIP with POSIX archive paths."""
 
 from pathlib import Path
+import shutil
+import subprocess
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
@@ -64,14 +66,31 @@ DIRECTORIES = (
     "preferences",
 )
 
-with ZipFile(ARCHIVE, "w", compression=ZIP_DEFLATED) as archive:
-    for relative_file in FILES:
-        path = ROOT / relative_file
-        archive.write(path, path.relative_to(ROOT).as_posix())
-    for relative_directory in DIRECTORIES:
-        directory = ROOT / relative_directory
-        for path in directory.rglob("*"):
-            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
-                archive.write(path, path.relative_to(ROOT).as_posix())
+def build_frontend() -> None:
+    """Rebuild the client so releases include current UI and footer changes."""
+    npm = shutil.which("npm")
+    if npm is None:
+        raise RuntimeError("npm is required to build the frontend before packaging.")
+    subprocess.run([npm, "run", "build"], cwd=ROOT / "frontend", check=True)
 
-print(f"Created {ARCHIVE}")
+
+def create_archive() -> None:
+    with ZipFile(ARCHIVE, "w", compression=ZIP_DEFLATED) as archive:
+        for relative_file in FILES:
+            path = ROOT / relative_file
+            archive.write(path, path.relative_to(ROOT).as_posix())
+        for relative_directory in DIRECTORIES:
+            directory = ROOT / relative_directory
+            for path in directory.rglob("*"):
+                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
+                    archive.write(path, path.relative_to(ROOT).as_posix())
+
+
+def main() -> None:
+    build_frontend()
+    create_archive()
+    print(f"Created {ARCHIVE}")
+
+
+if __name__ == "__main__":
+    main()

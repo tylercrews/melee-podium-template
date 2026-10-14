@@ -647,6 +647,10 @@ body {
 
 .step-tab { border-color: var(--theme-border); color: #858ca8ff; }
 .step-tab::after { background: var(--theme-border); }
+.step-tab--available { border-color: var(--theme-blue); color: #7fc4ffff; }
+.step-tab--available::after { background: var(--theme-blue); }
+.step-tab--available .step-tab__number { border-color: var(--theme-blue); color: #7fc4ffff; background: #238fe81c; }
+.step-tab--available:hover, .step-tab--available:focus-visible { color: #ffffffff; background: #238fe81c; }
 .step-tab--current { border-color: var(--theme-pink); color: #ff75dbff; }
 .step-tab--skipped { border-color: var(--theme-blue); color: #7fc4ffff; }
 .step-tab--complete { border-color: var(--theme-green); color: #82f3b4ff; }

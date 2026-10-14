@@ -85,8 +85,6 @@ TODO LIST:
 
 * get some melee fonts added in. like the timer one is super clean - at least one more font would go really hard
 
-* add the sponsors to the gods for when they peaked like armada had one for sure
-* fix the gods list to go to top 50 by looking at the top 10 melee players every year and write them down
 * README/Documentation/FAQ/How To have somewhere that explains the middle, left, right multi-char logic for people who get really deep into minmaxing poses. Should also explain the point of logging in and whatnot.
 * in manage favorites check out the logic for what happens when you import another person's "Primary" favorited entry for a tag. Does it keep yours or theirs? Maybe make it like a git merge conflict and create a series of popups where you have to choose yours or theirs
 * bugfix - when someone manages to make top 8 but didn't win any games then it doesn't keep track of any of their characters (lol). Yes this did happen lol. Maybe we can keep track of both characters won with and all characters and let the person decide which one to use for them/everyone. Maybe when you import there's like a dialog where you can confirm everything you're bringing in for each entrant. And that could let you see autocorrect stuff from your saved entrants and have you decide whether or not to keep it like a zip code correction screen
@@ -265,17 +263,15 @@ deployment checklist.
 
 ## Deploying to cPanel
 
-The application serves the built frontend from `frontend/dist`. Build that
-frontend before creating each deployment ZIP.
+The application serves the built frontend from `frontend/dist`. The deployment
+script rebuilds the frontend before creating each ZIP so UI and footer updates
+are included. Node.js/npm and the frontend dependencies must be installed.
 
 ### Build the release locally
 
 From the project root in PowerShell:
 
 ```powershell
-cd .\frontend
-npm run build
-cd ..
 .\.venv\Scripts\python.exe .\build_deployment_zip.py
 ```
 
