@@ -732,6 +732,7 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
     tournament = imported.to_tournament()
     return {
         "provider": imported.link.provider.value,
+        "import_all_characters": imported.import_all_characters,
         "bracket": {
             "url": imported.link.url,
             "tournament_slug": imported.link.tournament_slug,
@@ -766,6 +767,14 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                     {"fighter": character.name, "color": character.costume, "pose": None}
                     for character in player.characters
                 ],
+                "played_characters": [
+                    {"fighter": character.name, "color": character.costume, "pose": None}
+                    for character in (player.played_characters if player.played_characters is not None else player.characters)
+                ],
+                "won_characters": [
+                    {"fighter": character.name, "color": character.costume, "pose": None}
+                    for character in player.won_characters
+                ],
                 "members": [
                     {
                         "tag": member.tag,
@@ -774,6 +783,14 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                         "characters": [
                             {"fighter": character.name, "color": character.costume, "pose": None}
                             for character in member.characters
+                        ],
+                        "played_characters": [
+                            {"fighter": character.name, "color": character.costume, "pose": None}
+                            for character in (member.played_characters if member.played_characters is not None else member.characters)
+                        ],
+                        "won_characters": [
+                            {"fighter": character.name, "color": character.costume, "pose": None}
+                            for character in member.won_characters
                         ],
                     }
                     for member in player.members
@@ -793,12 +810,15 @@ def import_bracket() -> Any:
     top_entrants = payload.get("top_entrants", 8)
     if top_entrants not in {3, 4, 8}:
         return jsonify(error="top_entrants must be 3, 4, or 8"), 400
+    import_all_characters = payload.get("import_all_characters", False)
+    if not isinstance(import_all_characters, bool):
+        return jsonify(error="import_all_characters must be a boolean"), 400
     if link.provider is BracketProvider.CHALLONGE:
         imported = fetch_challonge(link)
     elif link.provider is BracketProvider.START_GG:
-        imported = fetch_startgg(link, top_entrants=top_entrants)
+        imported = fetch_startgg(link, top_entrants=top_entrants, import_all_characters=import_all_characters)
     elif link.provider is BracketProvider.PARRY_GG:
-        imported = fetch_parrygg(link, top_entrants=top_entrants)
+        imported = fetch_parrygg(link, top_entrants=top_entrants, import_all_characters=import_all_characters)
     else:
         return jsonify(error=f"{link.provider} import is not configured yet", provider=link.provider.value), 501
     return jsonify(_import_response(imported))

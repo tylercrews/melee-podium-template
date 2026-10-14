@@ -47,6 +47,7 @@ FILES = (
     "radial_content_renderer.py",
     "radial_geometry.py",
     "radial_palette.py",
+    "radial_watermark.py",
     "sample_creation_data.py",
     "square_portrait_renderer.py",
     "fonts/Impact.ttf",

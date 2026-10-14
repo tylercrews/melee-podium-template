@@ -741,6 +741,7 @@ body {
 .bracket-import-card, .bracket-review { border: 1px solid var(--theme-border); border-radius: 10px 3px 10px 3px; background: var(--theme-surface); box-shadow: 0 18px 45px #00000040; }
 .bracket-import-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 18px; padding: 24px; }
 .bracket-import-card__heading { grid-column: 1 / -1; }
+.bracket-character-setting { grid-column: 1 / -1; }
 .bracket-import-card h2, .bracket-review h2 { margin: 0; color: var(--theme-text); font-family: var(--font-heading); }
 .bracket-import-card__heading p { margin: 8px 0 0; color: var(--theme-muted); font-size: .84rem; line-height: 1.55; }
 .bracket-url-field { min-width: 0; }

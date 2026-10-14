@@ -21,6 +21,8 @@ import re
 import requests
 from models import Character, DoublesTeam, Entrant, MELEE_FIGHTERS, SinglesEntrant, Tournament, TournamentFormat
 from .startgg_usb_reporting import canonical_fighter_name, costume_for_usb_score
+from .character_usage import select_import_characters
+from .parrygg_character_usage import reported_character_usage as parry_character_usage
 
 
 class BracketProvider(StrEnum):
@@ -98,6 +100,8 @@ class ImportedMember:
     characters: tuple[ImportedCharacter, ...] = ()
     x_handle: str | None = None
     country: str | None = None
+    played_characters: tuple[ImportedCharacter, ...] | None = None
+    won_characters: tuple[ImportedCharacter, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +114,8 @@ class ImportedPlayer:
     country: str | None = None
     provider_id: str | None = None
     members: tuple[ImportedMember, ...] = ()
+    played_characters: tuple[ImportedCharacter, ...] | None = None
+    won_characters: tuple[ImportedCharacter, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +132,7 @@ class BracketImport:
     organizer_x_account: str | None = None
     organizer_twitch_account: str | None = None
     extra: Mapping[str, Any] = field(default_factory=dict)
+    import_all_characters: bool = False
 
     def to_tournament(self) -> Tournament:
         """Create display metadata once the provider has supplied a player count."""
@@ -357,6 +364,9 @@ def _reported_character_usage(event_id: int | str, top_entrant_ids: set[str], to
                     if entrant_id not in top_entrant_ids:
                         continue
                     enriched_selection = dict(selection)
+                    enriched_selection["_startgg_won"] = (
+                        game.get("winnerId") is not None and str(game["winnerId"]) == entrant_id
+                    )
                     score_field = score_field_by_entrant.get(entrant_id)
                     if score_field:
                         enriched_selection["_startgg_score"] = game.get(score_field)
@@ -365,8 +375,8 @@ def _reported_character_usage(event_id: int | str, top_entrant_ids: set[str], to
     return usage
 
 
-def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
-    """Fetch an event plus its winning character selections for top placers."""
+def fetch_startgg(link: BracketLink, *, top_entrants: int = 8, import_all_characters: bool = False) -> BracketImport:
+    """Fetch an event plus all played and winning selections for top placers."""
     token = os.environ.get("START_GG_TOKEN")
     if not token:
         raise ValueError("START_GG_TOKEN is not configured on the server")
@@ -387,7 +397,7 @@ def fetch_startgg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
         character_import_count = 4 if _event_format(event.get("entrantSizeMin")) is TournamentFormat.DOUBLES else 8
         top_ids = {str(item["entrant"]["id"]) for item in standings[:character_import_count]}
         usage = _reported_character_usage(event["id"], top_ids, token, phase_group_id=link.phase_group_id)
-        return parse_startgg(payload, link, character_usage=usage)
+        return parse_startgg(payload, link, character_usage=usage, import_all_characters=import_all_characters)
     except (KeyError, TypeError) as error:
         raise ValueError("Start.gg returned an incomplete event response") from error
 
@@ -437,7 +447,7 @@ def _startgg_organizer_accounts(tournament: Mapping[str, Any]) -> tuple[str | No
     return accounts.get("twitter"), accounts.get("twitch")
 
 
-def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_names: Mapping[int | str, str] | None = None, character_usage: Mapping[str, list[Mapping[str, Any]]] | None = None) -> BracketImport:
+def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_names: Mapping[int | str, str] | None = None, character_usage: Mapping[str, list[Mapping[str, Any]]] | None = None, import_all_characters: bool = False) -> BracketImport:
     event = payload["data"]["event"]
     tournament = event["tournament"]
     usage = character_usage or {}
@@ -459,8 +469,11 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_na
             )
             for item in participants
         )
-        characters = tuple(_startgg_characters(usage.get(str(entrant.get("id")), usage.get(entrant["name"], [])), character_names))
-        players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members))
+        selections = usage.get(str(entrant.get("id")), usage.get(entrant["name"], []))
+        played = tuple(_startgg_characters(selections, character_names))
+        won = tuple(_startgg_characters([item for item in selections if item.get("_startgg_won") is True], character_names))
+        characters = select_import_characters(played, won, import_all_characters=import_all_characters)
+        players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members, played_characters=played, won_characters=won))
     entrant_size = event.get("entrantSizeMin")
     event_format = _event_format(entrant_size)
     organizer_x_account, organizer_twitch_account = _startgg_organizer_accounts(tournament)
@@ -477,6 +490,7 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_na
         organizer_x_account=organizer_x_account,
         organizer_twitch_account=organizer_twitch_account,
         extra={"game": event.get("videogame"), "entrant_size_min": entrant_size},
+        import_all_characters=import_all_characters,
     )
 
 
@@ -624,7 +638,7 @@ def parse_tonamel(payload: Mapping[str, Any], link: BracketLink) -> BracketImpor
     return BracketImport(link, payload.get("competition_name") or payload.get("name") or link.tournament_slug, payload.get("event_name"), _iso_time(payload.get("start_date") or payload.get("date")), None, payload.get("entrant_count") or len(places), tuple(players), TournamentFormat.UNKNOWN)
 
 
-def fetch_parrygg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
+def fetch_parrygg(link: BracketLink, *, top_entrants: int = 8, import_all_characters: bool = False) -> BracketImport:
     """Fetch a parry.gg event, including reported per-game character colors."""
     if link.provider is not BracketProvider.PARRY_GG:
         raise ValueError("fetch_parrygg requires a parry.gg link")
@@ -636,7 +650,7 @@ def fetch_parrygg(link: BracketLink, *, top_entrants: int = 8) -> BracketImport:
         phase_slug=link.phase_slug,
         bracket_slug=link.bracket_slug,
     )
-    return parse_parrygg(payload, link, top_entrants=top_entrants)
+    return parse_parrygg(payload, link, top_entrants=top_entrants, import_all_characters=import_all_characters)
 
 
 _PARRY_FIGHTER_BY_SLUG = {
@@ -679,36 +693,6 @@ def _parry_character(character: Mapping[str, Any]) -> ImportedCharacter | None:
     return ImportedCharacter(name, costume=costume)
 
 
-def _parry_character_usage(brackets: Any) -> dict[str, tuple[ImportedCharacter, ...]]:
-    usage: dict[str, list[ImportedCharacter]] = {}
-    for bracket in brackets if isinstance(brackets, list) else []:
-        if not isinstance(bracket, Mapping):
-            continue
-        for match in bracket.get("matches", []):
-            if not isinstance(match, Mapping):
-                continue
-            for game in match.get("matchGames", match.get("match_games", [])):
-                if not isinstance(game, Mapping):
-                    continue
-                for slot in game.get("slots", []):
-                    if not isinstance(slot, Mapping):
-                        continue
-                    for participant in slot.get("participants", []):
-                        if not isinstance(participant, Mapping):
-                            continue
-                        user_id = participant.get("userId") or participant.get("user_id")
-                        if not user_id:
-                            continue
-                        selected = usage.setdefault(str(user_id), [])
-                        for raw_character in participant.get("characters", []):
-                            if not isinstance(raw_character, Mapping):
-                                continue
-                            character = _parry_character(raw_character)
-                            if character is not None and character not in selected:
-                                selected.append(character)
-    return {user_id: tuple(characters) for user_id, characters in usage.items()}
-
-
 def _parry_location(tournament: Mapping[str, Any]) -> str | None:
     address = tournament.get("address")
     if isinstance(address, Mapping):
@@ -730,6 +714,7 @@ def parse_parrygg(
     link: BracketLink,
     *,
     top_entrants: int = 8,
+    import_all_characters: bool = False,
 ) -> BracketImport:
     """Normalize the combined responses returned by :mod:`bracket_import.parrygg_api`."""
     tournament = payload.get("tournament", payload)
@@ -739,7 +724,7 @@ def parse_parrygg(
     if not isinstance(event, Mapping):
         event = {}
     placements = payload.get("placements", tournament.get("placements", []))
-    usage = _parry_character_usage(payload.get("brackets", []))
+    played_usage, won_usage = parry_character_usage(payload.get("brackets", []), _parry_character)
     players = []
     for placement in placements if isinstance(placements, list) else []:
         if not isinstance(placement, Mapping):
@@ -754,8 +739,14 @@ def parse_parrygg(
         members = tuple(
             ImportedMember(
                 str(user.get("gamerTag") or user.get("gamer_tag") or "Unknown"),
-                characters=usage.get(str(user.get("id")), ()),
+                characters=select_import_characters(
+                    played_usage.get(str(user.get("id")), ()),
+                    won_usage.get(str(user.get("id")), ()),
+                    import_all_characters=import_all_characters,
+                ),
                 country=user.get("locationCountry") or user.get("location_country"),
+                played_characters=played_usage.get(str(user.get("id")), ()),
+                won_characters=won_usage.get(str(user.get("id")), ()),
             )
             for user in users
         )
@@ -769,6 +760,8 @@ def parse_parrygg(
             country=members[0].country if len(members) == 1 else None,
             provider_id=str(event_entrant.get("id") or entrant.get("id") or "") or None,
             members=members,
+            played_characters=members[0].played_characters if len(members) == 1 else (),
+            won_characters=members[0].won_characters if len(members) == 1 else (),
         ))
 
     entrant_size = event.get("entrantSize") or event.get("entrant_size")
@@ -789,6 +782,7 @@ def parse_parrygg(
             "game": event.get("game"),
             "reported_character_players": sum(bool(player.characters) for player in sorted_players[:top_entrants]),
         },
+        import_all_characters=import_all_characters,
     )
 
 

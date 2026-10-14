@@ -7,6 +7,7 @@ import {
   buildBracketReview,
   normalizeBracketUrl,
   normalizeBracketImport,
+  withCharacterImportMode,
 } from "./bracket";
 import { CharacterStockIcons } from "./FavoritePicker";
 import { FavoritesData } from "./favorites";
@@ -18,6 +19,8 @@ interface BracketStepProps {
   favorites: FavoritesData;
   eventFormat: EventFormat;
   entrantCount: number;
+  importAllCharacters: boolean;
+  onImportAllCharactersChange: (value: boolean) => void;
   onUrlChange: (url: string) => void;
   onReviewChange: (review: BracketImportReview) => void;
   onSkip: () => void;
@@ -58,7 +61,7 @@ function ReviewParticipant({
   </div>;
 }
 
-export default function BracketStep({ url, review, favorites, eventFormat, entrantCount, onUrlChange, onReviewChange, onSkip }: BracketStepProps) {
+export default function BracketStep({ url, review, favorites, eventFormat, entrantCount, importAllCharacters, onImportAllCharactersChange, onUrlChange, onReviewChange, onSkip }: BracketStepProps) {
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(false);
@@ -71,7 +74,7 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     try {
       const normalizedUrl = normalizeBracketUrl(url);
       onUrlChange(normalizedUrl);
-      const response = normalizeBracketImport(await importBracket(normalizedUrl, 8));
+      const response = withCharacterImportMode(normalizeBracketImport(await importBracket(normalizedUrl, 8, importAllCharacters)), importAllCharacters);
       const nextReview = buildBracketReview(response, favorites, eventFormat);
       onReviewChange(nextReview);
       setMessageIsError(false);
@@ -101,6 +104,12 @@ export default function BracketStep({ url, review, favorites, eventFormat, entra
     <form className="bracket-import-card" onSubmit={handleImport}>
       <div className="bracket-import-card__heading"><span className="eyebrow">Public bracket link</span><h2>Bring in bracket results</h2><p>Supports Start.gg, Start.gg USB Reporting character data, Challonge.com, and Parry.gg brackets.</p></div>
       <label className="field bracket-url-field">Bracket URL<input type="text" inputMode="url" value={url} onChange={(event) => onUrlChange(event.target.value)} placeholder="start.gg/tournament/.../event/..." required /></label>
+      <label className="text-setting-check bracket-character-setting"><input type="checkbox" checked={importAllCharacters} disabled={importing} aria-describedby="bracket-character-setting-help" onChange={(event) => {
+        const checked = event.target.checked;
+        onImportAllCharactersChange(checked);
+        if (review) onReviewChange({ ...review, source: withCharacterImportMode(review.source, checked) });
+      }} />Import all characters an entrant played with</label>
+      <p className="field-help bracket-character-setting" id="bracket-character-setting-help">Unchecked: import characters they won games with. Entrants with no reported wins always use all reported characters they played. This preference is saved with your format. Saved favorite matches still take priority.</p>
       <div className="bracket-provider-list" aria-label="Supported bracket providers"><span>start.gg</span><span>USB Reporting</span><span>challonge.com</span><span>parry.gg</span></div>
       <button className="button button--dark bracket-import-button" type="submit" disabled={importing || !url.trim()}>{importing ? "Importing bracket…" : review ? "Import bracket again" : "Import bracket"}</button>
     </form>

@@ -142,11 +142,11 @@ export async function getOptions(): Promise<OptionsResponse> {
   };
 }
 
-export async function importBracket(url: string, topEntrants: 3 | 4 | 8): Promise<unknown> {
+export async function importBracket(url: string, topEntrants: 3 | 4 | 8, importAllCharacters = false): Promise<unknown> {
   const response = await request("import", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url, top_entrants: topEntrants }),
+    body: JSON.stringify({ url, top_entrants: topEntrants, import_all_characters: importAllCharacters }),
   });
   return response.json() as Promise<unknown>;
 }

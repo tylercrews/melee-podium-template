@@ -91,6 +91,10 @@ export interface EntrantCountOption {
 
 export type HeaderLayout = Record<HeaderPosition, HeaderContent>;
 
+export interface BracketImportSettings {
+  import_all_characters: boolean;
+}
+
 export interface FormatConfiguration {
   schema_version: 1;
   selection: FormatSelection;
@@ -99,6 +103,7 @@ export interface FormatConfiguration {
   formatting_asset_colors: FormattingAssetColors;
   entrant_text_colors: EntrantTextColors;
   text_settings: TextSettings;
+  bracket_import_settings: BracketImportSettings;
 }
 
 export const DEFAULT_HEADER_LAYOUT: HeaderLayout = {
@@ -168,6 +173,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
   formatting_asset_colors: DEFAULT_FORMATTING_ASSET_COLORS,
   entrant_text_colors: DEFAULT_ENTRANT_TEXT_COLORS,
   text_settings: DEFAULT_TEXT_SETTINGS,
+  bracket_import_settings: { import_all_characters: false },
 };
 
 const modes = new Set<CreationMode>(["podium", "eyes", "squares", "radial"]);
@@ -485,11 +491,19 @@ export function selectEntrantCount(format: FormatConfiguration, option: EntrantC
   return { ...format, selection };
 }
 
+function normalizeBracketImportSettings(value: unknown): BracketImportSettings {
+  if (value === undefined) return { import_all_characters: false };
+  if (!isObject(value) || typeof value.import_all_characters !== "boolean") {
+    throw new Error("Bracket import setting import_all_characters must be true or false.");
+  }
+  return { import_all_characters: value.import_all_characters };
+}
+
 export function normalizeFormat(value: unknown): FormatConfiguration {
   if (!isObject(value) || value.schema_version !== 1) {
     throw new Error("Format code must be a version 1 format object.");
   }
-  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors), entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors), text_settings: normalizeTextSettings(value.text_settings) };
+  if (value.selection === null) return { ...EMPTY_FORMAT, header_layout: normalizeHeaderLayout(value.header_layout), image_settings: normalizeImageSettings(value.image_settings), formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors), entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors), text_settings: normalizeTextSettings(value.text_settings), bracket_import_settings: normalizeBracketImportSettings(value.bracket_import_settings) };
   if (!isObject(value.selection) || !modes.has(value.selection.mode as CreationMode)) {
     throw new Error("Format code has an invalid creation mode.");
   }
@@ -539,6 +553,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
     formatting_asset_colors: normalizeFormattingAssetColors(value.formatting_asset_colors),
     entrant_text_colors: normalizeEntrantTextColors(value.entrant_text_colors),
     text_settings: normalizeTextSettings(value.text_settings),
+    bracket_import_settings: normalizeBracketImportSettings(value.bracket_import_settings),
   };
 }
 

@@ -13,6 +13,8 @@ export interface ImportedBracketMember {
   characters: ImportedBracketCharacter[];
   x_handle: string;
   country: string;
+  played_characters?: ImportedBracketCharacter[];
+  won_characters?: ImportedBracketCharacter[];
 }
 
 export interface ImportedBracketEntrant {
@@ -24,6 +26,8 @@ export interface ImportedBracketEntrant {
   x_handle: string;
   country: string;
   provider_id: string;
+  played_characters?: ImportedBracketCharacter[];
+  won_characters?: ImportedBracketCharacter[];
 }
 
 export interface ImportedBracketTournament {
@@ -46,6 +50,7 @@ export interface BracketImportResponse {
   entrants: ImportedBracketEntrant[];
   bracket: Record<string, unknown>;
   provider_data: Record<string, unknown>;
+  import_all_characters?: boolean;
 }
 
 export interface FavoriteImportCorrection {
@@ -102,7 +107,25 @@ function member(value: unknown): ImportedBracketMember | null {
   if (!isRecord(value)) return null;
   const tag = text(value.tag || value.name || value.player_tag).trim();
   if (!tag) return null;
-  return { tag, characters: characters(value.characters), x_handle: text(value.x_handle), country: text(value.country) };
+  return { tag, ...characterHistory(value), x_handle: text(value.x_handle), country: text(value.country) };
+}
+
+function characterHistory(value: Record<string, unknown>) {
+  const selected = characters(value.characters);
+  return {
+    characters: selected,
+    played_characters: value.played_characters === undefined ? selected : characters(value.played_characters),
+    won_characters: value.won_characters === undefined ? selected : characters(value.won_characters),
+  };
+}
+
+export function withCharacterImportMode(source: BracketImportResponse, importAllCharacters: boolean): BracketImportResponse {
+  function select<T extends { characters: ImportedBracketCharacter[]; played_characters?: ImportedBracketCharacter[]; won_characters?: ImportedBracketCharacter[] }>(item: T): T {
+    const played = item.played_characters ?? item.characters;
+    const won = item.won_characters ?? item.characters;
+    return { ...item, characters: (importAllCharacters || !won.length ? played : won).map((character) => ({ ...character })) };
+  }
+  return { ...source, import_all_characters: importAllCharacters, entrants: source.entrants.map((entrant) => ({ ...select(entrant), members: entrant.members.map(select) })) };
 }
 
 export function normalizeBracketImport(value: unknown): BracketImportResponse {
@@ -118,7 +141,7 @@ export function normalizeBracketImport(value: unknown): BracketImportResponse {
       tag,
       seed: optionalNumber(item.seed),
       placement: optionalNumber(item.placement),
-      characters: characters(item.characters),
+      ...characterHistory(item),
       members: Array.isArray(item.members) ? item.members.map(member).filter((entry): entry is ImportedBracketMember => entry !== null) : [],
       x_handle: text(item.x_handle),
       country: text(item.country),
@@ -128,6 +151,7 @@ export function normalizeBracketImport(value: unknown): BracketImportResponse {
   if (!entrants.length) throw new Error("The bracket did not return any placed entrants.");
   return {
     provider: text(value.provider),
+    import_all_characters: value.import_all_characters === true,
     tournament: {
       title: text(tournament.title || tournament.name),
       date: text(tournament.date),

@@ -116,6 +116,8 @@ class BracketImportTests(unittest.TestCase):
 
         self.assertEqual(usage["9"][0]["_startgg_score"], 204)
         self.assertEqual(usage["12"][0]["_startgg_score"], 104)
+        self.assertFalse(usage["9"][0]["_startgg_won"])
+        self.assertTrue(usage["12"][0]["_startgg_won"])
     def test_challonge_orders_final_ranks(self):
         link = identify_bracket_link("https://challonge.com/melee")
         result = parse_challonge({"tournament": {"name": "Weekly", "participants": [{"participant": {"id": 1, "name": "Second", "seed": 3, "final_rank": 2}}, {"participant": {"id": 2, "display_name": "First", "seed": 1, "final_rank": 1}}]}}, link)

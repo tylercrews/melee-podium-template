@@ -143,6 +143,25 @@ function previewFormat(app) {
   return app.root.find(node => node.type?.name === "Preview").props.format;
 }
 
+for (const source of ["saved", "code"]) {
+  test(`${source} format restores the character import preference and keeps edits in saved format data`, async () => {
+    const format = quickPickFormat(QUICK_PICKS[0].id);
+    format.bracket_import_settings.import_all_characters = true;
+    const app = await mount({ user: source === "saved" ? user : null, saved: [{ id: "saved", name: "My format", data: format }] });
+    try {
+      await load(app, source, format);
+      await click(button(app, "Proceed to Bracket Import"));
+      assert.equal(app.root.findByType("test-BracketStep").props.importAllCharacters, true);
+      await act(async () => app.root.findByType("test-BracketStep").props.onImportAllCharactersChange(false));
+      await click(app.root.findAllByType("button").find(node => text(node).endsWith("Format")));
+      const saveData = app.root.findByType("test-FormatStep").props.value;
+      assert.equal(JSON.parse(formatCode(saveData)).bracket_import_settings.import_all_characters, false);
+      await click(button(app, "4Bracket Import"));
+      assert.equal(app.root.findByType("test-BracketStep").props.importAllCharacters, false);
+    } finally { act(() => app.unmount()); }
+  });
+}
+
 test("incomplete format imports keep Bracket Import locked", async () => {
   const app = await mount();
   try {
