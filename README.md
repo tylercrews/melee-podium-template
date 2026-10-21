@@ -94,6 +94,7 @@ Maybes/Eventuallies:
 
 Different Layout Styles One Day:
 * flying v with first place centered - been trying to figure out how to make this work. The problem is the asymmetry of doing 1st / 2, 3, 4 / 5, 5, 7, 7. 2nd being right behind 1st will only work if it's almost as large as first. That way 1st still clearly upstages it, but gets some more recognition for doing really well. Then I think there will be sizeable gaps in the top center, bottom left corner, and bottom right corner where we can let users put tournament title, tournament logo, and metadata
+    * the doubles version of this might only be able to be 3 teams. If you have 4 you don't get the gap in the center top, which is necessary for the layout to work I think
 * a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s -- ended up using this idea to do podiums + clapping instead, which I like a lot more I think. Keeping this idea for a second just in case I reconsider
 * long portraits like the character select screen
 * long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
