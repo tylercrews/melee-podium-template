@@ -101,6 +101,10 @@ def radial_preferences() -> ModePreferences:
         if slot == 6:
             # Clear the lower-left diagonal without moving names or seeds.
             number = replace(number, anchor=replace(number.anchor, x=number.anchor.x + 12))
+        elif slot == 2:
+            # Echo the first-place crest at a smaller size, deeper in the wedge,
+            # with a three-pixel gap below the top border.
+            number = replace(number, anchor=PixelPoint(1600, 67), max_size=PixelSize(140, 120))
         numbers.append(number)
     return replace(
         reference, formatting_assets=assets, character_slots=characters, text_slots=text,

@@ -19,7 +19,7 @@ function Footer({ renderCount }: FooterProps) {
     <>
       <footer className="site-footer">
         <div>
-          V7.5 10/14/2026 
+          V7.6 10/20/2026 
           {" "}●{" "}
           {count} created
           {" "}●{" "}

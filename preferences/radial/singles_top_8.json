@@ -268,12 +268,12 @@
       "slot_id": "number_2",
       "asset_id": "02nd.png",
       "anchor": {
-        "x": 1710,
-        "y": 48
+        "x": 1600,
+        "y": 67
       },
       "max_size": {
-        "width": 120,
-        "height": 90
+        "width": 140,
+        "height": 120
       },
       "z_index": 20
     },

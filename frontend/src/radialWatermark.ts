@@ -1,5 +1,5 @@
 // Matches radial_watermark.py: choose contrast from the fully composed image.
-const singlesBox = { left: 1450, top: 962, right: 1790, bottom: 986 };
+const singlesBox = { left: 1450, top: 787, right: 1686, bottom: 933 };
 const doublesBox = { left: 1562, top: 1034, right: 1902, bottom: 1062 };
 
 export function drawRadialWatermark(context: CanvasRenderingContext2D, mask: HTMLImageElement, doubles: boolean) {
