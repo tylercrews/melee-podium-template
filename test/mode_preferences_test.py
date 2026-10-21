@@ -22,7 +22,7 @@ class ModePreferencesTest(unittest.TestCase):
     def test_creation_modes_are_explicit(self) -> None:
         self.assertEqual(
             tuple(CreationMode),
-            (CreationMode.PODIUM, CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL),
+            (CreationMode.PODIUM, CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL, CreationMode.FLYING_V),
         )
 
     def test_mode_options_are_part_of_the_serialized_selection(self) -> None:
@@ -153,6 +153,7 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
                 CreationMode.RADIAL: 2,
+                CreationMode.FLYING_V: 2,
             },
         )
         podium_styles = Counter(
@@ -170,7 +171,7 @@ class ModePreferencesTest(unittest.TestCase):
                 and item.selection.options.podium_style is PodiumStyle.LEGACY
                 and item.selection.submode_id == "singles_top_8"
             ) or (
-                item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL}
+                item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL, CreationMode.FLYING_V}
                 and item.selection.submode_id
                 in {"singles_top_8", "doubles_top_3", "doubles_top_4"}
             ) or (
@@ -206,6 +207,7 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.EYES: PixelSize(1080, 1920),
                 CreationMode.SQUARES: PixelSize(1920, 1080),
                 CreationMode.RADIAL: PixelSize(1920, 1080),
+                CreationMode.FLYING_V: PixelSize(1080, 1920),
             }.get(
                 item.selection.mode,
                 PixelSize(1920, 1280 if item.selection.submode_id == "doubles_top_8_four_podium" else 1000 if item.selection.submode_id == "singles_top_16_clapping" else 941)

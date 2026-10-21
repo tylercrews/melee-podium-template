@@ -33,6 +33,7 @@ from entrant_visibility import apply_visibility, visible_preferences
 from layout_text_defaults import layout_text_defaults
 from mode_preferences import ModePreferenceRepository
 from radial_content_renderer import RadialContentRenderer
+from flying_v_content_renderer import FlyingVContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 from sample_creation_data import (
@@ -65,6 +66,7 @@ SUPPORTED_SQUARE_LAYOUTS = frozenset(
         (TournamentFormat.DOUBLES, 4, None),
     }
 )
+SUPPORTED_FLYING_V_LAYOUTS = frozenset({(TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 3, None)})
 SUPPORTED_EYES_LAYOUTS = frozenset(
     {
         *((TournamentFormat.SINGLES, count, None) for count in (8, 10, 15, 16, 20, 25)),
@@ -111,6 +113,8 @@ def prepare_format_preview(
         if creation_mode is CreationMode.EYES
         else frozenset({(TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 4, None)})
         if creation_mode is CreationMode.RADIAL
+        else SUPPORTED_FLYING_V_LAYOUTS
+        if creation_mode is CreationMode.FLYING_V
         else frozenset()
     )
     if layout not in supported_layouts:
@@ -203,6 +207,8 @@ def prepare_format_preview(
         if creation_mode is CreationMode.EYES
         else RadialContentRenderer(font=font, tournament_logo=tournament_logo, custom_font_bytes=custom_font_bytes, logo_scale=logo_scale)
         if creation_mode is CreationMode.RADIAL
+        else FlyingVContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+        if creation_mode is CreationMode.FLYING_V
         else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
     )
     return renderer.draw(formatted, request, preferences)

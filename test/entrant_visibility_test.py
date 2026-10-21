@@ -28,7 +28,7 @@ class EntrantVisibilityTest(unittest.TestCase):
                     options.event_format, options.entrant_count, options.variant, transparent=True,
                     creation_mode=selection.mode, font=PodiumFont.UBUNTU,
                     formatting_colors=GeometricFormattingColors.from_dict({"mode": "pick_1", "colors": [
-                        {"background_color": "#112233FF", "trim_color": "#445566FF"}]} ) if selection.mode is not CreationMode.PODIUM else None,
+                        {"background_color": "#112233FF", "trim_color": "#445566FF"}]} ) if selection.mode not in {CreationMode.PODIUM, CreationMode.FLYING_V} else None,
                     entrant_visibility=[{"omit_entrant": True}] * options.entrant_count)
                 image = result.frame() if isinstance(result, ClappingLayout) else result
                 self.assertIsInstance(image, Image.Image)

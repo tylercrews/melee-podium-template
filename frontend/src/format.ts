@@ -1,7 +1,7 @@
 import { CLAPPING_GRID_LAYOUTS, clappingGridLayout, clappingGridVariant } from "./clappingGrid";
 import { isPrLayout, layoutTextDefaults, transitionLayoutTextSettings } from "./layoutTextDefaults";
 
-export type CreationMode = "podium" | "eyes" | "squares" | "radial";
+export type CreationMode = "podium" | "eyes" | "squares" | "radial" | "flying_v";
 export type EventFormat = "singles" | "doubles";
 export type PodiumStyle = "legacy" | "customizable";
 export type HeaderPosition = "top_left" | "top_middle" | "top_right";
@@ -181,7 +181,7 @@ export const EMPTY_FORMAT: FormatConfiguration = {
   bracket_import_settings: { import_all_characters: false },
 };
 
-const modes = new Set<CreationMode>(["podium", "eyes", "squares", "radial"]);
+const modes = new Set<CreationMode>(["podium", "eyes", "squares", "radial", "flying_v"]);
 const eventFormats = new Set<EventFormat>(["singles", "doubles"]);
 const podiumStyles = new Set<PodiumStyle>(["legacy", "customizable"]);
 const headerPositions: HeaderPosition[] = ["top_left", "top_middle", "top_right"];
@@ -203,10 +203,28 @@ const formattingColorPresets = new Set<FormattingColorPreset>(["smash_player_col
 const entrantTextColorModes = new Set<EntrantTextColorSelectionMode>(["match_podium", "pick_1", "pick_2", "pick_all"]);
 const metadataFields = new Set<MetadataField>(ALL_METADATA_FIELDS);
 
+/** Modes with one layout per bracket type fix the entrant count with Singles/Doubles. */
+const FIXED_LAYOUT_COUNTS: Partial<Record<CreationMode, Record<EventFormat, number>>> = {
+  radial: { singles: 8, doubles: 4 },
+  flying_v: { singles: 8, doubles: 3 },
+};
+
+export function fixedEntrantCount(mode: CreationMode, eventFormat: EventFormat | null): number | null {
+  return eventFormat ? FIXED_LAYOUT_COUNTS[mode]?.[eventFormat] ?? null : null;
+}
+
+export function hasFixedLayouts(mode: CreationMode): boolean {
+  return FIXED_LAYOUT_COUNTS[mode] !== undefined;
+}
+
 export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, EntrantCountOption[]>> = {
   radial: {
     singles: [{ entrant_count: 8, variant: null, label: "Top 8" }],
     doubles: [{ entrant_count: 4, variant: null, label: "Top 4" }],
+  },
+  flying_v: {
+    singles: [{ entrant_count: 8, variant: null, label: "Top 8" }],
+    doubles: [{ entrant_count: 3, variant: null, label: "Top 3" }],
   },
   podium: {
     singles: [
@@ -264,7 +282,7 @@ export function formattingAssetCount(format: FormatConfiguration): number {
 }
 
 function hasCompleteFormattingAssetColors(format: FormatConfiguration): boolean {
-  if (format.selection.mode === "podium" && format.selection.options.podium_style !== "customizable") return true;
+  if (!hasFormattingAssetColors(format)) return true;
   const colors = format.formatting_asset_colors;
   if (colors.mode === "premade") return colors.preset !== null;
   if (colors.mode === "pick_1") return colors.colors.length === 1;
@@ -497,6 +515,12 @@ function normalizeTextSettings(value: unknown, defaults = DEFAULT_TEXT_SETTINGS)
   };
 }
 
+/** Legacy podium artwork and Flying V's free-standing figures have no recolorable shapes. */
+export function hasFormattingAssetColors(format: FormatConfiguration): boolean {
+  const { mode, options } = format.selection;
+  return mode !== "flying_v" && (mode !== "podium" || options.podium_style === "customizable");
+}
+
 export function isPodiumsClapping(selection: FormatSelection): boolean {
   return selection.mode === "podium" && (
     (selection.options.event_format !== null && selection.options.entrant_count === 8 && selection.options.variant === "four_podium")
@@ -508,6 +532,14 @@ export function isPodiumsClapping(selection: FormatSelection): boolean {
 export function selectEntrantCount(format: FormatConfiguration, option: EntrantCountOption): FormatConfiguration {
   const selection = { ...format.selection, options: { ...format.selection.options, entrant_count: option.entrant_count, variant: option.variant } };
   selection.options.animated = isPodiumsClapping(selection) && (!isPodiumsClapping(format.selection) || format.selection.options.animated !== false);
+  return { ...format, selection, text_settings: transitionLayoutTextSettings(format.text_settings, format.selection, selection) };
+}
+
+/** Choosing Singles/Doubles in a fixed-layout mode selects its count and bracket type together. */
+export function selectFixedLayout(format: FormatConfiguration, mode: CreationMode, eventFormat: EventFormat): FormatConfiguration {
+  const entrant_count = fixedEntrantCount(mode, eventFormat);
+  if (entrant_count === null) throw new Error("This image type does not have a fixed layout.");
+  const selection: FormatSelection = { mode, options: { event_format: eventFormat, entrant_count, variant: null, podium_style: null, animated: false } };
   return { ...format, selection, text_settings: transitionLayoutTextSettings(format.text_settings, format.selection, selection) };
 }
 
@@ -549,8 +581,10 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
   if (options.variant !== null && typeof options.variant !== "string") {
     throw new Error("Format code has an invalid layout variant.");
   }
-  if (mode === "radial" && (options.variant !== null || (rawEntrantCount !== null && (rawEventFormat === null || rawEntrantCount !== (rawEventFormat === "singles" ? 8 : 4))))) {
-    throw new Error("Radial formats must use Singles Top 8 or Doubles Top 4 without a layout variant.");
+  if (hasFixedLayouts(mode) && (options.variant !== null || (rawEntrantCount !== null && rawEntrantCount !== fixedEntrantCount(mode, rawEventFormat as EventFormat | null)))) {
+    throw new Error(mode === "radial"
+      ? "Radial formats must use Singles Top 8 or Doubles Top 4 without a layout variant."
+      : "Flying V formats must use Singles Top 8 or Doubles Top 3 without a layout variant.");
   }
   const rawStyle = options.podium_style;
   const rawSelection = { mode, options: options as unknown as FormatSelection["options"] };
@@ -574,7 +608,7 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
       mode,
       options: {
         event_format: rawEventFormat as EventFormat | null,
-        entrant_count: rawEntrantCount === null ? (mode === "radial" && rawEventFormat !== null ? (rawEventFormat === "singles" ? 8 : 4) : null) : Number(rawEntrantCount),
+        entrant_count: rawEntrantCount === null ? fixedEntrantCount(mode, rawEventFormat as EventFormat | null) : Number(rawEntrantCount),
         variant: options.variant as string | null,
         animated: clapping ? options.animated !== false : false,
         podium_style: rawStyle as PodiumStyle | null,
@@ -637,6 +671,7 @@ export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelS
 
 export function formatCanvasSize(format: FormatConfiguration): PixelSize | null {
   if (format.selection.mode === "squares" || format.selection.mode === "radial") return { width: 1920, height: 1080 };
+  if (format.selection.mode === "flying_v") return { width: 1080, height: 1920 };
   if (format.selection.mode === "eyes") {
     const count = format.selection.options.entrant_count;
     // Use the representative Eyes Top 8 canvas while the remaining format

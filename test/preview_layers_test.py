@@ -40,8 +40,11 @@ class PreviewLayerTests(unittest.TestCase):
 
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
-        self.assertEqual(len(files), 453)
-        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers").rglob("*.png"))), 76)
+        self.assertEqual(len(files), 495)
+        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers").rglob("*.png"))), 80)
+        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers" / "flying_v").rglob("*.png"))), 4)
+        self.assertEqual(len(tuple((LAYER_ROOT / "flying_v_headers").rglob("*.png"))), 36)
+        self.assertEqual(len(tuple((LAYER_ROOT / "flying_v").rglob("*.png"))), 2)
         self.assertTrue((LAYER_ROOT / "radial_watermark.png").is_file())
         self.assertTrue((LAYER_ROOT / "radial_watermark_doubles.png").is_file())
         self.assertEqual(len(tuple((LAYER_ROOT / "radial_headers").rglob("*.png"))), 36)
@@ -113,7 +116,7 @@ class PreviewLayerTests(unittest.TestCase):
 
     def test_mode_selector_thumbnails_are_small_webp_images(self) -> None:
         thumbnail_root = PROJECT_ROOT / "frontend" / "public" / "format_mode_thumbnails"
-        for name in ("podium", "eyes", "squares"):
+        for name in ("podium", "eyes", "squares", "radial", "flying_v"):
             with self.subTest(name=name), Image.open(thumbnail_root / f"{name}.webp") as image:
                 self.assertEqual(image.format, "WEBP")
                 self.assertLessEqual(image.width, 360)

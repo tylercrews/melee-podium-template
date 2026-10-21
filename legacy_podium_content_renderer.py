@@ -44,6 +44,7 @@ from DrawPodium import (
     _draw_lower_entrant_summary,
     _draw_text,
     _draw_tournament_subtitle,
+    _font_settings,
     _font_to_fit,
     _metadata_layout,
     _place_characters,
@@ -541,8 +542,15 @@ class LegacyPodiumContentRenderer:
         y: int,
         anchor: str,
         max_width: int,
+        exact_size: bool = False,
     ) -> int:
-        """Draw one compact metadata row while retaining supported URL icons."""
+        """Draw one compact metadata row while retaining supported URL icons.
+
+        ``exact_size`` draws at the measured size. Without it, the typeface
+        calibration is applied a second time, so Impact and Ubuntu rows render
+        wider than the width used to align them; existing layouts and their
+        cached header layers still depend on that legacy sizing.
+        """
 
         pieces: list[tuple[Image.Image | None, str]] = []
         for text, _preferred_size in row:
@@ -577,6 +585,7 @@ class LegacyPodiumContentRenderer:
         ]
         row_width = sum(piece_widths) + separator_width * (len(pieces) - 1)
         left = x if anchor.startswith("l") else x - row_width // 2 if anchor.startswith("m") else x - row_width
+        draw_size = loaded.size - _font_settings(self.font)[1] if exact_size else loaded.size
         bounds = loaded.getbbox("Ag")
         text_height = bounds[3] - bounds[1]
         row_height = max(32 if any(icon is not None for icon, _text in pieces) else 0, text_height)
@@ -597,7 +606,7 @@ class LegacyPodiumContentRenderer:
                     text,
                     anchor="la",
                     max_width=max_width,
-                    preferred_size=loaded.size,
+                    preferred_size=draw_size,
                     font=self.font,
                     fill=request.text_settings.heading_color,
                     metallic=request.text_settings.heading_metallic,
@@ -610,7 +619,7 @@ class LegacyPodiumContentRenderer:
                     " • ",
                     anchor="la",
                     max_width=separator_width,
-                    preferred_size=loaded.size,
+                    preferred_size=draw_size,
                     font=self.font,
                     fill=request.text_settings.heading_color,
                     metallic=request.text_settings.heading_metallic,

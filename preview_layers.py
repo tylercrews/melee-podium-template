@@ -444,4 +444,6 @@ def generate_preview_layers(output_root: Path) -> list[Path]:
     outputs.extend(generate_placement_number_layers(output_root))
     from radial_preview_layers import generate_radial_preview_layers
     outputs.extend(generate_radial_preview_layers(output_root))
+    from flying_v_preview_layers import generate_flying_v_preview_layers
+    outputs.extend(generate_flying_v_preview_layers(output_root))
     return outputs

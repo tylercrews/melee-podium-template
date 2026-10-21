@@ -19,6 +19,7 @@ class CreationMode(StrEnum):
     EYES = "eyes"
     SQUARES = "squares"
     RADIAL = "radial"
+    FLYING_V = "flying_v"
 
 
 class PodiumStyle(StrEnum):
@@ -143,6 +144,12 @@ class ModeSelection:
             or self.options.variant is not None
         ):
             raise ValueError("Radial supports Singles Top 8 and Doubles Top 4")
+        if self.mode is CreationMode.FLYING_V and (
+            (self.options.event_format, self.options.entrant_count)
+            not in {(TournamentFormat.SINGLES, 8), (TournamentFormat.DOUBLES, 3)}
+            or self.options.variant is not None
+        ):
+            raise ValueError("Flying V supports Singles Top 8 and Doubles Top 3")
 
     @property
     def submode_id(self) -> str:

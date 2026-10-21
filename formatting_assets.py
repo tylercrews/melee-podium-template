@@ -117,6 +117,10 @@ class FormattingAssetRenderer:
 
             assert isinstance(colors, GeometricFormattingColors)
             return draw_radial_formatting(result, preferences, colors)
+        if preferences.selection.mode is CreationMode.FLYING_V:
+            # Flying V frames and header regions only reserve space; the
+            # figures and their placement artwork are drawn as content.
+            return result
         for placement in _formatting_asset_draw_order(preferences):
             if geometric:
                 assert isinstance(colors, GeometricFormattingColors)

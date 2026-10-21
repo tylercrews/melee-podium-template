@@ -9,7 +9,7 @@ import { isPrLayout } from "./layoutTextDefaults";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import { EntrantDraft, TournamentDetails } from "./creationData";
 import { FavoriteCharacter } from "./favorites";
-import { FormatConfiguration, PixelSize, buildBackgroundPlacement, formatCanvasSize, sizeMultiplierValue, isPodiumsClapping } from "./format";
+import { FormatConfiguration, PixelSize, buildBackgroundPlacement, fixedEntrantCount, formatCanvasSize, sizeMultiplierValue, isPodiumsClapping } from "./format";
 
 interface FormatPreviewProps {
   format: FormatConfiguration;
@@ -77,6 +77,14 @@ function headerBox(format: FormatConfiguration, outputSize: PixelSize, position:
       top_right: { left: 705, top: 675, right: 1215, bottom: 900 },
     }[position];
   }
+  if (format.selection.mode === "flying_v") {
+    // Matches HEADER_BOXES in generate_flying_v_preferences.py.
+    return {
+      top_left: { left: 16, top: 1612, right: 316, bottom: 1904 },
+      top_middle: { left: 270, top: 48, right: 810, bottom: 246 },
+      top_right: { left: 764, top: 1612, right: 1064, bottom: 1904 },
+    }[position];
+  }
   if (format.selection.mode === "eyes") {
     const index = position === "top_left" ? 0 : position === "top_middle" ? 1 : 2;
     if (outputSize.width === 1080) {
@@ -140,6 +148,9 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     const colorId = colors.mode === "premade" ? colors.preset ?? "smash_player_colors" : "pick_all";
     foregroundLayers = [{ url: `${layerRoot}/radial/${eventFormat === "doubles" ? "doubles_top_4" : "singles_top_8"}/${colorId}.png` }];
     headerUrl = `${layerRoot}/radial_headers/${fontId}/${eventFormat === "doubles" ? "doubles/" : ""}${headerPermutationId(format)}.png`;
+  } else if (mode === "flying_v") {
+    foregroundLayers = [{ url: `${layerRoot}/flying_v/${eventFormat === "doubles" ? "doubles_top_3" : "singles_top_8"}/placeholders.png` }];
+    headerUrl = `${layerRoot}/flying_v_headers/${fontId}/${eventFormat}/${headerPermutationId(format)}.png`;
   } else if (mode === "eyes") {
     const eyeEntrantCount = format.selection.options.entrant_count
       ?? (eventFormat === "doubles" ? 3 : 8);
@@ -160,11 +171,11 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     foregroundLayers = [{ url: `${layerRoot}/podiums/legacy/${layout}.png` }];
     headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
   }
-  const styleLabel = mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
+  const styleLabel = mode === "flying_v" ? "Flying V" : mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
   const layoutLabel = isPodiumsClapping(format.selection)
     ? `Podiums+Clapping · Top ${format.selection.options.entrant_count}`
-    : `Top ${format.selection.options.entrant_count ?? (mode === "radial" && eventFormat === "doubles" ? 4 : 8)}`;
+    : `Top ${format.selection.options.entrant_count ?? fixedEntrantCount(mode, eventFormat) ?? 8}`;
   return {
     foregroundLayers,
     headerUrl,
@@ -210,7 +221,7 @@ function previewEntrants(entrants: EntrantDraft[], entrantCount: number, include
 }
 
 async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean, logoImage: FormatImageInfo | null, composition?: { background: Blob; overlay: Blob }): Promise<Blob> {
-  const entrantCount = format.selection.options.entrant_count ?? (format.selection.mode === "radial" && format.selection.options.event_format === "doubles" ? 4 : 8);
+  const entrantCount = format.selection.options.entrant_count ?? fixedEntrantCount(format.selection.mode, format.selection.options.event_format ?? "singles") ?? 8;
   const config = {
     mode: format.selection.mode,
     style: format.selection.options.podium_style ?? "legacy",
@@ -314,7 +325,7 @@ function drawLogo(context: CanvasRenderingContext2D, format: FormatConfiguration
     context.rotate(Math.PI / 2);
     context.drawImage(logo, -width / 2, -height / 2, width, height);
     context.restore();
-  } else if (format.selection.mode === "squares" || format.selection.mode === "eyes" || format.selection.mode === "radial") {
+  } else if (format.selection.mode === "squares" || format.selection.mode === "eyes" || format.selection.mode === "radial" || format.selection.mode === "flying_v") {
     context.drawImage(logo, box.left + (box.right - box.left - width) / 2, box.top + (box.bottom - box.top - height) / 2, width, height);
   } else {
     const left = position === "top_middle" ? (outputSize.width - width) / 2 : position === "top_right" ? outputSize.width - width - 20 : 20;

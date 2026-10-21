@@ -44,7 +44,7 @@ class PlacementNumberingTest(unittest.TestCase):
     def test_all_modes_have_distinct_cached_tournament_and_sequential_numbers(self):
         for mode, count, variant in ((CreationMode.PODIUM, 16, "clapping"),
                                     (CreationMode.EYES, 16, None), (CreationMode.SQUARES, 8, None),
-                                    (CreationMode.RADIAL, 8, None)):
+                                    (CreationMode.RADIAL, 8, None), (CreationMode.FLYING_V, 8, None)):
             selection = ModeSelection(mode, ModeOptions(TournamentFormat.SINGLES, count, variant,
                                       PodiumStyle.CUSTOMIZABLE if mode is CreationMode.PODIUM else None))
             tournament = render_placement_number_layer(selection, True)

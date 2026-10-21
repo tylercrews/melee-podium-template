@@ -23,7 +23,8 @@ def preview_selections():
                 continue
             yield ModeSelection(CreationMode.PODIUM, ModeOptions(event_format, count, variant, style))
     for mode, layouts in ((CreationMode.EYES, SUPPORTED_EYES_LAYOUTS), (CreationMode.SQUARES, SUPPORTED_SQUARE_LAYOUTS),
-                          (CreationMode.RADIAL, ((TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 4, None)))):
+                          (CreationMode.RADIAL, ((TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 4, None))),
+                          (CreationMode.FLYING_V, ((TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 3, None)))):
         for event_format, count, variant in sorted(layouts, key=str):
             yield ModeSelection(mode, ModeOptions(event_format, count, variant))
 
@@ -38,6 +39,10 @@ def render_placement_number_layer(selection, use_tournament_placing):
                    else json.loads(PROFILE.read_text(encoding="utf-8"))["layouts"][selection.submode_id][selection.options.podium_style.value])
         lower = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
         preferences = replace(preferences, placement_tags=preferences.placement_tags + lower)
+    if selection.mode is CreationMode.FLYING_V:
+        # Match the placeholder figures, whose hanging second-place label rises.
+        from flying_v_preview_layers import placeholder_preview
+        preferences = placeholder_preview(preferences)[1]
     preferences = numbered_preferences(preferences, use_tournament_placing)
     layer = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     draw_placement_tags(layer, preferences)

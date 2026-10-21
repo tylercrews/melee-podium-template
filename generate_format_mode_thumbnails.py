@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 from DrawEyes import draw_singles_top_8 as draw_eyes_singles_top_8
+from DrawFlyingV import draw_singles_top_8 as draw_flying_v_singles_top_8
 from DrawRadial import draw_singles_top_8 as draw_radial_singles_top_8
 from creation_modes import CreationMode, PodiumStyle
 from DrawSquares import draw_singles_top_8 as draw_squares_singles_top_8
@@ -36,6 +37,16 @@ def generate_radial_mode_thumbnails() -> tuple[Path, ...]:
     return (_save_thumbnail(singles, "radial"),)
 
 
+def generate_flying_v_mode_thumbnails() -> tuple[Path, ...]:
+    """Generate the single portrait Flying V image-type selection thumbnail."""
+    singles = draw_flying_v_singles_top_8(
+        sample_singles_entrants(8, random.Random(20261020)),
+        tournament=sample_tournament(TournamentFormat.SINGLES),
+        fill_color="#080B14FF",
+    )
+    return (_save_thumbnail(singles, "flying_v"),)
+
+
 def generate_format_mode_thumbnails() -> tuple[Path, ...]:
     rng = random.Random(20260928)
     top_8 = sample_singles_entrants(8, rng)
@@ -60,7 +71,11 @@ def generate_format_mode_thumbnails() -> tuple[Path, ...]:
             fill_color="#080B14FF",
         ),
     }
-    return tuple(_save_thumbnail(image, name) for name, image in images.items()) + generate_radial_mode_thumbnails()
+    return (
+        tuple(_save_thumbnail(image, name) for name, image in images.items())
+        + generate_radial_mode_thumbnails()
+        + generate_flying_v_mode_thumbnails()
+    )
 
 
 if __name__ == "__main__":

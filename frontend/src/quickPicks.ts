@@ -9,7 +9,7 @@ export function quickPickLayoutLabel(pick: typeof QUICK_PICKS[number]): string {
     if (pick.variant === "four_podium" || pick.variant?.startsWith("clapping_grid_")) return "Podiums+Clapping";
     return pick.podium_style === "customizable" ? "Customizable Podiums" : "Legacy Podiums";
   }
-  return pick.mode === "eyes" ? "Eyes" : pick.mode === "radial" ? "Radial" : "Squares";
+  return pick.mode === "eyes" ? "Eyes" : pick.mode === "radial" ? "Radial" : pick.mode === "flying_v" ? "Flying V" : "Squares";
 }
 
 /** Return independent, serializable settings through the saved-format boundary. */

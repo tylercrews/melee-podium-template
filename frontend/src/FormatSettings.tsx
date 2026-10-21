@@ -1,8 +1,7 @@
-import { DEFAULT_RADIAL_HEADER_LAYOUT, CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle, metadataRowSizeAdjustments } from "./format";
+import { DEFAULT_HEADER_LAYOUT, DEFAULT_RADIAL_HEADER_LAYOUT, CreationMode, EventFormat, FormatConfiguration, HeaderContent, HeaderPosition, PodiumStyle, fixedEntrantCount, hasFixedLayouts, metadataRowSizeAdjustments, selectFixedLayout } from "./format";
 import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
 import EntrantCountSettings from "./EntrantCountSettings";
-import { selectRadialLayout } from "./radialFormat";
 import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
 import RgbaColorPicker from "./RgbaColorPicker";
 import MetadataRowEditor from "./MetadataRowEditor";
@@ -34,13 +33,14 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   function updateMode(mode: CreationMode) {
     const nextSelection: FormatConfiguration["selection"] = {
       mode,
-      options: { ...selection.options, entrant_count: mode === "radial" && selection.options.event_format ? (selection.options.event_format === "singles" ? 8 : 4) : null, variant: null, animated: false, podium_style: mode === "podium" ? selection.options.podium_style : null },
+      options: { ...selection.options, entrant_count: fixedEntrantCount(mode, selection.options.event_format), variant: null, animated: false, podium_style: mode === "podium" ? selection.options.podium_style : null },
     };
     onChange({
       ...value,
       selection: nextSelection,
       text_settings: transitionLayoutTextSettings(value.text_settings, selection, nextSelection),
-      header_layout: mode === "radial" ? { ...DEFAULT_RADIAL_HEADER_LAYOUT } : value.header_layout,
+      // Radial and Flying V positions mean different places than the shared top row.
+      header_layout: mode === "radial" ? { ...DEFAULT_RADIAL_HEADER_LAYOUT } : mode === "flying_v" ? { ...DEFAULT_HEADER_LAYOUT } : value.header_layout,
     });
   }
 
@@ -53,8 +53,8 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
   }
 
   function updateEventFormat(event_format: EventFormat) {
-    if (selection.mode === "radial") {
-      onChange(selectRadialLayout(value, event_format));
+    if (hasFixedLayouts(selection.mode)) {
+      onChange(selectFixedLayout(value, selection.mode, event_format));
       return;
     }
     const nextSelection = { ...selection, options: { ...selection.options, event_format, entrant_count: null, variant: null, animated: false } };
@@ -73,6 +73,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
 
   function headerPositionLabel(position: HeaderPosition, fallback: string) {
     if (selection.mode === "radial") return { top_left: "Middle Top", top_middle: "Middle", top_right: "Middle Bottom" }[position];
+    if (selection.mode === "flying_v") return { top_left: "Bottom Left", top_middle: "Top Middle", top_right: "Bottom Right" }[position];
     const verticalEyes = selection.mode === "eyes"
       && (selection.options.event_format === "doubles" || selection.options.entrant_count === 8);
     if (!verticalEyes) return fallback;
@@ -92,6 +93,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
           { value: "eyes" as const, label: "Eyes", detail: "Close-up portrait strips with placement numbers", disabled: false, thumbnail: "eyes.webp" },
           { value: "squares" as const, label: "Squares", detail: "Portrait cards with customizable borders and backgrounds", disabled: false, thumbnail: "squares.webp" },
           { value: "radial" as const, label: "Radial", detail: "Eight triangular portraits around a central tournament header", disabled: false, thumbnail: "radial.webp" },
+          { value: "flying_v" as const, label: "Flying V", detail: "Full-body characters flying in a V behind the champion", disabled: false, thumbnail: "flying_v.webp" },
         ]).map((option) => <label className={`format-choice format-choice--with-thumbnail${option.disabled ? " format-choice--disabled" : ""}`} key={option.value}><input type="radio" name="image-format" value={option.value} checked={selection.mode === option.value} onChange={() => updateMode(option.value)} disabled={option.disabled} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{option.label}</strong><small>{option.detail}</small></span><img className="format-choice__thumbnail" src={`${import.meta.env.BASE_URL}format_mode_thumbnails/${option.thumbnail}`} alt={`${option.label} example`} /></label>)}
       </div></fieldset>
 
@@ -107,7 +109,7 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div></fieldset>
     </section>
 
-    {selection.mode !== "radial" && <EntrantCountSettings value={value} onChange={onChange} />}
+    {!hasFixedLayouts(selection.mode) && <EntrantCountSettings value={value} onChange={onChange} />}
 
     <section className="format-settings-card" aria-labelledby="header-layout-heading">
       <div className="format-settings-card__heading"><span className="eyebrow">Text and header</span><h2 id="header-layout-heading">Content Selections</h2><p>Assign the header positions and choose which supporting details appear in the image.</p></div>
