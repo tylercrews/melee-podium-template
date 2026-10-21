@@ -4,7 +4,7 @@
   { "id": "squares-singles-top-8", "name": "Just Give Me Top8er", "mode": "squares", "event_format": "singles", "entrant_count": 8 },
   { "id": "podium-singles-top-8", "name": "Podium Top 8 singles", "mode": "podium", "podium_style": "legacy", "event_format": "singles", "entrant_count": 8 },
   { "id": "squares-doubles-top-4", "name": "...But What If Top8er Did Doubles?", "mode": "squares", "event_format": "doubles", "entrant_count": 4 },
-  { "id": "podiums-clapping-pr-top-11", "name": "MeleePodium Also Has Some PR Settings", "mode": "podium", "podium_style": "customizable", "event_format": "singles", "entrant_count": 11, "variant": "clapping_grid_4", "animated": true },
+  { "id": "podiums-clapping-pr-top-11", "name": "MeleePodium Also Has Some PR Settings", "mode": "podium", "podium_style": "customizable", "event_format": "singles", "entrant_count": 11, "variant": "clapping_grid_4", "animated": true, "thumbnail_revision": 2 },
   { "id": "eyes-singles-top-8", "name": "Eyes Top 8", "mode": "eyes", "event_format": "singles", "entrant_count": 8 },
   { "id": "radial-singles-top-8", "name": "Radial Top 8", "mode": "radial", "event_format": "singles", "entrant_count": 8 }
 ]

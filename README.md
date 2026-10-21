@@ -93,8 +93,8 @@ Maybes/Eventuallies:
 * split sponsor into a designated field, allowing for sponsor to update as a property of a favorited entrant? maybe some kind of options thing?
 
 Different Layout Styles One Day:
+* flying v with first place centered - been trying to figure out how to make this work. The problem is the asymmetry of doing 1st / 2, 3, 4 / 5, 5, 7, 7. 2nd being right behind 1st will only work if it's almost as large as first. That way 1st still clearly upstages it, but gets some more recognition for doing really well. Then I think there will be sizeable gaps in the top center, bottom left corner, and bottom right corner where we can let users put tournament title, tournament logo, and metadata
 * a template that combines podiums and eyes - similar to podium top 8 4 podiums, but expands a lot. Might work even better for PRs and top 16s -- ended up using this idea to do podiums + clapping instead, which I like a lot more I think. Keeping this idea for a second just in case I reconsider
-* flying v with first place centered
 * long portraits like the character select screen
 * long portraits like the slippi loading screen - I think these are the same as like adventure mode maybe? would be a great source for new poses
 * top8.gg has a really cool type of layout where they have title bar, podium-arranged top 3, then 5 on the bottom. But they do all squares. What if I had a half-and-half layout where the top 3 get their characters on short podiums, then the subsequent players get their characters in boxes underneath.

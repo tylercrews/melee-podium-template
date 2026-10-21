@@ -93,7 +93,7 @@ export default function LoadStep({ user, hasLoadedFormat, canProceedToBracket, o
         setSelectedId("");
         setMessageIsError(false);
         setMessage(`Loaded ${pick.name}. Bracket Import is ready when you are.`);
-      }}><img src={`${import.meta.env.BASE_URL}quick_pick_thumbnails/${pick.id}.webp`} alt={`${pick.animated ? "Animated " : ""}${quickPickLayoutLabel(pick)} ${pick.event_format} Top ${pick.entrant_count} example`} loading="lazy" /><strong>{pick.name}</strong><span>{quickPickLayoutLabel(pick)} · {pick.event_format === "singles" ? "Singles" : "Doubles"} · Top {pick.entrant_count}</span></button>)}</div>
+      }}><img src={`${import.meta.env.BASE_URL}quick_pick_thumbnails/${pick.id}.webp${pick.thumbnail_revision ? `?v=${pick.thumbnail_revision}` : ""}`} alt={`${pick.animated ? "Animated " : ""}${quickPickLayoutLabel(pick)} ${pick.event_format} Top ${pick.entrant_count} example`} loading="lazy" /><strong>{pick.name}</strong><span>{quickPickLayoutLabel(pick)} · {pick.event_format === "singles" ? "Singles" : "Doubles"} · Top {pick.entrant_count}</span></button>)}</div>
     </section>
     {canProceedToBracket && <button className="button button--dark" type="button" onClick={onProceedToBracket}>Continue to Bracket Import</button>}
     {message && <p className="inline-message format-message" role={messageIsError ? "alert" : "status"}>{message}</p>}
