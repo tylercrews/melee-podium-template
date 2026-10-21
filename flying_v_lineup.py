@@ -9,12 +9,13 @@ from PIL import Image
 
 from background_builder import PixelRect
 from models import Character
-from portrait_assets import load_scaled_portrait, with_team_color
+from portrait_assets import load_character_source, with_team_color
+from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 
 # Additional characters follow the Podium center/left/right stagger at a
 # spacing relative to the tallest portrait, so every tier keeps its proportions.
-LINEUP_SPREAD = 0.2
+LINEUP_SPREAD = 0.16
 STANDING_FRAME = "flying_v_standing_frame"
 HANGING_FRAME = "flying_v_hanging_frame"
 FRAME_ASSETS = frozenset({STANDING_FRAME, HANGING_FRAME})
@@ -28,15 +29,48 @@ class PlacedLineup:
     bounds: PixelRect
 
 
-def _visible_portraits(characters: Sequence[Character], scale: float, team_color: str | None) -> list[Image.Image]:
-    portraits = []
+@dataclass(frozen=True, slots=True)
+class _Source:
+    """One character's visible pixels at source resolution and its relativity scale."""
+
+    image: Image.Image
+    relativity: float
+
+    def size_at(self, scale: float) -> tuple[float, float]:
+        return self.image.width * self.relativity * scale, self.image.height * self.relativity * scale
+
+    def scaled(self, scale: float) -> Image.Image:
+        width, height = self.size_at(scale)
+        return self.image.resize((max(1, round(width)), max(1, round(height))), Image.Resampling.LANCZOS)
+
+
+def _load_sources(characters: Sequence[Character], team_color: str | None) -> list[_Source]:
+    # Resolve each (possibly random) costume and pose exactly once per render.
+    sources = []
     for character in characters:
-        portrait = load_scaled_portrait(with_team_color(character, team_color), scale)
-        visible = portrait.getbbox()
+        image, pose = load_character_source(with_team_color(character, team_color))
+        visible = image.getbbox()
         if visible is not None:
-            portraits.append(portrait.crop(visible))
+            sources.append(_Source(image.crop(visible), get_pose_scale(character.melee_fighter_name, f"00{pose}")))
+    return sources
+
+
+def _compose(portraits: list[Image.Image]) -> tuple[Image.Image, int]:
+    """Bottom-align portraits tallest first and return the center anchor's x offset."""
+    if not portraits:
+        return Image.new("RGBA", (1, 1), "#00000000"), 0
     # The tallest portrait establishes the silhouette; later ones layer over it.
-    return sorted(portraits, key=lambda image: image.height, reverse=True)
+    portraits = sorted(portraits, key=lambda image: image.height, reverse=True)
+    spread = round(portraits[0].height * LINEUP_SPREAD)
+    pattern = (-spread, spread) if len(portraits) == 2 else (0, -spread, spread)
+    offsets = [pattern[index % len(pattern)] for index in range(len(portraits))]
+    left = min(offset - image.width / 2 for offset, image in zip(offsets, portraits))
+    right = max(offset + image.width / 2 for offset, image in zip(offsets, portraits))
+    height = portraits[0].height
+    lineup = Image.new("RGBA", (round(right - left), height), "#00000000")
+    for offset, image in zip(offsets, portraits):
+        lineup.alpha_composite(image, (round(offset - image.width / 2 - left), height - image.height))
+    return lineup, round(-left)
 
 
 def render_lineup(
@@ -49,19 +83,7 @@ def render_lineup(
 
     if not characters:
         raise ValueError("A Flying V entrant must have at least one character")
-    portraits = _visible_portraits(characters, scale, team_color)
-    if not portraits:
-        return Image.new("RGBA", (1, 1), "#00000000"), 0
-    spread = round(portraits[0].height * LINEUP_SPREAD)
-    pattern = (-spread, spread) if len(portraits) == 2 else (0, -spread, spread)
-    offsets = [pattern[index % len(pattern)] for index in range(len(portraits))]
-    left = min(offset - image.width / 2 for offset, image in zip(offsets, portraits))
-    right = max(offset + image.width / 2 for offset, image in zip(offsets, portraits))
-    height = max(image.height for image in portraits)
-    lineup = Image.new("RGBA", (round(right - left), height), "#00000000")
-    for offset, image in zip(offsets, portraits):
-        lineup.alpha_composite(image, (round(offset - image.width / 2 - left), height - image.height))
-    return lineup, round(-left)
+    return _compose([source.scaled(scale) for source in _load_sources(characters, team_color)])
 
 
 def place_lineup(
@@ -72,27 +94,28 @@ def place_lineup(
     hanging: bool = False,
     team_color: str | None = None,
 ) -> PlacedLineup:
-    """Scale a lineup to its tier, shrinking only when it would overflow the frame.
+    """Scale a lineup to its tier, shrinking only a character too large for the frame.
 
-    Standing lineups rest on the frame's bottom center. Hanging lineups start at
-    the frame's top center so they never rise into space reserved above them.
+    The frame limits each character rather than the staggered lineup, so
+    entrants with several characters match single-character entrants in the
+    same tier. Standing lineups rest on the frame's bottom center; hanging
+    lineups start at its top center so they never rise into reserved space.
     """
 
     if scale <= 0:
         raise ValueError("Flying V scales must be greater than zero")
-    lineup, anchor_x = render_lineup(characters, scale, team_color=team_color)
-    # Per-portrait rounding can leave a refit lineup a few pixels too large.
-    for _attempt in range(3):
-        fit = min(1.0, frame.width / lineup.width, frame.height / lineup.height)
-        if fit >= 1:
-            break
-        scale *= fit
-        lineup, anchor_x = render_lineup(characters, scale, team_color=team_color)
-    if lineup.width > frame.width or lineup.height > frame.height:
-        fit = min(frame.width / lineup.width, frame.height / lineup.height)
-        anchor_x = round(anchor_x * fit)
-        lineup = lineup.resize((max(1, int(lineup.width * fit)), max(1, int(lineup.height * fit))), Image.Resampling.LANCZOS)
-    # Center the primary character, then keep uneven lineups inside the frame.
-    left = min(max((frame.left + frame.right) // 2 - anchor_x, frame.left), frame.right - lineup.width)
+    if not characters:
+        raise ValueError("A Flying V entrant must have at least one character")
+    sources = _load_sources(characters, team_color)
+    if sources:
+        widest = max(source.size_at(scale)[0] for source in sources)
+        tallest = max(source.size_at(scale)[1] for source in sources)
+        scale *= min(1.0, frame.width / widest, frame.height / tallest)
+    lineup, anchor_x = _compose([source.scaled(scale) for source in sources])
+    if lineup.width <= frame.width:
+        # Center the primary character, then keep uneven lineups inside the frame.
+        left = min(max((frame.left + frame.right) // 2 - anchor_x, frame.left), frame.right - lineup.width)
+    else:
+        left = (frame.left + frame.right - lineup.width) // 2
     top = frame.top if hanging else frame.bottom - lineup.height
     return PlacedLineup(lineup, PixelRect(left, top, left + lineup.width, top + lineup.height))

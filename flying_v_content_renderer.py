@@ -9,7 +9,14 @@ from PIL import Image, ImageDraw
 from background_builder import PixelRect
 from creation import CreationRequest
 from creation_modes import CreationMode
-from DrawPodium import CharacterTag, PodiumFont, _draw_character_tag, _resolve_doubles_tag_collisions, _temporary_font_settings
+from DrawPodium import (
+    CharacterTag,
+    PodiumFont,
+    _character_tag_bounds,
+    _draw_character_tag,
+    _resolve_doubles_tag_collisions,
+    _temporary_font_settings,
+)
 from entrant_visibility import slot_from_id
 from flying_v_lineup import FRAME_ASSETS, HANGING_FRAME, PlacedLineup, place_lineup
 from font_size_adjustments import adjusted_size
@@ -41,8 +48,11 @@ HEADER_ANCHORS = {"top_left": "la", "top_middle": "ma", "top_right": "ra"}
 # the top-center header never cover it.
 WATERMARK_ROW_HEIGHT = 44
 WATERMARK_MARGIN = 16
-LABEL_GAP = 6
 NAME_ABOVE_HEAD_OFFSET = 15
+LABEL_GAP = 6
+# Placement tags with this slot suffix sit centered between a team's member names.
+BETWEEN_NAMES_SUFFIX = "_between_names"
+CREST_NAME_GUTTER = 12
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,7 +61,6 @@ class PlacedFigure:
     entrant_slot: int
     z_index: int
     hanging: bool
-    frame: PixelRect
     lineup: PlacedLineup
 
 
@@ -73,7 +82,7 @@ def place_figures(request: CreationRequest, preferences: ModePreferences) -> dic
         member = _member_for_placement(result, placement)
         hanging = frame.asset_id == HANGING_FRAME
         figures[placement.slot_id] = PlacedFigure(
-            placement.slot_id, placement.entrant_slot, placement.z_index, hanging, frame.destination,
+            placement.slot_id, placement.entrant_slot, placement.z_index, hanging,
             place_lineup(member.characters, placement.scale, frame.destination, hanging=hanging,
                          team_color=result.team_color if isinstance(result, DoublesTeam) else None),
         )
@@ -91,49 +100,85 @@ def text_vertical_extent(item: TextPlacement) -> tuple[int, int]:
     return item.anchor.y, item.anchor.y + round(size * 1.25)
 
 
-def _label_shift(preferences: ModePreferences, figure: PlacedFigure, figures: dict[str, PlacedFigure]) -> int:
-    """Keep a hanging figure's name on its visible feet, clear of figures in front."""
+def _clear_of_front_shift(preferences: ModePreferences, figure: PlacedFigure, figures: dict[str, PlacedFigure]) -> int:
+    """Lift a hanging figure's fixed label only when it would cover a nearer figure's head."""
     tags = [tag for tag in preferences.placement_tags if slot_from_id(tag.slot_id) == figure.entrant_slot]
     names = [item for item in preferences.text_slots if item.entrant_slot == figure.entrant_slot and item.field != "member.tag"]
-    if not tags and not names:
-        return 0
     extents = [(tag.anchor.y - tag.max_size.height // 2, tag.anchor.y + tag.max_size.height // 2) for tag in tags]
     extents += [text_vertical_extent(item) for item in names]
-    top = min(extent[0] for extent in extents)
-    bottom = max(extent[1] for extent in extents)
+    if not extents:
+        return 0
+    top, bottom = min(extent[0] for extent in extents), max(extent[1] for extent in extents)
+    center_x = (tags or names)[0].anchor.x
     half_width = max([item.max_width // 2 for item in names] + [tag.max_size.width // 2 for tag in tags])
-    center_x = (figure.lineup.bounds.left + figure.lineup.bounds.right) // 2
-    # The serialized label rests on the frame bottom; follow the actual feet.
-    shift = figure.lineup.bounds.bottom - figure.frame.bottom
     in_front = [other.lineup.bounds.top for other in figures.values()
                 if other.z_index > figure.z_index
                 and other.lineup.bounds.left < center_x + half_width and other.lineup.bounds.right > center_x - half_width]
-    if in_front:
-        shift = min(shift, min(in_front) - LABEL_GAP - bottom)
-    shift = max(shift, figure.lineup.bounds.top - top)
-    return min(0, shift)
+    if not in_front or bottom + LABEL_GAP <= min(in_front):
+        return 0
+    return min(0, max(min(in_front) - LABEL_GAP - bottom, figure.lineup.bounds.top - top))
 
 
 def labelled_preferences(preferences: ModePreferences, figures: dict[str, PlacedFigure]) -> ModePreferences:
-    """Return label anchors that follow the rendered figures for this request."""
-    shifts = {figure.entrant_slot: _label_shift(preferences, figure, figures) for figure in figures.values() if figure.hanging}
+    """Return label anchors that follow the rendered figures for this request.
 
-    def moved(item, slot):
-        return replace(item, anchor=replace(item.anchor, y=item.anchor.y + shifts.get(slot, 0)))
-
+    Doubles member names sit just above each visible head. A team crest marked
+    with ``BETWEEN_NAMES_SUFFIX`` is centered vertically on those names, and its
+    seed moves with it. A hanging figure's label keeps its serialized position
+    unless that would cover a nearer figure's head. Every other label is fixed.
+    """
+    lifts = {figure.entrant_slot: _clear_of_front_shift(preferences, figure, figures)
+             for figure in figures.values() if figure.hanging}
+    preferences = replace(
+        preferences,
+        placement_tags=tuple(replace(tag, anchor=replace(tag.anchor, y=tag.anchor.y + lifts.get(slot_from_id(tag.slot_id), 0)))
+                             for tag in preferences.placement_tags),
+        text_slots=tuple(replace(item, anchor=replace(item.anchor, y=item.anchor.y + lifts.get(item.entrant_slot, 0)))
+                         if item.field != "member.tag" else item for item in preferences.text_slots),
+    )
     text = []
+    names: dict[int, list[TextPlacement]] = {}
     for item in preferences.text_slots:
         if item.field == "member.tag":
             figure = figures.get(f"entrant_{item.entrant_slot}_member_{item.member_slot}")
-            if figure is not None:
-                text.append(replace(item, anchor=replace(item.anchor, y=figure.lineup.bounds.top - NAME_ABOVE_HEAD_OFFSET)))
+            if figure is None:
+                continue
+            item = replace(item, anchor=replace(item.anchor, y=figure.lineup.bounds.top - NAME_ABOVE_HEAD_OFFSET))
+            names.setdefault(item.entrant_slot, []).append(item)
+        text.append(item)
+    shifts: dict[int, int] = {}
+    tags = []
+    for tag in preferences.placement_tags:
+        slot = slot_from_id(tag.slot_id)
+        if tag.slot_id.endswith(BETWEEN_NAMES_SUFFIX) and names.get(slot):
+            # Baselines sit below each name's visual middle by about a third of its size.
+            center = round(sum(item.anchor.y - (item.preferred_size or 40) * 7 // 20 for item in names[slot]) / len(names[slot]))
+            shifts[slot] = center - tag.anchor.y
+            tag = replace(tag, anchor=replace(tag.anchor, y=center))
+        tags.append(tag)
+    text = [replace(item, anchor=replace(item.anchor, y=item.anchor.y + shifts[item.entrant_slot]))
+            if item.field == "entrant.seed" and item.entrant_slot in shifts else item for item in text]
+    return replace(preferences, placement_tags=tuple(tags), text_slots=tuple(text))
+
+
+def crest_clearances(preferences: ModePreferences, include_seeding: bool) -> dict[int, tuple[int, int, int, int]]:
+    """Return the area each between-names crest and its seed keep free of member names."""
+    seeds = {item.entrant_slot: item for item in preferences.text_slots if item.field == "entrant.seed"}
+    clearances = {}
+    for tag in preferences.placement_tags:
+        if not tag.slot_id.endswith(BETWEEN_NAMES_SUFFIX):
             continue
-        text.append(moved(item, item.entrant_slot))
-    return replace(
-        preferences,
-        placement_tags=tuple(moved(tag, slot_from_id(tag.slot_id)) for tag in preferences.placement_tags),
-        text_slots=tuple(text),
-    )
+        slot = slot_from_id(tag.slot_id)
+        left, top = tag.anchor.x - tag.max_size.width // 2, tag.anchor.y - tag.max_size.height // 2
+        right, bottom = tag.anchor.x + tag.max_size.width // 2, tag.anchor.y + tag.max_size.height // 2
+        seed = seeds.get(slot)
+        if include_seeding and seed is not None:
+            # Short seeds such as "12s" span about two em widths.
+            size = seed.preferred_size or 24
+            right = max(right, seed.anchor.x + size * 2)
+            top = min(top, text_vertical_extent(seed)[0])
+        clearances[slot] = (left, top, right, bottom)
+    return clearances
 
 
 def _entrant_text_style(request: CreationRequest, placement: TextPlacement) -> tuple[str, bool]:
@@ -145,7 +190,22 @@ def _entrant_text_style(request: CreationRequest, placement: TextPlacement) -> t
     return chosen, settings.entrant_text_metallic[index]
 
 
-def _draw_member_names(canvas: Image.Image, request: CreationRequest, placements: list[TextPlacement], font: PodiumFont) -> None:
+def _clear_of(draw: ImageDraw.ImageDraw, tag: CharacterTag, box: tuple[int, int, int, int] | None, font: PodiumFont) -> CharacterTag:
+    """Move a member name outward until it no longer covers the team crest."""
+    if box is None:
+        return tag
+    left, top, right, bottom = _character_tag_bounds(draw, tag, font)
+    if right <= box[0] or left >= box[2] or bottom <= box[1] or top >= box[3]:
+        return tag
+    if (left + right) / 2 < (box[0] + box[2]) / 2:
+        dx = box[0] - CREST_NAME_GUTTER - right
+    else:
+        dx = box[2] + CREST_NAME_GUTTER - left
+    return replace(tag, position=(tag.position[0] + dx, tag.position[1]))
+
+
+def _draw_member_names(canvas: Image.Image, request: CreationRequest, placements: list[TextPlacement], font: PodiumFont,
+                       crests: dict[int, tuple[int, int, int, int]]) -> None:
     """Draw doubles identities above each member's head, sponsor on the line above."""
     draw = ImageDraw.Draw(canvas)
     by_team: dict[int, list[CharacterTag]] = {}
@@ -158,9 +218,9 @@ def _draw_member_names(canvas: Image.Image, request: CreationRequest, placements
             (placement.anchor.x, placement.anchor.y), member.tag, color, placement.max_width,
             size, max(14, size * 3 // 5), metallic,
         ))
-    for tags in by_team.values():
+    for slot, tags in by_team.items():
         for tag in _resolve_doubles_tag_collisions(draw, tags, font, canvas.width):
-            _draw_character_tag(draw, tag, font)
+            _draw_character_tag(draw, _clear_of(draw, tag, crests.get(slot), font), font)
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,16 +237,22 @@ class FlyingVContentRenderer:
         watermark_color = _watermark_color(result, watermark_box)
         with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
             figures = place_figures(request, preferences)
-            # Smaller figures stand farther back; the leader is drawn last.
-            for figure in sorted(figures.values(), key=lambda item: (item.z_index, item.slot_id)):
-                _composite_clipped(result, figure.lineup.image, figure.lineup.bounds.as_tuple())
             labelled = labelled_preferences(preferences, figures)
+            # Smaller figures stand farther back; the leader is drawn last.
+            # Placement art layered below a figure is drawn just before it.
+            pending = sorted(labelled.placement_tags, key=lambda item: (item.z_index, item.slot_id))
+            for figure in sorted(figures.values(), key=lambda item: (item.z_index, item.slot_id)):
+                behind = [tag for tag in pending if tag.z_index < figure.z_index]
+                pending = [tag for tag in pending if tag.z_index >= figure.z_index]
+                draw_placement_tags(result, replace(labelled, placement_tags=tuple(behind)))
+                _composite_clipped(result, figure.lineup.image, figure.lineup.bounds.as_tuple())
             text_layer = Image.new("RGBA", result.size, "#00000000")
             _draw_result_text(text_layer, request, labelled, self.font,
                               [item for item in labelled.text_slots if item.field != "member.tag"])
-            _draw_member_names(text_layer, request, [item for item in labelled.text_slots if item.field == "member.tag"], self.font)
+            _draw_member_names(text_layer, request, [item for item in labelled.text_slots if item.field == "member.tag"],
+                               self.font, crest_clearances(labelled, request.text_settings.include_seeding))
             _composite_outlined_text(result, text_layer)
-            draw_placement_tags(result, labelled)
+            draw_placement_tags(result, replace(labelled, placement_tags=tuple(pending)))
             self._draw_header(result, request, preferences)
             _composite_watermark(
                 result,

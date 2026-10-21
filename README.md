@@ -77,7 +77,8 @@ npm run build
 
 
 TODO LIST:
-
+* make zain's sponsor Shopify instead of GG
+* increment the version number
 * need to decide an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament. Sandbag is more like null, random should be something different.
 
 * get some melee fonts added in. like the timer one is super clean - at least one more font would go really hard

@@ -84,9 +84,9 @@ function headerBox(format: FormatConfiguration, outputSize: PixelSize, position:
       top_middle: { left: 660, top: 48, right: 1260, bottom: 230 },
       top_right: { left: 1464, top: 800, right: 1904, bottom: 1064 },
     } : {
-      top_left: { left: 16, top: 1612, right: 356, bottom: 1904 },
-      top_middle: { left: 340, top: 48, right: 940, bottom: 246 },
-      top_right: { left: 924, top: 1612, right: 1264, bottom: 1904 },
+      top_left: { left: 16, top: 1612, right: 396, bottom: 1904 },
+      top_middle: { left: 420, top: 48, right: 1020, bottom: 246 },
+      top_right: { left: 1044, top: 1612, right: 1424, bottom: 1904 },
     })[position];
   }
   if (format.selection.mode === "eyes") {

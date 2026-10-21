@@ -78,7 +78,7 @@ def render_placeholder_layer(layout_id: str) -> Image.Image:
         _composite_clipped(layer, silhouette, figure.lineup.bounds.as_tuple())
     draw = ImageDraw.Draw(layer)
     for placement in labelled.text_slots:
-        if placement.field == "entrant.seed":
+        if placement.field in {"entrant.seed", "entrant.sponsor"}:
             continue
         size = placement.preferred_size or 40
         width = min(placement.max_width, size * 5)
