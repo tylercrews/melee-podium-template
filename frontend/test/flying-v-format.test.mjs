@@ -53,7 +53,7 @@ for (const [eventFormat, count] of [["singles", 8], ["doubles", 3]]) {
     // No recolorable shapes: completeness does not depend on a formatting palette.
     assert.equal(formats.hasFormattingAssetColors(imported), false);
     assert.equal(formats.isFormatComplete(imported), true);
-    assert.deepEqual(formats.formatCanvasSize(imported), { width: 1080, height: 1920 });
+    assert.deepEqual(formats.formatCanvasSize(imported), eventFormat === "singles" ? { width: 1280, height: 1920 } : { width: 1920, height: 1080 });
     assert.equal(numbering.placementNumberPreviewPath(imported), `placement_numbers/flying_v/${eventFormat}_top_${count}/tournament.png`);
   });
 }

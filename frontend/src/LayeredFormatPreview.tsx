@@ -78,12 +78,16 @@ function headerBox(format: FormatConfiguration, outputSize: PixelSize, position:
     }[position];
   }
   if (format.selection.mode === "flying_v") {
-    // Matches HEADER_BOXES in generate_flying_v_preferences.py.
-    return {
-      top_left: { left: 16, top: 1612, right: 316, bottom: 1904 },
-      top_middle: { left: 270, top: 48, right: 810, bottom: 246 },
-      top_right: { left: 764, top: 1612, right: 1064, bottom: 1904 },
-    }[position];
+    // Matches the header boxes in generate_flying_v_preferences.py.
+    return (format.selection.options.event_format === "doubles" ? {
+      top_left: { left: 16, top: 800, right: 456, bottom: 1064 },
+      top_middle: { left: 660, top: 48, right: 1260, bottom: 230 },
+      top_right: { left: 1464, top: 800, right: 1904, bottom: 1064 },
+    } : {
+      top_left: { left: 16, top: 1612, right: 356, bottom: 1904 },
+      top_middle: { left: 340, top: 48, right: 940, bottom: 246 },
+      top_right: { left: 924, top: 1612, right: 1264, bottom: 1904 },
+    })[position];
   }
   if (format.selection.mode === "eyes") {
     const index = position === "top_left" ? 0 : position === "top_middle" ? 1 : 2;

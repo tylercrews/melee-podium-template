@@ -207,7 +207,7 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.EYES: PixelSize(1080, 1920),
                 CreationMode.SQUARES: PixelSize(1920, 1080),
                 CreationMode.RADIAL: PixelSize(1920, 1080),
-                CreationMode.FLYING_V: PixelSize(1080, 1920),
+                CreationMode.FLYING_V: PixelSize(1920, 1080) if item.selection.submode_id == "doubles_top_3" else PixelSize(1280, 1920),
             }.get(
                 item.selection.mode,
                 PixelSize(1920, 1280 if item.selection.submode_id == "doubles_top_8_four_podium" else 1000 if item.selection.submode_id == "singles_top_16_clapping" else 941)

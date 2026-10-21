@@ -671,7 +671,10 @@ export function backgroundSizeValue(option: BackgroundSizeOption, source: PixelS
 
 export function formatCanvasSize(format: FormatConfiguration): PixelSize | null {
   if (format.selection.mode === "squares" || format.selection.mode === "radial") return { width: 1920, height: 1080 };
-  if (format.selection.mode === "flying_v") return { width: 1080, height: 1920 };
+  if (format.selection.mode === "flying_v") {
+    // Singles is a wide portrait; Doubles is landscape.
+    return format.selection.options.event_format === "doubles" ? { width: 1920, height: 1080 } : { width: 1280, height: 1920 };
+  }
   if (format.selection.mode === "eyes") {
     const count = format.selection.options.entrant_count;
     // Use the representative Eyes Top 8 canvas while the remaining format

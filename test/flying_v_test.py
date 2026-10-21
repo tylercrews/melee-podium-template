@@ -16,17 +16,23 @@ from creation import CreationPipeline, CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection
 from DrawFlyingV import draw_doubles_top_3, draw_singles_top_8
 from DrawPodium import PodiumFont
-from entrant_visibility import visible_preferences
+from entrant_visibility import slot_from_id, visible_preferences
 from flying_v_content_renderer import (
     FlyingVContentRenderer,
     WATERMARK_ROW_HEIGHT,
     flying_v_header_boxes,
     labelled_preferences,
     place_figures,
+    text_vertical_extent,
 )
 from flying_v_lineup import HANGING_FRAME, STANDING_FRAME, place_lineup
 from flying_v_preview_layers import render_flying_v_header_layer, render_placeholder_layer
-from generate_flying_v_preferences import HEADER_BOXES, flying_v_doubles_preferences, flying_v_singles_preferences
+from generate_flying_v_preferences import (
+    DOUBLES_HEADER_BOXES,
+    SINGLES_HEADER_BOXES,
+    flying_v_doubles_preferences,
+    flying_v_singles_preferences,
+)
 from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository, ModePreferences
@@ -60,15 +66,16 @@ def _request(selection, entrants, **kwargs):
 
 
 class FlyingVPreferenceTests(unittest.TestCase):
-    def test_both_layouts_are_reviewed_portrait_preferences_that_round_trip(self):
-        for selection, generated in ((SINGLES, flying_v_singles_preferences()), (DOUBLES, flying_v_doubles_preferences())):
+    def test_singles_is_wide_portrait_doubles_is_landscape_and_both_round_trip(self):
+        for selection, generated, size, boxes in ((SINGLES, flying_v_singles_preferences(), (1280, 1920), SINGLES_HEADER_BOXES),
+                                                  (DOUBLES, flying_v_doubles_preferences(), (1920, 1080), DOUBLES_HEADER_BOXES)):
             with self.subTest(selection=selection.submode_id):
                 preferences = ModePreferenceRepository().load(selection)
                 self.assertTrue(preferences.ready)
-                self.assertEqual(preferences.canvas_size.as_tuple(), (1080, 1920))
+                self.assertEqual(preferences.canvas_size.as_tuple(), size)
                 self.assertEqual(preferences, generated)
                 self.assertEqual(ModePreferences.from_dict(json.loads(json.dumps(preferences.to_dict()))), preferences)
-                self.assertEqual(flying_v_header_boxes(preferences), HEADER_BOXES)
+                self.assertEqual(flying_v_header_boxes(preferences), boxes)
 
     def test_only_singles_top_8_and_doubles_top_3_are_valid(self):
         for event_format, count, variant in ((TournamentFormat.SINGLES, 3, None), (TournamentFormat.DOUBLES, 4, None),
@@ -89,12 +96,12 @@ class FlyingVPreferenceTests(unittest.TestCase):
     def test_figures_flank_the_center_and_fly_outward_toward_the_top(self):
         frames = _frames(ModePreferenceRepository().load(SINGLES))
         center = {slot: (frames[f"entrant_{slot}"].destination.left + frames[f"entrant_{slot}"].destination.right) / 2 for slot in range(1, 9)}
-        self.assertEqual(center[1], 540)
-        self.assertEqual(center[2], 540)
+        self.assertEqual(center[1], 640)
+        self.assertEqual(center[2], 640)
         for left, right in ((3, 4), (5, 6), (7, 8)):
-            self.assertLess(center[left], 540)
-            self.assertGreater(center[right], 540)
-            self.assertEqual(center[left] + center[right], 1080)
+            self.assertLess(center[left], 640)
+            self.assertGreater(center[right], 640)
+            self.assertEqual(center[left] + center[right], 1280)
         self.assertLess(center[5], center[3])
         self.assertLess(center[7], center[5])
         bottoms = {slot: frames[f"entrant_{slot}"].destination.bottom for slot in range(1, 9)}
@@ -102,11 +109,41 @@ class FlyingVPreferenceTests(unittest.TestCase):
         self.assertLess(bottoms[5], bottoms[3])
         self.assertLess(bottoms[3], bottoms[1])
 
+    def test_first_place_stands_on_the_canvas_bottom_under_its_name_and_large_crest(self):
+        for selection in (SINGLES, DOUBLES):
+            with self.subTest(selection=selection.submode_id):
+                preferences = ModePreferenceRepository().load(selection)
+                canvas = preferences.canvas_size
+                leader_frames = [frame for slot_id, frame in _frames(preferences).items() if slot_from_id(slot_id) == 1]
+                self.assertTrue(all(frame.destination.bottom == canvas.height for frame in leader_frames))
+                badges = {slot_from_id(tag.slot_id): tag for tag in preferences.placement_tags}
+                self.assertGreaterEqual(badges[1].max_size.height, 2.5 * max(tag.max_size.height for slot, tag in badges.items() if slot != 1))
+                self.assertLessEqual(badges[1].anchor.y + badges[1].max_size.height // 2, canvas.height)
+                # The name and crest are drawn over the leader's legs.
+                name = next(item for item in preferences.text_slots if item.slot_id == "name_1")
+                self.assertGreater(name.anchor.y - name.preferred_size, min(frame.destination.top for frame in leader_frames))
+
+    def test_names_rest_on_the_feet_directly_above_each_placement_number(self):
+        for selection in (SINGLES, DOUBLES):
+            preferences = ModePreferenceRepository().load(selection)
+            badges = {slot_from_id(tag.slot_id): tag for tag in preferences.placement_tags}
+            feet = {}
+            for slot_id, frame in _frames(preferences).items():
+                feet[slot_from_id(slot_id)] = max(feet.get(slot_from_id(slot_id), 0), frame.destination.bottom)
+            for name in (item for item in preferences.text_slots if item.slot_id.startswith("name_")):
+                with self.subTest(selection=selection.submode_id, slot=name.entrant_slot):
+                    badge = badges[name.entrant_slot]
+                    self.assertEqual(name.pillow_anchor, "ms")
+                    self.assertEqual(name.anchor.x, badge.anchor.x)
+                    self.assertEqual(badge.anchor.y - badge.max_size.height // 2 - name.anchor.y, 12)
+                    if name.entrant_slot != 1:
+                        self.assertEqual(name.anchor.y, feet[name.entrant_slot] - 2)
+
     def test_second_place_hangs_below_the_reserved_top_center(self):
         preferences = ModePreferenceRepository().load(SINGLES)
         frames = _frames(preferences)
         self.assertEqual([slot for slot, frame in frames.items() if frame.asset_id == HANGING_FRAME], ["entrant_2"])
-        header = HEADER_BOXES["top_middle"]
+        header = SINGLES_HEADER_BOXES["top_middle"]
         self.assertGreaterEqual(frames["entrant_2"].destination.top, header.bottom)
         anchors = {item.slot_id: item.anchor for item in preferences.character_slots}
         for slot_id, frame in frames.items():
@@ -115,27 +152,30 @@ class FlyingVPreferenceTests(unittest.TestCase):
             self.assertEqual((anchors[slot_id].x, anchors[slot_id].y), ((box.left + box.right) // 2, expected_y))
 
     def test_reserved_header_spaces_and_watermark_row_stay_clear_of_back_figures(self):
-        for selection in (SINGLES, DOUBLES):
+        for selection, boxes in ((SINGLES, SINGLES_HEADER_BOXES), (DOUBLES, DOUBLES_HEADER_BOXES)):
             preferences = ModePreferenceRepository().load(selection)
-            leader = {item.slot_id for item in preferences.character_slots if item.entrant_slot == 1}
             for slot_id, frame in _frames(preferences).items():
-                self.assertGreaterEqual(frame.destination.top, WATERMARK_ROW_HEIGHT)
-                self.assertFalse(_overlaps(frame.destination, HEADER_BOXES["top_middle"]), slot_id)
-                if slot_id not in leader:
-                    self.assertFalse(_overlaps(frame.destination, HEADER_BOXES["top_left"]), slot_id)
-                    self.assertFalse(_overlaps(frame.destination, HEADER_BOXES["top_right"]), slot_id)
+                with self.subTest(selection=selection.submode_id, slot=slot_id):
+                    self.assertGreaterEqual(frame.destination.top, WATERMARK_ROW_HEIGHT)
+                    self.assertFalse(_overlaps(frame.destination, boxes["top_middle"]))
+                    if slot_from_id(slot_id) != 1:
+                        self.assertFalse(_overlaps(frame.destination, boxes["top_left"]))
+                        self.assertFalse(_overlaps(frame.destination, boxes["top_right"]))
             # Every result label sits above the bottom corners, or between them for the leader.
             for item in preferences.text_slots:
                 if item.field == "member.tag":
                     continue
-                bottom = item.anchor.y + item.preferred_size
+                _top, bottom = text_vertical_extent(item)
                 if item.entrant_slot == 1:
-                    self.assertLessEqual(bottom, 1920)
+                    self.assertLessEqual(bottom, preferences.canvas_size.height)
                     if item.field != "entrant.seed":
-                        self.assertGreaterEqual(item.anchor.x - item.max_width // 2, HEADER_BOXES["top_left"].right)
-                        self.assertLessEqual(item.anchor.x + item.max_width // 2, HEADER_BOXES["top_right"].left)
+                        self.assertGreaterEqual(item.anchor.x - item.max_width // 2, boxes["top_left"].right)
+                        self.assertLessEqual(item.anchor.x + item.max_width // 2, boxes["top_right"].left)
                 else:
-                    self.assertLess(bottom, HEADER_BOXES["top_left"].top, item.slot_id)
+                    self.assertLess(bottom, boxes["top_left"].top, item.slot_id)
+            for tag in preferences.placement_tags:
+                if slot_from_id(tag.slot_id) != 1:
+                    self.assertLess(tag.anchor.y + tag.max_size.height // 2, boxes["top_left"].top, tag.slot_id)
 
     def test_labels_use_canonical_ordinals_and_smash_player_colors(self):
         singles = ModePreferenceRepository().load(SINGLES)
@@ -180,7 +220,9 @@ class FlyingVPlacementTests(unittest.TestCase):
         self.assertEqual(second.top, _frames(preferences)["entrant_2"].destination.top)
         labelled = labelled_preferences(preferences, figures)
         badge = next(tag for tag in labelled.placement_tags if tag.slot_id == "number_2")
-        self.assertEqual(badge.anchor.y - badge.max_size.height // 2, second.bottom + 6)
+        name = next(item for item in labelled.text_slots if item.slot_id == "name_2")
+        self.assertEqual(name.anchor.y, second.bottom - 2)
+        self.assertEqual(badge.anchor.y - badge.max_size.height // 2, second.bottom + 10)
 
     def test_covered_second_place_label_stays_above_first_place(self):
         request, preferences = _request(SINGLES, _singles({1: Character("Ganondorf", color="default", pose="c"),
@@ -189,8 +231,8 @@ class FlyingVPlacementTests(unittest.TestCase):
         first = figures["entrant_1"].lineup.bounds
         self.assertLess(first.top, figures["entrant_2"].lineup.bounds.bottom)
         labelled = labelled_preferences(preferences, figures)
-        name = next(item for item in labelled.text_slots if item.slot_id == "name_2")
-        self.assertLessEqual(name.anchor.y + round(name.preferred_size * 1.25), first.top - 6)
+        badge = next(tag for tag in labelled.placement_tags if tag.slot_id == "number_2")
+        self.assertLessEqual(badge.anchor.y + badge.max_size.height // 2, first.top - 6)
         unchanged = {item.slot_id: item for item in preferences.text_slots}
         self.assertEqual(next(item for item in labelled.text_slots if item.slot_id == "name_4"), unchanged["name_4"])
 
@@ -221,10 +263,10 @@ class FlyingVRenderingTests(unittest.TestCase):
     def test_public_api_renders_both_layouts_with_header_and_top_row_watermark(self):
         singles = draw_singles_top_8(sample_top_8_entrants(random.Random(1)), tournament=sample_tournament(TournamentFormat.SINGLES))
         doubles = draw_doubles_top_3(sample_top_4_teams(random.Random(1))[:3], tournament=sample_tournament(TournamentFormat.DOUBLES))
-        for image in (singles, doubles):
-            self.assertEqual((image.mode, image.size), ("RGBA", (1080, 1920)))
-            self.assertIsNotNone(image.crop(HEADER_BOXES["top_middle"].as_tuple()).getbbox())
-            self.assertIsNotNone(image.crop((540, 0, 1080, WATERMARK_ROW_HEIGHT)).getbbox())
+        for image, size, boxes in ((singles, (1280, 1920), SINGLES_HEADER_BOXES), (doubles, (1920, 1080), DOUBLES_HEADER_BOXES)):
+            self.assertEqual((image.mode, image.size), ("RGBA", size))
+            self.assertIsNotNone(image.crop(boxes["top_middle"].as_tuple()).getbbox())
+            self.assertIsNotNone(image.crop((size[0] // 2, 0, size[0], WATERMARK_ROW_HEIGHT)).getbbox())
             self.assertIsNone(image.crop((0, 0, 400, WATERMARK_ROW_HEIGHT)).getchannel("A").point(lambda value: 255 if value > 70 else 0).getbbox())
 
     def test_flying_v_rejects_formatting_colors(self):
@@ -236,12 +278,12 @@ class FlyingVRenderingTests(unittest.TestCase):
         renderer = FlyingVContentRenderer()
         for contents in permutations(HEADER_CONTENTS):
             layout = dict(zip(HEADER_POSITIONS, contents, strict=True))
-            canvas = Image.new("RGBA", (1080, 1920), "#00000000")
+            canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
             renderer._draw_header(canvas, replace(request, header_layout=layout), preferences)
             for position, content in layout.items():
                 if content == "tournament_logo":
                     continue
-                box = HEADER_BOXES[position]
+                box = SINGLES_HEADER_BOXES[position]
                 visible = canvas.crop(box.as_tuple()).getbbox()
                 self.assertIsNotNone(visible, (position, content))
                 if position == "top_middle":
@@ -252,7 +294,7 @@ class FlyingVRenderingTests(unittest.TestCase):
     def test_metadata_rows_align_to_their_box_edges_in_every_provided_font(self):
         request, preferences = _request(SINGLES, sample_top_8_entrants(random.Random(2)),
                                         header_layout={"top_left": "tournament_title", "top_middle": "metadata", "top_right": "tournament_logo"})
-        box = HEADER_BOXES["top_middle"]
+        box = SINGLES_HEADER_BOXES["top_middle"]
         for font in PodiumFont:
             with self.subTest(font=font.value):
                 left, _top, right, _bottom = FlyingVContentRenderer(font=font).header_text_layer(request, "metadata", box, "ma").getbbox()
@@ -269,16 +311,16 @@ class FlyingVRenderingTests(unittest.TestCase):
             entrant_text_color_mode="pick_1", entrant_text_colors=("#00FF00FF",), include_seeding=False))
         result = CreationPipeline({CreationMode.FLYING_V: FlyingVContentRenderer()}).create(request)
         name = next(item for item in preferences.text_slots if item.slot_id == "name_4")
-        region = result.crop((name.anchor.x - 100, name.anchor.y, name.anchor.x + 100, name.anchor.y + 40)).convert("RGBA")
+        region = result.crop((name.anchor.x - 100, name.anchor.y - 40, name.anchor.x + 100, name.anchor.y + 4)).convert("RGBA")
         self.assertIn((0, 255, 0, 255), set(region.getdata()))
         self.assertNotIn((0, 240, 66, 255), set(region.getdata()))
 
     def test_format_preview_route_renders_both_layouts_and_rejects_other_counts(self):
         client = app.test_client()
-        for event_format, count in (("singles", 8), ("doubles", 3)):
+        for event_format, count, size in (("singles", 8, (1280, 1920)), ("doubles", 3, (1920, 1080))):
             response = client.post("/api/format-preview", json={"mode": "flying_v", "event_format": event_format, "entrant_count": count})
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(Image.open(BytesIO(response.data)).size, (1080, 1920))
+            self.assertEqual(Image.open(BytesIO(response.data)).size, size)
         response = client.post("/api/format-preview", json={"mode": "flying_v", "event_format": "doubles", "entrant_count": 4})
         self.assertEqual(response.status_code, 400)
         self.assertIn("Flying V supports", response.get_json()["error"])
@@ -286,18 +328,19 @@ class FlyingVRenderingTests(unittest.TestCase):
     def test_browser_logo_boxes_match_the_serialized_header_regions(self):
         source = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "LayeredFormatPreview.tsx").read_text(encoding="utf-8")
         block = source[source.index('format.selection.mode === "flying_v"'):]
-        for position, box in HEADER_BOXES.items():
-            self.assertIn(f"{position}: {{ left: {box.left}, top: {box.top}, right: {box.right}, bottom: {box.bottom} }}", block[:600])
+        for boxes in (SINGLES_HEADER_BOXES, DOUBLES_HEADER_BOXES):
+            for position, box in boxes.items():
+                self.assertIn(f"{position}: {{ left: {box.left}, top: {box.top}, right: {box.right}, bottom: {box.bottom} }}", block[:1000])
 
     def test_preview_layers_match_the_placeholder_figures_and_header_boxes(self):
-        for layout_id in ("singles_top_8", "doubles_top_3"):
+        for layout_id, size in (("singles_top_8", (1280, 1920)), ("doubles_top_3", (1920, 1080))):
             layer = render_placeholder_layer(layout_id)
-            self.assertEqual(layer.size, (1080, 1920))
+            self.assertEqual(layer.size, size)
             self.assertIsNotNone(layer.getbbox())
         header = render_flying_v_header_layer(PodiumFont.UBUNTU, TournamentFormat.SINGLES,
                                               {"top_left": "tournament_logo", "top_middle": "tournament_title", "top_right": "metadata"})
         # The boxed logo placeholder marks the bottom-left reserved corner.
-        self.assertIsNotNone(header.crop(HEADER_BOXES["top_left"].as_tuple()).getbbox())
+        self.assertIsNotNone(header.crop(SINGLES_HEADER_BOXES["top_left"].as_tuple()).getbbox())
 
 
 if __name__ == "__main__":

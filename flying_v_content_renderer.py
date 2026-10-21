@@ -51,6 +51,7 @@ class PlacedFigure:
     entrant_slot: int
     z_index: int
     hanging: bool
+    frame: PixelRect
     lineup: PlacedLineup
 
 
@@ -72,32 +73,45 @@ def place_figures(request: CreationRequest, preferences: ModePreferences) -> dic
         member = _member_for_placement(result, placement)
         hanging = frame.asset_id == HANGING_FRAME
         figures[placement.slot_id] = PlacedFigure(
-            placement.slot_id, placement.entrant_slot, placement.z_index, hanging,
+            placement.slot_id, placement.entrant_slot, placement.z_index, hanging, frame.destination,
             place_lineup(member.characters, placement.scale, frame.destination, hanging=hanging,
                          team_color=result.team_color if isinstance(result, DoublesTeam) else None),
         )
     return figures
 
 
+def text_vertical_extent(item: TextPlacement) -> tuple[int, int]:
+    """Approximate the rows a result label covers from its Pillow anchor."""
+    size = item.preferred_size or 24
+    vertical = item.pillow_anchor[1]
+    if vertical == "s":
+        return item.anchor.y - size, item.anchor.y + size // 4
+    if vertical == "m":
+        return item.anchor.y - size // 2, item.anchor.y + size // 2
+    return item.anchor.y, item.anchor.y + round(size * 1.25)
+
+
 def _label_shift(preferences: ModePreferences, figure: PlacedFigure, figures: dict[str, PlacedFigure]) -> int:
-    """Raise a hanging figure's label to its feet, staying clear of figures in front."""
+    """Keep a hanging figure's name on its visible feet, clear of figures in front."""
     tags = [tag for tag in preferences.placement_tags if slot_from_id(tag.slot_id) == figure.entrant_slot]
     names = [item for item in preferences.text_slots if item.entrant_slot == figure.entrant_slot and item.field != "member.tag"]
     if not tags and not names:
         return 0
-    top = min([tag.anchor.y - tag.max_size.height // 2 for tag in tags] + [item.anchor.y for item in names])
-    bottom = max([tag.anchor.y + tag.max_size.height // 2 for tag in tags]
-                 + [item.anchor.y + round((item.preferred_size or 24) * 1.25) for item in names])
+    extents = [(tag.anchor.y - tag.max_size.height // 2, tag.anchor.y + tag.max_size.height // 2) for tag in tags]
+    extents += [text_vertical_extent(item) for item in names]
+    top = min(extent[0] for extent in extents)
+    bottom = max(extent[1] for extent in extents)
     half_width = max([item.max_width // 2 for item in names] + [tag.max_size.width // 2 for tag in tags])
     center_x = (figure.lineup.bounds.left + figure.lineup.bounds.right) // 2
-    desired = figure.lineup.bounds.bottom + LABEL_GAP
+    # The serialized label rests on the frame bottom; follow the actual feet.
+    shift = figure.lineup.bounds.bottom - figure.frame.bottom
     in_front = [other.lineup.bounds.top for other in figures.values()
                 if other.z_index > figure.z_index
                 and other.lineup.bounds.left < center_x + half_width and other.lineup.bounds.right > center_x - half_width]
     if in_front:
-        desired = min(desired, min(in_front) - (bottom - top) - LABEL_GAP)
-    desired = max(desired, figure.lineup.bounds.top)
-    return min(0, desired - top)
+        shift = min(shift, min(in_front) - LABEL_GAP - bottom)
+    shift = max(shift, figure.lineup.bounds.top - top)
+    return min(0, shift)
 
 
 def labelled_preferences(preferences: ModePreferences, figures: dict[str, PlacedFigure]) -> ModePreferences:
