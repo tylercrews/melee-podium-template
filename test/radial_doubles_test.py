@@ -24,7 +24,7 @@ from sample_creation_data import sample_top_4_teams, sample_tournament
 from generate_radial_preferences import radial_reference_preferences
 from generate_radial_doubles_preferences import radial_doubles_preferences
 from DrawPodium import PodiumFont, _font_to_fit
-from radial_watermark import RADIAL_DOUBLES_WATERMARK_BOX, draw_radial_watermark
+from radial_watermark import draw_radial_watermark, radial_watermark_line_samples
 
 
 class RadialDoublesTests(unittest.TestCase):
@@ -75,16 +75,18 @@ class RadialDoublesTests(unittest.TestCase):
             distance = lambda point: (point.x - corner[0]) ** 2 + (point.y - corner[1]) ** 2
             self.assertLess(distance(seed.anchor), distance(number.anchor))
 
-    def test_watermark_clears_fourth_place_team_and_both_member_names(self):
+    def test_watermark_follows_the_third_and_fourth_team_divider_and_clears_their_names(self):
         layer = Image.new("RGBA", (1920, 1080))
-        draw_radial_watermark(layer, doubles=True)
-        bounds = layer.getbbox()
-        left, top, right, bottom = bounds
-        box = RADIAL_DOUBLES_WATERMARK_BOX
-        self.assertTrue(box.left <= left < right <= box.right and box.top <= top < bottom <= box.bottom)
-        team = self.teams[3]
-        draw = ImageDraw.Draw(layer)
-        for slot in (p for p in self.preferences.text_slots if p.entrant_slot == 4):
+        draw_radial_watermark(layer, doubles=True, fill="#FFFFFF40")
+        left, top, right, bottom = layer.getbbox()
+        self.assertGreater(right, 1850)
+        self.assertLess(bottom, 1080)
+        self.assertLess(abs((top + bottom) / 2 - (540 + ((left + right) / 2 - 960) * 0.5625)), 4)
+        samples = radial_watermark_line_samples()
+        self.assertTrue(left - 3 <= samples[0][0] and samples[-1][0] <= right + 3)
+        draw = ImageDraw.Draw(Image.new("RGBA", (1920, 1080)))
+        for slot in (p for p in self.preferences.text_slots if p.entrant_slot in (3, 4)):
+            team = self.teams[slot.entrant_slot - 1]
             if slot.field == "entrant.team_name":
                 value = team.team_name
             elif slot.field == "entrant.seed":

@@ -9,7 +9,7 @@ import random
 import unittest
 from unittest.mock import patch
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw
 
 from app import app
 from background_builder import BackgroundRequest, PixelRect
@@ -23,7 +23,7 @@ from models import TournamentFormat
 from radial_content_renderer import RadialContentRenderer
 from radial_geometry import clip_to_section, radial_sections
 from radial_palette import radial_palette_color
-from radial_watermark import RADIAL_WATERMARK_BOX, draw_radial_watermark
+from radial_watermark import draw_radial_watermark, radial_watermark_line_samples, radial_watermark_mask
 from generate_radial_preferences import radial_preferences
 from podium_colors import PodiumColorSelection
 from sample_creation_data import sample_top_8_entrants, sample_tournament
@@ -95,30 +95,37 @@ class RadialTests(unittest.TestCase):
                 else:
                     self.assertGreater(label.anchor.x, 960)
 
-    def test_bottom_right_watermark_clears_badges_and_seeds(self):
-        layer = Image.new("RGBA", (1920, 1080))
-        draw_radial_watermark(layer)
-        bounds = layer.getbbox()
-        left, top, right, bottom = bounds
-        box = RADIAL_WATERMARK_BOX
-        self.assertTrue(box.left <= left < right <= box.right and box.top <= top < bottom <= box.bottom)
-        draw = ImageDraw.Draw(layer)
-        obstacles = [(p.anchor.x - p.max_size.width / 2, p.anchor.y - p.max_size.height / 2, p.anchor.x + p.max_size.width / 2, p.anchor.y + p.max_size.height / 2) for p in self.preferences.placement_tags]
+    def test_watermark_shares_the_doubles_divider_position_and_clears_seeds(self):
+        from PIL import ImageFilter
+        mask = radial_watermark_mask((1920, 1080)).point(lambda value: 255 if value > 16 else 0)
+        # The divider passes through the text along its full length.
+        for x, y in radial_watermark_line_samples()[1::3][10:-10:10]:
+            self.assertIsNotNone(mask.crop((x - 12, y - 12, x + 13, y + 13)).getbbox())
+        left, top, right, bottom = mask.getbbox()
+        self.assertGreater(right, 1850)
+        singles, doubles = Image.new("RGBA", (1920, 1080)), Image.new("RGBA", (1920, 1080))
+        draw_radial_watermark(singles, fill="#FFFFFF40")
+        draw_radial_watermark(doubles, doubles=True, fill="#FFFFFF40")
+        self.assertEqual(singles.tobytes(), doubles.tobytes())
+        self.assertLess(abs((top + bottom) / 2 - (540 + ((left + right) / 2 - 960) * 0.5625)), 4)
+        clearance = mask.filter(ImageFilter.MaxFilter(5))
+        draw = ImageDraw.Draw(Image.new("RGBA", (1920, 1080)))
         for seed in (p for p in self.preferences.text_slots if p.field == "entrant.seed"):
             value = f"{self.entrants[seed.entrant_slot - 1].seed}s"
             font = _font_to_fit(value, seed.max_width, seed.preferred_size, PodiumFont.TYROWO)
-            obstacles.append(draw.textbbox((seed.anchor.x, seed.anchor.y), value, font=font, anchor=seed.pillow_anchor, stroke_width=2))
-        for obstacle in obstacles:
-            self.assertTrue(right < obstacle[0] or left > obstacle[2] or bottom < obstacle[1] or top > obstacle[3])
+            self.assertIsNone(clearance.crop(draw.textbbox((seed.anchor.x, seed.anchor.y), value, font=font, anchor=seed.pillow_anchor, stroke_width=2)).getbbox())
 
-    def test_watermark_chooses_local_contrast_and_blends_once(self):
-        for background, expected in (("#FFFFFFFF", 191), ("#000000FF", 64)):
+    def test_watermark_contrasts_with_the_divider_color_and_blends_once(self):
+        for background, divider, expected in (("#000000FF", "#FFFFFFFF", (0, 0, 0, 64)), ("#FFFFFFFF", "#202020FF", (255, 255, 255, 64))):
             image = Image.new("RGBA", (1920, 1080), background)
+            draw = ImageDraw.Draw(image)
+            draw.line((960, 540, 1920, 1080), fill=divider, width=9)
+            reference = image.copy()
             draw_radial_watermark(image)
-            pixels = list(image.crop(RADIAL_WATERMARK_BOX.as_tuple()).getdata())
-            values = [pixel[0] for pixel in pixels]
-            self.assertEqual(min(values) if background == "#FFFFFFFF" else max(values), expected)
-            self.assertTrue(all(pixel[3] == 255 for pixel in pixels))
+            fill = Image.new("RGBA", image.size, expected[:3] + (0,))
+            fill.putalpha(ImageChops.multiply(radial_watermark_mask(image.size), Image.new("L", image.size, expected[3])))
+            reference.alpha_composite(fill)
+            self.assertEqual(image.tobytes(), reference.tobytes())
 
     def test_browser_watermark_masks_match_exact_render_geometry(self):
         root = Path(__file__).resolve().parents[1] / "frontend/public/format_preview_layers"

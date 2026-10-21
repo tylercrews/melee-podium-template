@@ -419,7 +419,7 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
         context.drawImage(tintedHeader(headerLayer, request.outputSize.width, headerHeight, format.text_settings.heading_color, format.text_settings.heading_metallic), 0, 0);
         if (resultLabels) context.drawImage(resultLabels, 0, 0, request.outputSize.width, request.outputSize.height);
         if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
-        if (watermark) drawRadialWatermark(context, watermark, format.selection.options.event_format === "doubles");
+        if (watermark) drawRadialWatermark(context, watermark);
         if (isPodiumsClapping(format.selection)) drawPodiumPreviewFooter(context, header, request.outputSize);
         setLoading(false);
       } catch {
