@@ -76,7 +76,7 @@
       "asset_id": "flying_v_standing_frame",
       "destination": {
         "left": 20,
-        "top": 130,
+        "top": 146,
         "right": 320,
         "bottom": 510
       },
@@ -87,7 +87,7 @@
       "asset_id": "flying_v_standing_frame",
       "destination": {
         "left": 280,
-        "top": 130,
+        "top": 146,
         "right": 580,
         "bottom": 510
       },
@@ -98,7 +98,7 @@
       "asset_id": "flying_v_standing_frame",
       "destination": {
         "left": 1340,
-        "top": 130,
+        "top": 146,
         "right": 1640,
         "bottom": 510
       },
@@ -109,7 +109,7 @@
       "asset_id": "flying_v_standing_frame",
       "destination": {
         "left": 1600,
-        "top": 130,
+        "top": 146,
         "right": 1900,
         "bottom": 510
       },
@@ -297,7 +297,7 @@
       "member_slot": 1,
       "anchor": {
         "x": 170,
-        "y": 115
+        "y": 131
       },
       "max_width": 300,
       "pillow_anchor": "ms",
@@ -313,7 +313,7 @@
       "member_slot": 2,
       "anchor": {
         "x": 430,
-        "y": 115
+        "y": 131
       },
       "max_width": 300,
       "pillow_anchor": "ms",
@@ -361,7 +361,7 @@
       "member_slot": 1,
       "anchor": {
         "x": 1490,
-        "y": 115
+        "y": 131
       },
       "max_width": 300,
       "pillow_anchor": "ms",
@@ -377,7 +377,7 @@
       "member_slot": 2,
       "anchor": {
         "x": 1750,
-        "y": 115
+        "y": 131
       },
       "max_width": 300,
       "pillow_anchor": "ms",

@@ -40,9 +40,13 @@ def render_placement_number_layer(selection, use_tournament_placing):
         lower = tuple(PlacementTagPlacement.from_dict(row) for row in profile["placement_tags"])
         preferences = replace(preferences, placement_tags=preferences.placement_tags + lower)
     if selection.mode is CreationMode.FLYING_V:
-        # Match the placeholder figures, whose hanging second-place label rises.
+        # Match the placeholder figures and the exact render's outlined art.
+        from flying_v_content_renderer import draw_outlined_placement_tags
         from flying_v_preview_layers import placeholder_preview
-        preferences = placeholder_preview(preferences)[1]
+        preferences = numbered_preferences(placeholder_preview(preferences)[1], use_tournament_placing)
+        layer = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
+        draw_outlined_placement_tags(layer, preferences)
+        return layer
     preferences = numbered_preferences(preferences, use_tournament_placing)
     layer = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     draw_placement_tags(layer, preferences)

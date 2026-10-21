@@ -121,10 +121,12 @@ SINGLES_TIERS = {
 SINGLES_LEADER_NAME_BASELINE = 1900
 
 # team slot: two member frames, tier scale, z, badge height, name size, name width.
+# Upper frames start low enough that a sponsored name above the tallest head
+# stays out of the watermark's top row.
 DOUBLES_TIERS = {
     1: ((PixelRect(520, 320, 1040, 1080), PixelRect(880, 320, 1400, 1080)), .8, 20, 175, 56, 900),
-    2: ((PixelRect(20, 130, 320, 510), PixelRect(280, 130, 580, 510)), .46, 10, 50, 44, 540),
-    3: ((PixelRect(1340, 130, 1640, 510), PixelRect(1600, 130, 1900, 510)), .46, 10, 50, 44, 540),
+    2: ((PixelRect(20, 146, 320, 510), PixelRect(280, 146, 580, 510)), .46, 10, 50, 44, 540),
+    3: ((PixelRect(1340, 146, 1640, 510), PixelRect(1600, 146, 1900, 510)), .46, 10, 50, 44, 540),
 }
 # The winning team's name sits on the canvas bottom.
 DOUBLES_LEADER_NAME_BASELINE = 1066

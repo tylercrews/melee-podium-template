@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from background_builder import PixelRect
 from creation import CreationRequest
@@ -20,7 +20,7 @@ from DrawPodium import (
 from entrant_visibility import slot_from_id
 from flying_v_lineup import FRAME_ASSETS, HANGING_FRAME, PlacedLineup, place_lineup
 from font_size_adjustments import adjusted_size
-from formatting_assets import _composite_clipped, draw_placement_tags
+from formatting_assets import LocalPlacementTagAssets, PlacementTagAssetProvider, _composite_clipped
 from geometric_content_renderer import (
     LogoInput,
     _composite_watermark,
@@ -53,6 +53,10 @@ LABEL_GAP = 6
 # Placement tags with this slot suffix sit centered between a team's member names.
 BETWEEN_NAMES_SUFFIX = "_between_names"
 CREST_NAME_GUTTER = 12
+# Placement art other than the first-place crest gets a black outline so it
+# stays legible where it overlaps a figure.
+FIRST_PLACE_ART = "01st.png"
+PLACEMENT_OUTLINE_RATIO = .07
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,6 +185,28 @@ def crest_clearances(preferences: ModePreferences, include_seeding: bool) -> dic
     return clearances
 
 
+def draw_outlined_placement_tags(
+    canvas: Image.Image,
+    preferences: ModePreferences,
+    assets: PlacementTagAssetProvider = LocalPlacementTagAssets(),
+) -> None:
+    """Draw canonical placement art, outlining everything except the first-place crest."""
+    for tag in sorted(preferences.placement_tags, key=lambda item: (item.z_index, item.slot_id)):
+        layer = assets.open(tag.asset_id)
+        layer.thumbnail(tag.max_size.as_tuple(), Image.Resampling.LANCZOS)
+        if tag.asset_id != FIRST_PLACE_ART:
+            radius = max(2, round(min(layer.size) * PLACEMENT_OUTLINE_RATIO))
+            padded = Image.new("RGBA", (layer.width + radius * 2, layer.height + radius * 2), "#00000000")
+            padded.alpha_composite(layer, (radius, radius))
+            outlined = Image.new("RGBA", padded.size, "#000000FF")
+            outlined.putalpha(padded.getchannel("A").filter(ImageFilter.MaxFilter(radius * 2 + 1)))
+            outlined.alpha_composite(padded)
+            layer = outlined
+        left = tag.anchor.x - layer.width // 2
+        top = tag.anchor.y - layer.height // 2
+        _composite_clipped(canvas, layer, (left, top, left + layer.width, top + layer.height))
+
+
 def _entrant_text_style(request: CreationRequest, placement: TextPlacement) -> tuple[str, bool]:
     chosen = _explicit_entrant_color(request, placement.entrant_slot)
     if chosen is None:
@@ -244,7 +270,7 @@ class FlyingVContentRenderer:
             for figure in sorted(figures.values(), key=lambda item: (item.z_index, item.slot_id)):
                 behind = [tag for tag in pending if tag.z_index < figure.z_index]
                 pending = [tag for tag in pending if tag.z_index >= figure.z_index]
-                draw_placement_tags(result, replace(labelled, placement_tags=tuple(behind)))
+                draw_outlined_placement_tags(result, replace(labelled, placement_tags=tuple(behind)))
                 _composite_clipped(result, figure.lineup.image, figure.lineup.bounds.as_tuple())
             text_layer = Image.new("RGBA", result.size, "#00000000")
             _draw_result_text(text_layer, request, labelled, self.font,
@@ -252,7 +278,7 @@ class FlyingVContentRenderer:
             _draw_member_names(text_layer, request, [item for item in labelled.text_slots if item.field == "member.tag"],
                                self.font, crest_clearances(labelled, request.text_settings.include_seeding))
             _composite_outlined_text(result, text_layer)
-            draw_placement_tags(result, replace(labelled, placement_tags=tuple(pending)))
+            draw_outlined_placement_tags(result, replace(labelled, placement_tags=tuple(pending)))
             self._draw_header(result, request, preferences)
             _composite_watermark(
                 result,

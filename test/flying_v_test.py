@@ -19,6 +19,7 @@ from DrawPodium import CharacterTag, PodiumFont, _character_tag_bounds
 from entrant_visibility import slot_from_id, visible_preferences
 from flying_v_content_renderer import (
     BETWEEN_NAMES_SUFFIX,
+    draw_outlined_placement_tags,
     FlyingVContentRenderer,
     WATERMARK_ROW_HEIGHT,
     flying_v_header_boxes,
@@ -35,6 +36,7 @@ from generate_flying_v_preferences import (
     flying_v_doubles_preferences,
     flying_v_singles_preferences,
 )
+from formatting_assets import draw_placement_tags
 from geometric_formatting_colors import GeometricFormattingColors
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferenceRepository, ModePreferences
@@ -270,7 +272,7 @@ class FlyingVPlacementTests(unittest.TestCase):
         self.assertLessEqual(alone.bounds.height, 300)
 
     def test_extra_characters_never_shrink_an_entrant_below_its_tier_size(self):
-        marth, fox = Character("Marth", color="default", pose="a"), Character("Fox", color="default", pose="a")
+        marth, fox = Character("Marth", color="default", pose="b"), Character("Fox", color="default", pose="a")
         frame = PixelRect(0, 0, 400, 900)
         single = place_lineup([marth], .8, frame)
         lineup = place_lineup([marth, fox, fox], .8, frame)
@@ -324,6 +326,28 @@ class FlyingVPlacementTests(unittest.TestCase):
             tag = _clear_of(draw, CharacterTag((x, crest.anchor.y + 20), "AVeryLongPlayerTag", "#FFFFFFFF", 600), box, PodiumFont.TYROWO)
             left, _top, right, _bottom = _character_tag_bounds(draw, tag, PodiumFont.TYROWO)
             self.assertTrue(right <= box[0] or left >= box[2])
+
+    def test_placement_art_is_outlined_in_black_except_the_first_place_crest(self):
+        preferences = ModePreferenceRepository().load(SINGLES)
+        for slot_id, outlined in (("number_1", False), ("number_2", True), ("number_5", True), ("number_7", True)):
+            with self.subTest(slot=slot_id):
+                tag = next(item for item in preferences.placement_tags if item.slot_id == slot_id)
+                plain = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
+                draw_placement_tags(plain, replace(preferences, placement_tags=(tag,)))
+                layer = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
+                draw_outlined_placement_tags(layer, replace(preferences, placement_tags=(tag,)))
+                if not outlined:
+                    self.assertEqual(layer.tobytes(), plain.tobytes())
+                    continue
+                left, top, right, bottom = plain.getbbox()
+                # The outline widens the art and is opaque black where the art was clear.
+                grown = layer.getbbox()
+                self.assertLess(grown[0], left)
+                self.assertGreater(grown[2], right)
+                box = grown
+                outline = [pixel for pixel, original in zip(layer.crop(box).getdata(), plain.crop(box).getdata())
+                           if original[3] == 0 and pixel == (0, 0, 0, 255)]
+                self.assertGreater(len(outline), 100)
 
     def test_doubles_member_names_sit_above_each_visible_head(self):
         request, preferences = _request(DOUBLES, sample_top_4_teams(random.Random(5))[:3])
