@@ -11,6 +11,7 @@ from PIL import Image
 
 from creation_modes import CreationMode, PodiumStyle
 from DrawPodium import PodiumFont
+from flying_v_content_renderer import DEFAULT_FLYING_V_HEADER_LAYOUT
 from format_preview import prepare_format_preview, render_format_preview
 from podiums_clapping_renderer import ClappingLayout
 from geometric_formatting_colors import GeometricFormattingColor, GeometricFormattingColors
@@ -48,7 +49,8 @@ def generate_quick_pick_thumbnails(ids: tuple[str, ...] | None = None) -> tuple[
             creation_mode=mode,
             font=PodiumFont.UBUNTU,
             formatting_colors=colors,
-            header_layout={"top_left": "tournament_title", "top_middle": "tournament_logo", "top_right": "metadata"},
+            header_layout=dict(DEFAULT_FLYING_V_HEADER_LAYOUT) if mode is CreationMode.FLYING_V
+            else {"top_left": "tournament_title", "top_middle": "tournament_logo", "top_right": "metadata"},
             entrants=sample_clapping_top_8_entrants(random.Random(2026))
             if mode is CreationMode.PODIUM and pick.get("variant") == "four_podium" else None,
         )

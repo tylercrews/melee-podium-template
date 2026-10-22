@@ -6,5 +6,7 @@
   { "id": "squares-doubles-top-4", "name": "...But What If Top8er Did Doubles?", "mode": "squares", "event_format": "doubles", "entrant_count": 4 },
   { "id": "podiums-clapping-pr-top-11", "name": "MeleePodium Also Has Some PR Settings", "mode": "podium", "podium_style": "customizable", "event_format": "singles", "entrant_count": 11, "variant": "clapping_grid_4", "animated": true, "thumbnail_revision": 2 },
   { "id": "eyes-singles-top-8", "name": "Eyes Top 8", "mode": "eyes", "event_format": "singles", "entrant_count": 8 },
-  { "id": "radial-singles-top-8", "name": "Radial Top 8", "mode": "radial", "event_format": "singles", "entrant_count": 8 }
+  { "id": "radial-singles-top-8", "name": "Radial Top 8", "mode": "radial", "event_format": "singles", "entrant_count": 8 },
+  { "id": "flying-v-singles-top-8", "name": "Flying V Singles", "mode": "flying_v", "event_format": "singles", "entrant_count": 8 },
+  { "id": "flying-v-doubles-top-3", "name": "Flying V Doubles", "mode": "flying_v", "event_format": "doubles", "entrant_count": 3 }
 ]

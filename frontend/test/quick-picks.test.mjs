@@ -27,19 +27,19 @@ const { QUICK_PICKS, quickPickFormat } = await loadModule("quickPicks.ts");
 const { isFormatComplete, parseFormatCode, formatCode, formatCanvasSize } = await loadModule("format.ts");
 const { default: LoadStep } = await loadModule("LoadStep.tsx");
 
-test("guests see eight accessible thumbnail buttons in the requested order", () => {
+test("guests see ten accessible thumbnail buttons in the requested order", () => {
   const html = renderToStaticMarkup(createElement(LoadStep, {
     user: null, hasLoadedFormat: false, canProceedToBracket: false, onChange() {}, onSignIn() {}, onSkip() {}, onProceedToBracket() {},
   }));
   assert.ok(html.indexOf("load-format-heading") < html.indexOf("quick-picks-heading"));
   assert.ok(html.includes("<h1>Load A Format</h1>"));
-  assert.equal((html.match(/class="quick-pick"/g) ?? []).length, 8);
+  assert.equal((html.match(/class="quick-pick"/g) ?? []).length, 10);
   for (const pick of QUICK_PICKS) {
     assert.ok(html.includes(pick.name));
     assert.ok(html.includes(`/quick_pick_thumbnails/${pick.id}.webp`));
   }
   const buttons = html.match(/<button\b[^>]*class="quick-pick"[^>]*>/g) ?? [];
-  assert.equal(buttons.length, 8);
+  assert.equal(buttons.length, 10);
   assert.ok(buttons.every((button) => !button.includes("disabled=")));
   assert.ok(html.includes('alt="Eyes singles Top 8 example"'));
   assert.ok(html.includes('alt="Radial singles Top 8 example"'));
@@ -47,17 +47,17 @@ test("guests see eight accessible thumbnail buttons in the requested order", () 
   assert.deepEqual(QUICK_PICKS.map(({ id }) => id), [
     "podiums-clapping-singles-top-8", "podium-doubles-top-4", "squares-singles-top-8",
     "podium-singles-top-8", "squares-doubles-top-4",
-    "podiums-clapping-pr-top-11", "eyes-singles-top-8", "radial-singles-top-8",
+    "podiums-clapping-pr-top-11", "eyes-singles-top-8", "radial-singles-top-8", "flying-v-singles-top-8", "flying-v-doubles-top-3",
   ]);
   for (let index = 1; index < QUICK_PICKS.length; index++) {
     assert.ok(html.indexOf(QUICK_PICKS[index - 1].name) < html.indexOf(QUICK_PICKS[index].name));
   }
 });
 
-test("all eight Quick Picks load complete editable formats with their own thumbnails", () => {
+test("all ten Quick Picks load complete editable formats with their own thumbnails", () => {
   assert.deepEqual(QUICK_PICKS.map(({ mode, event_format, entrant_count }) => [mode, event_format, entrant_count]), [
     ["podium", "singles", 8], ["podium", "doubles", 4], ["squares", "singles", 8], ["podium", "singles", 8], ["squares", "doubles", 4],
-    ["podium", "singles", 11], ["eyes", "singles", 8], ["radial", "singles", 8],
+    ["podium", "singles", 11], ["eyes", "singles", 8], ["radial", "singles", 8], ["flying_v", "singles", 8], ["flying_v", "doubles", 3],
   ]);
   assert.equal(QUICK_PICKS[2].name, "Just Give Me Top8er");
   for (const pick of QUICK_PICKS) {
@@ -88,6 +88,21 @@ test("the first animated Quick Pick loads Podiums+Clapping and remains editable 
   for (const pick of QUICK_PICKS.filter((item) => !item.animated)) {
     assert.equal(quickPickFormat(pick.id).selection.options.animated, false);
     assert.equal(quickPickFormat(pick.id).selection.options.variant, null);
+  }
+});
+
+test("Flying V Quick Picks load their fixed layouts with the Flying V header default", () => {
+  for (const [id, eventFormat, count, canvas] of [
+    ["flying-v-singles-top-8", "singles", 8, { width: 1440, height: 1920 }],
+    ["flying-v-doubles-top-3", "doubles", 3, { width: 1920, height: 1080 }],
+  ]) {
+    const format = quickPickFormat(id);
+    assert.equal(format.selection.mode, "flying_v");
+    assert.equal(format.selection.options.event_format, eventFormat);
+    assert.equal(format.selection.options.entrant_count, count);
+    assert.equal(format.selection.options.variant, null);
+    assert.deepEqual(format.header_layout, { top_left: "tournament_logo", top_middle: "tournament_title", top_right: "metadata" });
+    assert.deepEqual(formatCanvasSize(format), canvas);
   }
 });
 

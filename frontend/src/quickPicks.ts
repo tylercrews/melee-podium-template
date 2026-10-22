@@ -1,5 +1,5 @@
 import catalog from "./quickPicks.json";
-import { EMPTY_FORMAT, FormatConfiguration, buildBackgroundPlacement, defaultTextSettings, formatCanvasSize, normalizeFormat } from "./format";
+import { DEFAULT_HEADER_LAYOUT, EMPTY_FORMAT, FormatConfiguration, buildBackgroundPlacement, defaultTextSettings, formatCanvasSize, normalizeFormat } from "./format";
 
 export const QUICK_PICKS = catalog;
 const BATTLEFIELD_ID = "builtin:00_Battlefield_5000_5000_resaved.png";
@@ -28,7 +28,9 @@ export function quickPickFormat(id: string): FormatConfiguration {
         podium_style: pick.podium_style ?? null,
       },
     },
-    header_layout: { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" },
+    // Flying V's middle position is its top-center title box, so it keeps its own default.
+    header_layout: pick.mode === "flying_v" ? { ...DEFAULT_HEADER_LAYOUT }
+      : { top_left: "tournament_title", top_middle: "tournament_logo", top_right: "metadata" },
     text_settings: { ...EMPTY_FORMAT.text_settings, font_asset_id: "provided:ubuntu" },
   });
   format.text_settings = { ...defaultTextSettings(format.selection), font_asset_id: "provided:ubuntu" };
