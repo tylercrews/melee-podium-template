@@ -36,7 +36,7 @@ SAMPLE_TOP_8_ENTRANT_POOL: tuple[Entrant, ...] = (
         Character("Marth", color="default", pose=None),
     ]),
     Entrant(tag="Cody", characters=[Character("Fox", color="green", pose=None)]),
-    Entrant(tag="GG | Zain", characters=[Character("Marth", color="red", pose=None)]),
+    Entrant(tag="SR | Zain", characters=[Character("Marth", color="red", pose=None)]),
     Entrant(tag="Mew2King", characters=[
         Character("Sheik", color="red", pose=None),
         Character("Marth", color="black", pose=None),

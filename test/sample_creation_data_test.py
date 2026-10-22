@@ -73,7 +73,7 @@ class SampleCreationDataTest(unittest.TestCase):
                 "[A] | Armada": [("Peach", "default"), ("Fox", "red")],
                 "EG | PPMD": [("Falco", "green"), ("Marth", "default")],
                 "Cody": [("Fox", "green")],
-                "GG | Zain": [("Marth", "red")],
+                "SR | Zain": [("Marth", "red")],
                 "Mew2King": [("Sheik", "red"), ("Marth", "black"), ("Fox", "green")],
                 "Liquid | Hungrybox": [("Jigglypuff", "green")],
                 "TSM | Leffen": [("Fox", "default"), ("Sheik", "white")],
