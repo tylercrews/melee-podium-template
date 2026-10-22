@@ -69,6 +69,23 @@ class EntrantVisibilityTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "booleans"):
                     _preview_entrants([{key: invalid}], TournamentFormat.SINGLES)
 
+    def test_blank_omitted_legacy_podium_slots_skip_footer_measurement(self):
+        character = {"melee_fighter_name": "Fox", "color": "default", "pose": "a"}
+        member = lambda tag: {"tag": tag, "characters": [character]}
+        for event_format, count, variant in (("singles", 8, None), ("singles", 8, "four_podium"), ("doubles", 3, None)):
+            with self.subTest(event_format=event_format, count=count, variant=variant):
+                entrants = [{"team_name": f"Team {slot}", "seed": slot, "placement": slot, "team_color": "red",
+                             "entrant_1": member(f"A{slot}"), "entrant_2": member(f"B{slot}")}
+                            if event_format == "doubles" else {**member(f"P{slot}"), "seed": slot, "placement": slot}
+                            for slot in range(1, count + 1)]
+                entrants[0] = {"omit_entrant": True, "tag": "", "team_name": "", "characters": [{"melee_fighter_name": ""}]}
+                entrants[-1] = {"omit_entrant": True}
+                response = app.test_client().post("/api/format-preview", json={
+                    "style": "legacy", "event_format": event_format, "entrant_count": count, "variant": variant,
+                    "animated": False, "transparent": True, "entrants": entrants,
+                    "tournament": {"title": "Omitted", "date": "2026-10-20", "event_format": event_format}})
+                self.assertEqual(response.status_code, 200, response.data[:200])
+
     def test_mixed_radial_teams_remove_both_member_regions_and_keep_header_geometry(self):
         from creation_modes import ModeOptions, ModeSelection
         selection = ModeSelection(CreationMode.RADIAL, ModeOptions(TournamentFormat.DOUBLES, 4))

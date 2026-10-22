@@ -1136,6 +1136,8 @@ def _footer_text_bounds(
     bounds: list[tuple[int, int, int, int]] = []
 
     for podium_slot, entrant in enumerate(entrants[:placement_count], start=1):
+        if entrant.omit_entrant:
+            continue
         label_anchor = PODIUM_TEXT_ANCHORS[placement_count][podium_slot]["label"]
         if isinstance(entrant, DoublesTeam):
             max_width = 440 if placement_count == 3 else 370
@@ -1182,6 +1184,8 @@ def _footer_text_bounds(
     if mode is PodiumMode.SINGLES_TOP_8_FOUR_PODIUM:
         for summary_slot, entrant in enumerate(entrants[4:], start=1):
             assert isinstance(entrant, SinglesEntrant)
+            if entrant.omit_entrant:
+                continue
             anchor = PODIUM_TEXT_ANCHORS[4][summary_slot]["label"]
             for position, text, preferred_size in _lower_summary_identity_fields(
                 entrant, anchor=anchor
