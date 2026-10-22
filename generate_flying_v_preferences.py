@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from background_builder import PixelRect, PixelSize
@@ -92,17 +93,6 @@ def _number_above_name(slot: int, center_x: int, line: int, badge_height: int, n
     ]
 
 
-def _name_above_number(slot: int, center_x: int, line: int, badge_height: int, name_size: int, name_width: int,
-                       name_field: str) -> tuple[PlacementTagPlacement, list[TextPlacement]]:
-    """Rest the name over the feet with the placement art just below the line."""
-    badge_y = line + 10 + badge_height // 2
-    return _badge(slot, PixelPoint(center_x, badge_y), badge_height), [
-        _text(slot, f"name_{slot}", name_field, PixelPoint(center_x, line - 2), name_width, "ms", name_size),
-        _text(slot, f"seed_{slot}", "entrant.seed", PixelPoint(center_x + _badge_width(slot, badge_height) // 2 + 8, badge_y),
-              140, "lm", _seed_size(name_size)),
-    ]
-
-
 # slot: frame, hanging, tier scale, z, badge height, name size, name width, label line.
 # Labels rest on the frame bottom (the feet) unless a fixed label line is given:
 # second place keeps one label position while its hanging figure grows past it,
@@ -120,16 +110,23 @@ SINGLES_TIERS = {
 # First place's name sits on the canvas bottom with its crest right above it.
 SINGLES_LEADER_NAME_BASELINE = 1900
 
-# team slot: two member frames, tier scale, z, badge height, name size, name width.
-# Upper frames start low enough that a sponsored name above the tallest head
-# stays out of the watermark's top row.
+# team slot: (member frame, figure center x) pairs, tier scale, z, badge height,
+# name size, name width. Upper frames start low enough that a sponsored name
+# above the tallest head stays out of the watermark's top row. The 2nd and 3rd
+# frames hold the largest render (Bowser's victory pose) at their tier scale,
+# so no member shrinks; figures keep their spacing by centering on their own x
+# and slide inward only when a wide pose would leave the frame.
 DOUBLES_TIERS = {
-    1: ((PixelRect(520, 320, 1040, 1080), PixelRect(880, 320, 1400, 1080)), .8, 20, 175, 56, 900),
-    2: ((PixelRect(20, 146, 320, 510), PixelRect(280, 146, 580, 510)), .46, 10, 50, 44, 540),
-    3: ((PixelRect(1340, 146, 1640, 510), PixelRect(1600, 146, 1900, 510)), .46, 10, 50, 44, 540),
+    1: (((PixelRect(520, 320, 1040, 1080), 780), (PixelRect(880, 320, 1400, 1080), 1140)), .8, 20, 175, 56, 900),
+    2: (((PixelRect(0, 146, 560, 691), 170), (PixelRect(100, 146, 660, 691), 430)), .46, 10, 50, 44, 900),
+    3: (((PixelRect(1260, 146, 1820, 691), 1490), (PixelRect(1360, 146, 1920, 691), 1750)), .46, 10, 50, 44, 900),
 }
 # The winning team's name sits on the canvas bottom.
 DOUBLES_LEADER_NAME_BASELINE = 1066
+# Back team names hug their outer canvas edge and sit behind the winning team,
+# so a name running toward the center disappears under its figures.
+DOUBLES_SIDE_MARGIN = 16
+DOUBLES_SIDE_NAME_Z = DOUBLES_TIERS[1][2] - 5
 
 
 def flying_v_singles_preferences() -> ModePreferences:
@@ -160,18 +157,39 @@ def flying_v_singles_preferences() -> ModePreferences:
     )
 
 
+def _side_team_label(slot: int, left_side: bool, line: int, badge_height: int, name_size: int,
+                     name_width: int) -> tuple[PlacementTagPlacement, list[TextPlacement]]:
+    """Align a back team's name and placement art to its outer edge.
+
+    The name wraps early, stacking extra lines upward from the feet so the
+    placement art below never moves; the seed sits on the art's inner side.
+    """
+    side = "l" if left_side else "r"
+    direction = 1 if left_side else -1
+    edge = DOUBLES_SIDE_MARGIN if left_side else DOUBLES_CANVAS.width - DOUBLES_SIDE_MARGIN
+    badge_width = _badge_width(slot, badge_height)
+    badge_x = edge + direction * (badge_width // 2)
+    badge_y = line + 10 + badge_height // 2
+    name = _text(slot, f"name_{slot}", "entrant.team_name", PixelPoint(edge, line + 6), name_width, f"{side}d", name_size)
+    return _badge(slot, PixelPoint(badge_x, badge_y), badge_height), [
+        replace(name, wrap=True, z_index=DOUBLES_SIDE_NAME_Z),
+        _text(slot, f"seed_{slot}", "entrant.seed", PixelPoint(badge_x + direction * (badge_width // 2 + 8), badge_y),
+              140, f"{side}m", _seed_size(name_size)),
+    ]
+
+
 def flying_v_doubles_preferences() -> ModePreferences:
     frames, characters, tags, text = _header_regions(DOUBLES_HEADER_BOXES), [], [], []
-    for slot, (member_frames, scale, z_index, badge, size, width) in DOUBLES_TIERS.items():
-        for member, frame in enumerate(member_frames, 1):
+    for slot, (members, scale, z_index, badge, size, width) in DOUBLES_TIERS.items():
+        member_frames = [frame for frame, _x in members]
+        for member, (frame, figure_x) in enumerate(members, 1):
             slot_id = f"entrant_{slot}_member_{member}"
-            center_x = (frame.left + frame.right) // 2
             frames.append(FormattingAssetPlacement(slot_id, STANDING_FRAME, frame, z_index))
-            characters.append(CharacterPlacement(slot_id, slot, PixelPoint(center_x, frame.bottom),
+            characters.append(CharacterPlacement(slot_id, slot, PixelPoint(figure_x, frame.bottom),
                                                  member_slot=member, scale=scale, z_index=z_index))
             # The renderer lowers this baseline to just above the member's visible head.
             text.append(_text(slot, f"member_{slot}_{member}", "member.tag",
-                              PixelPoint(center_x, frame.top - NAME_ABOVE_HEAD_OFFSET), frame.width, "ms", size, member))
+                              PixelPoint(figure_x, frame.top - NAME_ABOVE_HEAD_OFFSET), frame.width, "ms", size, member))
         center_x = (member_frames[0].left + member_frames[1].right) // 2
         if slot == 1:
             # The crest sits centered between the members' names, behind the
@@ -186,8 +204,8 @@ def flying_v_doubles_preferences() -> ModePreferences:
                       _seed_size(size)),
             ))
             continue
-        badge_tag, label_text = _name_above_number(slot, center_x, max(frame.bottom for frame in member_frames),
-                                                   badge, size, width, "entrant.team_name")
+        badge_tag, label_text = _side_team_label(slot, center_x < DOUBLES_CANVAS.width // 2,
+                                                 max(frame.bottom for frame in member_frames), badge, size, width)
         tags.append(badge_tag)
         text.extend(label_text)
     return ModePreferences(

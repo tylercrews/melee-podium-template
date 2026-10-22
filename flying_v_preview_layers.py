@@ -82,10 +82,13 @@ def render_placeholder_layer(layout_id: str) -> Image.Image:
             continue
         size = placement.preferred_size or 40
         width = min(placement.max_width, size * 5)
-        # Above-head identities sit on their baseline; result names hang from their top.
-        top = placement.anchor.y - size * 3 // 4 if placement.pillow_anchor.endswith("s") else placement.anchor.y + size // 8
-        draw.rounded_rectangle((placement.anchor.x - width // 2, top, placement.anchor.x + width // 2, top + size // 2),
-                               radius=size // 4, fill=GUIDE_FILL)
+        # Baseline and bottom-anchored names rise from their anchor; result names hang from their top.
+        vertical = placement.pillow_anchor[1]
+        top = (placement.anchor.y - size * 3 // 4 if vertical == "s" else placement.anchor.y - size if vertical == "d"
+               else placement.anchor.y + size // 8)
+        left = {"l": placement.anchor.x, "r": placement.anchor.x - width}.get(placement.pillow_anchor[0],
+                                                                              placement.anchor.x - width // 2)
+        draw.rounded_rectangle((left, top, left + width, top + size // 2), radius=size // 4, fill=GUIDE_FILL)
     return layer
 
 

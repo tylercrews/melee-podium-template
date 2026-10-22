@@ -93,13 +93,16 @@ def place_lineup(
     *,
     hanging: bool = False,
     team_color: str | None = None,
+    anchor_x: int | None = None,
 ) -> PlacedLineup:
     """Scale a lineup to its tier, shrinking only a character too large for the frame.
 
     The frame limits each character rather than the staggered lineup, so
     entrants with several characters match single-character entrants in the
-    same tier. Standing lineups rest on the frame's bottom center; hanging
-    lineups start at its top center so they never rise into reserved space.
+    same tier. Standing lineups rest on the frame's bottom; hanging lineups
+    start at its top so they never rise into reserved space. The primary
+    character centers on ``anchor_x`` (the frame center by default), sliding
+    only as far as needed to keep a wide lineup inside the frame.
     """
 
     if scale <= 0:
@@ -111,10 +114,11 @@ def place_lineup(
         widest = max(source.size_at(scale)[0] for source in sources)
         tallest = max(source.size_at(scale)[1] for source in sources)
         scale *= min(1.0, frame.width / widest, frame.height / tallest)
-    lineup, anchor_x = _compose([source.scaled(scale) for source in sources])
+    lineup, lineup_anchor_x = _compose([source.scaled(scale) for source in sources])
     if lineup.width <= frame.width:
         # Center the primary character, then keep uneven lineups inside the frame.
-        left = min(max((frame.left + frame.right) // 2 - anchor_x, frame.left), frame.right - lineup.width)
+        center_x = (frame.left + frame.right) // 2 if anchor_x is None else anchor_x
+        left = min(max(center_x - lineup_anchor_x, frame.left), frame.right - lineup.width)
     else:
         left = (frame.left + frame.right - lineup.width) // 2
     top = frame.top if hanging else frame.bottom - lineup.height

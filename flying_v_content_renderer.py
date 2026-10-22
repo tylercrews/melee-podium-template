@@ -14,12 +14,14 @@ from DrawPodium import (
     PodiumFont,
     _character_tag_bounds,
     _draw_character_tag,
+    _draw_text,
     _resolve_doubles_tag_collisions,
     _temporary_font_settings,
+    _wrap_text,
 )
 from entrant_visibility import slot_from_id
 from flying_v_lineup import FRAME_ASSETS, HANGING_FRAME, PlacedLineup, place_lineup
-from font_size_adjustments import adjusted_size
+from font_size_adjustments import adjusted_size, result_text_adjustment
 from formatting_assets import LocalPlacementTagAssets, PlacementTagAssetProvider, _composite_clipped
 from geometric_content_renderer import (
     LogoInput,
@@ -30,6 +32,7 @@ from geometric_content_renderer import (
     _explicit_entrant_color,
     _member_for_placement,
     _open_logo,
+    _text_value,
     _watermark_color,
 )
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
@@ -57,6 +60,9 @@ CREST_NAME_GUTTER = 12
 # stays legible where it overlaps a figure.
 FIRST_PLACE_ART = "01st.png"
 PLACEMENT_OUTLINE_RATIO = .07
+# Wrapped result names break at this width even when their serialized width
+# lets a long unbroken name run on (behind any nearer figures) before shrinking.
+NAME_WRAP_WIDTH = 320
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,7 +94,8 @@ def place_figures(request: CreationRequest, preferences: ModePreferences) -> dic
         figures[placement.slot_id] = PlacedFigure(
             placement.slot_id, placement.entrant_slot, placement.z_index, hanging,
             place_lineup(member.characters, placement.scale, frame.destination, hanging=hanging,
-                         team_color=result.team_color if isinstance(result, DoublesTeam) else None),
+                         team_color=result.team_color if isinstance(result, DoublesTeam) else None,
+                         anchor_x=placement.anchor.x),
         )
     return figures
 
@@ -101,6 +108,8 @@ def text_vertical_extent(item: TextPlacement) -> tuple[int, int]:
         return item.anchor.y - size, item.anchor.y + size // 4
     if vertical == "m":
         return item.anchor.y - size // 2, item.anchor.y + size // 2
+    if vertical == "d":
+        return item.anchor.y - round(size * 1.25), item.anchor.y
     return item.anchor.y, item.anchor.y + round(size * 1.25)
 
 
@@ -216,6 +225,37 @@ def _entrant_text_style(request: CreationRequest, placement: TextPlacement) -> t
     return chosen, settings.entrant_text_metallic[index]
 
 
+def _draw_wrapped_names(canvas: Image.Image, request: CreationRequest, placements: list[TextPlacement], font: PodiumFont) -> None:
+    """Break names early at the wrap width, shrinking only past their wider run-on width.
+
+    Extra lines stack upward from a bottom anchor and follow its left or right
+    alignment, so a long name grows over the figures rather than into the art.
+    """
+    draw = ImageDraw.Draw(canvas)
+    for placement in placements:
+        result = request.entrants[placement.entrant_slot - 1]
+        value = _text_value(placement, result, request.text_settings.include_seeding)
+        if value is None:
+            continue
+        size = adjusted_size(placement.preferred_size or 42,
+                             result_text_adjustment(request.text_settings, result, placement.field, placement.member_slot))
+        color, metallic = _entrant_text_style(request, placement)
+        _draw_text(draw, (placement.anchor.x, placement.anchor.y), _wrap_text(value, NAME_WRAP_WIDTH, size, font),
+                   anchor=placement.pillow_anchor, max_width=placement.max_width, preferred_size=size, font=font,
+                   fill=color, metallic=metallic, align={"l": "left", "r": "right"}.get(placement.pillow_anchor[0], "center"))
+
+
+def _draw_labels(canvas: Image.Image, request: CreationRequest, preferences: ModePreferences,
+                 placements: list[TextPlacement], font: PodiumFont) -> None:
+    """Draw result labels (never member names) with the shared black outline."""
+    if not placements:
+        return
+    layer = Image.new("RGBA", canvas.size, "#00000000")
+    _draw_result_text(layer, request, preferences, font, [item for item in placements if not item.wrap])
+    _draw_wrapped_names(layer, request, [item for item in placements if item.wrap], font)
+    _composite_outlined_text(canvas, layer)
+
+
 def _clear_of(draw: ImageDraw.ImageDraw, tag: CharacterTag, box: tuple[int, int, int, int] | None, font: PodiumFont) -> CharacterTag:
     """Move a member name outward until it no longer covers the team crest."""
     if box is None:
@@ -265,16 +305,19 @@ class FlyingVContentRenderer:
             figures = place_figures(request, preferences)
             labelled = labelled_preferences(preferences, figures)
             # Smaller figures stand farther back; the leader is drawn last.
-            # Placement art layered below a figure is drawn just before it.
+            # Placement art and labels layered below a figure are drawn just before it.
             pending = sorted(labelled.placement_tags, key=lambda item: (item.z_index, item.slot_id))
+            labels = [item for item in labelled.text_slots if item.field != "member.tag"]
             for figure in sorted(figures.values(), key=lambda item: (item.z_index, item.slot_id)):
                 behind = [tag for tag in pending if tag.z_index < figure.z_index]
                 pending = [tag for tag in pending if tag.z_index >= figure.z_index]
                 draw_outlined_placement_tags(result, replace(labelled, placement_tags=tuple(behind)))
+                _draw_labels(result, request, labelled, [item for item in labels if item.z_index < figure.z_index], self.font)
+                labels = [item for item in labels if item.z_index >= figure.z_index]
                 _composite_clipped(result, figure.lineup.image, figure.lineup.bounds.as_tuple())
             text_layer = Image.new("RGBA", result.size, "#00000000")
-            _draw_result_text(text_layer, request, labelled, self.font,
-                              [item for item in labelled.text_slots if item.field != "member.tag"])
+            _draw_result_text(text_layer, request, labelled, self.font, [item for item in labels if not item.wrap])
+            _draw_wrapped_names(text_layer, request, [item for item in labels if item.wrap], self.font)
             _draw_member_names(text_layer, request, [item for item in labelled.text_slots if item.field == "member.tag"],
                                self.font, crest_clearances(labelled, request.text_settings.include_seeding))
             _composite_outlined_text(result, text_layer)

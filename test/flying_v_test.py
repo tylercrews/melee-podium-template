@@ -185,11 +185,19 @@ class FlyingVPreferenceTests(unittest.TestCase):
         preferences = ModePreferenceRepository().load(DOUBLES)
         frames = _frames(preferences)
         badges = {slot_from_id(tag.slot_id): tag for tag in preferences.placement_tags}
-        for slot in (2, 3):
+        for slot, side, edge in ((2, "l", 16), (3, "r", 1904)):
             name = next(item for item in preferences.text_slots if item.slot_id == f"name_{slot}")
             feet = frames[f"entrant_{slot}_member_1"].destination.bottom
-            self.assertEqual((name.pillow_anchor, name.anchor.y), ("ms", feet - 2))
+            # Back team names hug their outer edge and wrap upward from the feet.
+            self.assertEqual((name.pillow_anchor, name.anchor.x, name.anchor.y, name.wrap), (f"{side}d", edge, feet + 6, True))
             self.assertEqual(badges[slot].anchor.y - badges[slot].max_size.height // 2, feet + 10)
+            badge_edge = badges[slot].anchor.x + (-1 if side == "l" else 1) * (badges[slot].max_size.width // 2)
+            self.assertLessEqual(abs(badge_edge - edge), 1)
+            seed = next(item for item in preferences.text_slots if item.slot_id == f"seed_{slot}")
+            self.assertEqual(seed.pillow_anchor, f"{side}m")
+            # Names that run toward the center pass behind the winning team.
+            self.assertLess(name.z_index, min(item.z_index for item in preferences.character_slots if item.entrant_slot == 1))
+            self.assertGreater(name.z_index, max(item.z_index for item in preferences.character_slots if item.entrant_slot == slot))
         crest = badges[1]
         self.assertTrue(crest.slot_id.endswith(BETWEEN_NAMES_SUFFIX))
         self.assertEqual(crest.anchor.x, 960)
@@ -283,6 +291,73 @@ class FlyingVPlacementTests(unittest.TestCase):
         roomy = PixelRect(0, 0, 1000, 1000)
         ratio = place_lineup([pichu], .3, roomy).bounds.height / place_lineup([fox], .3, roomy).bounds.height
         self.assertAlmostEqual(ratio, 434.6 / 796, delta=.02)
+
+    def test_every_render_fits_the_doubles_back_tiers_at_full_tier_size(self):
+        preferences = ModePreferenceRepository().load(DOUBLES)
+        frames = _frames(preferences)
+        # Second and third place mirror each other at one shared tier size.
+        back = {(item.entrant_slot, item.member_slot): item for item in preferences.character_slots if item.entrant_slot != 1}
+        for member, mirror in ((1, 2), (2, 1)):
+            second, third = back[(2, member)], back[(3, mirror)]
+            self.assertEqual(second.scale, third.scale)
+            self.assertEqual(second.anchor.x, preferences.canvas_size.width - third.anchor.x)
+            second_frame, third_frame = frames[second.slot_id].destination, frames[third.slot_id].destination
+            self.assertEqual((second_frame.width, second_frame.height), (third_frame.width, third_frame.height))
+            self.assertEqual(second_frame.left, preferences.canvas_size.width - third_frame.right)
+        largest = [Character("Bowser", color="default", pose="c"), Character("Ice Climbers", color="default", pose="a"),
+                   Character("Marth", color="default", pose="e")]
+        for placement in preferences.character_slots:
+            if placement.entrant_slot == 1:
+                continue
+            frame = frames[placement.slot_id].destination
+            for character in largest:
+                with self.subTest(slot=placement.slot_id, character=character.melee_fighter_name):
+                    placed = place_lineup([character], placement.scale, frame, anchor_x=placement.anchor.x)
+                    roomy = place_lineup([character], placement.scale, PixelRect(0, 0, 4000, 4000))
+                    self.assertEqual(placed.image.size, roomy.image.size)
+                    self.assertGreaterEqual(placed.bounds.left, max(0, frame.left))
+                    self.assertLessEqual(placed.bounds.right, min(preferences.canvas_size.width, frame.right))
+
+    def test_figures_center_on_their_anchor_and_slide_only_to_stay_in_frame(self):
+        fox, bowser = Character("Fox", color="default", pose="a"), Character("Bowser", color="default", pose="c")
+        frame = PixelRect(0, 0, 560, 600)
+        placed = place_lineup([fox], .46, frame, anchor_x=170)
+        self.assertLessEqual(abs((placed.bounds.left + placed.bounds.right) / 2 - 170), 1)
+        wide = place_lineup([bowser], .46, frame, anchor_x=170)
+        self.assertEqual(wide.bounds.left, 0)
+
+    def test_back_team_names_wrap_early_and_pass_behind_the_winning_team(self):
+        # Fixed poses keep the measured figures identical to the rendered ones.
+        member = Entrant(tag="Player", characters=[Character("Fox", color="default", pose="a")])
+        teams = [DoublesTeam(seed=slot, placement=slot, entrant_1=member, entrant_2=member, team_name=name)
+                 for slot, name in enumerate(("Leaders", "TheseTeamNamesHaveNoSpacesAndRunOnForever",
+                                              "A Very Long Team Name That Keeps Going"), 1)]
+        request, preferences = _request(DOUBLES, teams, text_settings=TextSettings(include_seeding=False))
+        names = {item.entrant_slot: item for item in preferences.text_slots if item.field == "entrant.team_name"}
+        renderer = FlyingVContentRenderer(font=PodiumFont.UBUNTU)
+        image = renderer.draw(Image.new("RGBA", (1920, 1080), "#00000000"), request, preferences)
+        without_leader = renderer.draw(Image.new("RGBA", (1920, 1080), "#00000000"),
+                                       replace(request, entrants=[replace(teams[0], omit_entrant=True), *teams[1:]]),
+                                       visible_preferences(preferences, [replace(teams[0], omit_entrant=True), *teams[1:]]))
+        # The unbroken name runs on into the first-place figures, which cover it
+        # wherever they are opaque.
+        row = names[2].anchor.y - 20
+        topmost = {}
+        leaders = [figure for figure in place_figures(request, preferences).values() if figure.entrant_slot == 1]
+        for figure in sorted(leaders, key=lambda item: (item.z_index, item.slot_id)):
+            bounds = figure.lineup.bounds
+            if bounds.top <= row < bounds.bottom:
+                for x in range(max(0, bounds.left), min(1920, bounds.right)):
+                    pixel = figure.lineup.image.getpixel((x - bounds.left, row - bounds.top))
+                    if pixel[3] == 255:
+                        topmost[x] = pixel
+        covered = [x for x in topmost if without_leader.getpixel((x, row))[3]]
+        self.assertGreater(len(covered), 20)
+        for x in covered:
+            self.assertEqual(image.getpixel((x, row)), topmost[x])
+        # The spaced name breaks into several right-aligned lines stacked upward.
+        third = without_leader.crop((1300, 300, 1920, names[3].anchor.y + 2))
+        self.assertGreater(names[3].anchor.y - (third.getbbox()[1] + 300), 44 * 3)
 
     def test_second_place_label_stays_put_while_its_figure_grows(self):
         pichu, bowser = Character("Pichu", color="default", pose="a"), Character("Bowser", color="default", pose="c")
