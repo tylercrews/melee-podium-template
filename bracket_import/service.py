@@ -23,6 +23,7 @@ from models import Character, DoublesTeam, Entrant, MELEE_FIGHTERS, SinglesEntra
 from .startgg_usb_reporting import canonical_fighter_name, costume_for_usb_score
 from .character_usage import select_import_characters
 from .parrygg_character_usage import reported_character_usage as parry_character_usage
+from .random_selection import RANDOM_SELECTION, expand_random_selections, is_random_selection
 
 
 class BracketProvider(StrEnum):
@@ -90,6 +91,13 @@ class ImportedCharacter:
     name: str
     costume: str | None = None
     evidence: CharacterEvidence = CharacterEvidence.REPORTED
+    # Providers report no poses; Random stand-ins carry their paired pose.
+    pose: str | None = None
+
+    def to_character(self) -> Character:
+        if self.pose is None:
+            return Character(self.name, color=self.costume)
+        return Character(self.name, color=self.costume, pose=self.pose)
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,7 +172,7 @@ class BracketImport:
                 placement=player.placement,  # type: ignore[arg-type]
                 seed=player.seed,
                 x_handle=player.x_handle,
-                characters=[Character(character.name, color=character.costume) for character in player.characters]
+                characters=[character.to_character() for character in player.characters]
                 or [Character("Sandbag")],
             )
             for player in self.players
@@ -188,7 +196,7 @@ class BracketImport:
             members = []
             for member in team.members:
                 characters = (characters_by_member or {}).get(member.tag) or [
-                    Character(character.name, color=character.costume) for character in member.characters
+                    character.to_character() for character in member.characters
                 ] or [Character("Sandbag")]
                 members.append(Entrant(tag=member.tag, characters=characters, x_handle=member.x_handle))
             teams.append(DoublesTeam(seed=team.seed, placement=team.placement, entrant_1=members[0], entrant_2=members[1], team_name=team.tag))
@@ -472,6 +480,7 @@ def parse_startgg(payload: Mapping[str, Any], link: BracketLink, *, character_na
         selections = usage.get(str(entrant.get("id")), usage.get(entrant["name"], []))
         played = tuple(_startgg_characters(selections, character_names))
         won = tuple(_startgg_characters([item for item in selections if item.get("_startgg_won") is True], character_names))
+        played, won = expand_random_selections(played, won)
         characters = select_import_characters(played, won, import_all_characters=import_all_characters)
         players.append(ImportedPlayer(entrant["name"], standing.get("placement"), entrant.get("initialSeedNum"), characters, f"@{handle}" if handle else None, provider_id=str(entrant.get("id")), members=members, played_characters=played, won_characters=won))
     entrant_size = event.get("entrantSizeMin")
@@ -667,6 +676,8 @@ _PARRY_FIGHTER_BY_SLUG.update({
 def _parry_character(character: Mapping[str, Any]) -> ImportedCharacter | None:
     slug = str(character.get("slug") or character.get("characterSlug") or "").casefold()
     raw_name = str(character.get("name") or "").strip()
+    if is_random_selection(slug) or is_random_selection(raw_name):
+        return ImportedCharacter(RANDOM_SELECTION)
     name = _PARRY_FIGHTER_BY_SLUG.get(slug)
     if name is None:
         name = next((fighter for fighter in MELEE_FIGHTERS if fighter.casefold() == raw_name.casefold()), None)
@@ -736,20 +747,20 @@ def parse_parrygg(
         if not isinstance(entrant, Mapping):
             entrant = {}
         users = [user for user in entrant.get("users", []) if isinstance(user, Mapping)]
-        members = tuple(
-            ImportedMember(
-                str(user.get("gamerTag") or user.get("gamer_tag") or "Unknown"),
-                characters=select_import_characters(
-                    played_usage.get(str(user.get("id")), ()),
-                    won_usage.get(str(user.get("id")), ()),
-                    import_all_characters=import_all_characters,
-                ),
-                country=user.get("locationCountry") or user.get("location_country"),
-                played_characters=played_usage.get(str(user.get("id")), ()),
-                won_characters=won_usage.get(str(user.get("id")), ()),
+        members = []
+        for user in users:
+            played, won = expand_random_selections(
+                played_usage.get(str(user.get("id")), ()),
+                won_usage.get(str(user.get("id")), ()),
             )
-            for user in users
-        )
+            members.append(ImportedMember(
+                str(user.get("gamerTag") or user.get("gamer_tag") or "Unknown"),
+                characters=select_import_characters(played, won, import_all_characters=import_all_characters),
+                country=user.get("locationCountry") or user.get("location_country"),
+                played_characters=played,
+                won_characters=won,
+            ))
+        members = tuple(members)
         tag = event_entrant.get("name") or " / ".join(member.tag for member in members)
         player_characters = members[0].characters if len(members) == 1 else ()
         players.append(ImportedPlayer(
@@ -796,7 +807,7 @@ def _startgg_characters(selections: list[Mapping[str, Any]], names: Mapping[int 
         name = name or (names or {}).get(raw)
         if not name:
             continue
-        name = canonical_fighter_name(str(name))
+        name = RANDOM_SELECTION if is_random_selection(str(name)) else canonical_fighter_name(str(name))
         if name not in costume_counts:
             ordered_names.append(name)
             costume_counts[name] = {}

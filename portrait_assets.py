@@ -11,6 +11,7 @@ from PIL import Image
 
 from models import Character
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
+from wireframe_fighters import WIREFRAME_FIGHTERS
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -106,4 +107,7 @@ def load_scaled_portrait(character: Character, mode_scale: float) -> Image.Image
 def with_team_color(character: Character, team_color: str | None) -> Character:
     """Return a doubles-color portrait request without mutating the entrant."""
 
-    return character if team_color is None else replace(character, color=team_color)
+    # Wireframes have a single costume, so team colors leave them unchanged.
+    if team_color is None or character.melee_fighter_name in WIREFRAME_FIGHTERS:
+        return character
+    return replace(character, color=team_color)

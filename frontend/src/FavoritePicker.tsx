@@ -15,7 +15,7 @@ const STOCK_COLOR_CODES: Record<string, string> = {
 };
 
 export function stockIconPath(fighter: string, color = ""): string {
-  const slug = fighter.toLowerCase().replace(/\./g, "").replace(/\s+/g, "_");
+  const slug = fighter.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   const selectedColor = color.toLowerCase() || "default";
   const iconColor = STOCK_COLOR_CODES[selectedColor] ? selectedColor : "default";
   const colorCode = STOCK_COLOR_CODES[iconColor];

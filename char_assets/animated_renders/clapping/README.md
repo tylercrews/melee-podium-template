@@ -1,8 +1,16 @@
 # Clapping animations
 
-This collection contains 123 supplied animated GIFs, 14 byte-identical
-default-costume aliases, and Sandbag's single-frame standing GIF. Its 138
-entries cover all 26 playable characters plus Sandbag.
+This collection contains 125 supplied animated GIFs, 14 byte-identical
+default-costume aliases, and Sandbag's single-frame standing GIF. Its 140
+entries cover all 26 playable characters plus Sandbag and the two Fighting
+Wire Frames.
+
+The wireframes come from `tyro-decomp-anims`: `Wireframe-Male` performs
+Captain Falcon's results clap and `Wireframe-Female` performs Sheik's. Both
+use the same camera and 42-frame, 840 ms timing as those fighters, so their
+clapping crops reuse the reviewed Captain Falcon and Sheik windows. Each has
+one default costume; doubles team colors leave wireframes unchanged instead of
+requiring recolored copies.
 
 Sandbag's standing pose comes from `tyro-decomp-anims`. The static portrait is
 `char_assets/renders/Sandbag/00a_default_Sandbag_tyro-decomp-anims_standing.png`.

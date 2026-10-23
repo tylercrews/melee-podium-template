@@ -58,6 +58,7 @@ from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
 from entrant_visibility import validation_entrants
 from metadata_content import metadata_values
+from wireframe_fighters import fighter_display_name
 from podium_colors import podium_color_for_slot
 
 
@@ -422,7 +423,7 @@ class LegacyPodiumContentRenderer:
     ) -> str | None:
         if placement.field == "entrant.primary_character_name":
             assert isinstance(entrant, SinglesEntrant)
-            return entrant.characters[0].melee_fighter_name
+            return fighter_display_name(entrant.characters[0].melee_fighter_name)
         if placement.field == "entrant.team_name":
             assert isinstance(entrant, DoublesTeam)
             return entrant.team_name

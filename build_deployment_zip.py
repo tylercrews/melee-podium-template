@@ -64,6 +64,7 @@ FILES = (
     "radial_watermark.py",
     "sample_creation_data.py",
     "square_portrait_renderer.py",
+    "wireframe_fighters.py",
     "fonts/Impact.ttf",
     "fonts/Tyrowo-Inked-Regular.ttf",
     "fonts/Ubuntu-Regular.ttf",

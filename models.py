@@ -6,6 +6,7 @@ from enum import StrEnum
 
 from font_size_adjustments import validate_font_size_adjustment
 from metadata_content import validate_date_range
+from wireframe_fighters import WIREFRAME_FIGHTERS
 
 
 MELEE_FIGHTERS = (
@@ -39,7 +40,7 @@ MELEE_FIGHTERS = (
 
 # Extra portrait subjects are usable in images without changing the playable
 # roster used by bracket providers and their costume mappings.
-SUPPORTED_PORTRAIT_CHARACTERS = (*MELEE_FIGHTERS, "Sandbag")
+SUPPORTED_PORTRAIT_CHARACTERS = (*MELEE_FIGHTERS, "Sandbag", *WIREFRAME_FIGHTERS)
 
 
 class TournamentFormat(StrEnum):

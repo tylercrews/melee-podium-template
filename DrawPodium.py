@@ -26,6 +26,7 @@ from models import Character, DoublesTeam, SinglesEntrant, Tournament, Tournamen
 from portrait_assets import with_team_color
 from portrait_scale_adjustment_for_each_mode import get_mode_portrait_scale
 from portrait_scale_adjustment_to_character_relativity import get_pose_scale
+from wireframe_fighters import fighter_display_name
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -793,7 +794,8 @@ _STOCK_ICON_FILENAME = re.compile(
 
 
 def _stock_icon_slug(fighter_name: str) -> str:
-    return fighter_name.lower().replace(".", "").replace(" ", "_")
+    # "Dr. Mario" -> "dr_mario"; "Wireframe-Male" -> "wireframe_male".
+    return re.sub(r"[^a-z0-9]+", "_", fighter_name.lower()).strip("_")
 
 
 def _resolve_stock_icon_path(character: Character) -> Path:
@@ -1163,7 +1165,7 @@ def _footer_text_bounds(
             max_width = 180 if placement_count == 8 else 290
             preferred_size = 28 if placement_count == 8 else 34
             wrapped_name = _wrap_text(
-                entrant.characters[0].melee_fighter_name,
+                fighter_display_name(entrant.characters[0].melee_fighter_name),
                 max_width,
                 preferred_size,
                 font,
@@ -1371,7 +1373,7 @@ def _draw_text_fields(
                     anchors["label"][0],
                     anchors["label"][1] + label_y_offset,
                 ),
-                entrant.characters[0].melee_fighter_name,
+                fighter_display_name(entrant.characters[0].melee_fighter_name),
                 anchor="ma",
                 max_width=180 if placement_count == 8 else 290,
                 preferred_size=28 if placement_count == 8 else 34,

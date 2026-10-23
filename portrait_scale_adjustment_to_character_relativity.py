@@ -11,6 +11,11 @@ for the selected podium layout in portrait_scale_adjustment_for_each_mode.py.
 
 POSE_SCALE = {  # Side comments show the original Donkey Kong-relative values.
     "Sandbag": {"00a": 0.605},  # Native 2048px source: preserves the reviewed 512px portrait's standing height.
+    # Each wireframe's six crops share one source pixel scale. Matching poses
+    # give Falcon/Marth size at 0.317; Male sits between that and Ganondorf.
+    "Wireframe-Male": {"00a": 0.337, "00b": 0.337, "00c": 0.337, "00d": 0.337, "00e": 0.337, "00f": 0.337},
+    # Matching poses give Peach 0.315, Samus 0.312, and Sheik 0.260; Female uses their mean.
+    "Wireframe-Female": {"00a": 0.296, "00b": 0.296, "00c": 0.296, "00d": 0.296, "00e": 0.296, "00f": 0.296},
     "Bowser": {"00a": 0.96, "00b": 1.25, "00c": 1.07},  # {"00a": 0.9336, "00b": 1.0}
     "Captain Falcon": {"00a": 0.69, "00b": 0.69, "00c": 0.69, "00d": 0.69, "00e": 0.7909},  # {"00a": 0.7143, "00b": 0.7162}
     "Donkey Kong": {"00a": 1.0, "00b": 0.86, "00c": 0.7645},  # {"00a": 1.0, "00b": 1.0}

@@ -51,6 +51,24 @@ class EyePortraitAdjustment:
 # Mr. Game & Watch's head center are used for characters without visible eyes.
 EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
     "Sandbag": {"a": EyePortraitAdjustment(1068, 692, 0.65)},  # Native 2048px source, after its 184px vertical crop.
+    # Wireframe focal points center the red face panel. Each model's crops
+    # share one source scale, so zoom follows visible width to keep head size.
+    "Wireframe-Male": {
+        "a": EyePortraitAdjustment(895, 218, 1.41),
+        "b": EyePortraitAdjustment(1381, 465, 1.51),
+        "c": EyePortraitAdjustment(699, 817, 0.70),
+        "d": EyePortraitAdjustment(380, 243, 0.61),
+        "e": EyePortraitAdjustment(864, 367, 1.15),
+        "f": EyePortraitAdjustment(1664, 194, 1.68),
+    },
+    "Wireframe-Female": {
+        "a": EyePortraitAdjustment(240, 248, 0.78),
+        "b": EyePortraitAdjustment(826, 209, 0.93),
+        "c": EyePortraitAdjustment(1758, 250, 1.89),
+        "d": EyePortraitAdjustment(781, 254, 0.79),
+        "e": EyePortraitAdjustment(565, 283, 0.78),
+        "f": EyePortraitAdjustment(534, 362, 1.40),
+    },
     "Bowser": {
         "a": EyePortraitAdjustment(180, 297, 1.00),
         "c": EyePortraitAdjustment(600, 130, 1.05),

@@ -1815,6 +1815,90 @@
           "zoom_relative_to_3rd": 0.77
         }
       }
+    },
+    "Wireframe-Male": {
+      "source_size": [
+        512,
+        512
+      ],
+      "preview_frame_index": 12,
+      "placement_profiles": {
+        "2": {
+          "source_crop": [
+            193.012,
+            44.59,
+            314.903,
+            239.616
+          ],
+          "calibration": "source_fighter_clap",
+          "source_fighter": "Captain Falcon",
+          "zoom_relative_to_3rd": 1.19899
+        },
+        "3": {
+          "source_crop": [
+            175.731,
+            35.965,
+            321.878,
+            269.8
+          ],
+          "calibration": "source_fighter_clap",
+          "source_fighter": "Captain Falcon",
+          "zoom_relative_to_3rd": 1.0
+        },
+        "4": {
+          "source_crop": [
+            158.939,
+            17.027,
+            349.776,
+            322.367
+          ],
+          "calibration": "source_fighter_clap",
+          "source_fighter": "Captain Falcon",
+          "zoom_relative_to_3rd": 0.76582
+        }
+      }
+    },
+    "Wireframe-Female": {
+      "source_size": [
+        512,
+        512
+      ],
+      "preview_frame_index": 18,
+      "placement_profiles": {
+        "2": {
+          "source_crop": [
+            169.318,
+            35.625,
+            294.671,
+            236.191
+          ],
+          "calibration": "source_fighter_clap",
+          "source_fighter": "Sheik",
+          "zoom_relative_to_3rd": 1.20154
+        },
+        "3": {
+          "source_crop": [
+            150.76,
+            14.625,
+            301.378,
+            255.613
+          ],
+          "calibration": "source_fighter_clap",
+          "source_fighter": "Sheik",
+          "zoom_relative_to_3rd": 1.0
+        },
+        "4": {
+          "source_crop": [
+            133.47,
+            -1.125,
+            329.352,
+            312.287
+          ],
+          "calibration": "source_fighter_clap",
+          "source_fighter": "Sheik",
+          "zoom_relative_to_3rd": 0.76892
+        }
+      }
     }
   }
 }

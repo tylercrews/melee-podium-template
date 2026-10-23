@@ -794,15 +794,15 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                 "country": player.country,
                 "provider_id": player.provider_id,
                 "characters": [
-                    {"fighter": character.name, "color": character.costume, "pose": None}
+                    {"fighter": character.name, "color": character.costume, "pose": character.pose}
                     for character in player.characters
                 ],
                 "played_characters": [
-                    {"fighter": character.name, "color": character.costume, "pose": None}
+                    {"fighter": character.name, "color": character.costume, "pose": character.pose}
                     for character in (player.played_characters if player.played_characters is not None else player.characters)
                 ],
                 "won_characters": [
-                    {"fighter": character.name, "color": character.costume, "pose": None}
+                    {"fighter": character.name, "color": character.costume, "pose": character.pose}
                     for character in player.won_characters
                 ],
                 "members": [
@@ -811,15 +811,15 @@ def _import_response(imported: BracketImport) -> dict[str, Any]:
                         "x_handle": member.x_handle,
                         "country": member.country,
                         "characters": [
-                            {"fighter": character.name, "color": character.costume, "pose": None}
+                            {"fighter": character.name, "color": character.costume, "pose": character.pose}
                             for character in member.characters
                         ],
                         "played_characters": [
-                            {"fighter": character.name, "color": character.costume, "pose": None}
+                            {"fighter": character.name, "color": character.costume, "pose": character.pose}
                             for character in (member.played_characters if member.played_characters is not None else member.characters)
                         ],
                         "won_characters": [
-                            {"fighter": character.name, "color": character.costume, "pose": None}
+                            {"fighter": character.name, "color": character.costume, "pose": character.pose}
                             for character in member.won_characters
                         ],
                     }
