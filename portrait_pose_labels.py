@@ -5,8 +5,8 @@
 POSE_LABELS = {
     "Sandbag": {"a": "Standing"},
     # Wireframe labels name the fighter animation each pose was taken from.
-    "Wireframe-Male": {"a": "Hand On Hip - Finger Up", "b": "Captain Falcon Victory X - High Kick", "c": "Ganondorf Victory B - Fist Raised", "d": "Ganondorf Victory Y - Arms Crossed", "e": "Marth Victory X - Arm Raised", "f": "Marth Victory X - Jojo Pose"},
-    "Wireframe-Female": {"a": "Peach Taunt - Hands Clasped", "b": "Peach Victory B - Wave", "c": "Peach Victory X - Point", "d": "Samus Victory Y - Metroid 2 Cover", "e": "Sheik Victory Y - Standing", "f": "Sheik Victory X - High Kick"},
+    "Wireframe-Male": {"a": "Captain Falcon - Salute Wave", "b": "Captain Falcon Victory X - High Kick", "c": "Ganondorf Victory B - Fist Raised", "d": "Ganondorf Victory Y - Flick Off", "e": "Marth Victory X - Jojo Pose", "f": "Marth Victory X - Arm Out"},
+    "Wireframe-Female": {"a": "Peach Taunt - Victory Hand", "b": "Peach Victory B - Wave", "c": "Peach Victory X - Arm Out", "d": "Samus Victory Y - Crouch", "e": "Sheik Victory Y - Jojo Pose", "f": "Sheik Victory X - High Kick"},
     "Bowser": {"a": "Standing Upright", "b": "Archived - Char Select Portrait - Crouched", "c": "Victory B - Flex"},
     "Captain Falcon": {"a": "Archived Standing Foot Back", "b": "Char Select Portrait - Salute", "c": "Victory B - Talk To The Hand", "d": "Victory Y - Shirt Rip", "e": "Victory X - High Kick"},
     "Donkey Kong": {"a": "Fist Pump", "b": "Char Select Portrait - Kung Fu", "c": "Victory B - Flex"},

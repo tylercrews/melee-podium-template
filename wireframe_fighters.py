@@ -17,12 +17,12 @@ RANDOM_FIGHTER_LABEL = "Random"
 # selection draws one pair for both wireframes; users can then choose either
 # pose independently. Keep this a one-to-one mapping over existing poses.
 WIREFRAME_POSE_PAIRS = {
-    "a": "e",  # Hand On Hip - Finger Up / Sheik Victory Y - Standing
-    "b": "f",  # Captain Falcon Victory X / Sheik Victory X - High Kick
-    "c": "d",  # Ganondorf Victory B - Fist Raised / Samus Victory Y
-    "d": "a",  # Ganondorf Victory Y - Arms Crossed / Peach Taunt
-    "e": "b",  # Marth Victory X - Arm Raised / Peach Victory B - Wave
-    "f": "c",  # Marth Victory X - Jojo Pose / Peach Victory X - Point
+    "a": "b",  # Captain Falcon Salute Wave / Peach Wave
+    "b": "f",  # Captain Falcon High Kick / Sheik High Kick
+    "c": "a",  # Ganondorf Fist Raised / Peach Taunt Victory Hand
+    "d": "d",  # Ganondorf Flick Off / Samus Crouch
+    "e": "e",  # Marth Jojo Pose / Sheik Jojo Pose
+    "f": "c",  # Marth Arm Out / Peach Arm Out
 }
 
 
