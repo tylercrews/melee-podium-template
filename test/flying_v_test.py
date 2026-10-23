@@ -15,10 +15,11 @@ from background_builder import BackgroundRequest, PixelRect
 from creation import CreationPipeline, CreationRequest, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection
 from DrawFlyingV import draw_doubles_top_3, draw_singles_top_8
-from DrawPodium import CharacterTag, PodiumFont, _character_tag_bounds
+from DrawPodium import CharacterTag, PodiumFont, _character_tag_bounds, _draw_text
 from entrant_visibility import slot_from_id, visible_preferences
 from flying_v_content_renderer import (
     BETWEEN_NAMES_SUFFIX,
+    composite_outlined_names,
     draw_outlined_placement_tags,
     FlyingVContentRenderer,
     WATERMARK_ROW_HEIGHT,
@@ -502,6 +503,34 @@ class FlyingVRenderingTests(unittest.TestCase):
         region = result.crop((name.anchor.x - 100, name.anchor.y, name.anchor.x + 100, name.anchor.y + 44)).convert("RGBA")
         self.assertIn((0, 255, 0, 255), set(region.getdata()))
         self.assertNotIn((0, 240, 66, 255), set(region.getdata()))
+
+    def test_name_outlines_share_each_names_alpha(self):
+        for alpha, expected_inside, expected_ring in (("FF", (255, 0, 0), (0, 0, 0)), ("80", (255, 127, 127), (127, 127, 127)),
+                                                      ("40", (255, 191, 191), (191, 191, 191))):
+            with self.subTest(alpha=alpha):
+                layer = Image.new("RGBA", (400, 120), "#00000000")
+                _draw_text(ImageDraw.Draw(layer), (20, 20), "Mang0", anchor="la", max_width=360, preferred_size=64,
+                           font=PodiumFont.UBUNTU, fill=f"#FF0000{alpha}")
+                canvas = Image.new("RGBA", layer.size, "#FFFFFFFF")
+                composite_outlined_names(canvas, layer)
+                coverage = layer.getchannel("A")
+                full = max(coverage.getdata())
+                inside = {canvas.getpixel((x, y))[:3] for x in range(400) for y in range(120) if coverage.getpixel((x, y)) == full}
+                ring = [canvas.getpixel((x, y))[:3] for x in range(400) for y in range(120)
+                        if coverage.getpixel((x, y)) == 0 and canvas.getpixel((x, y))[:3] != (255, 255, 255)]
+                # Letters show the background at the name's own transparency, never a black underlay.
+                self.assertEqual(inside, {expected_inside})
+                self.assertEqual(min(ring, key=sum), expected_ring)
+
+    def test_translucent_entrant_names_render_without_a_darkened_outline_underlay(self):
+        request, preferences = _request(SINGLES, sample_top_8_entrants(random.Random(4)), text_settings=TextSettings(
+            entrant_text_color_mode="pick_1", entrant_text_colors=("#FF000080",), include_seeding=False))
+        request = replace(request, background=BackgroundRequest(preferences.canvas_size, fill_color="#FFFFFFFF"))
+        result = CreationPipeline({CreationMode.FLYING_V: FlyingVContentRenderer()}).create(request)
+        name = next(item for item in preferences.text_slots if item.slot_id == "name_7")
+        region = set(result.crop((name.anchor.x - 120, name.anchor.y, name.anchor.x + 120, name.anchor.y + 44)).getdata())
+        self.assertTrue(any(abs(red - 255) <= 1 and abs(green - 127) <= 1 and abs(blue - 127) <= 1 for red, green, blue, _ in region))
+        self.assertFalse(any(red > 150 and green < 90 for red, green, _blue, _ in region))
 
     def test_format_preview_route_renders_both_layouts_and_rejects_other_counts(self):
         client = app.test_client()

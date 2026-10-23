@@ -38,7 +38,6 @@ from geometric_content_renderer import (
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferences, TextPlacement
 from models import DoublesTeam
-from radial_content_renderer import _composite_outlined_text
 
 
 DEFAULT_FLYING_V_HEADER_LAYOUT = {
@@ -63,6 +62,7 @@ PLACEMENT_OUTLINE_RATIO = .07
 # Wrapped result names break at this width even when their serialized width
 # lets a long unbroken name run on (behind any nearer figures) before shrinking.
 NAME_WRAP_WIDTH = 320
+NAME_OUTLINE_FILTER_SIZE = 5
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,6 +216,21 @@ def draw_outlined_placement_tags(
         _composite_clipped(canvas, layer, (left, top, left + layer.width, top + layer.height))
 
 
+def composite_outlined_names(canvas: Image.Image, layer: Image.Image) -> None:
+    """Composite names and their black outline as one unit at each name's alpha.
+
+    The outline is the name's alpha dilated around its letters. Inside the
+    letters the name fully covers its outline, so a translucent name shows the
+    background at its own transparency instead of a darkening black underlay,
+    and its outline ring carries that same alpha. Opaque names are unchanged.
+    """
+    outline_alpha = layer.getchannel("A").filter(ImageFilter.MaxFilter(NAME_OUTLINE_FILTER_SIZE))
+    # Premultiplied color over the dilated alpha unpremultiplies to the name's
+    # color blended with black in proportion to the letters' coverage.
+    red, green, blue, _alpha = layer.convert("RGBa").split()
+    canvas.alpha_composite(Image.merge("RGBa", (red, green, blue, outline_alpha)).convert("RGBA"))
+
+
 def _entrant_text_style(request: CreationRequest, placement: TextPlacement) -> tuple[str, bool]:
     chosen = _explicit_entrant_color(request, placement.entrant_slot)
     if chosen is None:
@@ -253,7 +268,7 @@ def _draw_labels(canvas: Image.Image, request: CreationRequest, preferences: Mod
     layer = Image.new("RGBA", canvas.size, "#00000000")
     _draw_result_text(layer, request, preferences, font, [item for item in placements if not item.wrap])
     _draw_wrapped_names(layer, request, [item for item in placements if item.wrap], font)
-    _composite_outlined_text(canvas, layer)
+    composite_outlined_names(canvas, layer)
 
 
 def _clear_of(draw: ImageDraw.ImageDraw, tag: CharacterTag, box: tuple[int, int, int, int] | None, font: PodiumFont) -> CharacterTag:
@@ -320,7 +335,7 @@ class FlyingVContentRenderer:
             _draw_wrapped_names(text_layer, request, [item for item in labels if item.wrap], self.font)
             _draw_member_names(text_layer, request, [item for item in labelled.text_slots if item.field == "member.tag"],
                                self.font, crest_clearances(labelled, request.text_settings.include_seeding))
-            _composite_outlined_text(result, text_layer)
+            composite_outlined_names(result, text_layer)
             draw_outlined_placement_tags(result, replace(labelled, placement_tags=tuple(pending)))
             self._draw_header(result, request, preferences)
             _composite_watermark(
