@@ -106,7 +106,12 @@ def _header_geometry(position: str, width: int) -> tuple[tuple[int, int], str, i
 
 def _website_icon_and_remainder(value: str) -> tuple[Path, str] | None:
     candidate = value.strip()
-    parsed = urlsplit(candidate if "://" in candidate else f"https://{candidate}")
+    try:
+        parsed = urlsplit(candidate if "://" in candidate else f"https://{candidate}")
+    except ValueError:
+        # Plain text such as "Singles [FROZEN STARTER]" reads as a malformed
+        # IPv6 host; anything unparseable is simply not a website link.
+        return None
     host = (parsed.hostname or "").casefold().removeprefix("www.")
     filename = WEBSITE_HOST_ICONS.get(host)
     if filename is None:

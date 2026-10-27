@@ -5,6 +5,8 @@ import unittest
 
 from PIL import Image
 
+from legacy_podium_content_renderer import _website_icon_and_remainder
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ICON_FOLDER = PROJECT_ROOT / "formatting_assets" / "website_icons"
@@ -20,6 +22,11 @@ EXPECTED_ICONS = {
 
 
 class WebsiteIconTests(unittest.TestCase):
+    def test_bracketed_metadata_text_is_plain_text_not_a_url(self):
+        self.assertIsNone(_website_icon_and_remainder("Melee Singles [FROZEN POKEMON STARTER]"))
+        icon, remainder = _website_icon_and_remainder("https://www.start.gg/tournament/weekly")
+        self.assertEqual((icon.name, remainder), ("startgg.png", "tournament/weekly"))
+
     def test_full_color_icons_are_normalized_rgba_images(self):
         actual = {path.name for path in ICON_FOLDER.glob("*.png")}
         self.assertEqual(actual, EXPECTED_ICONS)
