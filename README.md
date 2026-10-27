@@ -77,6 +77,7 @@ npm run build
 
 
 TODO LIST:
+* add option for flags
 * add better handling for long sponsor names - would be necessary for a big tournament to use it
 * increment the version number
 * need to decide an option for Random character selection. Usually won't be able to see it from imports, but should be able to set it manually in case someone enters an online tournament. Sandbag is more like null, random should be something different.
