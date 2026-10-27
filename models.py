@@ -42,6 +42,8 @@ MELEE_FIGHTERS = (
 # roster used by bracket providers and their costume mappings.
 SUPPORTED_PORTRAIT_CHARACTERS = (*MELEE_FIGHTERS, "Sandbag", *WIREFRAME_FIGHTERS)
 
+TEAM_COLORS = ("red", "green", "blue")
+
 
 class TournamentFormat(StrEnum):
     """Whether an event is singles or the supported two-player doubles format."""
@@ -215,6 +217,6 @@ class DoublesTeam:
         if self.team_color is not None:
             _validate_text(self.team_color, "Team color")
             normalized_color = self.team_color.strip().lower()
-            if normalized_color not in {"red", "green", "blue", "random"}:
+            if normalized_color not in {*TEAM_COLORS, "random"}:
                 raise ValueError("Team color must be one of: red, green, blue, random, or None")
             object.__setattr__(self, "team_color", normalized_color)

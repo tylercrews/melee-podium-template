@@ -1,5 +1,6 @@
 """Tests for the overall mode-driven creation coordinator."""
 
+from dataclasses import replace
 import unittest
 
 from PIL import Image
@@ -8,7 +9,7 @@ from background_builder import BackgroundRequest, PixelSize
 from creation import CreationPipeline, CreationRequest, PreferencesNotReadyError, TextSettings
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from mode_preferences import ModePreferenceRepository, ModePreferences
-from models import Character, SinglesEntrant, Tournament, TournamentFormat
+from models import TEAM_COLORS, Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorSelection
 
 
@@ -124,6 +125,20 @@ class CreationPipelineTest(unittest.TestCase):
 
         with self.assertRaisesRegex(PreferencesNotReadyError, "still a scaffold"):
             pipeline.create(self.request(PixelSize(1672, 941)))
+
+    def test_request_resolves_random_team_colors_for_every_mode(self) -> None:
+        def team(placement: int, color: str | None) -> DoublesTeam:
+            member = Entrant(tag=f"Member {placement}", characters=[Character("Fox")])
+            return DoublesTeam(placement, placement, member, member, f"Team {placement}", color)
+
+        request = CreationRequest(
+            selection=ModeSelection(CreationMode.FLYING_V, ModeOptions(TournamentFormat.DOUBLES, 3)),
+            background=BackgroundRequest(PixelSize(2, 2)),
+            entrants=(team(1, "random"), team(2, "blue"), team(3, None)),
+            tournament=replace(tournament(), event_format=TournamentFormat.DOUBLES),
+        )
+        self.assertIn(request.entrants[0].team_color, TEAM_COLORS)
+        self.assertEqual([entrant.team_color for entrant in request.entrants[1:]], ["blue", None])
 
     def test_request_rejects_the_wrong_number_of_included_entrants(self) -> None:
         with self.assertRaisesRegex(ValueError, "Expected 3"):

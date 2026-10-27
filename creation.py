@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
+from random import choice
 
 from PIL import Image
 
@@ -27,7 +28,7 @@ from mode_preferences import (
     ModePreferences,
     ModePreferencesProvider,
 )
-from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
+from models import TEAM_COLORS, DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
 from podium_colors import PodiumColorConfiguration, PodiumColorInput, PodiumColorSelection
 from metadata_content import METADATA_FIELDS
 
@@ -165,7 +166,14 @@ class CreationRequest:
                     "header_layout must assign each header item to one unique position"
                 )
             object.__setattr__(self, "header_layout", normalized_layout)
-        entrants = tuple(self.entrants)
+        # Resolve a random team color once so both members, and every mode's
+        # renderer, share one concrete costume color.
+        entrants = tuple(
+            replace(entrant, team_color=choice(TEAM_COLORS))
+            if isinstance(entrant, DoublesTeam) and entrant.team_color == "random"
+            else entrant
+            for entrant in self.entrants
+        )
         object.__setattr__(self, "entrants", entrants)
         options = self.selection.options
         if len(entrants) != options.entrant_count:
