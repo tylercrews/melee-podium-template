@@ -77,6 +77,7 @@ npm run build
 
 
 TODO LIST:
+* doubles flying v flip it so that the team name is on top and then the player names and placement are underneath?
 * add option for flags
 * add better handling for long sponsor names - would be necessary for a big tournament to use it
 * increment the version number
