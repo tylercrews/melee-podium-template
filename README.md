@@ -77,6 +77,7 @@ npm run build
 
 
 TODO LIST:
+* new text field for entrant record, should get from bracket import and/or count it up. Ideally can be right next to or underneath where their seed is. 
 * doubles flying v flip it so that the team name is on top and then the player names and placement are underneath?
 * add option for flags
 * add better handling for long sponsor names - would be necessary for a big tournament to use it
