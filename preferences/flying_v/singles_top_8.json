@@ -65,7 +65,7 @@
       "asset_id": "flying_v_standing_frame",
       "destination": {
         "left": 260,
-        "top": 680,
+        "top": 720,
         "right": 1180,
         "bottom": 1830
       },
@@ -75,10 +75,10 @@
       "slot_id": "entrant_2",
       "asset_id": "flying_v_standing_frame",
       "destination": {
-        "left": 400,
+        "left": 334,
         "top": 246,
-        "right": 1040,
-        "bottom": 860
+        "right": 1106,
+        "bottom": 1000
       },
       "z_index": 40
     },
@@ -167,8 +167,8 @@
       "slot_id": "number_2",
       "asset_id": "02nd.png",
       "anchor": {
-        "x": 720,
-        "y": 830
+        "x": 990,
+        "y": 360
       },
       "max_size": {
         "width": 81,
@@ -264,7 +264,7 @@
         "x": 720,
         "y": 1830
       },
-      "scale": 1.16,
+      "scale": 1.12,
       "z_index": 50
     },
     {
@@ -273,9 +273,9 @@
       "member_slot": null,
       "anchor": {
         "x": 720,
-        "y": 860
+        "y": 1000
       },
-      "scale": 0.5235,
+      "scale": 0.6429,
       "z_index": 40
     },
     {
@@ -400,10 +400,10 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 720,
-        "y": 866
+        "x": 990,
+        "y": 256
       },
-      "max_width": 520,
+      "max_width": 280,
       "pillow_anchor": "ma",
       "preferred_size": 54,
       "wrap": false,
@@ -416,8 +416,8 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 768,
-        "y": 830
+        "x": 1038,
+        "y": 360
       },
       "max_width": 140,
       "pillow_anchor": "lm",
@@ -432,10 +432,10 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 672,
-        "y": 830
+        "x": 942,
+        "y": 360
       },
-      "max_width": 212,
+      "max_width": 92,
       "pillow_anchor": "rm",
       "preferred_size": 32,
       "wrap": false,

@@ -82,13 +82,13 @@ function headerBox(format: FormatConfiguration, outputSize: PixelSize, position:
     // Matches the header boxes in generate_flying_v_preferences.py.
     if (isFlyingVVerticallyReversed(format.selection)) return {
       top_left: { left: 16, top: 16, right: 396, bottom: 308 },
-      top_middle: { left: 420, top: 1674, right: 1020, bottom: 1872 },
+      top_middle: { left: 420, top: 1716, right: 1020, bottom: 1872 },
       top_right: { left: 1044, top: 16, right: 1424, bottom: 308 },
     }[position];
     return (format.selection.options.event_format === "doubles" ? {
       top_left: { left: 16, top: 800, right: 456, bottom: 1064 },
-      top_middle: { left: 660, top: 48, right: 1260, bottom: 230 },
-      top_right: { left: 1464, top: 800, right: 1904, bottom: 1064 },
+      top_middle: { left: 780, top: 48, right: 1380, bottom: 230 },
+      top_right: { left: 1704, top: 800, right: 2144, bottom: 1064 },
     } : {
       top_left: { left: 16, top: 1612, right: 396, bottom: 1904 },
       top_middle: { left: 420, top: 48, right: 1020, bottom: 246 },

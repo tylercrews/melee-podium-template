@@ -51,7 +51,6 @@ HEADER_ANCHORS = {"top_left": "la", "top_middle": "ma", "top_right": "ra"}
 WATERMARK_REGION = "flying_v_watermark_region"
 WATERMARK_ROW_HEIGHT = 44
 NAME_ABOVE_HEAD_OFFSET = 15
-LABEL_GAP = 6
 # Placement tags with this slot suffix sit centered between a team's member names.
 BETWEEN_NAMES_SUFFIX = "_between_names"
 CREST_NAME_GUTTER = 12
@@ -70,7 +69,6 @@ class PlacedFigure:
     slot_id: str
     entrant_slot: int
     z_index: int
-    frame: PixelRect
     lineup: PlacedLineup
 
 
@@ -95,7 +93,7 @@ def place_figures(request: CreationRequest, preferences: ModePreferences) -> dic
         result = request.entrants[placement.entrant_slot - 1]
         member = _member_for_placement(result, placement)
         figures[placement.slot_id] = PlacedFigure(
-            placement.slot_id, placement.entrant_slot, placement.z_index, frame.destination,
+            placement.slot_id, placement.entrant_slot, placement.z_index,
             place_lineup(member.characters, placement.scale, frame.destination,
                          team_color=result.team_color if isinstance(result, DoublesTeam) else None,
                          anchor_x=placement.anchor.x),
@@ -116,45 +114,13 @@ def text_vertical_extent(item: TextPlacement) -> tuple[int, int]:
     return item.anchor.y, item.anchor.y + round(size * 1.25)
 
 
-def _covered_label_lift(preferences: ModePreferences, figure: PlacedFigure, figures: dict[str, PlacedFigure]) -> int:
-    """Lift a figure's label only when a nearer figure standing over that spot would hide it.
-
-    A nearer figure counts when its frame contains the label's center and its
-    visible pixels reach the label, as first place's head can reach second
-    place's feet. The label rises just above that head, never above its own figure.
-    """
-    tags = [tag for tag in preferences.placement_tags if slot_from_id(tag.slot_id) == figure.entrant_slot]
-    names = [item for item in preferences.text_slots if item.entrant_slot == figure.entrant_slot and item.field != "member.tag"]
-    extents = [(tag.anchor.y - tag.max_size.height // 2, tag.anchor.y + tag.max_size.height // 2) for tag in tags]
-    extents += [text_vertical_extent(item) for item in names]
-    if not extents:
-        return 0
-    top, bottom = min(extent[0] for extent in extents), max(extent[1] for extent in extents)
-    center_x = (tags or names)[0].anchor.x
-    covering = [other.lineup.bounds.top for other in figures.values()
-                if other.z_index > figure.z_index and other.frame.left <= center_x < other.frame.right
-                and other.lineup.bounds.top < bottom + LABEL_GAP and other.lineup.bounds.bottom > top]
-    if not covering:
-        return 0
-    return min(0, max(min(covering) - LABEL_GAP - bottom, figure.lineup.bounds.top - top))
-
-
 def labelled_preferences(preferences: ModePreferences, figures: dict[str, PlacedFigure]) -> ModePreferences:
     """Return label anchors that follow the rendered figures for this request.
 
     Doubles member names sit just above each visible head. A team crest marked
     with ``BETWEEN_NAMES_SUFFIX`` is centered vertically on those names, and its
-    seed moves with it. Result labels keep their serialized positions unless a
-    nearer figure standing over them would hide them.
+    seed moves with it. Every other result label keeps its serialized position.
     """
-    lifts = {figure.entrant_slot: _covered_label_lift(preferences, figure, figures) for figure in figures.values()}
-    preferences = replace(
-        preferences,
-        placement_tags=tuple(replace(tag, anchor=replace(tag.anchor, y=tag.anchor.y + lifts.get(slot_from_id(tag.slot_id), 0)))
-                             for tag in preferences.placement_tags),
-        text_slots=tuple(replace(item, anchor=replace(item.anchor, y=item.anchor.y + lifts.get(item.entrant_slot, 0)))
-                         if item.field != "member.tag" else item for item in preferences.text_slots),
-    )
     text = []
     names: dict[int, list[TextPlacement]] = {}
     for item in preferences.text_slots:
@@ -363,14 +329,16 @@ class FlyingVContentRenderer:
             if content == "tournament_logo":
                 _draw_logo_in_box(canvas, logo, box)
                 continue
-            layer = self.header_text_layer(request, content, box, HEADER_ANCHORS[position])
+            # Blocks in the lower half hug the canvas bottom and grow upward rather
+            # than clipping; upper blocks hang from the top of their box.
+            lower = box.top + box.bottom > canvas.height
+            area = PixelRect(box.left, box.top, box.right, box.top + box.height * 2) if lower else box
+            layer = self.header_text_layer(request, content, area, HEADER_ANCHORS[position])
             visible = layer.getbbox()
             if visible is None:
                 continue
-            # Blocks in the lower half hug the canvas bottom; upper blocks hang from the top.
-            lower = box.top + box.bottom > canvas.height
-            offset = max(0, box.height - visible[3]) if lower else 0
-            canvas.alpha_composite(layer, (box.left, box.top + offset))
+            top = box.bottom - visible[3] if lower else box.top
+            _composite_clipped(canvas, layer, (box.left, top, box.left + layer.width, top + layer.height))
 
     def header_text_layer(self, request: CreationRequest, content: str, box: PixelRect, anchor: str) -> Image.Image:
         """Draw one title or metadata block into a transparent box-sized layer."""

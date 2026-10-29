@@ -94,7 +94,7 @@ test("the first animated Quick Pick loads Podiums+Clapping and remains editable 
 test("Flying V Quick Picks load their fixed layouts with the Flying V header default", () => {
   for (const [id, eventFormat, count, canvas] of [
     ["flying-v-singles-top-8", "singles", 8, { width: 1440, height: 1920 }],
-    ["flying-v-doubles-top-3", "doubles", 3, { width: 1920, height: 1080 }],
+    ["flying-v-doubles-top-3", "doubles", 3, { width: 2160, height: 1080 }],
   ]) {
     const format = quickPickFormat(id);
     assert.equal(format.selection.mode, "flying_v");

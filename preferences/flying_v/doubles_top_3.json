@@ -12,7 +12,7 @@
     }
   },
   "canvas_size": {
-    "width": 1920,
+    "width": 2160,
     "height": 1080
   },
   "formatting_assets": [
@@ -31,9 +31,9 @@
       "slot_id": "header_top_middle",
       "asset_id": "flying_v_header_region",
       "destination": {
-        "left": 660,
+        "left": 780,
         "top": 48,
-        "right": 1260,
+        "right": 1380,
         "bottom": 230
       },
       "z_index": 0
@@ -42,9 +42,9 @@
       "slot_id": "header_top_right",
       "asset_id": "flying_v_header_region",
       "destination": {
-        "left": 1464,
+        "left": 1704,
         "top": 800,
-        "right": 1904,
+        "right": 2144,
         "bottom": 1064
       },
       "z_index": 0
@@ -53,9 +53,9 @@
       "slot_id": "watermark",
       "asset_id": "flying_v_watermark_region",
       "destination": {
-        "left": 960,
+        "left": 1080,
         "top": 0,
-        "right": 1904,
+        "right": 2144,
         "bottom": 44
       },
       "z_index": 0
@@ -64,10 +64,10 @@
       "slot_id": "entrant_1_member_1",
       "asset_id": "flying_v_standing_frame",
       "destination": {
-        "left": 520,
+        "left": 610,
         "top": 320,
-        "right": 1040,
-        "bottom": 1080
+        "right": 1130,
+        "bottom": 1040
       },
       "z_index": 20
     },
@@ -75,10 +75,10 @@
       "slot_id": "entrant_1_member_2",
       "asset_id": "flying_v_standing_frame",
       "destination": {
-        "left": 880,
+        "left": 1030,
         "top": 320,
-        "right": 1400,
-        "bottom": 1080
+        "right": 1550,
+        "bottom": 1040
       },
       "z_index": 20
     },
@@ -97,9 +97,9 @@
       "slot_id": "entrant_2_member_2",
       "asset_id": "flying_v_standing_frame",
       "destination": {
-        "left": 100,
+        "left": 160,
         "top": 146,
-        "right": 660,
+        "right": 720,
         "bottom": 691
       },
       "z_index": 10
@@ -108,9 +108,9 @@
       "slot_id": "entrant_3_member_1",
       "asset_id": "flying_v_standing_frame",
       "destination": {
-        "left": 1260,
+        "left": 1440,
         "top": 146,
-        "right": 1820,
+        "right": 2000,
         "bottom": 691
       },
       "z_index": 10
@@ -119,9 +119,9 @@
       "slot_id": "entrant_3_member_2",
       "asset_id": "flying_v_standing_frame",
       "destination": {
-        "left": 1360,
+        "left": 1600,
         "top": 146,
-        "right": 1920,
+        "right": 2160,
         "bottom": 691
       },
       "z_index": 10
@@ -132,7 +132,7 @@
       "slot_id": "number_1_between_names",
       "asset_id": "01st.png",
       "anchor": {
-        "x": 960,
+        "x": 1080,
         "y": 286
       },
       "max_size": {
@@ -146,7 +146,7 @@
       "asset_id": "02nd.png",
       "anchor": {
         "x": 47,
-        "y": 726
+        "y": 762
       },
       "max_size": {
         "width": 63,
@@ -158,8 +158,8 @@
       "slot_id": "number_3",
       "asset_id": "03rd.png",
       "anchor": {
-        "x": 1870,
-        "y": 726
+        "x": 2110,
+        "y": 762
       },
       "max_size": {
         "width": 69,
@@ -174,8 +174,8 @@
       "entrant_slot": 1,
       "member_slot": 1,
       "anchor": {
-        "x": 780,
-        "y": 1080
+        "x": 870,
+        "y": 1040
       },
       "scale": 0.8,
       "z_index": 20
@@ -185,8 +185,8 @@
       "entrant_slot": 1,
       "member_slot": 2,
       "anchor": {
-        "x": 1140,
-        "y": 1080
+        "x": 1290,
+        "y": 1040
       },
       "scale": 0.8,
       "z_index": 20
@@ -196,7 +196,7 @@
       "entrant_slot": 2,
       "member_slot": 1,
       "anchor": {
-        "x": 170,
+        "x": 160,
         "y": 691
       },
       "scale": 0.46,
@@ -207,7 +207,7 @@
       "entrant_slot": 2,
       "member_slot": 2,
       "anchor": {
-        "x": 430,
+        "x": 440,
         "y": 691
       },
       "scale": 0.46,
@@ -218,7 +218,7 @@
       "entrant_slot": 3,
       "member_slot": 1,
       "anchor": {
-        "x": 1490,
+        "x": 1720,
         "y": 691
       },
       "scale": 0.46,
@@ -229,7 +229,7 @@
       "entrant_slot": 3,
       "member_slot": 2,
       "anchor": {
-        "x": 1750,
+        "x": 2000,
         "y": 691
       },
       "scale": 0.46,
@@ -243,7 +243,7 @@
       "entrant_slot": 1,
       "member_slot": 1,
       "anchor": {
-        "x": 780,
+        "x": 870,
         "y": 305
       },
       "max_width": 520,
@@ -259,7 +259,7 @@
       "entrant_slot": 1,
       "member_slot": 2,
       "anchor": {
-        "x": 1140,
+        "x": 1290,
         "y": 305
       },
       "max_width": 520,
@@ -275,7 +275,7 @@
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 960,
+        "x": 1080,
         "y": 1066
       },
       "max_width": 900,
@@ -291,7 +291,7 @@
       "entrant_slot": 1,
       "member_slot": null,
       "anchor": {
-        "x": 1047,
+        "x": 1167,
         "y": 215
       },
       "max_width": 140,
@@ -307,7 +307,7 @@
       "entrant_slot": 2,
       "member_slot": 1,
       "anchor": {
-        "x": 170,
+        "x": 160,
         "y": 131
       },
       "max_width": 560,
@@ -323,7 +323,7 @@
       "entrant_slot": 2,
       "member_slot": 2,
       "anchor": {
-        "x": 430,
+        "x": 440,
         "y": 131
       },
       "max_width": 560,
@@ -340,7 +340,7 @@
       "member_slot": null,
       "anchor": {
         "x": 16,
-        "y": 697
+        "y": 733
       },
       "max_width": 900,
       "pillow_anchor": "ld",
@@ -356,7 +356,7 @@
       "member_slot": null,
       "anchor": {
         "x": 86,
-        "y": 726
+        "y": 762
       },
       "max_width": 140,
       "pillow_anchor": "lm",
@@ -371,7 +371,7 @@
       "entrant_slot": 3,
       "member_slot": 1,
       "anchor": {
-        "x": 1490,
+        "x": 1720,
         "y": 131
       },
       "max_width": 560,
@@ -387,7 +387,7 @@
       "entrant_slot": 3,
       "member_slot": 2,
       "anchor": {
-        "x": 1750,
+        "x": 2000,
         "y": 131
       },
       "max_width": 560,
@@ -403,8 +403,8 @@
       "entrant_slot": 3,
       "member_slot": null,
       "anchor": {
-        "x": 1904,
-        "y": 697
+        "x": 2144,
+        "y": 733
       },
       "max_width": 900,
       "pillow_anchor": "rd",
@@ -419,8 +419,8 @@
       "entrant_slot": 3,
       "member_slot": null,
       "anchor": {
-        "x": 1828,
-        "y": 726
+        "x": 2068,
+        "y": 762
       },
       "max_width": 140,
       "pillow_anchor": "rm",

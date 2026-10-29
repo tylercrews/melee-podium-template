@@ -32,7 +32,7 @@
       "asset_id": "flying_v_header_region",
       "destination": {
         "left": 420,
-        "top": 1674,
+        "top": 1716,
         "right": 1020,
         "bottom": 1872
       },
@@ -65,7 +65,7 @@
       "asset_id": "flying_v_standing_frame",
       "destination": {
         "left": 260,
-        "top": 20,
+        "top": 56,
         "right": 1180,
         "bottom": 1040
       },
@@ -78,7 +78,7 @@
         "left": 400,
         "top": 1130,
         "right": 1040,
-        "bottom": 1594
+        "bottom": 1634
       },
       "z_index": 40
     },
@@ -168,7 +168,7 @@
       "asset_id": "02nd.png",
       "anchor": {
         "x": 720,
-        "y": 1564
+        "y": 1604
       },
       "max_size": {
         "width": 81,
@@ -264,7 +264,7 @@
         "x": 720,
         "y": 1040
       },
-      "scale": 1.16,
+      "scale": 1.12,
       "z_index": 50
     },
     {
@@ -273,9 +273,9 @@
       "member_slot": null,
       "anchor": {
         "x": 720,
-        "y": 1594
+        "y": 1634
       },
-      "scale": 0.3956,
+      "scale": 0.4297,
       "z_index": 40
     },
     {
@@ -401,7 +401,7 @@
       "member_slot": null,
       "anchor": {
         "x": 720,
-        "y": 1600
+        "y": 1640
       },
       "max_width": 520,
       "pillow_anchor": "ma",
@@ -417,7 +417,7 @@
       "member_slot": null,
       "anchor": {
         "x": 768,
-        "y": 1564
+        "y": 1604
       },
       "max_width": 140,
       "pillow_anchor": "lm",
@@ -433,7 +433,7 @@
       "member_slot": null,
       "anchor": {
         "x": 672,
-        "y": 1564
+        "y": 1604
       },
       "max_width": 212,
       "pillow_anchor": "rm",
