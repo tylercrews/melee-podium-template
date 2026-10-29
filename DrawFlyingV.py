@@ -7,7 +7,7 @@ from PIL import Image
 
 from background_builder import BackgroundRequest
 from creation import CreationPipeline, CreationRequest, TextSettings
-from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection
+from creation_modes import CreationMode, ModeOptions, ModeSelection, flying_v_singles_variant
 from DrawPodium import PodiumFont
 from flying_v_content_renderer import FlyingVContentRenderer
 from geometric_content_renderer import LogoInput
@@ -62,17 +62,21 @@ def draw_singles_top_8(
     text_settings: TextSettings | None = None,
     output_path: str | Path | None = None,
     vertically_reversed: bool = False,
+    second_place_flipped: bool = False,
 ) -> Image.Image:
     """Render first place in front, second behind it, and the rest flying out.
 
     ``vertically_reversed`` flips the layout: first place leads from the top,
     the title moves to the bottom, and the logo and metadata take the top corners.
+    ``second_place_flipped`` mirrors second place's label to the other side of
+    its area: top left instead of top right, or bottom right instead of bottom
+    left when reversed.
     """
     return _draw_flying_v(
         TournamentFormat.SINGLES, 8, entrants, tournament=tournament, background=background,
         fill_color=fill_color, header_layout=header_layout, tournament_logo=tournament_logo, font=font,
         custom_font_bytes=custom_font_bytes, text_settings=text_settings, output_path=output_path,
-        variant=FLYING_V_VERTICALLY_REVERSED if vertically_reversed else None,
+        variant=flying_v_singles_variant(vertically_reversed, second_place_flipped),
     )
 
 

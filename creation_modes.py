@@ -12,8 +12,22 @@ from clapping_grid_layouts import GRID_VARIANTS, grid_layout
 
 
 _VARIANT_ID = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
-# Flying V Singles can flip top to bottom: first place leads from the top.
+# Flying V Singles can flip top to bottom (first place leads from the top) and
+# can mirror second place's label to the other side; each combination of these
+# choices is its own layout variant.
 FLYING_V_VERTICALLY_REVERSED = "vertically_reversed"
+FLYING_V_SECOND_PLACE_FLIPPED = "second_place_flipped"
+
+
+def flying_v_singles_variant(vertically_reversed: bool = False, second_place_flipped: bool = False) -> str | None:
+    """Return the Flying V Singles layout variant for its two layout checkboxes."""
+    parts = [name for name, chosen in ((FLYING_V_VERTICALLY_REVERSED, vertically_reversed),
+                                       (FLYING_V_SECOND_PLACE_FLIPPED, second_place_flipped)) if chosen]
+    return "_".join(parts) or None
+
+
+FLYING_V_SINGLES_VARIANTS = tuple(flying_v_singles_variant(reversed_, flipped)
+                                  for reversed_ in (False, True) for flipped in (False, True))
 
 
 class CreationMode(StrEnum):
@@ -149,13 +163,13 @@ class ModeSelection:
         if self.mode is CreationMode.FLYING_V and (
             (self.options.event_format, self.options.entrant_count, self.options.variant)
             not in {
-                (TournamentFormat.SINGLES, 8, None),
-                (TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED),
+                *((TournamentFormat.SINGLES, 8, variant) for variant in FLYING_V_SINGLES_VARIANTS),
                 (TournamentFormat.DOUBLES, 3, None),
             }
         ):
             raise ValueError(
-                "Flying V supports Singles Top 8 (optionally vertically reversed) and Doubles Top 3"
+                "Flying V supports Singles Top 8 (optionally vertically reversed or with second place flipped)"
+                " and Doubles Top 3"
             )
 
     @property

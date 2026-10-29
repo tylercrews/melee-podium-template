@@ -8,7 +8,7 @@ import MetadataRowEditor from "./MetadataRowEditor";
 import FontSizeSlider from "./FontSizeSlider";
 import { clappingGridLayout } from "./clappingGrid";
 import { transitionLayoutTextSettings } from "./layoutTextDefaults";
-import { isFlyingVVerticallyReversed, setFlyingVVerticallyReversed } from "./flyingVFormat";
+import { isFlyingVSecondPlaceFlipped, isFlyingVVerticallyReversed, setFlyingVSecondPlaceFlipped, setFlyingVVerticallyReversed } from "./flyingVFormat";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -112,9 +112,10 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div></fieldset>
     </section>
 
-    {selection.mode === "flying_v" && selection.options.event_format === "singles" && <section className="format-settings-card" aria-labelledby="flying-v-orientation-heading">
-      <div className="format-settings-card__heading"><span className="eyebrow">Layout</span><h2 id="flying-v-orientation-heading">Orientation</h2></div>
+    {selection.mode === "flying_v" && selection.options.event_format === "singles" && <section className="format-settings-card" aria-labelledby="flying-v-arrangement-heading">
+      <div className="format-settings-card__heading"><span className="eyebrow">Layout</span><h2 id="flying-v-arrangement-heading">Arrangement</h2></div>
       <label className="text-setting-check"><input type="checkbox" name="flying-v-vertically-reversed" checked={isFlyingVVerticallyReversed(selection)} onChange={(event) => onChange(setFlyingVVerticallyReversed(value, event.target.checked))} /><span><strong>Vertically Reverse the Flying V</strong><small>Flip the layout top to bottom: first place leads from the top with second beneath it, the title moves to the bottom, and the logo and metadata take the top corners.</small></span></label>
+      <label className="text-setting-check"><input type="checkbox" name="flying-v-second-place-flipped" checked={isFlyingVSecondPlaceFlipped(selection)} onChange={(event) => onChange(setFlyingVSecondPlaceFlipped(value, event.target.checked))} /><span><strong>Flip 2nd Place Position</strong><small>Move second place's name and placement to the other side of its figures: top left instead of top right, or bottom right instead of bottom left when vertically reversed.</small></span></label>
     </section>}
 
     {!hasFixedLayouts(selection.mode) && <EntrantCountSettings value={value} onChange={onChange} />}

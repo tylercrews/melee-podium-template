@@ -20,7 +20,7 @@ from DrawPodium import (
     _wrap_text,
 )
 from entrant_visibility import slot_from_id
-from flying_v_lineup import FRAME_ASSETS, PlacedLineup, place_lineup
+from flying_v_lineup import FRAME_ASSETS, LineupSlot, PlacedLineup, place_team
 from font_size_adjustments import adjusted_size, result_text_adjustment
 from formatting_assets import LocalPlacementTagAssets, PlacementTagAssetProvider, _composite_clipped
 from geometric_content_renderer import (
@@ -36,7 +36,7 @@ from geometric_content_renderer import (
     _watermark_color,
 )
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
-from mode_preferences import ModePreferences, TextPlacement
+from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam
 
 
@@ -58,9 +58,10 @@ CREST_NAME_GUTTER = 12
 # stays legible where it overlaps a figure.
 FIRST_PLACE_ART = "01st.png"
 PLACEMENT_OUTLINE_RATIO = .07
-# Wrapped result names break at this width even when their serialized width
-# lets a long unbroken name run on (behind any nearer figures) before shrinking.
-NAME_WRAP_WIDTH = 320
+# Wrapped result names break at the corner header boxes' width even when their
+# serialized width lets a long unbroken name run on (behind any nearer figures)
+# before shrinking, so typical team names stay within two lines above the boxes.
+NAME_WRAP_WIDTH = 440
 NAME_OUTLINE_FILTER_SIZE = 5
 
 
@@ -85,19 +86,25 @@ def flying_v_watermark_row(preferences: ModePreferences) -> PixelRect:
 
 
 def place_figures(request: CreationRequest, preferences: ModePreferences) -> dict[str, PlacedFigure]:
-    """Resolve every visible entrant's lineup inside its serialized frame."""
-    frames = {item.slot_id: item for item in preferences.formatting_assets if item.asset_id in FRAME_ASSETS}
-    figures = {}
+    """Resolve every visible entrant's lineup inside its serialized frame.
+
+    A doubles team's members share one shrink factor, so partners keep their
+    true relative sizes even when only one of them is too large for its frame.
+    """
+    frames = {item.slot_id: item.destination for item in preferences.formatting_assets if item.asset_id in FRAME_ASSETS}
+    teams: dict[int, list[CharacterPlacement]] = {}
     for placement in preferences.character_slots:
-        frame = frames[placement.slot_id]
-        result = request.entrants[placement.entrant_slot - 1]
-        member = _member_for_placement(result, placement)
-        figures[placement.slot_id] = PlacedFigure(
-            placement.slot_id, placement.entrant_slot, placement.z_index,
-            place_lineup(member.characters, placement.scale, frame.destination,
-                         team_color=result.team_color if isinstance(result, DoublesTeam) else None,
-                         anchor_x=placement.anchor.x),
+        teams.setdefault(placement.entrant_slot, []).append(placement)
+    figures = {}
+    for entrant_slot, placements in teams.items():
+        result = request.entrants[entrant_slot - 1]
+        lineups = place_team(
+            [LineupSlot(_member_for_placement(result, placement).characters, placement.scale,
+                        frames[placement.slot_id], placement.anchor.x) for placement in placements],
+            team_color=result.team_color if isinstance(result, DoublesTeam) else None,
         )
+        for placement, lineup in zip(placements, lineups):
+            figures[placement.slot_id] = PlacedFigure(placement.slot_id, entrant_slot, placement.z_index, lineup)
     return figures
 
 
@@ -215,8 +222,9 @@ def _entrant_text_style(request: CreationRequest, placement: TextPlacement) -> t
 def _draw_wrapped_names(canvas: Image.Image, request: CreationRequest, placements: list[TextPlacement], font: PodiumFont) -> None:
     """Break names early at the wrap width, shrinking only past their wider run-on width.
 
-    Extra lines stack upward from a bottom anchor and follow its left or right
-    alignment, so a long name grows over the figures rather than into the art.
+    Extra lines stack downward from a top anchor (or upward from a bottom one)
+    and follow its left or right alignment, so a long name grows away from its
+    placement art.
     """
     draw = ImageDraw.Draw(canvas)
     for placement in placements:

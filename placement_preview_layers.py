@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection, PodiumStyle
+from creation_modes import FLYING_V_SINGLES_VARIANTS, CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from format_preview import SUPPORTED_LAYOUTS, SUPPORTED_EYES_LAYOUTS, SUPPORTED_SQUARE_LAYOUTS
 from formatting_assets import draw_placement_tags
 from mode_preferences import ModePreferenceRepository, PlacementTagPlacement
@@ -24,8 +24,9 @@ def preview_selections():
             yield ModeSelection(CreationMode.PODIUM, ModeOptions(event_format, count, variant, style))
     for mode, layouts in ((CreationMode.EYES, SUPPORTED_EYES_LAYOUTS), (CreationMode.SQUARES, SUPPORTED_SQUARE_LAYOUTS),
                           (CreationMode.RADIAL, ((TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 4, None))),
-                          (CreationMode.FLYING_V, ((TournamentFormat.SINGLES, 8, None), (TournamentFormat.DOUBLES, 3, None),
-                                                   (TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED)))):
+                          (CreationMode.FLYING_V, ((TournamentFormat.DOUBLES, 3, None),
+                                                   *((TournamentFormat.SINGLES, 8, variant)
+                                                     for variant in FLYING_V_SINGLES_VARIANTS)))):
         for event_format, count, variant in sorted(layouts, key=str):
             yield ModeSelection(mode, ModeOptions(event_format, count, variant))
 

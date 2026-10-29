@@ -20,7 +20,7 @@ from creation import TextSettings
 from clapping_colors import resolve_clapping_podium_colors
 from placement_numbering import default_tournament_placing, numbered_preferences
 from DrawPodium import PodiumFont
-from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection, PodiumStyle
+from creation_modes import FLYING_V_SINGLES_VARIANTS, CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from formatting_assets import FormattingAssetRenderer
 from geometric_content_renderer import EyesContentRenderer, SquaresContentRenderer
 from geometric_formatting_colors import GeometricFormattingColors
@@ -67,8 +67,7 @@ SUPPORTED_SQUARE_LAYOUTS = frozenset(
     }
 )
 SUPPORTED_FLYING_V_LAYOUTS = frozenset({
-    (TournamentFormat.SINGLES, 8, None),
-    (TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED),
+    *((TournamentFormat.SINGLES, 8, variant) for variant in FLYING_V_SINGLES_VARIANTS),
     (TournamentFormat.DOUBLES, 3, None),
 })
 SUPPORTED_EYES_LAYOUTS = frozenset(

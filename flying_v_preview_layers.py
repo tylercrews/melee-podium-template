@@ -9,7 +9,13 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from background_builder import BackgroundRequest
 from creation import CreationRequest, TextSettings
-from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection
+from creation_modes import (
+    FLYING_V_SINGLES_VARIANTS,
+    FLYING_V_VERTICALLY_REVERSED,
+    CreationMode,
+    ModeOptions,
+    ModeSelection,
+)
 from DrawPodium import PodiumFont
 from flying_v_content_renderer import (
     FlyingVContentRenderer,
@@ -25,8 +31,8 @@ from sample_creation_data import sample_tournament
 
 
 FLYING_V_LAYOUTS = {
-    "singles_top_8": (TournamentFormat.SINGLES, 8, None),
-    "singles_top_8_vertically_reversed": (TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED),
+    **{ModeOptions(TournamentFormat.SINGLES, 8, variant).submode_id: (TournamentFormat.SINGLES, 8, variant)
+       for variant in FLYING_V_SINGLES_VARIANTS},
     "doubles_top_3": (TournamentFormat.DOUBLES, 3, None),
 }
 # A median-height pose shows every tier at its typical size without implying
@@ -43,9 +49,10 @@ def flying_v_selection(layout_id: str) -> ModeSelection:
 
 
 def header_geometry_id(layout_id: str) -> str:
-    """Header layers depend on bracket type and orientation, not entrant data."""
+    """Header layers depend on bracket type and orientation, not entrant data or second place's side."""
     event_format, _count, variant = FLYING_V_LAYOUTS[layout_id]
-    return event_format.value + (f"_{variant}" if variant else "")
+    reversed_ = variant is not None and variant.startswith(FLYING_V_VERTICALLY_REVERSED)
+    return event_format.value + (f"_{FLYING_V_VERTICALLY_REVERSED}" if reversed_ else "")
 
 
 def _placeholder_entrants(event_format: TournamentFormat, count: int) -> list[SinglesEntrant] | list[DoublesTeam]:
@@ -125,8 +132,12 @@ def generate_flying_v_preview_layers(output_root: Path) -> list[Path]:
         image.save(path, format="PNG", optimize=True)
         outputs.append(path)
 
+    header_geometries = set()
     for layout_id in FLYING_V_LAYOUTS:
         save(render_placeholder_layer(layout_id), f"flying_v/{layout_id}/placeholders.png")
+        if header_geometry_id(layout_id) in header_geometries:
+            continue
+        header_geometries.add(header_geometry_id(layout_id))
         for font in PodiumFont:
             for contents in permutations(HEADER_CONTENTS):
                 layout = dict(zip(HEADER_POSITIONS, contents, strict=True))

@@ -1,6 +1,6 @@
 import { CLAPPING_GRID_LAYOUTS, clappingGridLayout, clappingGridVariant } from "./clappingGrid";
 import { isPrLayout, layoutTextDefaults, transitionLayoutTextSettings } from "./layoutTextDefaults";
-import { FLYING_V_VERTICALLY_REVERSED } from "./flyingVFormat";
+import { FLYING_V_SECOND_PLACE_FLIPPED, FLYING_V_SINGLES_VARIANTS, FLYING_V_VERTICALLY_REVERSED } from "./flyingVFormat";
 
 export type CreationMode = "podium" | "eyes" | "squares" | "radial" | "flying_v";
 export type EventFormat = "singles" | "doubles";
@@ -224,9 +224,12 @@ export const FORMAT_ENTRANT_OPTIONS: Record<CreationMode, Record<EventFormat, En
     doubles: [{ entrant_count: 4, variant: null, label: "Top 4" }],
   },
   flying_v: {
-    // The reversed orientation is toggled by its own checkbox, not this picker.
+    // The orientation and second place's side are toggled by their own checkboxes, not this picker.
     singles: [{ entrant_count: 8, variant: null, label: "Top 8" },
-      { entrant_count: 8, variant: FLYING_V_VERTICALLY_REVERSED, label: "Top 8 (Vertically Reversed)" }],
+      { entrant_count: 8, variant: FLYING_V_VERTICALLY_REVERSED, label: "Top 8 (Vertically Reversed)" },
+      { entrant_count: 8, variant: FLYING_V_SECOND_PLACE_FLIPPED, label: "Top 8 (2nd Place Flipped)" },
+      { entrant_count: 8, variant: `${FLYING_V_VERTICALLY_REVERSED}_${FLYING_V_SECOND_PLACE_FLIPPED}`,
+        label: "Top 8 (Vertically Reversed, 2nd Place Flipped)" }],
     doubles: [{ entrant_count: 3, variant: null, label: "Top 3" }],
   },
   podium: {
@@ -584,12 +587,12 @@ export function normalizeFormat(value: unknown): FormatConfiguration {
   if (options.variant !== null && typeof options.variant !== "string") {
     throw new Error("Format code has an invalid layout variant.");
   }
-  // Only Flying V Singles has a layout variant: its vertically reversed orientation.
-  const allowedVariant = mode === "flying_v" && rawEventFormat === "singles" && options.variant === FLYING_V_VERTICALLY_REVERSED;
+  // Only Flying V Singles has layout variants: its orientation and second place's side.
+  const allowedVariant = mode === "flying_v" && rawEventFormat === "singles" && FLYING_V_SINGLES_VARIANTS.includes(options.variant as string | null);
   if (hasFixedLayouts(mode) && ((options.variant !== null && !allowedVariant) || (rawEntrantCount !== null && rawEntrantCount !== fixedEntrantCount(mode, rawEventFormat as EventFormat | null)))) {
     throw new Error(mode === "radial"
       ? "Radial formats must use Singles Top 8 or Doubles Top 4 without a layout variant."
-      : "Flying V formats must use Singles Top 8 (optionally vertically reversed) or Doubles Top 3.");
+      : "Flying V formats must use Singles Top 8 (optionally vertically reversed or with 2nd place flipped) or Doubles Top 3.");
   }
   const rawStyle = options.podium_style;
   const rawSelection = { mode, options: options as unknown as FormatSelection["options"] };

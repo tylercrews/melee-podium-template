@@ -78,7 +78,7 @@
         "left": 334,
         "top": 246,
         "right": 1106,
-        "bottom": 1000
+        "bottom": 940
       },
       "z_index": 40
     },
@@ -273,7 +273,7 @@
       "member_slot": null,
       "anchor": {
         "x": 720,
-        "y": 1000
+        "y": 940
       },
       "scale": 0.6429,
       "z_index": 40

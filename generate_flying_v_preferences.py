@@ -11,7 +11,7 @@ from PIL import Image
 
 from background_builder import PixelRect, PixelSize
 from constants import PODIUM_BOX_COLORS_BY_SLOT
-from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection
+from creation_modes import CreationMode, ModeOptions, ModeSelection, flying_v_singles_variant
 from flying_v_content_renderer import BETWEEN_NAMES_SUFFIX, WATERMARK_REGION
 from flying_v_lineup import STANDING_FRAME
 from mode_preferences import (
@@ -150,9 +150,9 @@ def _number_above_name(slot: int, center_x: int, line: int, badge_height: int, n
 # stands on its frame bottom, where its placement art covers its feet and its
 # name sits just below. A scale of None fills the frame with only the tallest
 # render: second place's tallest characters reach the title, never past it.
-# Upright second place stands behind first, so its name and placement row sit
-# at the top right of its area instead, beside its head rather than over it;
-# its frame is wide enough for the widest render at its tier scale.
+# Second place stands behind first, so its name and placement row sit in a
+# corner of its area instead, beside its figure rather than over it; its frame
+# is wide enough for the widest render at its tier scale.
 SINGLES_TIERS = {
     1: (PixelRect(260, 720, 1180, 1830), 1.12, 50, 180, 64, 620),
     2: (PixelRect(334, 246, 1106, 1000), None, 40, 64, 54, 280),
@@ -163,18 +163,24 @@ SINGLES_TIERS = {
     7: (PixelRect(0, 50, 270, 320), .3, 10, 40, 36, 270),
     8: (PixelRect(1170, 50, 1440, 320), .3, 10, 40, 36, 270),
 }
-# Flipped top to bottom: first place leads from the top, second stands beneath
-# its name (its tallest render reaching up to that name) with its own label
-# just above the title, and the flanking
-# tiers fly downward toward the bottom corners. Each back-row name still ends
-# above the frames of the figures below it.
-# Upright second place's label column, centered right of its figure, just below the title.
-SECOND_LABEL_CENTER_X = 990
+# Second place's label column sits this far beside its figure's center: at the
+# top right of its area just below the title when upright, or at the bottom
+# left just above the title when reversed. Flipping second place mirrors it.
+SECOND_LABEL_OFFSET = 270
 SECOND_LABEL_TOP = SINGLES_HEADER_BOXES["top_middle"].bottom + 10
+# Upright second place stands this far above the line its tier scale fills, so
+# more of it shows over first place's head; the renderer shrinks only the very
+# tallest poses to keep them below the title.
+UPRIGHT_SECOND_RISE = 60
 
+# Flipped top to bottom: first place leads from the top, second stands beneath
+# its name (its tallest render reaching up to that name) on the line where its
+# own name ends, just above the title, and the flanking tiers fly downward
+# toward the bottom corners. Each back-row name still ends above the frames of
+# the figures below it.
 REVERSED_SINGLES_TIERS = {
     1: (PixelRect(260, 56, 1180, 1040), 1.12, 50, 180, 64, 620),
-    2: (PixelRect(400, 1130, 1040, 1634), None, 40, 64, 54, 520),
+    2: (PixelRect(400, 1130, 1040, REVERSED_SINGLES_HEADER_BOXES["top_middle"].top), None, 40, 64, 54, 280),
     3: (PixelRect(0, 570, 420, 1040), .6, 30, 56, 48, 420),
     4: (PixelRect(1020, 570, 1440, 1040), .6, 30, 56, 48, 420),
     5: (PixelRect(10, 1108, 330, 1488), .45, 20, 48, 42, 320),
@@ -183,48 +189,65 @@ REVERSED_SINGLES_TIERS = {
     8: (PixelRect(1170, 1550, 1440, 1820), .3, 10, 40, 36, 270),
 }
 
-# team slot: (member frame, figure center x) pairs, tier scale, z, badge height,
-# name size, name width. Upper frames start low enough that a sponsored name
-# above the tallest head stays out of the watermark's top row. The 2nd and 3rd
-# frames hold the largest render (Bowser's victory pose) at their tier scale,
-# so no member shrinks; figures keep their spacing by centering on their own x
-# and slide inward only when a wide pose would leave the frame.
+# team slot: (member frame, figure center x) pairs, tier scale (None fills the
+# frame with only the tallest render), z, badge height, name size, name width.
+# Upper frames start low enough that a sponsored name above the tallest head
+# stays out of the watermark's top row. The 2nd and 3rd frames hold the largest
+# render (Bowser's victory pose) at their tier scale, so no member shrinks;
+# figures keep their spacing by centering on their own x and slide inward only
+# when a wide pose would leave the frame. The winning team's frames reach the
+# corner header boxes so wide poses rarely shrink it, and the renderer shrinks
+# both members equally when one is too large.
 DOUBLES_TIERS = {
-    1: (((PixelRect(610, 320, 1130, 1040), 870), (PixelRect(1030, 320, 1550, 1040), 1290)), .8, 20, 175, 56, 900),
-    2: (((PixelRect(0, 146, 560, 691), 160), (PixelRect(160, 146, 720, 691), 440)), .46, 10, 50, 44, 900),
-    3: (((PixelRect(1440, 146, 2000, 691), 1720), (PixelRect(1600, 146, 2160, 691), 2000)), .46, 10, 50, 44, 900),
+    1: (((PixelRect(470, 320, 1350, 1040), 870), (PixelRect(810, 320, 1690, 1040), 1290)), .8, 20, 175, 56, 900),
+    2: (((PixelRect(0, 146, 560, 631), 160), (PixelRect(160, 146, 720, 631), 440)), None, 10, 50, 44, 900),
+    3: (((PixelRect(1440, 146, 2000, 631), 1720), (PixelRect(1600, 146, 2160, 631), 2000)), None, 10, 50, 44, 900),
 }
+DOUBLES_MEMBER_NAME_WIDTH = 560
 # The winning team stands a little above its name, which sits on the canvas bottom.
 DOUBLES_LEADER_NAME_BASELINE = 1066
-# Back team names and placement art sit this far below their feet.
-DOUBLES_SIDE_LABEL_DROP = 36
+# Back team placement art sits this far below their feet, with the name beneath it.
+DOUBLES_SIDE_LABEL_GAP = 4
 # Back team names hug their outer canvas edge and sit behind the winning team,
 # so a name running toward the center disappears under its figures.
 DOUBLES_SIDE_MARGIN = 16
 DOUBLES_SIDE_NAME_Z = DOUBLES_TIERS[1][2] - 5
 
 
-def flying_v_singles_preferences(vertically_reversed: bool = False) -> ModePreferences:
+def _second_place_label(center_x: int, frame: PixelRect, vertically_reversed: bool, second_place_flipped: bool,
+                        badge: int, size: int, width: int) -> tuple[PlacementTagPlacement, list[TextPlacement]]:
+    """Put second place's label in the corner of its area nearest the title."""
+    side = -1 if vertically_reversed != second_place_flipped else 1
+    label_x = center_x + side * SECOND_LABEL_OFFSET
+    if vertically_reversed:
+        # The placement row sits above the name, whose bottom meets the figures' feet.
+        return _number_above_name(2, label_x, frame.bottom - round(size * 1.25) - 6, badge, size, width, "entrant.player_tag")
+    return _name_above_number(2, label_x, SECOND_LABEL_TOP, badge, size, width, "entrant.player_tag")
+
+
+def flying_v_singles_preferences(vertically_reversed: bool = False, second_place_flipped: bool = False) -> ModePreferences:
     tiers = REVERSED_SINGLES_TIERS if vertically_reversed else SINGLES_TIERS
     frames = _header_regions(REVERSED_SINGLES_HEADER_BOXES if vertically_reversed else SINGLES_HEADER_BOXES,
                              REVERSED_SINGLES_WATERMARK_ROW if vertically_reversed else SINGLES_WATERMARK_ROW)
     characters, tags, text = [], [], []
     for slot, (frame, scale, z_index, badge, size, width) in tiers.items():
         center_x = (frame.left + frame.right) // 2
+        scale = _fill_scale(frame) if scale is None else scale
+        if slot == 2 and not vertically_reversed:
+            frame = replace(frame, bottom=frame.bottom - UPRIGHT_SECOND_RISE)
         frames.append(FormattingAssetPlacement(f"entrant_{slot}", STANDING_FRAME, frame, z_index))
         characters.append(CharacterPlacement(f"entrant_{slot}", slot, PixelPoint(center_x, frame.bottom),
-                                             scale=_fill_scale(frame) if scale is None else scale, z_index=z_index))
+                                             scale=scale, z_index=z_index))
         # Names show only the player tag; any sponsor moves to the placement row.
-        label_x = center_x
-        if slot == 2 and not vertically_reversed:
-            label_x = SECOND_LABEL_CENTER_X
-            badge_tag, label_text = _name_above_number(slot, label_x, SECOND_LABEL_TOP, badge, size, width, "entrant.player_tag")
+        if slot == 2:
+            badge_tag, label_text = _second_place_label(center_x, frame, vertically_reversed, second_place_flipped,
+                                                        badge, size, width)
         else:
             badge_tag, label_text = _number_above_name(slot, center_x, frame.bottom, badge, size, width, "entrant.player_tag")
         tags.append(badge_tag)
         text.extend(label_text)
-        text.append(_sponsor(slot, label_x, badge_tag.anchor.y, badge, size, width))
-    variant = FLYING_V_VERTICALLY_REVERSED if vertically_reversed else None
+        text.append(_sponsor(slot, badge_tag.anchor.x, badge_tag.anchor.y, badge, size, width))
+    variant = flying_v_singles_variant(vertically_reversed, second_place_flipped)
     return ModePreferences(
         ModeSelection(CreationMode.FLYING_V, ModeOptions(TournamentFormat.SINGLES, 8, variant)), SINGLES_CANVAS, ready=True,
         formatting_assets=tuple(frames), placement_tags=tuple(tags), character_slots=tuple(characters), text_slots=tuple(text),
@@ -233,18 +256,19 @@ def flying_v_singles_preferences(vertically_reversed: bool = False) -> ModePrefe
 
 def _side_team_label(slot: int, left_side: bool, line: int, badge_height: int, name_size: int,
                      name_width: int) -> tuple[PlacementTagPlacement, list[TextPlacement]]:
-    """Align a back team's name and placement art to its outer edge.
+    """Align a back team's placement art and name to its outer edge.
 
-    The name wraps early, stacking extra lines upward from the feet so the
-    placement art below never moves; the seed sits on the art's inner side.
+    The art hangs from ``line`` with the seed on its inner side, and the name
+    sits beneath it, wrapping early and stacking extra lines downward.
     """
     side = "l" if left_side else "r"
     direction = 1 if left_side else -1
     edge = DOUBLES_SIDE_MARGIN if left_side else DOUBLES_CANVAS.width - DOUBLES_SIDE_MARGIN
     badge_width = _badge_width(slot, badge_height)
     badge_x = edge + direction * (badge_width // 2)
-    badge_y = line + 10 + badge_height // 2
-    name = _text(slot, f"name_{slot}", "entrant.team_name", PixelPoint(edge, line + 6), name_width, f"{side}d", name_size)
+    badge_y = line + badge_height // 2
+    name = _text(slot, f"name_{slot}", "entrant.team_name", PixelPoint(edge, line + badge_height + 4), name_width,
+                 f"{side}a", name_size)
     return _badge(slot, PixelPoint(badge_x, badge_y), badge_height), [
         replace(name, wrap=True, z_index=DOUBLES_SIDE_NAME_Z),
         _text(slot, f"seed_{slot}", "entrant.seed", PixelPoint(badge_x + direction * (badge_width // 2 + 8), badge_y),
@@ -256,6 +280,7 @@ def flying_v_doubles_preferences() -> ModePreferences:
     frames, characters, tags, text = _header_regions(DOUBLES_HEADER_BOXES, DOUBLES_WATERMARK_ROW), [], [], []
     for slot, (members, scale, z_index, badge, size, width) in DOUBLES_TIERS.items():
         member_frames = [frame for frame, _x in members]
+        scale = _fill_scale(member_frames[0]) if scale is None else scale
         for member, (frame, figure_x) in enumerate(members, 1):
             slot_id = f"entrant_{slot}_member_{member}"
             frames.append(FormattingAssetPlacement(slot_id, STANDING_FRAME, frame, z_index))
@@ -263,7 +288,8 @@ def flying_v_doubles_preferences() -> ModePreferences:
                                                  member_slot=member, scale=scale, z_index=z_index))
             # The renderer lowers this baseline to just above the member's visible head.
             text.append(_text(slot, f"member_{slot}_{member}", "member.tag",
-                              PixelPoint(figure_x, frame.top - NAME_ABOVE_HEAD_OFFSET), frame.width, "ms", size, member))
+                              PixelPoint(figure_x, frame.top - NAME_ABOVE_HEAD_OFFSET),
+                              min(frame.width, DOUBLES_MEMBER_NAME_WIDTH), "ms", size, member))
         center_x = (member_frames[0].left + member_frames[1].right) // 2
         if slot == 1:
             # The crest sits centered between the members' names, behind the
@@ -279,7 +305,7 @@ def flying_v_doubles_preferences() -> ModePreferences:
             ))
             continue
         badge_tag, label_text = _side_team_label(slot, center_x < DOUBLES_CANVAS.width // 2,
-                                                 max(frame.bottom for frame in member_frames) + DOUBLES_SIDE_LABEL_DROP,
+                                                 max(frame.bottom for frame in member_frames) + DOUBLES_SIDE_LABEL_GAP,
                                                  badge, size, width)
         tags.append(badge_tag)
         text.extend(label_text)
@@ -292,8 +318,8 @@ def flying_v_doubles_preferences() -> ModePreferences:
 if __name__ == "__main__":
     folder = Path(__file__).resolve().parent / "preferences" / "flying_v"
     folder.mkdir(parents=True, exist_ok=True)
-    for preferences in (flying_v_singles_preferences(), flying_v_singles_preferences(vertically_reversed=True),
-                        flying_v_doubles_preferences()):
+    singles = (flying_v_singles_preferences(reversed_, flipped) for reversed_ in (False, True) for flipped in (False, True))
+    for preferences in (*singles, flying_v_doubles_preferences()):
         target = folder / f"{preferences.selection.submode_id}.json"
         target.write_text(json.dumps(preferences.to_dict(), indent=2) + "\n", encoding="utf-8")
         print(f"Wrote {target}")

@@ -85,33 +85,26 @@ def render_lineup(
     return _compose([source.scaled(scale) for source in _load_sources(characters, team_color)])
 
 
-def place_lineup(
-    characters: Sequence[Character],
-    scale: float,
-    frame: PixelRect,
-    *,
-    team_color: str | None = None,
-    anchor_x: int | None = None,
-) -> PlacedLineup:
-    """Scale a lineup to its tier, shrinking only a character too large for the frame.
+@dataclass(frozen=True, slots=True)
+class LineupSlot:
+    """One teammate's characters, tier scale, standing frame, and center anchor."""
 
-    The frame limits each character rather than the staggered lineup, so
-    entrants with several characters match single-character entrants in the
-    same tier. Lineups stand on the frame's bottom, where the placement art
-    covers their feet. The primary
-    character centers on ``anchor_x`` (the frame center by default), sliding
-    only as far as needed to keep a wide lineup inside the frame.
-    """
+    characters: Sequence[Character]
+    scale: float
+    frame: PixelRect
+    anchor_x: int | None = None
 
-    if scale <= 0:
-        raise ValueError("Flying V scales must be greater than zero")
-    if not characters:
-        raise ValueError("A Flying V entrant must have at least one character")
-    sources = _load_sources(characters, team_color)
-    if sources:
-        widest = max(source.size_at(scale)[0] for source in sources)
-        tallest = max(source.size_at(scale)[1] for source in sources)
-        scale *= min(1.0, frame.width / widest, frame.height / tallest)
+
+def _fit(sources: list[_Source], scale: float, frame: PixelRect) -> float:
+    """Return the factor that keeps the largest single character inside the frame."""
+    if not sources:
+        return 1.0
+    widest = max(source.size_at(scale)[0] for source in sources)
+    tallest = max(source.size_at(scale)[1] for source in sources)
+    return min(1.0, frame.width / widest, frame.height / tallest)
+
+
+def _stand(sources: list[_Source], scale: float, frame: PixelRect, anchor_x: int | None) -> PlacedLineup:
     lineup, lineup_anchor_x = _compose([source.scaled(scale) for source in sources])
     if lineup.width <= frame.width:
         # Center the primary character, then keep uneven lineups inside the frame.
@@ -121,3 +114,38 @@ def place_lineup(
         left = (frame.left + frame.right - lineup.width) // 2
     top = frame.bottom - lineup.height
     return PlacedLineup(lineup, PixelRect(left, top, left + lineup.width, top + lineup.height))
+
+
+def place_team(slots: Sequence[LineupSlot], *, team_color: str | None = None) -> list[PlacedLineup]:
+    """Place teammates' lineups, shrinking every member by one shared factor.
+
+    A character too large for its frame shrinks its whole team equally, so
+    doubles partners keep their true relative sizes. The frame limits each
+    character rather than the staggered lineup, so entrants with several
+    characters match single-character entrants in the same tier. Lineups stand
+    on the frame's bottom, where the placement art covers their feet. Each
+    primary character centers on its ``anchor_x`` (the frame center by
+    default), sliding only as far as needed to keep a wide lineup inside the
+    frame.
+    """
+
+    if any(slot.scale <= 0 for slot in slots):
+        raise ValueError("Flying V scales must be greater than zero")
+    if any(not slot.characters for slot in slots):
+        raise ValueError("A Flying V entrant must have at least one character")
+    sources = [_load_sources(slot.characters, team_color) for slot in slots]
+    fit = min((_fit(member, slot.scale, slot.frame) for member, slot in zip(sources, slots)), default=1.0)
+    return [_stand(member, slot.scale * fit, slot.frame, slot.anchor_x) for member, slot in zip(sources, slots)]
+
+
+def place_lineup(
+    characters: Sequence[Character],
+    scale: float,
+    frame: PixelRect,
+    *,
+    team_color: str | None = None,
+    anchor_x: int | None = None,
+) -> PlacedLineup:
+    """Scale one entrant's lineup to its tier, shrinking it only when a character is too large for the frame."""
+
+    return place_team([LineupSlot(characters, scale, frame, anchor_x)], team_color=team_color)[0]

@@ -1,4 +1,4 @@
-"""Render example Flying V Singles Top 8 (both orientations) and Doubles Top 3 images plus an overview.
+"""Render example Flying V Singles Top 8 (every layout variant) and Doubles Top 3 images plus an overview.
 
 Usage:
     python test/generate/generate_flying_v_previews.py [--count 3] [--seed 2026]
@@ -69,12 +69,15 @@ def generate_examples(count: int, seed: int | None) -> list[tuple[str, Path]]:
         draw_singles_top_8(entrants, tournament=sample_tournament(TournamentFormat.SINGLES),
                            background=_background(asset_id, singles_canvas), font=font, output_path=singles)
         outputs.append((f"Singles #{index} - {font.value}", singles))
-        # The same entrants flipped top to bottom, for side-by-side comparison.
-        reversed_singles = OUTPUT_FOLDER / f"singles_top_8_vertically_reversed_{index}.png"
-        draw_singles_top_8(entrants, tournament=sample_tournament(TournamentFormat.SINGLES),
-                           background=_background(asset_id, singles_canvas), font=font, output_path=reversed_singles,
-                           vertically_reversed=True)
-        outputs.append((f"Reversed #{index} - {font.value}", reversed_singles))
+        # The same entrants in every other Singles layout variant, for side-by-side comparison.
+        for kind, filename, reversed_, flipped in (("Flipped 2nd", "second_place_flipped", False, True),
+                                                   ("Reversed", "vertically_reversed", True, False),
+                                                   ("Flipped Reversed", "vertically_reversed_second_place_flipped", True, True)):
+            variant = OUTPUT_FOLDER / f"singles_top_8_{filename}_{index}.png"
+            draw_singles_top_8(entrants, tournament=sample_tournament(TournamentFormat.SINGLES),
+                               background=_background(asset_id, singles_canvas), font=font, output_path=variant,
+                               vertically_reversed=reversed_, second_place_flipped=flipped)
+            outputs.append((f"{kind} #{index} - {font.value}", variant))
         doubles = OUTPUT_FOLDER / f"doubles_top_3_{index}.png"
         draw_doubles_top_3(sample_top_4_teams(rng)[:3], tournament=sample_tournament(TournamentFormat.DOUBLES),
                            background=_background(asset_id, doubles_canvas), font=font, output_path=doubles)
@@ -83,9 +86,10 @@ def generate_examples(count: int, seed: int | None) -> list[tuple[str, Path]]:
 
 
 def build_overview(examples: list[tuple[str, Path]]) -> Path:
-    """Lay out labeled rows of Singles, vertically reversed Singles, and Doubles examples."""
+    """Lay out labeled rows of each Singles layout variant and of Doubles examples."""
     label_height, gap = 34, 12
-    rows = [[item for item in examples if item[0].startswith(kind)] for kind in ("Singles", "Reversed", "Doubles")]
+    kinds = ("Singles", "Flipped 2nd", "Reversed", "Flipped Reversed", "Doubles")
+    rows = [[item for item in examples if item[0].startswith(kind)] for kind in kinds]
     thumbnails = []
     for row in rows:
         loaded = []

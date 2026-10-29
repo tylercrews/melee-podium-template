@@ -172,3 +172,47 @@ test("reversed previews load their own cached figure, header, and numbering laye
     assert.ok(existsSync(new URL(`../public/format_preview_layers/${path}`, import.meta.url)), path);
   }
 });
+
+test("the Flip 2nd Place Position checkbox appears only for Singles and combines with the reversal", () => {
+  assert.match(renderToStaticMarkup(createElement(FormatSettings, { value: fixture("singles"), backgroundImage: null, onChange() {} })),
+    /name="flying-v-second-place-flipped"/);
+  assert.doesNotMatch(renderToStaticMarkup(createElement(FormatSettings, { value: fixture("doubles"), backgroundImage: null, onChange() {} })),
+    /name="flying-v-second-place-flipped"/);
+  let changed;
+  const tree = FormatSettings({ value: fixture("singles"), backgroundImage: null, onChange(next) { changed = next; } });
+  findInput(tree, "flying-v-second-place-flipped", undefined).props.onChange({ target: { checked: true } });
+  assert.equal(changed.selection.options.variant, "second_place_flipped");
+  assert.equal(flyingV.isFlyingVSecondPlaceFlipped(changed.selection), true);
+  assert.equal(flyingV.isFlyingVVerticallyReversed(changed.selection), false);
+  assert.equal(formats.isFormatComplete(changed), true);
+  // Each checkbox keeps the other's choice.
+  const both = flyingV.setFlyingVVerticallyReversed(changed, true);
+  assert.equal(both.selection.options.variant, "vertically_reversed_second_place_flipped");
+  assert.equal(formats.isFormatComplete(both), true);
+  assert.equal(flyingV.setFlyingVSecondPlaceFlipped(both, false).selection.options.variant, "vertically_reversed");
+  assert.equal(flyingV.setFlyingVVerticallyReversed(both, false).selection.options.variant, "second_place_flipped");
+  assert.equal(flyingV.setFlyingVSecondPlaceFlipped(fixture("doubles"), true).selection.options.variant, null);
+  // Doubles has no flipped layout, so switching bracket type clears it.
+  assert.equal(formats.selectFixedLayout(both, "flying_v", "doubles").selection.options.variant, null);
+});
+
+test("every flipped Flying V layout survives export and loads its own cached layers", () => {
+  for (const reversed of [false, true]) {
+    const value = flyingV.setFlyingVSecondPlaceFlipped(flyingV.setFlyingVVerticallyReversed(fixture("singles"), reversed), true);
+    assert.deepEqual(formats.parseFormatCode(formats.formatCode(value)), value);
+    assert.deepEqual(formats.normalizeFormat(JSON.parse(JSON.stringify(value))), value);
+    const layout = reversed ? "singles_top_8_vertically_reversed_second_place_flipped" : "singles_top_8_second_place_flipped";
+    const geometry = reversed ? "singles_vertically_reversed" : "singles";
+    assert.equal(flyingV.flyingVLayoutId(value.selection), layout);
+    // Second place's side changes only labels, so the header layers are shared.
+    assert.equal(flyingV.flyingVHeaderGeometryId(value.selection), geometry);
+    const numbers = numbering.placementNumberPreviewPath(value);
+    assert.equal(numbers, `placement_numbers/flying_v/${layout}/tournament.png`);
+    for (const path of [numbers, `flying_v/${layout}/placeholders.png`, `flying_v_headers/ubuntu/${geometry}/logo-title-metadata.png`]) {
+      assert.ok(existsSync(new URL(`../public/format_preview_layers/${path}`, import.meta.url)), path);
+    }
+  }
+  const invalid = flyingV.setFlyingVSecondPlaceFlipped(fixture("singles"), true);
+  Object.assign(invalid.selection.options, { event_format: "doubles", entrant_count: 3 });
+  assert.throws(() => formats.normalizeFormat(invalid), /Flying V formats/);
+});
