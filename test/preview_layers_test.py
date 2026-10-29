@@ -40,11 +40,12 @@ class PreviewLayerTests(unittest.TestCase):
 
     def test_generated_layer_inventory_is_complete(self) -> None:
         files = tuple(LAYER_ROOT.rglob("*.png"))
-        self.assertEqual(len(files), 495)
-        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers").rglob("*.png"))), 80)
-        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers" / "flying_v").rglob("*.png"))), 4)
-        self.assertEqual(len(tuple((LAYER_ROOT / "flying_v_headers").rglob("*.png"))), 36)
-        self.assertEqual(len(tuple((LAYER_ROOT / "flying_v").rglob("*.png"))), 2)
+        self.assertEqual(len(files), 516)
+        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers").rglob("*.png"))), 82)
+        # Flying V layers cover Singles, vertically reversed Singles, and Doubles.
+        self.assertEqual(len(tuple((LAYER_ROOT / "placement_numbers" / "flying_v").rglob("*.png"))), 6)
+        self.assertEqual(len(tuple((LAYER_ROOT / "flying_v_headers").rglob("*.png"))), 54)
+        self.assertEqual(len(tuple((LAYER_ROOT / "flying_v").rglob("*.png"))), 3)
         self.assertTrue((LAYER_ROOT / "radial_watermark.png").is_file())
         self.assertTrue((LAYER_ROOT / "radial_watermark_doubles.png").is_file())
         self.assertEqual(len(tuple((LAYER_ROOT / "radial_headers").rglob("*.png"))), 36)

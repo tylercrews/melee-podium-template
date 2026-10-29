@@ -1,5 +1,6 @@
 import type { FormatConfiguration } from "./format";
 import { clappingGridLayout } from "./clappingGrid";
+import { isFlyingVVerticallyReversed } from "./flyingVFormat";
 
 export function placementRank(slot: number, tournament = true): number {
   if (!Number.isInteger(slot) || slot < 1) throw new Error("Placement slot must be a positive integer.");
@@ -23,6 +24,7 @@ export function placementNumberPreviewPath(format: FormatConfiguration): string 
     else if (clappingGridLayout(format.selection)) variant = `_${options.variant}`;
     else if (![3, 4, 8].includes(count)) count = 8;
   }
+  if (isFlyingVVerticallyReversed(format.selection)) variant = `_${options.variant}`;
   const numbering = format.text_settings.use_tournament_placing !== false ? "tournament" : "sequential";
   return `placement_numbers/${mode}/${style}${event}_top_${count}${variant}/${numbering}.png`;
 }

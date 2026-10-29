@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 from app import app
 from background_builder import BackgroundRequest, PixelRect
 from creation import CreationPipeline, CreationRequest, TextSettings
-from creation_modes import CreationMode, ModeOptions, ModeSelection
+from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection
 from DrawFlyingV import draw_doubles_top_3, draw_singles_top_8
 from DrawPodium import CharacterTag, PodiumFont, _character_tag_bounds, _draw_text
 from entrant_visibility import slot_from_id, visible_preferences
@@ -24,16 +24,19 @@ from flying_v_content_renderer import (
     FlyingVContentRenderer,
     WATERMARK_ROW_HEIGHT,
     flying_v_header_boxes,
+    flying_v_watermark_row,
     _clear_of,
     labelled_preferences,
     place_figures,
     text_vertical_extent,
 )
-from flying_v_lineup import HANGING_FRAME, STANDING_FRAME, place_lineup
+from flying_v_lineup import STANDING_FRAME, place_lineup
 from flying_v_preview_layers import render_flying_v_header_layer, render_placeholder_layer
 from generate_flying_v_preferences import (
     DOUBLES_HEADER_BOXES,
+    REVERSED_SINGLES_HEADER_BOXES,
     SINGLES_HEADER_BOXES,
+    tallest_render_height,
     flying_v_doubles_preferences,
     flying_v_singles_preferences,
 )
@@ -49,10 +52,17 @@ from sample_creation_data import sample_top_4_teams, sample_top_8_entrants, samp
 
 SINGLES = ModeSelection(CreationMode.FLYING_V, ModeOptions(TournamentFormat.SINGLES, 8))
 DOUBLES = ModeSelection(CreationMode.FLYING_V, ModeOptions(TournamentFormat.DOUBLES, 3))
+REVERSED = ModeSelection(CreationMode.FLYING_V, ModeOptions(TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED))
 
 
 def _frames(preferences):
-    return {item.slot_id: item for item in preferences.formatting_assets if item.asset_id in {STANDING_FRAME, HANGING_FRAME}}
+    return {item.slot_id: item for item in preferences.formatting_assets if item.asset_id == STANDING_FRAME}
+
+
+def _label_rect(item) -> PixelRect:
+    top, bottom = text_vertical_extent(item)
+    left = {"l": item.anchor.x, "r": item.anchor.x - item.max_width}.get(item.pillow_anchor[0], item.anchor.x - item.max_width // 2)
+    return PixelRect(left, top, left + item.max_width, bottom)
 
 
 def _overlaps(a: PixelRect, b: PixelRect) -> bool:
@@ -73,6 +83,8 @@ def _request(selection, entrants, **kwargs):
 class FlyingVPreferenceTests(unittest.TestCase):
     def test_singles_is_wide_portrait_doubles_is_landscape_and_both_round_trip(self):
         for selection, generated, size, boxes in ((SINGLES, flying_v_singles_preferences(), (1440, 1920), SINGLES_HEADER_BOXES),
+                                                  (REVERSED, flying_v_singles_preferences(vertically_reversed=True), (1440, 1920),
+                                                   REVERSED_SINGLES_HEADER_BOXES),
                                                   (DOUBLES, flying_v_doubles_preferences(), (1920, 1080), DOUBLES_HEADER_BOXES)):
             with self.subTest(selection=selection.submode_id):
                 preferences = ModePreferenceRepository().load(selection)
@@ -84,22 +96,34 @@ class FlyingVPreferenceTests(unittest.TestCase):
 
     def test_only_singles_top_8_and_doubles_top_3_are_valid(self):
         for event_format, count, variant in ((TournamentFormat.SINGLES, 3, None), (TournamentFormat.DOUBLES, 4, None),
-                                             (TournamentFormat.SINGLES, 8, "four_podium")):
+                                             (TournamentFormat.SINGLES, 8, "four_podium"),
+                                             (TournamentFormat.DOUBLES, 3, FLYING_V_VERTICALLY_REVERSED)):
             with self.assertRaisesRegex(ValueError, "Flying V supports"):
                 ModeSelection(CreationMode.FLYING_V, ModeOptions(event_format, count, variant))
+        self.assertEqual(REVERSED.submode_id, "singles_top_8_vertically_reversed")
 
     def test_singles_tiers_shrink_from_the_leader_back_through_the_v(self):
-        preferences = ModePreferenceRepository().load(SINGLES)
-        scales = {item.entrant_slot: item.scale for item in preferences.character_slots}
-        depth = {item.entrant_slot: item.z_index for item in preferences.character_slots}
-        self.assertTrue(scales[1] > scales[2] > scales[3] == scales[4] > scales[5] == scales[6] > scales[7] == scales[8])
-        self.assertTrue(.65 <= scales[2] / scales[1] <= .8)
-        self.assertTrue(.45 <= scales[3] / scales[1] <= .55)
-        # Larger, nearer figures are drawn over the smaller ones behind them.
-        self.assertTrue(depth[1] > depth[2] > depth[3] == depth[4] > depth[5] == depth[6] > depth[7] == depth[8])
+        for selection in (SINGLES, REVERSED):
+            with self.subTest(selection=selection.submode_id):
+                preferences = ModePreferenceRepository().load(selection)
+                scales = {item.entrant_slot: item.scale for item in preferences.character_slots}
+                depth = {item.entrant_slot: item.z_index for item in preferences.character_slots}
+                self.assertTrue(scales[1] > scales[3] == scales[4] > scales[5] == scales[6] > scales[7] == scales[8])
+                self.assertTrue(.45 <= scales[3] / scales[1] <= .55)
+                self.assertLess(scales[2], scales[1] / 2)
+                # Larger, nearer figures are drawn over the smaller ones behind them.
+                self.assertTrue(depth[1] > depth[2] > depth[3] == depth[4] > depth[5] == depth[6] > depth[7] == depth[8])
 
     def test_figures_flank_the_center_and_fly_outward_toward_the_top(self):
-        frames = _frames(ModePreferenceRepository().load(SINGLES))
+        self._assert_flying_v(_frames(ModePreferenceRepository().load(SINGLES)), reversed_order=False)
+
+    def test_reversed_figures_fly_outward_toward_the_bottom_beneath_the_leader(self):
+        frames = _frames(ModePreferenceRepository().load(REVERSED))
+        self._assert_flying_v(frames, reversed_order=True)
+        # Second place stands beneath first, not behind it.
+        self.assertGreater(frames["entrant_2"].destination.top, frames["entrant_1"].destination.bottom)
+
+    def _assert_flying_v(self, frames, *, reversed_order):
         center = {slot: (frames[f"entrant_{slot}"].destination.left + frames[f"entrant_{slot}"].destination.right) / 2 for slot in range(1, 9)}
         self.assertEqual(center[1], 720)
         self.assertEqual(center[2], 720)
@@ -110,40 +134,38 @@ class FlyingVPreferenceTests(unittest.TestCase):
         self.assertLess(center[5], center[3])
         self.assertLess(center[7], center[5])
         bottoms = {slot: frames[f"entrant_{slot}"].destination.bottom for slot in range(1, 9)}
-        self.assertLess(bottoms[7], bottoms[5])
-        self.assertLess(bottoms[5], bottoms[3])
-        self.assertLess(bottoms[3], bottoms[1])
+        order = (1, 3, 5, 7) if reversed_order else (7, 5, 3, 1)
+        for upper, lower in zip(order, order[1:]):
+            self.assertLessEqual(bottoms[upper], bottoms[lower])
 
-    def test_first_place_stands_on_the_canvas_bottom_under_its_name_and_large_crest(self):
-        for selection in (SINGLES, DOUBLES):
-            with self.subTest(selection=selection.submode_id):
-                preferences = ModePreferenceRepository().load(selection)
-                canvas = preferences.canvas_size
-                leader_frames = [frame for slot_id, frame in _frames(preferences).items() if slot_from_id(slot_id) == 1]
-                self.assertTrue(all(frame.destination.bottom == canvas.height for frame in leader_frames))
-                badges = {slot_from_id(tag.slot_id): tag for tag in preferences.placement_tags}
-                self.assertGreaterEqual(badges[1].max_size.height, 2.5 * max(tag.max_size.height for slot, tag in badges.items() if slot != 1))
-                self.assertLessEqual(badges[1].anchor.y + badges[1].max_size.height // 2, canvas.height)
-                # The leader's name sits on the canvas bottom, over its feet.
-                name = next(item for item in preferences.text_slots if item.slot_id == "name_1")
-                self.assertEqual(name.pillow_anchor, "ms")
-                self.assertGreaterEqual(name.anchor.y, canvas.height - 20)
-
-    def test_singles_placement_numbers_sit_directly_above_each_name(self):
-        preferences = ModePreferenceRepository().load(SINGLES)
-        frames = _frames(preferences)
+    def test_doubles_first_place_stands_on_the_canvas_bottom_under_its_name(self):
+        preferences = ModePreferenceRepository().load(DOUBLES)
+        canvas = preferences.canvas_size
+        leader_frames = [frame for slot_id, frame in _frames(preferences).items() if slot_from_id(slot_id) == 1]
+        self.assertTrue(all(frame.destination.bottom == canvas.height for frame in leader_frames))
         badges = {slot_from_id(tag.slot_id): tag for tag in preferences.placement_tags}
-        for name in (item for item in preferences.text_slots if item.slot_id.startswith("name_")):
-            with self.subTest(slot=name.entrant_slot):
-                badge = badges[name.entrant_slot]
-                badge_bottom = badge.anchor.y + badge.max_size.height // 2
-                self.assertEqual(name.anchor.x, badge.anchor.x)
-                self.assertEqual(text_vertical_extent(name)[0] - badge_bottom, 4)
-                if name.entrant_slot not in {1, 2}:
+        self.assertGreaterEqual(badges[1].max_size.height, 2.5 * max(tag.max_size.height for slot, tag in badges.items() if slot != 1))
+        name = next(item for item in preferences.text_slots if item.slot_id == "name_1")
+        self.assertEqual(name.pillow_anchor, "ms")
+        self.assertGreaterEqual(name.anchor.y, canvas.height - 20)
+
+    def test_every_singles_figure_stands_on_its_placement_number_above_its_name(self):
+        for selection in (SINGLES, REVERSED):
+            preferences = ModePreferenceRepository().load(selection)
+            frames = _frames(preferences)
+            badges = {slot_from_id(tag.slot_id): tag for tag in preferences.placement_tags}
+            for name in (item for item in preferences.text_slots if item.slot_id.startswith("name_")):
+                with self.subTest(selection=selection.submode_id, slot=name.entrant_slot):
+                    badge = badges[name.entrant_slot]
+                    badge_bottom = badge.anchor.y + badge.max_size.height // 2
+                    self.assertEqual(name.anchor.x, badge.anchor.x)
+                    self.assertEqual(text_vertical_extent(name)[0] - badge_bottom, 4)
                     # The placement art covers the feet and the name sits just below them.
                     self.assertEqual(badge_bottom, frames[f"entrant_{name.entrant_slot}"].destination.bottom + 2)
-        # Second place keeps a fixed label while its hanging figure extends past it.
-        self.assertLess(badges[2].anchor.y + badges[2].max_size.height // 2, frames["entrant_2"].destination.bottom)
+            first_crest = badges[1].max_size.height
+            self.assertGreaterEqual(first_crest, 2.5 * max(tag.max_size.height for slot, tag in badges.items() if slot != 1))
+            self.assertLessEqual(text_vertical_extent(next(item for item in preferences.text_slots if item.slot_id == "name_1"))[1],
+                                 preferences.canvas_size.height)
 
     def test_singles_sponsors_share_the_placement_row_in_a_smaller_font(self):
         preferences = ModePreferenceRepository().load(SINGLES)
@@ -174,13 +196,16 @@ class FlyingVPreferenceTests(unittest.TestCase):
         self.assertIsNone(draw_text.crop((empty.anchor.x - empty.max_width, empty.anchor.y - 30, empty.anchor.x, empty.anchor.y + 30)).getbbox())
 
     def test_back_row_names_never_reach_the_figures_flying_below_them(self):
-        preferences = ModePreferenceRepository().load(SINGLES)
-        frames = _frames(preferences)
-        names = {item.entrant_slot: item for item in preferences.text_slots if item.slot_id.startswith("name_")}
-        # 7ths sit above the 5ths, which sit above 3rd and 4th, on each side.
-        for upper, lower in ((7, 5), (8, 6), (5, 3), (6, 4)):
-            with self.subTest(upper=upper, lower=lower):
-                self.assertLess(text_vertical_extent(names[upper])[1], frames[f"entrant_{lower}"].destination.top)
+        # 7ths sit above the 5ths, which sit above 3rd and 4th, on each side;
+        # reversed, 1st sits above 2nd and the flanking tiers fly downward.
+        for selection, pairs in ((SINGLES, ((7, 5), (8, 6), (5, 3), (6, 4))),
+                                 (REVERSED, ((1, 2), (3, 5), (4, 6), (5, 7), (6, 8)))):
+            preferences = ModePreferenceRepository().load(selection)
+            frames = _frames(preferences)
+            names = {item.entrant_slot: item for item in preferences.text_slots if item.slot_id.startswith("name_")}
+            for upper, lower in pairs:
+                with self.subTest(selection=selection.submode_id, upper=upper, lower=lower):
+                    self.assertLess(text_vertical_extent(names[upper])[1], frames[f"entrant_{lower}"].destination.top)
 
     def test_doubles_team_names_rest_on_the_feet_and_the_winning_crest_sits_between_names(self):
         preferences = ModePreferenceRepository().load(DOUBLES)
@@ -210,43 +235,62 @@ class FlyingVPreferenceTests(unittest.TestCase):
         self.assertGreater(seed.anchor.x, crest.anchor.x + crest.max_size.height * 9 // 20)
         self.assertLess(seed.anchor.y, crest.anchor.y - crest.max_size.height // 4)
 
-    def test_second_place_hangs_below_the_reserved_top_center(self):
+    def test_second_place_is_standardized_so_only_the_tallest_render_fills_its_frame(self):
+        tallest = tallest_render_height()
+        for selection, ceiling in ((SINGLES, SINGLES_HEADER_BOXES["top_middle"].bottom), (REVERSED, None)):
+            with self.subTest(selection=selection.submode_id):
+                preferences = ModePreferenceRepository().load(selection)
+                frame = _frames(preferences)["entrant_2"].destination
+                second = next(item for item in preferences.character_slots if item.entrant_slot == 2)
+                # The tallest character reaches the title (or first place's name) exactly; everyone stands on the art.
+                self.assertLessEqual(tallest * second.scale, frame.height)
+                self.assertGreaterEqual(tallest * second.scale, frame.height - 1)
+                self.assertEqual((second.anchor.x, second.anchor.y), ((frame.left + frame.right) // 2, frame.bottom))
+                if ceiling is not None:
+                    self.assertEqual(frame.top, ceiling)
+                else:
+                    first_name = next(item for item in preferences.text_slots if item.slot_id == "name_1")
+                    self.assertGreater(frame.top, text_vertical_extent(first_name)[1])
+        bowser = Character("Bowser", color="default", pose="c")
         preferences = ModePreferenceRepository().load(SINGLES)
-        frames = _frames(preferences)
-        self.assertEqual([slot for slot, frame in frames.items() if frame.asset_id == HANGING_FRAME], ["entrant_2"])
-        header = SINGLES_HEADER_BOXES["top_middle"]
-        self.assertGreaterEqual(frames["entrant_2"].destination.top, header.bottom)
-        anchors = {item.slot_id: item.anchor for item in preferences.character_slots}
-        for slot_id, frame in frames.items():
-            box = frame.destination
-            expected_y = box.top if frame.asset_id == HANGING_FRAME else box.bottom
-            self.assertEqual((anchors[slot_id].x, anchors[slot_id].y), ((box.left + box.right) // 2, expected_y))
+        frame = _frames(preferences)["entrant_2"].destination
+        scale = next(item.scale for item in preferences.character_slots if item.entrant_slot == 2)
+        self.assertEqual(place_lineup([bowser], scale, frame).image.size,
+                         place_lineup([bowser], scale, PixelRect(0, 0, 4000, 4000)).image.size)
 
-    def test_reserved_header_spaces_and_watermark_row_stay_clear_of_back_figures(self):
-        for selection, boxes in ((SINGLES, SINGLES_HEADER_BOXES), (DOUBLES, DOUBLES_HEADER_BOXES)):
+    def test_reserved_header_spaces_and_watermark_row_stay_clear(self):
+        for selection, boxes in ((SINGLES, SINGLES_HEADER_BOXES), (REVERSED, REVERSED_SINGLES_HEADER_BOXES),
+                                 (DOUBLES, DOUBLES_HEADER_BOXES)):
             preferences = ModePreferenceRepository().load(selection)
+            reserved = [*boxes.values(), flying_v_watermark_row(preferences)]
             for slot_id, frame in _frames(preferences).items():
                 with self.subTest(selection=selection.submode_id, slot=slot_id):
-                    self.assertGreaterEqual(frame.destination.top, WATERMARK_ROW_HEIGHT)
+                    self.assertFalse(_overlaps(frame.destination, flying_v_watermark_row(preferences)))
                     self.assertFalse(_overlaps(frame.destination, boxes["top_middle"]))
                     if slot_from_id(slot_id) != 1:
                         self.assertFalse(_overlaps(frame.destination, boxes["top_left"]))
                         self.assertFalse(_overlaps(frame.destination, boxes["top_right"]))
-            # Every result label sits above the bottom corners, or between them for the leader.
+            # Result names, seeds, and sponsors never enter the header boxes or the
+            # watermark row; the leader's crest and seed follow its names.
             for item in preferences.text_slots:
-                if item.field == "member.tag":
+                if item.field == "member.tag" or (item.entrant_slot == 1 and item.field == "entrant.seed"):
                     continue
-                _top, bottom = text_vertical_extent(item)
-                if item.entrant_slot == 1:
-                    self.assertLessEqual(bottom, preferences.canvas_size.height)
-                    if item.field != "entrant.seed":
-                        self.assertGreaterEqual(item.anchor.x - item.max_width // 2, boxes["top_left"].right)
-                        self.assertLessEqual(item.anchor.x + item.max_width // 2, boxes["top_right"].left)
-                else:
-                    self.assertLess(bottom, boxes["top_left"].top, item.slot_id)
+                with self.subTest(selection=selection.submode_id, text=item.slot_id):
+                    self.assertFalse(any(_overlaps(_label_rect(item), box) for box in reserved))
             for tag in preferences.placement_tags:
                 if slot_from_id(tag.slot_id) != 1:
-                    self.assertLess(tag.anchor.y + tag.max_size.height // 2, boxes["top_left"].top, tag.slot_id)
+                    rect = PixelRect(tag.anchor.x - tag.max_size.width // 2, tag.anchor.y - tag.max_size.height // 2,
+                                     tag.anchor.x + tag.max_size.width // 2, tag.anchor.y + tag.max_size.height // 2)
+                    self.assertFalse(any(_overlaps(rect, box) for box in reserved), tag.slot_id)
+
+    def test_reversed_header_puts_logo_and_metadata_on_top_and_the_title_at_the_bottom(self):
+        preferences = ModePreferenceRepository().load(REVERSED)
+        boxes = flying_v_header_boxes(preferences)
+        height = preferences.canvas_size.height
+        self.assertLess(boxes["top_left"].bottom, height // 4)
+        self.assertLess(boxes["top_right"].bottom, height // 4)
+        self.assertGreater(boxes["top_middle"].top, height * 3 // 4)
+        self.assertGreater(flying_v_watermark_row(preferences).top, boxes["top_middle"].bottom)
 
     def test_labels_use_canonical_ordinals_and_smash_player_colors(self):
         singles = ModePreferenceRepository().load(SINGLES)
@@ -269,13 +313,10 @@ class FlyingVPlacementTests(unittest.TestCase):
         giant = [Character("Bowser", color="default", pose="c"), Character("Donkey Kong", color="default", pose="a")]
         frame = PixelRect(100, 200, 300, 500)
         standing = place_lineup(giant, 1.0, frame)
-        hanging = place_lineup(giant, 1.0, frame, hanging=True)
-        for placed in (standing, hanging):
-            self.assertLessEqual(placed.bounds.height, frame.height)
-            # A lineup wider than its frame stays centered on it.
-            self.assertLessEqual(abs((placed.bounds.left + placed.bounds.right) - (frame.left + frame.right)), 1)
+        self.assertLessEqual(standing.bounds.height, frame.height)
+        # A lineup wider than its frame stays centered on it.
+        self.assertLessEqual(abs((standing.bounds.left + standing.bounds.right) - (frame.left + frame.right)), 1)
         self.assertEqual(standing.bounds.bottom, frame.bottom)
-        self.assertEqual(hanging.bounds.top, frame.top)
         alone = place_lineup(giant[:1], 1.0, PixelRect(0, 0, 200, 300))
         self.assertLessEqual(alone.bounds.width, 200)
         self.assertLessEqual(alone.bounds.height, 300)
@@ -360,18 +401,27 @@ class FlyingVPlacementTests(unittest.TestCase):
         third = without_leader.crop((1300, 300, 1920, names[3].anchor.y + 2))
         self.assertGreater(names[3].anchor.y - (third.getbbox()[1] + 300), 44 * 3)
 
-    def test_second_place_label_stays_put_while_its_figure_grows(self):
+    def test_second_place_stands_on_its_number_whatever_its_height(self):
         pichu, bowser = Character("Pichu", color="default", pose="a"), Character("Bowser", color="default", pose="c")
         for second in (pichu, bowser):
             with self.subTest(second=second.melee_fighter_name):
                 request, preferences = _request(SINGLES, _singles({1: pichu, 2: second}))
                 figures = place_figures(request, preferences)
-                self.assertEqual(figures["entrant_2"].lineup.bounds.top, _frames(preferences)["entrant_2"].destination.top)
+                frame = _frames(preferences)["entrant_2"].destination
+                self.assertEqual(figures["entrant_2"].lineup.bounds.bottom, frame.bottom)
                 labelled = labelled_preferences(preferences, figures)
                 self.assertEqual(labelled.placement_tags, preferences.placement_tags)
                 self.assertEqual(labelled.text_slots, preferences.text_slots)
-        badge = next(tag for tag in preferences.placement_tags if tag.slot_id == "number_2")
-        self.assertGreater(figures["entrant_2"].lineup.bounds.bottom, badge.anchor.y)
+        # The tallest render reaches the title; shorter characters keep their relative size.
+        self.assertLessEqual(abs(figures["entrant_2"].lineup.bounds.top - frame.top), 1)
+
+    def test_reversed_second_place_label_never_rises_under_the_leader(self):
+        request, preferences = _request(REVERSED, _singles({1: Character("Ganondorf", color="default", pose="c"),
+                                                             2: Character("Bowser", color="default", pose="c")}))
+        figures = place_figures(request, preferences)
+        self.assertLess(figures["entrant_1"].lineup.bounds.bottom, figures["entrant_2"].lineup.bounds.top)
+        labelled = labelled_preferences(preferences, figures)
+        self.assertEqual(labelled.text_slots, preferences.text_slots)
 
     def test_second_place_label_rises_only_to_clear_first_places_head(self):
         request, preferences = _request(SINGLES, _singles({1: Character("Ganondorf", color="default", pose="c"),
@@ -545,16 +595,16 @@ class FlyingVRenderingTests(unittest.TestCase):
     def test_browser_logo_boxes_match_the_serialized_header_regions(self):
         source = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "LayeredFormatPreview.tsx").read_text(encoding="utf-8")
         block = source[source.index('format.selection.mode === "flying_v"'):]
-        for boxes in (SINGLES_HEADER_BOXES, DOUBLES_HEADER_BOXES):
+        for boxes in (REVERSED_SINGLES_HEADER_BOXES, SINGLES_HEADER_BOXES, DOUBLES_HEADER_BOXES):
             for position, box in boxes.items():
-                self.assertIn(f"{position}: {{ left: {box.left}, top: {box.top}, right: {box.right}, bottom: {box.bottom} }}", block[:1000])
+                self.assertIn(f"{position}: {{ left: {box.left}, top: {box.top}, right: {box.right}, bottom: {box.bottom} }}", block[:1600])
 
     def test_preview_layers_match_the_placeholder_figures_and_header_boxes(self):
         for layout_id, size in (("singles_top_8", (1440, 1920)), ("doubles_top_3", (1920, 1080))):
             layer = render_placeholder_layer(layout_id)
             self.assertEqual(layer.size, size)
             self.assertIsNotNone(layer.getbbox())
-        header = render_flying_v_header_layer(PodiumFont.UBUNTU, TournamentFormat.SINGLES,
+        header = render_flying_v_header_layer(PodiumFont.UBUNTU, "singles_top_8",
                                               {"top_left": "tournament_logo", "top_middle": "tournament_title", "top_right": "metadata"})
         # The boxed logo placeholder marks the bottom-left reserved corner.
         self.assertIsNotNone(header.crop(SINGLES_HEADER_BOXES["top_left"].as_tuple()).getbbox())

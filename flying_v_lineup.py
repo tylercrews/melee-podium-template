@@ -17,8 +17,7 @@ from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 # spacing relative to the tallest portrait, so every tier keeps its proportions.
 LINEUP_SPREAD = 0.16
 STANDING_FRAME = "flying_v_standing_frame"
-HANGING_FRAME = "flying_v_hanging_frame"
-FRAME_ASSETS = frozenset({STANDING_FRAME, HANGING_FRAME})
+FRAME_ASSETS = frozenset({STANDING_FRAME})
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,7 +90,6 @@ def place_lineup(
     scale: float,
     frame: PixelRect,
     *,
-    hanging: bool = False,
     team_color: str | None = None,
     anchor_x: int | None = None,
 ) -> PlacedLineup:
@@ -99,8 +97,8 @@ def place_lineup(
 
     The frame limits each character rather than the staggered lineup, so
     entrants with several characters match single-character entrants in the
-    same tier. Standing lineups rest on the frame's bottom; hanging lineups
-    start at its top so they never rise into reserved space. The primary
+    same tier. Lineups stand on the frame's bottom, where the placement art
+    covers their feet. The primary
     character centers on ``anchor_x`` (the frame center by default), sliding
     only as far as needed to keep a wide lineup inside the frame.
     """
@@ -121,5 +119,5 @@ def place_lineup(
         left = min(max(center_x - lineup_anchor_x, frame.left), frame.right - lineup.width)
     else:
         left = (frame.left + frame.right - lineup.width) // 2
-    top = frame.top if hanging else frame.bottom - lineup.height
+    top = frame.bottom - lineup.height
     return PlacedLineup(lineup, PixelRect(left, top, left + lineup.width, top + lineup.height))

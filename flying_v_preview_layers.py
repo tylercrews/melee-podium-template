@@ -9,7 +9,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from background_builder import BackgroundRequest
 from creation import CreationRequest, TextSettings
-from creation_modes import CreationMode, ModeOptions, ModeSelection
+from creation_modes import FLYING_V_VERTICALLY_REVERSED, CreationMode, ModeOptions, ModeSelection
 from DrawPodium import PodiumFont
 from flying_v_content_renderer import (
     FlyingVContentRenderer,
@@ -25,8 +25,9 @@ from sample_creation_data import sample_tournament
 
 
 FLYING_V_LAYOUTS = {
-    "singles_top_8": (TournamentFormat.SINGLES, 8),
-    "doubles_top_3": (TournamentFormat.DOUBLES, 3),
+    "singles_top_8": (TournamentFormat.SINGLES, 8, None),
+    "singles_top_8_vertically_reversed": (TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED),
+    "doubles_top_3": (TournamentFormat.DOUBLES, 3, None),
 }
 # A median-height pose shows every tier at its typical size without implying
 # which characters the user's entrants will play.
@@ -37,8 +38,14 @@ GUIDE_FILL = "#8E95AFE6"
 
 
 def flying_v_selection(layout_id: str) -> ModeSelection:
-    event_format, count = FLYING_V_LAYOUTS[layout_id]
-    return ModeSelection(CreationMode.FLYING_V, ModeOptions(event_format, count))
+    event_format, count, variant = FLYING_V_LAYOUTS[layout_id]
+    return ModeSelection(CreationMode.FLYING_V, ModeOptions(event_format, count, variant))
+
+
+def header_geometry_id(layout_id: str) -> str:
+    """Header layers depend on bracket type and orientation, not entrant data."""
+    event_format, _count, variant = FLYING_V_LAYOUTS[layout_id]
+    return event_format.value + (f"_{variant}" if variant else "")
 
 
 def _placeholder_entrants(event_format: TournamentFormat, count: int) -> list[SinglesEntrant] | list[DoublesTeam]:
@@ -92,9 +99,9 @@ def render_placeholder_layer(layout_id: str) -> Image.Image:
     return layer
 
 
-def render_flying_v_header_layer(font: PodiumFont, event_format: TournamentFormat, header_layout: dict[str, str]) -> Image.Image:
-    layout_id = next(key for key, (layout_format, _count) in FLYING_V_LAYOUTS.items() if layout_format is event_format)
+def render_flying_v_header_layer(font: PodiumFont, layout_id: str, header_layout: dict[str, str]) -> Image.Image:
     selection = flying_v_selection(layout_id)
+    event_format = selection.options.event_format
     preferences = ModePreferenceRepository().load(selection)
     canvas = Image.new("RGBA", preferences.canvas_size.as_tuple(), "#00000000")
     request = CreationRequest(
@@ -109,7 +116,7 @@ def render_flying_v_header_layer(font: PodiumFont, event_format: TournamentForma
 
 
 def generate_flying_v_preview_layers(output_root: Path) -> list[Path]:
-    """Generate figure placeholders and all font/header permutations for both layouts."""
+    """Generate figure placeholders and all font/header permutations for every layout."""
     outputs = []
 
     def save(image: Image.Image, relative: str) -> None:
@@ -118,11 +125,11 @@ def generate_flying_v_preview_layers(output_root: Path) -> list[Path]:
         image.save(path, format="PNG", optimize=True)
         outputs.append(path)
 
-    for layout_id, (event_format, _count) in FLYING_V_LAYOUTS.items():
+    for layout_id in FLYING_V_LAYOUTS:
         save(render_placeholder_layer(layout_id), f"flying_v/{layout_id}/placeholders.png")
         for font in PodiumFont:
             for contents in permutations(HEADER_CONTENTS):
                 layout = dict(zip(HEADER_POSITIONS, contents, strict=True))
-                save(render_flying_v_header_layer(font, event_format, layout),
-                     f"flying_v_headers/{font.value}/{event_format.value}/{header_permutation_id(layout)}.png")
+                save(render_flying_v_header_layer(font, layout_id, layout),
+                     f"flying_v_headers/{font.value}/{header_geometry_id(layout_id)}/{header_permutation_id(layout)}.png")
     return outputs

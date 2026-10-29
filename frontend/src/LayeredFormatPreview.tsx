@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl, recordDownload } from "./api";
 import { previewDownloadName } from "./previewDownload";
 import { drawRadialWatermark } from "./radialWatermark";
+import { flyingVHeaderGeometryId, flyingVLayoutId, isFlyingVVerticallyReversed } from "./flyingVFormat";
 import { drawPodiumPreviewFooter, podiumHeaderWithoutFooter } from "./podiumPreviewFooter";
 import { placementNumberPreviewPath } from "./placementNumbering";
 import { clappingGridLayout, clappingGridVariant } from "./clappingGrid";
@@ -79,6 +80,11 @@ function headerBox(format: FormatConfiguration, outputSize: PixelSize, position:
   }
   if (format.selection.mode === "flying_v") {
     // Matches the header boxes in generate_flying_v_preferences.py.
+    if (isFlyingVVerticallyReversed(format.selection)) return {
+      top_left: { left: 16, top: 16, right: 396, bottom: 308 },
+      top_middle: { left: 420, top: 1674, right: 1020, bottom: 1872 },
+      top_right: { left: 1044, top: 16, right: 1424, bottom: 308 },
+    }[position];
     return (format.selection.options.event_format === "doubles" ? {
       top_left: { left: 16, top: 800, right: 456, bottom: 1064 },
       top_middle: { left: 660, top: 48, right: 1260, bottom: 230 },
@@ -153,8 +159,8 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     foregroundLayers = [{ url: `${layerRoot}/radial/${eventFormat === "doubles" ? "doubles_top_4" : "singles_top_8"}/${colorId}.png` }];
     headerUrl = `${layerRoot}/radial_headers/${fontId}/${eventFormat === "doubles" ? "doubles/" : ""}${headerPermutationId(format)}.png`;
   } else if (mode === "flying_v") {
-    foregroundLayers = [{ url: `${layerRoot}/flying_v/${eventFormat === "doubles" ? "doubles_top_3" : "singles_top_8"}/placeholders.png` }];
-    headerUrl = `${layerRoot}/flying_v_headers/${fontId}/${eventFormat}/${headerPermutationId(format)}.png`;
+    foregroundLayers = [{ url: `${layerRoot}/flying_v/${flyingVLayoutId(format.selection)}/placeholders.png` }];
+    headerUrl = `${layerRoot}/flying_v_headers/${fontId}/${flyingVHeaderGeometryId(format.selection)}/${headerPermutationId(format)}.png`;
   } else if (mode === "eyes") {
     const eyeEntrantCount = format.selection.options.entrant_count
       ?? (eventFormat === "doubles" ? 3 : 8);
@@ -175,7 +181,7 @@ function layerRequest(format: FormatConfiguration, fontAsset: FormatFontInfo | n
     foregroundLayers = [{ url: `${layerRoot}/podiums/legacy/${layout}.png` }];
     headerUrl = `${layerRoot}/headers/${fontId}/${headerPermutationId(format)}.png`;
   }
-  const styleLabel = mode === "flying_v" ? "Flying V" : mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
+  const styleLabel = mode === "flying_v" ? (isFlyingVVerticallyReversed(format.selection) ? "Flying V (Reversed)" : "Flying V") : mode === "radial" ? "Radial" : mode === "eyes" ? "Eyes" : mode === "squares" ? "Squares" : style === "customizable" ? "Customizable" : "Legacy";
   const eventLabel = eventFormat === "doubles" ? "Doubles" : "Singles";
   const layoutLabel = isPodiumsClapping(format.selection)
     ? `Podiums+Clapping · Top ${format.selection.options.entrant_count}`

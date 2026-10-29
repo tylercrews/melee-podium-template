@@ -50,6 +50,17 @@
       "z_index": 0
     },
     {
+      "slot_id": "watermark",
+      "asset_id": "flying_v_watermark_region",
+      "destination": {
+        "left": 960,
+        "top": 0,
+        "right": 1904,
+        "bottom": 44
+      },
+      "z_index": 0
+    },
+    {
       "slot_id": "entrant_1_member_1",
       "asset_id": "flying_v_standing_frame",
       "destination": {

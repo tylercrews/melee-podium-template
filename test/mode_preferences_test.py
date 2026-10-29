@@ -153,7 +153,7 @@ class ModePreferencesTest(unittest.TestCase):
                 CreationMode.EYES: 10,
                 CreationMode.SQUARES: 5,
                 CreationMode.RADIAL: 2,
-                CreationMode.FLYING_V: 2,
+                CreationMode.FLYING_V: 3,
             },
         )
         podium_styles = Counter(
@@ -174,6 +174,9 @@ class ModePreferencesTest(unittest.TestCase):
                 item.selection.mode in {CreationMode.EYES, CreationMode.SQUARES, CreationMode.RADIAL, CreationMode.FLYING_V}
                 and item.selection.submode_id
                 in {"singles_top_8", "doubles_top_3", "doubles_top_4"}
+            ) or (
+                item.selection.mode is CreationMode.FLYING_V
+                and item.selection.submode_id == "singles_top_8_vertically_reversed"
             ) or (
                 item.selection.mode is CreationMode.EYES
                 and item.selection.submode_id

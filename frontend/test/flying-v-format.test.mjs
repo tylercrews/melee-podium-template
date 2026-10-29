@@ -119,3 +119,56 @@ test("color settings hide the shape palette and offer Smash Player Colors for en
   assert.match(html, /<option value="match_podium"[^>]*>Smash Player Colors<\/option>/);
   assert.match(html, /only entrant name colors are customizable/);
 });
+
+const flyingV = await loadTypescript("flyingVFormat.ts");
+
+function reversedFixture() {
+  return flyingV.setFlyingVVerticallyReversed(fixture("singles"), true);
+}
+
+test("the Vertically Reverse checkbox appears only for Singles and toggles the layout variant", () => {
+  assert.match(renderToStaticMarkup(createElement(FormatSettings, { value: fixture("singles"), backgroundImage: null, onChange() {} })),
+    /name="flying-v-vertically-reversed"/);
+  assert.doesNotMatch(renderToStaticMarkup(createElement(FormatSettings, { value: fixture("doubles"), backgroundImage: null, onChange() {} })),
+    /name="flying-v-vertically-reversed"/);
+  let changed;
+  const tree = FormatSettings({ value: fixture("singles"), backgroundImage: null, onChange(next) { changed = next; } });
+  findInput(tree, "flying-v-vertically-reversed", undefined).props.onChange({ target: { checked: true } });
+  assert.equal(changed.selection.options.variant, "vertically_reversed");
+  assert.equal(flyingV.isFlyingVVerticallyReversed(changed.selection), true);
+  assert.equal(formats.isFormatComplete(changed), true);
+  assert.equal(flyingV.setFlyingVVerticallyReversed(changed, false).selection.options.variant, null);
+  // The same header keys now name the flipped positions.
+  const html = renderToStaticMarkup(createElement(FormatSettings, { value: changed, backgroundImage: null, onChange() {} }));
+  for (const label of ["Top Left", "Bottom Middle", "Top Right"]) assert.ok(html.includes(`<span>${label}</span>`), label);
+  assert.match(html, /name="flying-v-vertically-reversed"[^>]*checked=""|checked=""[^>]*name="flying-v-vertically-reversed"/);
+});
+
+test("a vertically reversed Flying V survives export and loading; other variants are rejected", () => {
+  const value = reversedFixture();
+  assert.deepEqual(formats.parseFormatCode(formats.formatCode(value)), value);
+  assert.deepEqual(formats.normalizeFormat(JSON.parse(JSON.stringify(value))), value);
+  assert.deepEqual(formats.formatCanvasSize(value), { width: 1440, height: 1920 });
+  for (const [eventFormat, entrantCount, variant] of [["doubles", 3, "vertically_reversed"], ["singles", 8, "four_podium"]]) {
+    const invalid = structuredClone(value);
+    Object.assign(invalid.selection.options, { event_format: eventFormat, entrant_count: entrantCount, variant });
+    assert.throws(() => formats.normalizeFormat(invalid), /Flying V formats/);
+  }
+  // Doubles has no reversed layout, so switching bracket type clears the flip.
+  assert.equal(formats.selectFixedLayout(value, "flying_v", "doubles").selection.options.variant, null);
+  assert.equal(flyingV.setFlyingVVerticallyReversed(fixture("doubles"), true).selection.options.variant, null);
+});
+
+test("reversed previews load their own cached figure, header, and numbering layers", () => {
+  const value = reversedFixture();
+  assert.equal(flyingV.flyingVLayoutId(value.selection), "singles_top_8_vertically_reversed");
+  assert.equal(flyingV.flyingVHeaderGeometryId(value.selection), "singles_vertically_reversed");
+  assert.equal(flyingV.flyingVLayoutId(fixture("singles").selection), "singles_top_8");
+  assert.equal(flyingV.flyingVHeaderGeometryId(fixture("doubles").selection), "doubles");
+  const numbers = numbering.placementNumberPreviewPath(value);
+  assert.equal(numbers, "placement_numbers/flying_v/singles_top_8_vertically_reversed/tournament.png");
+  for (const path of [numbers, "flying_v/singles_top_8_vertically_reversed/placeholders.png",
+    "flying_v_headers/ubuntu/singles_vertically_reversed/logo-title-metadata.png"]) {
+    assert.ok(existsSync(new URL(`../public/format_preview_layers/${path}`, import.meta.url)), path);
+  }
+});

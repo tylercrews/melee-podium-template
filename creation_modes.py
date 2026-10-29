@@ -12,6 +12,8 @@ from clapping_grid_layouts import GRID_VARIANTS, grid_layout
 
 
 _VARIANT_ID = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
+# Flying V Singles can flip top to bottom: first place leads from the top.
+FLYING_V_VERTICALLY_REVERSED = "vertically_reversed"
 
 
 class CreationMode(StrEnum):
@@ -145,11 +147,16 @@ class ModeSelection:
         ):
             raise ValueError("Radial supports Singles Top 8 and Doubles Top 4")
         if self.mode is CreationMode.FLYING_V and (
-            (self.options.event_format, self.options.entrant_count)
-            not in {(TournamentFormat.SINGLES, 8), (TournamentFormat.DOUBLES, 3)}
-            or self.options.variant is not None
+            (self.options.event_format, self.options.entrant_count, self.options.variant)
+            not in {
+                (TournamentFormat.SINGLES, 8, None),
+                (TournamentFormat.SINGLES, 8, FLYING_V_VERTICALLY_REVERSED),
+                (TournamentFormat.DOUBLES, 3, None),
+            }
         ):
-            raise ValueError("Flying V supports Singles Top 8 and Doubles Top 3")
+            raise ValueError(
+                "Flying V supports Singles Top 8 (optionally vertically reversed) and Doubles Top 3"
+            )
 
     @property
     def submode_id(self) -> str:

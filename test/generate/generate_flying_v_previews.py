@@ -1,4 +1,4 @@
-"""Render example Flying V Singles Top 8 and Doubles Top 3 images plus an overview.
+"""Render example Flying V Singles Top 8 (both orientations) and Doubles Top 3 images plus an overview.
 
 Usage:
     python test/generate/generate_flying_v_previews.py [--count 3] [--seed 2026]
@@ -65,9 +65,16 @@ def generate_examples(count: int, seed: int | None) -> list[tuple[str, Path]]:
         asset_id = BACKGROUNDS[(index - 1) % len(BACKGROUNDS)]
         font = fonts[(index - 1) % len(fonts)]
         singles = OUTPUT_FOLDER / f"singles_top_8_{index}.png"
-        draw_singles_top_8(sample_top_8_entrants(rng), tournament=sample_tournament(TournamentFormat.SINGLES),
+        entrants = sample_top_8_entrants(rng)
+        draw_singles_top_8(entrants, tournament=sample_tournament(TournamentFormat.SINGLES),
                            background=_background(asset_id, singles_canvas), font=font, output_path=singles)
         outputs.append((f"Singles #{index} - {font.value}", singles))
+        # The same entrants flipped top to bottom, for side-by-side comparison.
+        reversed_singles = OUTPUT_FOLDER / f"singles_top_8_vertically_reversed_{index}.png"
+        draw_singles_top_8(entrants, tournament=sample_tournament(TournamentFormat.SINGLES),
+                           background=_background(asset_id, singles_canvas), font=font, output_path=reversed_singles,
+                           vertically_reversed=True)
+        outputs.append((f"Reversed #{index} - {font.value}", reversed_singles))
         doubles = OUTPUT_FOLDER / f"doubles_top_3_{index}.png"
         draw_doubles_top_3(sample_top_4_teams(rng)[:3], tournament=sample_tournament(TournamentFormat.DOUBLES),
                            background=_background(asset_id, doubles_canvas), font=font, output_path=doubles)
@@ -76,9 +83,9 @@ def generate_examples(count: int, seed: int | None) -> list[tuple[str, Path]]:
 
 
 def build_overview(examples: list[tuple[str, Path]]) -> Path:
-    """Lay out one labeled row of Singles examples above a row of Doubles examples."""
+    """Lay out labeled rows of Singles, vertically reversed Singles, and Doubles examples."""
     label_height, gap = 34, 12
-    rows = [[item for item in examples if item[0].startswith(kind)] for kind in ("Singles", "Doubles")]
+    rows = [[item for item in examples if item[0].startswith(kind)] for kind in ("Singles", "Reversed", "Doubles")]
     thumbnails = []
     for row in rows:
         loaded = []

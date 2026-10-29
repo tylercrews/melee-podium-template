@@ -8,6 +8,7 @@ import MetadataRowEditor from "./MetadataRowEditor";
 import FontSizeSlider from "./FontSizeSlider";
 import { clappingGridLayout } from "./clappingGrid";
 import { transitionLayoutTextSettings } from "./layoutTextDefaults";
+import { isFlyingVVerticallyReversed, setFlyingVVerticallyReversed } from "./flyingVFormat";
 
 interface FormatSettingsProps {
   value: FormatConfiguration;
@@ -73,7 +74,9 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
 
   function headerPositionLabel(position: HeaderPosition, fallback: string) {
     if (selection.mode === "radial") return { top_left: "Middle Top", top_middle: "Middle", top_right: "Middle Bottom" }[position];
-    if (selection.mode === "flying_v") return { top_left: "Bottom Left", top_middle: "Top Middle", top_right: "Bottom Right" }[position];
+    if (selection.mode === "flying_v") return isFlyingVVerticallyReversed(selection)
+      ? { top_left: "Top Left", top_middle: "Bottom Middle", top_right: "Top Right" }[position]
+      : { top_left: "Bottom Left", top_middle: "Top Middle", top_right: "Bottom Right" }[position];
     const verticalEyes = selection.mode === "eyes"
       && (selection.options.event_format === "doubles" || selection.options.entrant_count === 8);
     if (!verticalEyes) return fallback;
@@ -108,6 +111,11 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
         {(["singles", "doubles"] as const).map((eventFormat) => <label className="format-choice" key={eventFormat}><input type="radio" name="event-format" value={eventFormat} checked={selection.options.event_format === eventFormat} onChange={() => updateEventFormat(eventFormat)} /><span className="format-choice__control" aria-hidden="true" /><span><strong>{eventFormat === "singles" ? "Singles" : "Doubles"}</strong><small>{eventFormat === "singles" ? "One player per result" : "Two-player teams"}</small></span></label>)}
       </div></fieldset>
     </section>
+
+    {selection.mode === "flying_v" && selection.options.event_format === "singles" && <section className="format-settings-card" aria-labelledby="flying-v-orientation-heading">
+      <div className="format-settings-card__heading"><span className="eyebrow">Layout</span><h2 id="flying-v-orientation-heading">Orientation</h2></div>
+      <label className="text-setting-check"><input type="checkbox" name="flying-v-vertically-reversed" checked={isFlyingVVerticallyReversed(selection)} onChange={(event) => onChange(setFlyingVVerticallyReversed(value, event.target.checked))} /><span><strong>Vertically Reverse the Flying V</strong><small>Flip the layout top to bottom: first place leads from the top with second beneath it, the title moves to the bottom, and the logo and metadata take the top corners.</small></span></label>
+    </section>}
 
     {!hasFixedLayouts(selection.mode) && <EntrantCountSettings value={value} onChange={onChange} />}
 
