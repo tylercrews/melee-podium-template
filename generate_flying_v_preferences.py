@@ -30,7 +30,7 @@ from portrait_scale_adjustment_to_character_relativity import get_pose_scale
 
 HEADER_REGION = "flying_v_header_region"
 SINGLES_CANVAS = PixelSize(1440, 1920)
-DOUBLES_CANVAS = PixelSize(2160, 1080)
+DOUBLES_CANVAS = PixelSize(2360, 1080)
 # Shared assignment keys: top_left is the bottom-left corner, top_middle is the
 # top center, and top_right is the bottom-right corner.
 SINGLES_HEADER_BOXES = {
@@ -47,14 +47,14 @@ REVERSED_SINGLES_HEADER_BOXES = {
 }
 DOUBLES_HEADER_BOXES = {
     "top_left": PixelRect(16, 800, 456, 1064),
-    "top_middle": PixelRect(780, 48, 1380, 230),
-    "top_right": PixelRect(1704, 800, 2144, 1064),
+    "top_middle": PixelRect(880, 48, 1480, 230),
+    "top_right": PixelRect(1904, 800, 2344, 1064),
 }
 # The attribution owns a slim row in the right half of the top edge, or of the
 # bottom edge when the layout is vertically reversed.
 SINGLES_WATERMARK_ROW = PixelRect(720, 0, 1424, 44)
 REVERSED_SINGLES_WATERMARK_ROW = PixelRect(720, 1876, 1424, 1920)
-DOUBLES_WATERMARK_ROW = PixelRect(1080, 0, 2144, 44)
+DOUBLES_WATERMARK_ROW = PixelRect(1180, 0, 2344, 44)
 # Width-to-height ratios of the canonical ordinal artwork, keyed by rank.
 ORDINAL_ASPECTS = {1: .95, 2: 1.15, 3: 1.26, 4: 1.26, 5: 1.36, 7: 1.1}
 NAME_ABOVE_HEAD_OFFSET = 15
@@ -150,9 +150,9 @@ def _number_above_name(slot: int, center_x: int, line: int, badge_height: int, n
 # stands on its frame bottom, where its placement art covers its feet and its
 # name sits just below. A scale of None fills the frame with only the tallest
 # render: second place's tallest characters reach the title, never past it.
-# Second place stands behind first, so its name and placement row sit in a
-# corner of its area instead, beside its figure rather than over it; its frame
-# is wide enough for the widest render at its tier scale.
+# Second place stands behind first, so its name and placement row sit just off
+# center at the top or bottom of its area instead; its frame is wide enough for
+# the widest render at its tier scale.
 SINGLES_TIERS = {
     1: (PixelRect(260, 720, 1180, 1830), 1.12, 50, 180, 64, 620),
     2: (PixelRect(334, 246, 1106, 1000), None, 40, 64, 54, 280),
@@ -163,10 +163,11 @@ SINGLES_TIERS = {
     7: (PixelRect(0, 50, 270, 320), .3, 10, 40, 36, 270),
     8: (PixelRect(1170, 50, 1440, 320), .3, 10, 40, 36, 270),
 }
-# Second place's label column sits this far beside its figure's center: at the
-# top right of its area just below the title when upright, or at the bottom
-# left just above the title when reversed. Flipping second place mirrors it.
-SECOND_LABEL_OFFSET = 270
+# Second place's label column sits this far beside its figures' center, just
+# clear of the center line: top center-right just below the title when upright,
+# or bottom center-left just above the title when reversed. Flipping second
+# place mirrors it.
+SECOND_LABEL_OFFSET = 180
 SECOND_LABEL_TOP = SINGLES_HEADER_BOXES["top_middle"].bottom + 10
 # Upright second place stands this far above the line its tier scale fills, so
 # more of it shows over first place's head; the renderer shrinks only the very
@@ -199,9 +200,9 @@ REVERSED_SINGLES_TIERS = {
 # corner header boxes so wide poses rarely shrink it, and the renderer shrinks
 # both members equally when one is too large.
 DOUBLES_TIERS = {
-    1: (((PixelRect(470, 320, 1350, 1040), 870), (PixelRect(810, 320, 1690, 1040), 1290)), .8, 20, 175, 56, 900),
+    1: (((PixelRect(460, 320, 1340, 1040), 900), (PixelRect(1020, 320, 1900, 1040), 1460)), .8, 20, 175, 56, 900),
     2: (((PixelRect(0, 146, 560, 631), 160), (PixelRect(160, 146, 720, 631), 440)), None, 10, 50, 44, 900),
-    3: (((PixelRect(1440, 146, 2000, 631), 1720), (PixelRect(1600, 146, 2160, 631), 2000)), None, 10, 50, 44, 900),
+    3: (((PixelRect(1640, 146, 2200, 631), 1920), (PixelRect(1800, 146, 2360, 631), 2200)), None, 10, 50, 44, 900),
 }
 DOUBLES_MEMBER_NAME_WIDTH = 560
 # The winning team stands a little above its name, which sits on the canvas bottom.
@@ -216,7 +217,7 @@ DOUBLES_SIDE_NAME_Z = DOUBLES_TIERS[1][2] - 5
 
 def _second_place_label(center_x: int, frame: PixelRect, vertically_reversed: bool, second_place_flipped: bool,
                         badge: int, size: int, width: int) -> tuple[PlacementTagPlacement, list[TextPlacement]]:
-    """Put second place's label in the corner of its area nearest the title."""
+    """Put second place's label beside its figures' center, at the edge of its area nearest the title."""
     side = -1 if vertically_reversed != second_place_flipped else 1
     label_x = center_x + side * SECOND_LABEL_OFFSET
     if vertically_reversed:

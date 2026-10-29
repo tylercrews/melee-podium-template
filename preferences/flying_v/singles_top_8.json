@@ -167,7 +167,7 @@
       "slot_id": "number_2",
       "asset_id": "02nd.png",
       "anchor": {
-        "x": 990,
+        "x": 900,
         "y": 360
       },
       "max_size": {
@@ -400,7 +400,7 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 990,
+        "x": 900,
         "y": 256
       },
       "max_width": 280,
@@ -416,7 +416,7 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 1038,
+        "x": 948,
         "y": 360
       },
       "max_width": 140,
@@ -432,7 +432,7 @@
       "entrant_slot": 2,
       "member_slot": null,
       "anchor": {
-        "x": 942,
+        "x": 852,
         "y": 360
       },
       "max_width": 92,

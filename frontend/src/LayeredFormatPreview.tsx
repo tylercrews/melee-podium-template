@@ -87,8 +87,8 @@ function headerBox(format: FormatConfiguration, outputSize: PixelSize, position:
     }[position];
     return (format.selection.options.event_format === "doubles" ? {
       top_left: { left: 16, top: 800, right: 456, bottom: 1064 },
-      top_middle: { left: 780, top: 48, right: 1380, bottom: 230 },
-      top_right: { left: 1704, top: 800, right: 2144, bottom: 1064 },
+      top_middle: { left: 880, top: 48, right: 1480, bottom: 230 },
+      top_right: { left: 1904, top: 800, right: 2344, bottom: 1064 },
     } : {
       top_left: { left: 16, top: 1612, right: 396, bottom: 1904 },
       top_middle: { left: 420, top: 48, right: 1020, bottom: 246 },

@@ -69,8 +69,8 @@ def draw_singles_top_8(
     ``vertically_reversed`` flips the layout: first place leads from the top,
     the title moves to the bottom, and the logo and metadata take the top corners.
     ``second_place_flipped`` mirrors second place's label to the other side of
-    its area: top left instead of top right, or bottom right instead of bottom
-    left when reversed.
+    its figures: top center-left instead of top center-right, or bottom
+    center-right instead of bottom center-left when reversed.
     """
     return _draw_flying_v(
         TournamentFormat.SINGLES, 8, entrants, tournament=tournament, background=background,
