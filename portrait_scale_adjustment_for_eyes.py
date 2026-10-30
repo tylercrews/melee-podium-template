@@ -140,6 +140,7 @@ EYE_PORTRAIT_ADJUSTMENTS: dict[str, dict[str, EyePortraitAdjustment]] = {
         "c": EyePortraitAdjustment(760, 140, 1.15),
         "d": EyePortraitAdjustment(700, 235, 1.20),
         "e": EyePortraitAdjustment(800, 195, 1.75),
+        "g": EyePortraitAdjustment(924, 610, 1.90),
     },
     "Mario": {
         "a": EyePortraitAdjustment(480, 330, 1.35),

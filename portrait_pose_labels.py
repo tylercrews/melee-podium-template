@@ -18,7 +18,7 @@ POSE_LABELS = {
     "Jigglypuff": {"a": "Surprised", "b": "Char Select Portrait - Waving", "c": "Victory B - Tilted", "d": "Victory X - Rest", "e": "Taunt"},
     "Kirby": {"a": "Tippie Toes", "b": "Char Select Portrait - Waving", "c": "Forgotten Land Cover"},
     "Link": {"a": "Standing", "b": "Char Select Portrait - Blocking", "c": "Victory Y* - Sword Raise"},
-    "Luigi": {"a": "Bashful", "b": "Char Select Portrait - Hat Tip", "c": "Victory B - Plank", "d": "Victory Y - Finger Guns", "e": "Brawl Up Taunt - Point Right"},
+    "Luigi": {"a": "Bashful", "b": "Char Select Portrait - Hat Tip", "c": "Victory B - Plank", "d": "Victory Y - Finger Guns", "e": "Brawl Up Taunt - Point Right", "g": "Downsmash - The Richie"},
     "Mario": {"a": "Victory Hand", "b": "Char Select Portrait - Jumping", "c": "Victory Y - Pointing"},
     "Marth": {"a": "Wide Stance", "b": "Char Select Portrait - Narrow Stance", "c": "Victory B - Sword Point", "d": "Victory Y - Looking Back", "e": "Victory X - Jojo Pose"},
     "Mewtwo": {"a": "Glaring", "b": "Char Select Portrait - Crystal Sprite", "c": "Victory B - Shadow Blast", "d": "Victory X - Levitate"},

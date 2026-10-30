@@ -271,7 +271,7 @@ def _fighter_options() -> list[dict[str, Any]]:
 
 @app.get("/api/health")
 def health() -> Any:
-    return jsonify(status="ok", release="2026-09-29-blank-tournament-fields-v2")
+    return jsonify(status="ok", release="2026-10-30-luigi-downsmash-pose")
 
 
 @app.get("/api/stats")
