@@ -45,10 +45,13 @@ Open `http://127.0.0.1:5173/`. Vite proxies API and character-asset requests to 
 
 ### Local checks
 
-Run the Python test suite from the repository root:
+Run the Python test suite from the repository root. `run_tests.py` runs each
+`test/*_test.py` module in its own process in parallel, finishing in about the
+time of the slowest module instead of the whole suite serially:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s .\test -p "*_test.py"
+.\.venv\Scripts\python.exe run_tests.py
+.\.venv\Scripts\python.exe run_tests.py eye_positioning flying_v  # selected modules
 ```
 
 Type-check and build the frontend:

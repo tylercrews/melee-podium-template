@@ -211,6 +211,7 @@
 
 - The README planning sections beginning with `TODO LIST:`, `Maybes/Eventuallies:`, `Different Layout Styles One Day:`, `LocalStorage and LocalStorage Management page.`, `way down the road:`, and `TODO Refactor Plan:` are the user's personal notes. Never delete, rewrite, reorder, mark complete, or otherwise modify those sections unless the user explicitly asks to change the TODO list itself. Repository cleanup and documentation refreshes must preserve them verbatim.
 - Update this file when the user establishes a durable design or architecture decision.
+- Run Python tests with the parallel runner, never a serial `unittest discover` over the whole suite (about 16 minutes serially versus about 3.5): `.\.venv\Scripts\python.exe run_tests.py` runs every `test/*_test.py` module in its own process, and `run_tests.py eye_positioning flying_v` runs only the named modules. It prints each failing module's full output and exits non-zero on failure. Frontend tests run with `npm test` in `frontend/`.
 - Add focused tests with new rendering modules, including serialization and image-boundary behavior.
 - Keep reusable sample entrants and complete sample tournament metadata together in `sample_creation_data.py`; generation scripts and tests should import from that single fixture module.
 - Sample Mew2King uses the plain tag `Mew2King`, without a sponsor prefix.
