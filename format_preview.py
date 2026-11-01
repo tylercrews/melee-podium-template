@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import random
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from PIL import Image
 
+from color_values import format_rgba_hex
 from background_builder import (
     BUILTIN_BACKGROUND_SIZES,
     BackgroundRequest,
@@ -283,4 +284,26 @@ def render_format_preview(*args, **kwargs) -> Image.Image:
     """Return a still render for offline reviews and non-animated callers."""
     result = prepare_format_preview(*args, **kwargs)
     return result.frame() if isinstance(result, ClappingLayout) else result
+
+
+def matched_entrant_text_styles(*args: Any, **kwargs: Any) -> tuple[tuple[str, bool], ...]:
+    """Return each entrant's text color and Metallic finish under Match podium color selection.
+
+    The UI seeds explicit entrant text colors from these, so choosing colors
+    starts from exactly what the matched render already shows.
+    """
+
+    setup = _preview_setup(*args, **kwargs)
+    settings = setup.request.text_settings
+    request = replace(setup.request, text_settings=replace(
+        settings, entrant_text_color_mode="match_podium", entrant_text_colors=(), entrant_text_metallic=()))
+    slots = range(1, request.selection.options.entrant_count + 1)
+    if request.selection.mode is CreationMode.PODIUM:
+        styles = (setup.renderer._default_text_style(request, slot) for slot in slots)
+        return tuple((color if isinstance(color, str) else format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255), metallic)
+                     for color, metallic in styles)
+    # Other modes fill each entrant's text with its placement's own color.
+    placements = sorted(setup.preferences.text_slots, key=lambda item: (item.z_index, item.slot_id))
+    return tuple((next((item.color for item in placements if item.entrant_slot == slot and item.color), None) or "#FFFFFFFF", False)
+                 for slot in slots)
 

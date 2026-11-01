@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import RgbaColorPicker from "./RgbaColorPicker";
+import { MatchEntrantTextColors, entrantTextColorCount, matchedEntrantTextColorsRequest, seedEntrantTextColors } from "./entrantTextColors";
 import { EntrantTextColorSelectionMode, FormatConfiguration, FormattingAssetColor, FormattingAssetColors, FormattingColorPreset, FormattingColorSelectionMode, PresetTransparency, formattingAssetCount, hasFormattingAssetColors } from "./format";
 
 interface FormattingAssetColorSettingsProps {
   value: FormatConfiguration;
   onChange: (value: FormatConfiguration) => void;
+  /** Without it, new entrant text color slots start from the fallback palette. */
+  matchEntrantTextColors?: MatchEntrantTextColors;
 }
 
 const DEFAULT_COLORS: FormattingAssetColor[] = [
@@ -42,7 +45,7 @@ function resizeColors(colors: FormattingAssetColor[], count: number): Formatting
   return Array.from({ length: count }, (_, index) => ({ ...(colors[index] ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length]) }));
 }
 
-export default function FormattingAssetColorSettings({ value, onChange }: FormattingAssetColorSettingsProps) {
+export default function FormattingAssetColorSettings({ value, onChange, matchEntrantTextColors }: FormattingAssetColorSettingsProps) {
   const configuration = value.formatting_asset_colors;
   const isRadial = value.selection.mode === "radial";
   const isSquares = value.selection.mode === "squares";
@@ -53,19 +56,45 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
   const requiredCount = configuration.mode === "pick_1" ? 1 : configuration.mode === "pick_2" ? 2 : configuration.mode === "pick_all" ? assetCount : 0;
   const entrantConfiguration = value.entrant_text_colors;
   const entrantCount = value.selection.options.entrant_count ?? 3;
-  const entrantColorCount = entrantConfiguration.mode === "pick_1" ? 1 : entrantConfiguration.mode === "pick_2" ? 2 : entrantConfiguration.mode === "pick_all" ? entrantCount : 0;
+  const entrantColorCount = entrantTextColorCount(entrantConfiguration.mode, entrantCount);
+  const [matchingTextColors, setMatchingTextColors] = useState(false);
+  const latestValue = useRef(value);
+  latestValue.current = value;
+  const pendingTextSeed = useRef<string | null>(null);
 
   useEffect(() => {
     const resizeAssets = configuration.mode !== "premade" && configuration.colors.length !== requiredCount;
-    const resizeEntrants = entrantConfiguration.colors.length !== entrantColorCount;
-    if (resizeAssets || resizeEntrants) {
+    const shrinkEntrants = entrantConfiguration.colors.length > entrantColorCount;
+    if (resizeAssets || shrinkEntrants) {
       onChange({
         ...value,
         formatting_asset_colors: resizeAssets ? { ...configuration, colors: resizeColors(configuration.colors, requiredCount) } : configuration,
-        entrant_text_colors: resizeEntrants ? { ...entrantConfiguration, colors: resizeTextColors(entrantConfiguration.colors, entrantColorCount), metallic: resizeMetallic(entrantConfiguration.metallic, entrantColorCount) } : entrantConfiguration,
+        entrant_text_colors: shrinkEntrants ? seedEntrantTextColors(entrantConfiguration, entrantConfiguration.mode, entrantCount, null, fallbackTextColor) : entrantConfiguration,
       });
+    } else if (entrantConfiguration.colors.length < entrantColorCount) {
+      void applyEntrantTextMode(entrantConfiguration.mode);
     }
-  }, [configuration, entrantColorCount, entrantConfiguration, onChange, requiredCount, value]);
+  }, [configuration, entrantColorCount, entrantConfiguration, entrantCount, onChange, requiredCount, value]);
+
+  /** Switch modes, seeding any new text color slots from what matching currently renders. */
+  async function applyEntrantTextMode(mode: EntrantTextColorSelectionMode) {
+    const payload = matchedEntrantTextColorsRequest(value);
+    if (!matchEntrantTextColors || !payload || entrantTextColorCount(mode, entrantCount) <= entrantConfiguration.colors.length) {
+      onChange({ ...value, entrant_text_colors: seedEntrantTextColors(entrantConfiguration, mode, entrantCount, null, fallbackTextColor) });
+      return;
+    }
+    const key = JSON.stringify([mode, payload]);
+    if (pendingTextSeed.current === key) return;
+    pendingTextSeed.current = key;
+    setMatchingTextColors(true);
+    const matched = await matchEntrantTextColors(payload).catch(() => null);
+    // A newer layout or palette started its own request; let that one apply.
+    if (pendingTextSeed.current !== key) return;
+    pendingTextSeed.current = null;
+    setMatchingTextColors(false);
+    const latest = latestValue.current;
+    onChange({ ...latest, entrant_text_colors: seedEntrantTextColors(latest.entrant_text_colors, mode, latest.selection.options.entrant_count ?? 3, matched, fallbackTextColor) });
+  }
 
   function setConfiguration(formatting_asset_colors: FormattingAssetColors) {
     onChange({ ...value, formatting_asset_colors });
@@ -99,11 +128,6 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
     setConfiguration({ ...configuration, colors });
   }
 
-  function selectEntrantTextMode(mode: EntrantTextColorSelectionMode) {
-    const count = mode === "match_podium" ? 0 : mode === "pick_1" ? 1 : mode === "pick_2" ? 2 : entrantCount;
-    onChange({ ...value, entrant_text_colors: { mode, colors: resizeTextColors(entrantConfiguration.colors, count), metallic: resizeMetallic(entrantConfiguration.metallic, count) } });
-  }
-
   function updateEntrantTextColor(index: number, color: string) {
     const colors = resizeTextColors(entrantConfiguration.colors, entrantColorCount);
     colors[index] = color;
@@ -123,7 +147,7 @@ export default function FormattingAssetColorSettings({ value, onChange }: Format
       {resizeColors(configuration.colors, requiredCount).map((colors, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{configuration.mode === "pick_all" ? `${assetNoun[0].toUpperCase()}${assetNoun.slice(1)} ${index + 1}` : `Color set ${index + 1}`}</span><small>{configuration.mode === "pick_2" ? (index === 0 ? `Odd ${assetNoun}s` : `Even ${assetNoun}s`) : configuration.mode === "pick_1" ? `Applied to every ${assetNoun}` : `Formatting asset ${index + 1}`}</small></div><div className="formatting-color-set__pickers"><RgbaColorPicker label={isRadial ? "Background Color (Primary)" : isEyes ? "Background Color" : isSquares ? "Border Color" : "Main Color"} value={colors.main_color} onChange={(color) => updateColor(index, "main_color", color)} metallic={isSquares || isEyes || isRadial ? undefined : colors.metallic} onMetallicChange={isSquares || isEyes || isRadial ? undefined : (metallic) => updatePodiumMetallic(index, metallic)} />{!isSquares && !isEyes && !isRadial && <RgbaColorPicker label="Face Color" value={colors.face_color} onChange={(color) => updateColor(index, "face_color", color)} />}{!isEyes && <RgbaColorPicker label={isRadial ? "Border Color (Box)" : isSquares ? "Background Color" : "Sides Color"} value={colors.base_color} onChange={(color) => updateColor(index, "base_color", color)} />}</div></section>)}
     </div>}
     {configuration.mode === "premade" && configuration.preset === "rainbow" && <p className="formatting-colors__note">Rainbow adapts to the layout: three podiums use red, green, and violet; four podiums use orange, green, blue, and violet.</p>}</> : !isFlyingV && <p className="formatting-colors__note">Legacy podium artwork uses its built-in podium colors.</p>}
-    <div className="entrant-text-colors"><label className="formatting-colors__select">Entrant Text Color<select value={entrantConfiguration.mode} onChange={(event) => selectEntrantTextMode(event.target.value as EntrantTextColorSelectionMode)}>{entrantTextChoices.map((choice) => <option value={choice.value} key={choice.value}>{choice.value === "match_podium" && isFlyingV ? "Smash Player Colors" : choice.value === "match_podium" && value.selection.mode !== "podium" ? `Match ${assetNoun} color selection` : choice.label}</option>)}</select></label>
+    <div className="entrant-text-colors"><label className="formatting-colors__select">Entrant Text Color<select value={entrantConfiguration.mode} disabled={matchingTextColors} aria-busy={matchingTextColors} onChange={(event) => void applyEntrantTextMode(event.target.value as EntrantTextColorSelectionMode)}>{entrantTextChoices.map((choice) => <option value={choice.value} key={choice.value}>{choice.value === "match_podium" && isFlyingV ? "Smash Player Colors" : choice.value === "match_podium" && value.selection.mode !== "podium" ? `Match ${assetNoun} color selection` : choice.label}</option>)}</select></label>
       {resizeTextColors(entrantConfiguration.colors, entrantColorCount).map((color, index) => <section className="formatting-color-set" key={index}><div className="formatting-color-set__heading"><span>{entrantConfiguration.mode === "pick_all" ? `Entrant ${index + 1}` : `Text color ${index + 1}`}</span><small>{entrantConfiguration.mode === "pick_2" ? (index === 0 ? "Odd placements" : "Even placements") : entrantConfiguration.mode === "pick_1" ? "Applied to every entrant" : `Placement ${index + 1}`}</small></div><RgbaColorPicker label="Entrant Text Color" value={color} onChange={(nextColor) => updateEntrantTextColor(index, nextColor)} metallic={resizeMetallic(entrantConfiguration.metallic, entrantColorCount)[index]} onMetallicChange={(metallic) => updateEntrantTextMetallic(index, metallic)} /></section>)}
     </div>
   </section>;
@@ -133,8 +157,12 @@ function TransparencySlider({ label, value, onChange }: { label: string; value: 
   return <label className="formatting-colors__transparency">{label} <output>{value}%</output><input type="range" min="0" max="100" value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
 }
 
+function fallbackTextColor(index: number): string {
+  return DEFAULT_COLORS[index % DEFAULT_COLORS.length].main_color;
+}
+
 function resizeTextColors(colors: string[], count: number): string[] {
-  return Array.from({ length: count }, (_, index) => colors[index] ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length].main_color);
+  return Array.from({ length: count }, (_, index) => colors[index] ?? fallbackTextColor(index));
 }
 
 function resizeMetallic(values: boolean[], count: number): boolean[] {

@@ -3,6 +3,7 @@ import { FormatImageInfo } from "./BackgroundPositionDialog";
 import ImageBackgroundSettings from "./ImageBackgroundSettings";
 import EntrantCountSettings from "./EntrantCountSettings";
 import FormattingAssetColorSettings from "./FormattingAssetColorSettings";
+import { MatchEntrantTextColors } from "./entrantTextColors";
 import RgbaColorPicker from "./RgbaColorPicker";
 import MetadataRowEditor from "./MetadataRowEditor";
 import FontSizeSlider from "./FontSizeSlider";
@@ -14,6 +15,7 @@ interface FormatSettingsProps {
   value: FormatConfiguration;
   backgroundImage: FormatImageInfo | null;
   onChange: (value: FormatConfiguration) => void;
+  matchEntrantTextColors?: MatchEntrantTextColors;
 }
 
 const headerPositions: Array<{ value: HeaderPosition; label: string }> = [
@@ -28,7 +30,7 @@ const headerContents: Array<{ value: HeaderContent; label: string }> = [
   { value: "metadata", label: "Metadata" },
 ];
 
-export default function FormatSettings({ value, backgroundImage, onChange }: FormatSettingsProps) {
+export default function FormatSettings({ value, backgroundImage, onChange, matchEntrantTextColors }: FormatSettingsProps) {
   const { selection } = value;
 
   function updateMode(mode: CreationMode) {
@@ -141,6 +143,6 @@ export default function FormatSettings({ value, backgroundImage, onChange }: For
       </div>
     </section>
     <ImageBackgroundSettings value={value} backgroundImage={backgroundImage} onChange={onChange} />
-    <FormattingAssetColorSettings value={value} onChange={onChange} />
+    <FormattingAssetColorSettings value={value} onChange={onChange} matchEntrantTextColors={matchEntrantTextColors} />
   </div>;
 }

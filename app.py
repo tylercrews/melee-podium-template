@@ -26,7 +26,7 @@ from geometric_formatting_colors import GeometricFormattingColor, GeometricForma
 from radial_palette import radial_palette_color
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
-from format_preview import prepare_format_preview, prepare_format_preview_layers, render_format_preview, render_format_preview_header
+from format_preview import matched_entrant_text_styles, prepare_format_preview, prepare_format_preview_layers, render_format_preview, render_format_preview_header
 from podiums_clapping_renderer import ClappingLayout
 from clapping_grid_layouts import GRID_VARIANTS
 from entrant_visibility import visibility_flags
@@ -794,6 +794,17 @@ def format_preview_header() -> Any:
     positional, arguments, _composition_images, _clapping = _format_preview_arguments()
     images = render_format_preview_header(*positional, **arguments)
     response = jsonify(layers=[_preview_layer_payload("header", image) for image in images])
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.post("/api/entrant-text-colors/matched")
+def matched_entrant_text_colors() -> Any:
+    """Return the entrant text colors that matching the formatting colors renders."""
+
+    positional, arguments, _composition_images, _clapping = _format_preview_arguments()
+    styles = matched_entrant_text_styles(*positional, **arguments)
+    response = jsonify(colors=[color for color, _metallic in styles], metallic=[metallic for _color, metallic in styles])
     response.headers["Cache-Control"] = "no-store"
     return response
 

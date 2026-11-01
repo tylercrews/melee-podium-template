@@ -1,5 +1,5 @@
 import { FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
-import { SavedFormat, createSavedFormat, listSavedFormats, replaceSavedFormat } from "./api";
+import { SavedFormat, createSavedFormat, getMatchedEntrantTextColors, listSavedFormats, replaceSavedFormat } from "./api";
 import { User } from "./firebaseAuth";
 import { FormatConfiguration, formatCode, isFormatComplete } from "./format";
 import FormatSettings from "./FormatSettings";
@@ -112,7 +112,7 @@ export default function FormatStep({ user, value, backgroundImage, onChange, onP
   return <section className="step-content format-step">
     <div className="step-intro"><div className="step-heading-row"><h1>Choose a Format</h1><button className="button button--ghost" type="button" disabled={!complete} onClick={onProceed}>{complete ? "Proceed to Bracket Import" : "Cannot Skip"}</button></div><p>Configure the image layout, header content, colors, and text settings.</p></div>
 
-    <FormatSettings value={value} backgroundImage={backgroundImage} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} />
+    <FormatSettings value={value} backgroundImage={backgroundImage} onChange={(nextValue) => { setSelectedId(""); onChange(nextValue); }} matchEntrantTextColors={getMatchedEntrantTextColors} />
     <div className={`format-readiness format-readiness--summary${complete ? " is-ready" : ""}`}><span aria-hidden="true" />{complete ? "All available format properties are selected" : "Choose an image type, bracket type, and entrant layout to continue"}</div>
 
     {message && <p className="inline-message format-message" role={messageIsError ? "alert" : "status"}>{message}</p>}

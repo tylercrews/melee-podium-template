@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import SAVED_COLOR_PALETTES from "./savedColors.json";
 
 interface RgbaColorPickerProps {
   label: string;
@@ -28,6 +29,8 @@ export default function RgbaColorPicker({ label, value, onChange, metallic, onMe
       <form onSubmit={commitDraft}><label>RGBA hex<input value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={() => commitDraft()} maxLength={9} spellCheck={false} aria-label={`${label} RGBA hex value`} /></label></form>
       <label className="rgba-picker__alpha">Opacity <span>{Math.round(alpha / 255 * 100)}%</span><input type="range" min="0" max="255" value={alpha} onChange={(event) => onChange(`${value.slice(0, 7)}${Number(event.target.value).toString(16).padStart(2, "0")}`.toUpperCase())} /></label>
     </div>
+    {/* Saved palette colors replace only the RGB channels, keeping the chosen opacity. */}
+    <div className="rgba-picker__saved" role="group" aria-label={`${label} saved colors`}>{SAVED_COLOR_PALETTES.map((palette) => <div className="rgba-picker__palette" role="group" aria-label={palette.name} key={palette.name}>{palette.colors.map((saved) => <button className="rgba-picker__saved-color" type="button" key={saved.name} style={{ background: saved.color }} title={`${palette.name}: ${saved.name}`} aria-label={`${palette.name} ${saved.name}`} aria-pressed={saved.color.slice(0, 7).toUpperCase() === value.slice(0, 7).toUpperCase()} onClick={() => onChange(`${saved.color.slice(0, 7)}${value.slice(7, 9)}`.toUpperCase())} />)}</div>)}</div>
   </div>;
 }
 

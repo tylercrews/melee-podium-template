@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Smash Player Colors",
+    "colors": [
+      { "name": "Red", "color": "#D90300FF" },
+      { "name": "Blue", "color": "#5B59F8FF" },
+      { "name": "Yellow", "color": "#FFD805FF" },
+      { "name": "Green", "color": "#00F042FF" },
+      { "name": "Orange", "color": "#FB8B00FF" },
+      { "name": "Cyan", "color": "#00CDC3FF" },
+      { "name": "Magenta", "color": "#FF00FFFF" },
+      { "name": "Gray", "color": "#8D8D8DFF" }
+    ]
+  },
+  {
+    "name": "Olympic Medals",
+    "colors": [
+      { "name": "Gold", "color": "#D4AF37FF" },
+      { "name": "Silver", "color": "#BEC6D2FF" },
+      { "name": "Bronze", "color": "#B87333FF" },
+      { "name": "Gray", "color": "#707070FF" }
+    ]
+  },
+  {
+    "name": "Rainbow",
+    "colors": [
+      { "name": "Red", "color": "#F23838FF" },
+      { "name": "Orange", "color": "#F28C28FF" },
+      { "name": "Yellow", "color": "#F2D338FF" },
+      { "name": "Green", "color": "#3BC65AFF" },
+      { "name": "Cyan", "color": "#32C7CFFF" },
+      { "name": "Blue", "color": "#3478F6FF" },
+      { "name": "Indigo", "color": "#5746C7FF" },
+      { "name": "Violet", "color": "#A84BE0FF" }
+    ]
+  }
+]

@@ -151,6 +151,20 @@ export async function importBracket(url: string, topEntrants: 3 | 4 | 8, importA
   return response.json() as Promise<unknown>;
 }
 
+export interface MatchedEntrantTextColors {
+  colors: string[];
+  metallic: boolean[];
+}
+
+export async function getMatchedEntrantTextColors(payload: unknown): Promise<MatchedEntrantTextColors> {
+  const response = await request("entrant-text-colors/matched", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return response.json() as Promise<MatchedEntrantTextColors>;
+}
+
 export async function renderPodium(payload: unknown): Promise<Blob> {
   const response = await request("render", {
     method: "POST",
