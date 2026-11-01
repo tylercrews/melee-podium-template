@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import RgbaColorPicker from "./RgbaColorPicker";
+import SliderValueInput, { formatPercent } from "./SliderValueInput";
 import { MatchEntrantTextColors, entrantTextColorCount, matchedEntrantTextColorsRequest, seedEntrantTextColors } from "./entrantTextColors";
 import { EntrantTextColorSelectionMode, FormatConfiguration, FormattingAssetColor, FormattingAssetColors, FormattingColorPreset, FormattingColorSelectionMode, PresetTransparency, formattingAssetCount, hasFormattingAssetColors } from "./format";
 
@@ -154,7 +155,7 @@ export default function FormattingAssetColorSettings({ value, onChange, matchEnt
 }
 
 function TransparencySlider({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return <label className="formatting-colors__transparency">{label} <output>{value}%</output><input type="range" min="0" max="100" value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
+  return <label className="formatting-colors__transparency">{label} <SliderValueInput label={label} value={value} min={0} max={100} format={formatPercent} onChange={onChange} /><input aria-label={label} type="range" min="0" max="100" value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
 }
 
 function fallbackTextColor(index: number): string {

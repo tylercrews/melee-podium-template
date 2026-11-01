@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import BackgroundPositionDialog, { FormatImageInfo } from "./BackgroundPositionDialog";
 import RgbaColorPicker from "./RgbaColorPicker";
+import SliderValueInput from "./SliderValueInput";
 import { BackgroundSizeOption, FormatConfiguration, buildBackgroundPlacement, backgroundSizeValue, formatCanvasSize } from "./format";
 
 interface ImageBackgroundSettingsProps {
@@ -10,8 +11,10 @@ interface ImageBackgroundSettingsProps {
 }
 
 const sliderPosition = (multiplier: number) => Math.round(Math.log10(Math.min(100, Math.max(.001, multiplier))) * 100);
-const sliderMultiplier = (position: number) => Number((10 ** (position / 100)).toFixed(3));
-const multiplierLabel = (multiplier: number) => `${multiplier.toFixed(multiplier < .01 ? 3 : 2).replace(/0+$/, "").replace(/\.$/, "")}×`;
+const roundMultiplier = (multiplier: number) => Number(multiplier.toFixed(3));
+const sliderMultiplier = (position: number) => roundMultiplier(10 ** (position / 100));
+// Show every stored decimal so a typed multiplier reads back exactly.
+const multiplierLabel = (multiplier: number) => `${multiplier.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}×`;
 
 interface SizeSliderProps {
   label: string;
@@ -21,8 +24,8 @@ interface SizeSliderProps {
 
 function SizeSlider({ label, value, onChange }: SizeSliderProps) {
   return <label className="size-slider">
-    <span className="size-slider__heading"><strong>{label}</strong><output>{multiplierLabel(value)}</output></span>
-    <input type="range" min="-300" max="200" step="1" value={sliderPosition(value)} onChange={(event) => onChange(sliderMultiplier(Number(event.target.value)))} />
+    <span className="size-slider__heading"><strong>{label}</strong><SliderValueInput label={label} value={value} min={.001} max={100} round={roundMultiplier} format={multiplierLabel} onChange={onChange} /></span>
+    <input aria-label={label} type="range" min="-300" max="200" step="1" value={sliderPosition(value)} onChange={(event) => onChange(sliderMultiplier(Number(event.target.value)))} />
     <span className="size-slider__marks" aria-hidden="true"><span>0.001×</span><span>1×</span><span>100×</span></span>
   </label>;
 }

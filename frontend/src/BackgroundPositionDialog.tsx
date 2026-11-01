@@ -1,5 +1,6 @@
 import { PointerEvent, useMemo, useRef, useState } from "react";
 import { BackgroundPlacement, BackgroundSizeOption, PixelSize, backgroundSizeValue, buildBackgroundPlacement } from "./format";
+import SliderValueInput, { formatPercent } from "./SliderValueInput";
 
 export interface FormatImageInfo extends PixelSize {
   id: string;
@@ -59,7 +60,11 @@ export default function BackgroundPositionDialog({ image, outputSize, multiplier
         <img src={image.url} alt="" draggable={false} style={{ left: percent(geometry.imageLeft, workspace.width), top: percent(geometry.imageTop, workspace.height), width: percent(scaled.width, workspace.width), height: percent(scaled.height, workspace.height) }} />
         <div className="background-position-stage__viewport" style={{ left: percent(geometry.viewportLeft, workspace.width), top: percent(geometry.viewportTop, workspace.height), width: percent(outputSize.width, workspace.width), height: percent(outputSize.height, workspace.height) }}><span>{outputSize.width} × {outputSize.height}</span></div>
       </div>
-      <div className="background-position-sliders"><label>Horizontal position <span>{Math.round(alignment.x * 100)}%</span><input type="range" min="0" max="100" value={Math.round(alignment.x * 100)} onChange={(event) => setAlignment((current) => ({ ...current, x: Number(event.target.value) / 100 }))} /></label><label>Vertical position <span>{Math.round(alignment.y * 100)}%</span><input type="range" min="0" max="100" value={Math.round(alignment.y * 100)} onChange={(event) => setAlignment((current) => ({ ...current, y: Number(event.target.value) / 100 }))} /></label></div>
+      <div className="background-position-sliders">{(["x", "y"] as const).map((axis) => {
+        const label = axis === "x" ? "Horizontal position" : "Vertical position";
+        const setPosition = (position: number) => setAlignment((current) => ({ ...current, [axis]: position / 100 }));
+        return <label key={axis}>{label} <SliderValueInput label={label} value={Math.round(alignment[axis] * 100)} min={0} max={100} format={formatPercent} onChange={setPosition} /><input aria-label={label} type="range" min="0" max="100" value={Math.round(alignment[axis] * 100)} onChange={(event) => setPosition(Number(event.target.value))} /></label>;
+      })}</div>
       <p className="background-position-summary">{image.name} · {image.width} × {image.height} · {multiplier === "scale_to_width" ? "scaled to width" : multiplier === "scale_to_height" ? "scaled to height" : `set to ${multiplier}×`} ({scale.toFixed(3)}× actual size)</p>
       <div className="modal__actions"><button className="button button--ghost" type="button" onClick={() => dialog.current?.close()}>Cancel</button><button className="button button--dark" type="button" onClick={() => { onChange(buildBackgroundPlacement(image.id, image, outputSize, multiplier, alignment)); dialog.current?.close(); }}>Apply position</button></div>
     </div></dialog>
