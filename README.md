@@ -80,6 +80,12 @@ npm run build
 
 
 TODO LIST:
+* adjust the top 8 medals template to have a lighter dark gray for 4th (matches podium) and then darker dark gray for 5th onward?
+* can you make it so instead of refreshing the entire drawing you JUST refresh what elements have changed?
+* when reselecting/selecting all text colors default to match the podiums instead of always defaulting to controller colors
+* ice climbers portrait previews not working
+* maybe changge wording to "tournament logo/ image"?
+* game and watch needs a bell pose (taunt or victory)
 * new text field for entrant record, should get from bracket import and/or count it up. Ideally can be right next to or underneath where their seed is. 
 * doubles flying v flip it so that the team name is on top and then the player names and placement are underneath?
 * add option for flags
