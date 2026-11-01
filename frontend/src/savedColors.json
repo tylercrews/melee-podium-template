@@ -24,14 +24,16 @@
   {
     "name": "Rainbow",
     "colors": [
-      { "name": "Red", "color": "#F23838FF" },
-      { "name": "Orange", "color": "#F28C28FF" },
-      { "name": "Yellow", "color": "#F2D338FF" },
-      { "name": "Green", "color": "#3BC65AFF" },
-      { "name": "Cyan", "color": "#32C7CFFF" },
-      { "name": "Blue", "color": "#3478F6FF" },
-      { "name": "Indigo", "color": "#5746C7FF" },
       { "name": "Violet", "color": "#A84BE0FF" }
+    ]
+  },
+  {
+    "name": "Neutrals",
+    "colors": [
+      { "name": "White", "color": "#FFFFFFFF" },
+      { "name": "Very Light Gray", "color": "#D9D9D9FF" },
+      { "name": "Very Dark Gray", "color": "#303030FF" },
+      { "name": "Black", "color": "#000000FF" }
     ]
   }
 ]

@@ -95,10 +95,12 @@ test("color pickers offer the saved palettes and keep the chosen opacity", () =>
   let component;
   act(() => { component = create(createElement(RgbaColorPicker, { label: "Main Color", value: "#12345680", onChange: (color) => changes.push(color) })); });
   const swatches = component.root.findAllByProps({ className: "rgba-picker__saved-color" });
-  assert.equal(swatches.length, 20);
+  assert.equal(swatches.length, 17);
   const labels = swatches.map((swatch) => swatch.props["aria-label"]);
   for (const name of ["Red", "Blue", "Yellow", "Green", "Orange", "Cyan", "Magenta", "Gray"]) assert.ok(labels.includes(`Smash Player Colors ${name}`));
   for (const name of ["Gold", "Silver", "Bronze"]) assert.ok(labels.includes(`Olympic Medals ${name}`));
+  assert.deepEqual(swatches.slice(-4).map((swatch) => [swatch.props["aria-label"], swatch.props.style.background]), [
+    ["Neutrals White", "#FFFFFFFF"], ["Neutrals Very Light Gray", "#D9D9D9FF"], ["Neutrals Very Dark Gray", "#303030FF"], ["Neutrals Black", "#000000FF"]]);
   act(() => swatches.find((swatch) => swatch.props["aria-label"] === "Olympic Medals Gold").props.onClick());
   assert.deepEqual(changes, ["#D4AF3780"]);
   act(() => component.update(createElement(RgbaColorPicker, { label: "Main Color", value: "#D4AF3780", onChange() {} })));

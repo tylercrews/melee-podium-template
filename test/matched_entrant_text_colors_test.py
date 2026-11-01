@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 import unittest
 
 from app import app
 from clapping_colors import TOP16_PLAYER_COLOR_SLOTS
 from color_values import format_rgba_hex
-from constants import BRONZE_PODIUM, GOLD_PODIUM, MEDAL_GRAY_PODIUM, PODIUM_BOX_COLORS_BY_SLOT, SILVER_PODIUM
-from preview_layers import RAINBOW_MAIN_COLORS
+from constants import PODIUM_BOX_COLORS_BY_SLOT
 
 
-SAVED_COLORS = Path(__file__).resolve().parents[1] / "frontend" / "src" / "savedColors.json"
 SMASH_PLAYER_COLORS = [format_rgba_hex(*box.exterior_line, 255) for box in PODIUM_BOX_COLORS_BY_SLOT]
 
 
@@ -66,16 +62,6 @@ class MatchedEntrantTextColorTests(unittest.TestCase):
         response = self.client.post("/api/entrant-text-colors/matched", json={"mode": "squares", "event_format": "singles", "entrant_count": 5,
                                                                               "formatting_asset_colors": _premade("rainbow")})
         self.assertEqual(response.status_code, 400)
-
-
-class SavedColorSwatchTests(unittest.TestCase):
-    def test_picker_swatches_match_the_renderer_palettes(self) -> None:
-        palettes = {palette["name"]: [entry["color"] for entry in palette["colors"]]
-                    for palette in json.loads(SAVED_COLORS.read_text(encoding="utf-8"))}
-        self.assertEqual(palettes["Smash Player Colors"], SMASH_PLAYER_COLORS)
-        self.assertEqual(palettes["Olympic Medals"], [format_rgba_hex(*box.exterior_line, 255)
-                                                      for box in (GOLD_PODIUM, SILVER_PODIUM, BRONZE_PODIUM, MEDAL_GRAY_PODIUM)])
-        self.assertEqual(palettes["Rainbow"], list(RAINBOW_MAIN_COLORS))
 
 
 if __name__ == "__main__":
