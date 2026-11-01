@@ -8,7 +8,7 @@ from enum import Enum
 from statistics import median
 from typing import Any, Mapping
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 from color_values import format_rgba_hex, normalize_rgba_hex, parse_rgba_hex
 from constants import (
@@ -318,50 +318,112 @@ def apply_podium_colors(
         raise TypeError("selection must be a PodiumColorSelection")
 
     colors = selection.resolve()
-    replacements = {
-        MAIN_MASK_COLOR: parse_rgba_hex(colors.main_color),
-        FACE_MASK_COLOR: parse_rgba_hex(colors.face_color),
-        BASE_MASK_COLOR: parse_rgba_hex(colors.base_color),
-    }
+    main_color = parse_rgba_hex(colors.main_color)
+    face_color = parse_rgba_hex(colors.face_color)
+    base_color = parse_rgba_hex(colors.base_color)
     source = mask.convert("RGBA")
-    output: list[tuple[int, int, int, int]] = []
-    for pixel_index, (red, green, blue, source_alpha) in enumerate(source.getdata()):
-        source_rgb = (red, green, blue)
-        if red == green == blue:
-            output.append((red, green, blue, source_alpha))
-            continue
-        if red >= 2 * max(green, blue) and red > 0:
-            semantic = MAIN_MASK_COLOR
-        elif min(green, blue) >= 2 * red and min(green, blue) > 0:
-            semantic = FACE_MASK_COLOR
-        elif blue >= 2 * max(red, green) and blue > 0:
-            semantic = BASE_MASK_COLOR
-        else:
-            output.append((red, green, blue, source_alpha))
-            continue
-        replacement = replacements[semantic]
-        active_channels = tuple(
-            index for index, channel in enumerate(semantic) if channel
-        )
-        intensity = sum(source_rgb[index] for index in active_channels) / (
-            255 * len(active_channels)
-        )
-        rendered_rgb = tuple(round(channel * intensity) for channel in replacement[:3])
-        if colors.metallic and semantic == MAIN_MASK_COLOR:
-            x = pixel_index % source.width
-            y = pixel_index // source.width
-            diagonal = x / max(1, source.width - 1) + 0.3 * y / max(
-                1, source.height - 1
-            )
-            highlight = max(0.0, 1.0 - abs(diagonal - 0.62) / 0.13) * 0.32
-            rendered_rgb = tuple(
-                round(channel + (255 - channel) * highlight)
-                for channel in rendered_rgb
-            )
-        output.append(
-            (*rendered_rgb, round(source_alpha * replacement[3] / 255))
-        )
+    red, green, blue, alpha = source.split()
+    # Gray pixels (including transparent black) fail every class test, so
+    # they and any unrecognized color keep their source values.
+    main = _both(_at_least_twice(red, ImageChops.lighter(green, blue)), red.point(_POSITIVE))
+    cyan = ImageChops.darker(green, blue)
+    face = _without(_both(_at_least_twice(cyan, red), cyan.point(_POSITIVE)), main)
+    base = _without(
+        _without(_both(_at_least_twice(blue, ImageChops.lighter(red, green)), blue.point(_POSITIVE)), main),
+        face,
+    )
+    # Face intensity averages green and blue. Splitting their sum into a
+    # floored half and its parity keeps every lookup exact in 8-bit images.
+    half_sum = ImageChops.add(green, blue, scale=2.0)
+    odd_sum = ImageChops.difference(green.point(_ODD), blue.point(_ODD))
+    highlight = _metallic_highlight(source.size) if colors.metallic else None
 
-    result = Image.new("RGBA", source.size)
-    result.putdata(output)
-    return result
+    channels = []
+    for index, original in enumerate((red, green, blue)):
+        main_value = red.point(_intensity_lookup(main_color[index], 255))
+        if highlight is not None:
+            main_value = Image.composite(Image.new("L", source.size, 255), main_value, highlight)
+        face_lookup = _intensity_lookup(face_color[index], 510, sums=True)
+        face_value = Image.composite(
+            # Odd sums stop at 509, so the padded final entry is never selected.
+            half_sum.point(face_lookup[1::2] + [0]),
+            half_sum.point(face_lookup[0::2]),
+            odd_sum,
+        )
+        base_value = blue.point(_intensity_lookup(base_color[index], 255))
+        channels.append(_by_class(original, main, main_value, face, face_value, base, base_value))
+    channels.append(_by_class(
+        alpha,
+        main, alpha.point(_intensity_lookup(main_color[3], 255)),
+        face, alpha.point(_intensity_lookup(face_color[3], 255)),
+        base, alpha.point(_intensity_lookup(base_color[3], 255)),
+    ))
+    return Image.merge("RGBA", channels)
+
+
+_POSITIVE = [0] + [255] * 255
+_ZERO = [255] + [0] * 255
+_ODD = [255 if value % 2 else 0 for value in range(256)]
+_HIGHLIGHT_SAMPLES = 4096
+_HIGHLIGHT_SPAN = 1.3
+
+
+def _at_least_twice(value: Image.Image, other: Image.Image) -> Image.Image:
+    """Mask pixels where ``value >= 2 * other`` using clipped 8-bit subtraction."""
+
+    return ImageChops.subtract(other, ImageChops.subtract(value, other)).point(_ZERO)
+
+
+def _both(first: Image.Image, second: Image.Image) -> Image.Image:
+    return ImageChops.darker(first, second)
+
+
+def _without(mask: Image.Image, excluded: Image.Image) -> Image.Image:
+    return ImageChops.darker(mask, ImageChops.invert(excluded))
+
+
+def _intensity_lookup(channel: int, full_scale: int, *, sums: bool = False) -> list[int]:
+    """Scale one replacement channel by a semantic pixel's source intensity."""
+
+    return [round(channel * (value / full_scale)) for value in range(511 if sums else 256)]
+
+
+def _by_class(
+    original: Image.Image,
+    main: Image.Image,
+    main_value: Image.Image,
+    face: Image.Image,
+    face_value: Image.Image,
+    base: Image.Image,
+    base_value: Image.Image,
+) -> Image.Image:
+    result = Image.composite(main_value, original, main)
+    result = Image.composite(face_value, result, face)
+    return Image.composite(base_value, result, base)
+
+
+def _metallic_highlight(size: tuple[int, int]) -> Image.Image:
+    """Return the diagonal metallic highlight as a blend-toward-white mask.
+
+    The highlight is a tent over ``x / (w - 1) + 0.3 * y / (h - 1)``. A fine
+    one-row profile of that tent is stretched along the diagonal with an
+    affine transform, staying within one channel level of per-pixel math.
+    """
+
+    width, height = size
+    profile = Image.new("L", (_HIGHLIGHT_SAMPLES, 1))
+    profile.putdata([
+        round(255 * max(0.0, 1.0 - abs(index * _HIGHLIGHT_SPAN / (_HIGHLIGHT_SAMPLES - 1) - 0.62) / 0.13) * 0.32)
+        for index in range(_HIGHLIGHT_SAMPLES)
+    ])
+    scale = (_HIGHLIGHT_SAMPLES - 1) / _HIGHLIGHT_SPAN
+    x_step = scale / max(1, width - 1)
+    y_step = scale * 0.3 / max(1, height - 1)
+    # Nearest sampling reads output pixel centers; the offset rounds each
+    # diagonal position to its closest profile sample.
+    return profile.transform(
+        size,
+        Image.Transform.AFFINE,
+        (x_step, y_step, 0.5 - 0.5 * (x_step + y_step), 0, 0, 0.5),
+        Image.Resampling.NEAREST,
+    )

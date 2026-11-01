@@ -27,6 +27,7 @@ from mode_preferences import ModePreferences, PlacementTagPlacement
 from gif_animation import encode_animated_gif
 from portrait_crop_adjustment_for_clapping import get_clapping_portrait_adjustment
 from placement_numbering import number_placement_tags
+from render_layers import RenderLayer, flatten_layers, transparent_layer
 from entrant_visibility import visible_placement_tags
 
 
@@ -89,6 +90,10 @@ class ClappingLayout:
     badges: tuple[PlacementTagPlacement, ...]
     preferences: ModePreferences
     footer_placement: FooterPlacement | None = None
+    # The static podium stack beneath the optional composition, and the lower
+    # identities drawn above it, let still previews swap only header layers.
+    layers: tuple[RenderLayer, ...] = ()
+    panel_text: Image.Image | None = None
 
     @property
     def durations(self) -> list[int]:
@@ -99,6 +104,16 @@ class ClappingLayout:
 
     def frame(self, index: int | None = None) -> Image.Image:
         canvas = self.base.copy()
+        self._draw_panels(canvas, index)
+        return canvas
+
+    def still_layers(self) -> tuple[RenderLayer, ...]:
+        """Return the preview frame as the podium stack plus one panel layer."""
+        panels = self.panel_text.copy() if self.panel_text is not None else transparent_layer(self.base.size)
+        self._draw_panels(panels, None)
+        return (*self.layers, RenderLayer("content", panels))
+
+    def _draw_panels(self, canvas: Image.Image, index: int | None) -> None:
         durations = self.durations
         if index is not None and not 0 <= index < len(durations):
             raise ValueError("Frame index must fit the shared clapping cycle")
@@ -107,7 +122,6 @@ class ClappingLayout:
             frame_index = track.preview_index if index is None else track.frame_index_at(elapsed, sum(durations))
             canvas.alpha_composite(track.frames[frame_index], (track.panel.rect.left, track.panel.rect.top))
         draw_placement_tags(canvas, replace(self.preferences, placement_tags=self.badges))
-        return canvas
 
     def png(self) -> bytes:
         output = BytesIO()
@@ -155,7 +169,8 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
         badges = visible_placement_tags(badges, request.entrants)
         panels = tuple(panel for panel in panels if not request.entrants[panel.entrant_slot - 1].omit_entrant)
         preferences = replace(preferences, text_slots=tuple(row for row in preferences.text_slots if row.field != "entrant.summary"))
-        base = super().draw(canvas, request, preferences)
+        layers = self.draw_layers(canvas, request, preferences)
+        base = flatten_layers(layers)
         if background is not None:
             if background.size != base.size:
                 raise ValueError("Composition background must match the output canvas")
@@ -173,14 +188,15 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
                           badge.anchor.y - badge.max_size.height // 2,
                           badge.anchor.x + badge.max_size.width // 2,
                           badge.anchor.y + badge.max_size.height // 2) for badge in badges)
+        panel_text = transparent_layer(base.size)
         with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
-            obstacles.extend(self._draw_panel_headings(base, request, profile))
+            obstacles.extend(self._draw_panel_headings(panel_text, request, profile))
             for panel in panels:
                 entrant = self._panel_subject(request, panel)
                 color, metallic = self._default_text_style(request, panel.entrant_slot)
                 if isinstance(color, tuple):
                     color = format_rgba_hex(*color[:3], color[3] if len(color) == 4 else 255)
-                obstacles.extend(self._draw_identity(base, entrant, panel, request, color, metallic))
+                obstacles.extend(self._draw_identity(panel_text, entrant, panel, request, color, metallic))
                 character = entrant.characters[0]
                 adjustment = get_clapping_portrait_adjustment(character.melee_fighter_name)
                 frames, durations = [], []
@@ -192,8 +208,9 @@ class PodiumsClappingContentRenderer(LegacyPodiumContentRenderer):
                             mirror_horizontally=character.mirror_horizontally))
                         durations.append(source.info.get("duration", 20))
                 tracks.append(ClappingTrack(panel, frames, durations, crops[character.melee_fighter_name]["preview_frame_index"]))
-            footer = draw_clapping_attribution(base, self.font, obstacles)
-        return ClappingLayout(base, tuple(tracks), badges, preferences, footer)
+            footer = draw_clapping_attribution(panel_text, self.font, obstacles)
+        base.alpha_composite(panel_text)
+        return ClappingLayout(base, tuple(tracks), badges, preferences, footer, layers, panel_text)
 
     def draw(self, canvas, request, preferences):
         return self.prepare(canvas, request, preferences).frame()

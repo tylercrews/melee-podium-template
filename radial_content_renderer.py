@@ -21,7 +21,8 @@ from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import ModePreferences
 from models import TournamentFormat
 from radial_geometry import clip_to_section, draw_radial_dividers, radial_sections
-from radial_watermark import draw_radial_watermark
+from radial_watermark import draw_radial_watermark, radial_watermark_color
+from render_layers import RenderLayer, drawn_layer, flatten_layers, transparent_layer
 
 
 DEFAULT_RADIAL_HEADER_LAYOUT = {
@@ -59,6 +60,13 @@ class RadialContentRenderer:
             raise ValueError("logo_scale must be a number between .001 and 100")
 
     def draw(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> Image.Image:
+        return flatten_layers(self.draw_layers(canvas, request, preferences))
+
+    def draw_header_layers(self, size: tuple[int, int], request: CreationRequest, preferences: ModePreferences) -> tuple[Image.Image, ...]:
+        with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
+            return (drawn_layer(size, lambda layer: self._draw_header(layer, request, preferences)),)
+
+    def draw_layers(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> tuple[RenderLayer, ...]:
         if request.selection.mode is not CreationMode.RADIAL:
             raise ValueError("RadialContentRenderer requires Radial mode")
         result = canvas.convert("RGBA")
@@ -81,14 +89,21 @@ class RadialContentRenderer:
                 )
                 result.alpha_composite(clip_to_section(portrait, section), (rect.left, rect.top))
             draw_radial_dividers(result, preferences, request.formatting_colors)
-            self._draw_header(result, request, preferences)
+            header = drawn_layer(result.size, lambda layer: self._draw_header(layer, request, preferences))
             # Both result labels and central text remain above an oversized logo.
+            above = transparent_layer(result.size)
             text_layer = Image.new("RGBA", result.size, "#00000000")
             _draw_result_text(text_layer, request, preferences, self.font)
-            _composite_outlined_text(result, text_layer)
-            draw_placement_tags(result, preferences)
-        draw_radial_watermark(result, doubles=request.selection.options.event_format is TournamentFormat.DOUBLES)
-        return result
+            _composite_outlined_text(above, text_layer)
+            draw_placement_tags(above, preferences)
+        layers = (RenderLayer("content", result), RenderLayer("header", header), RenderLayer("content", above))
+        # The attribution contrasts with the divider pixels of the finished composite.
+        draw_radial_watermark(
+            above,
+            doubles=request.selection.options.event_format is TournamentFormat.DOUBLES,
+            fill=radial_watermark_color(flatten_layers(layers)),
+        )
+        return layers
 
     def _draw_header(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> None:
         layout = request.header_layout or DEFAULT_RADIAL_HEADER_LAYOUT

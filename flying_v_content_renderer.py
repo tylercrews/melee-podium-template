@@ -38,6 +38,7 @@ from geometric_content_renderer import (
 from legacy_podium_content_renderer import LegacyPodiumContentRenderer
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam
+from render_layers import RenderLayer, drawn_layer, flatten_layers, transparent_layer
 
 
 DEFAULT_FLYING_V_HEADER_LAYOUT = {
@@ -291,11 +292,19 @@ class FlyingVContentRenderer:
     custom_font_bytes: bytes | None = None
 
     def draw(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> Image.Image:
+        return flatten_layers(self.draw_layers(canvas, request, preferences))
+
+    def draw_header_layers(self, size: tuple[int, int], request: CreationRequest, preferences: ModePreferences) -> tuple[Image.Image, ...]:
+        with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
+            return (drawn_layer(size, lambda layer: self._draw_header(layer, request, preferences)),)
+
+    def draw_layers(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> tuple[RenderLayer, ...]:
         if request.selection.mode is not CreationMode.FLYING_V:
             raise ValueError("FlyingVContentRenderer requires Flying V mode")
         result = canvas.convert("RGBA")
         watermark_box = flying_v_watermark_row(preferences)
         watermark_color = _watermark_color(result, watermark_box)
+        watermark = transparent_layer(result.size)
         with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
             figures = place_figures(request, preferences)
             labelled = labelled_preferences(preferences, figures)
@@ -317,16 +326,16 @@ class FlyingVContentRenderer:
                                self.font, crest_clearances(labelled, request.text_settings.include_seeding))
             composite_outlined_names(result, text_layer)
             draw_outlined_placement_tags(result, replace(labelled, placement_tags=tuple(pending)))
-            self._draw_header(result, request, preferences)
+            header = drawn_layer(result.size, lambda layer: self._draw_header(layer, request, preferences))
             _composite_watermark(
-                result,
+                watermark,
                 position=(watermark_box.right, watermark_box.top + 10),
                 anchor="ra",
                 max_width=watermark_box.width,
                 font=self.font,
                 fill=watermark_color,
             )
-        return result
+        return (RenderLayer("content", result), RenderLayer("header", header), RenderLayer("content", watermark))
 
     def _draw_header(self, canvas: Image.Image, request: CreationRequest, preferences: ModePreferences) -> None:
         layout = request.header_layout or DEFAULT_FLYING_V_HEADER_LAYOUT

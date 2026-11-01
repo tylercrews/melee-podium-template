@@ -61,6 +61,7 @@ from entrant_visibility import validation_entrants
 from metadata_content import metadata_values
 from wireframe_fighters import fighter_display_name
 from podium_colors import podium_color_for_slot
+from render_layers import RenderLayer, flatten_layers, transparent_layer
 
 
 WEBSITE_ICON_FOLDER = Path(__file__).resolve().parent / "formatting_assets" / "website_icons"
@@ -147,18 +148,45 @@ class LegacyPodiumContentRenderer:
         request: CreationRequest,
         preferences: ModePreferences,
     ) -> Image.Image:
+        return flatten_layers(self.draw_layers(canvas, request, preferences))
+
+    def draw_layers(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> tuple[RenderLayer, ...]:
         with _temporary_font_settings(
             request.text_settings.font_size_adjustment,
             self.custom_font_bytes,
         ):
             return self._draw_with_font(canvas, request, preferences)
 
+    def draw_header_layers(
+        self,
+        size: tuple[int, int],
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> tuple[Image.Image, ...]:
+        """Render only the header layers that ``draw_layers`` interleaves."""
+
+        if request.header_layout is None:
+            return ()
+        with _temporary_font_settings(
+            request.text_settings.font_size_adjustment,
+            self.custom_font_bytes,
+        ):
+            return (
+                self._assigned_subtitle_layer(size, request),
+                self._assigned_header_layer(size, request),
+            )
+
     def _draw_with_font(
         self,
         canvas: Image.Image,
         request: CreationRequest,
         preferences: ModePreferences,
-    ) -> Image.Image:
+    ) -> tuple[RenderLayer, ...]:
         selection = request.selection
         if selection.mode is not CreationMode.PODIUM:
             raise ValueError("LegacyPodiumContentRenderer requires podium mode")
@@ -166,42 +194,65 @@ class LegacyPodiumContentRenderer:
         mode = PodiumMode(selection.submode_id)
         _validate_placements(validation_entrants(request.entrants), selection.options.entrant_count)
         result = canvas.convert("RGBA")
-        is_doubles = selection.options.event_format is TournamentFormat.DOUBLES
-        assigned_header = request.header_layout is not None
+        if request.header_layout is not None:
+            # The subtitle sits beneath the portraits; the title and metadata
+            # sit above them, with the entrant content between the two.
+            content = transparent_layer(result.size)
+            self._draw_entrant_content(content, request, preferences, mode)
+            self._draw_attribution(content, request, mode)
+            return (
+                RenderLayer("content", result),
+                RenderLayer("header", self._assigned_subtitle_layer(result.size, request)),
+                RenderLayer("content", content),
+                RenderLayer("header", self._assigned_header_layer(result.size, request)),
+            )
+
         center_title, center_subtitle = (
             _centered_header_fields(
                 result,
                 request.tournament,
                 font=self.font,
-                is_doubles=is_doubles,
+                is_doubles=selection.options.event_format is TournamentFormat.DOUBLES,
             )
-            if mode.layout_count != 3 and not assigned_header
+            if mode.layout_count != 3
             else (False, False)
         )
+        _draw_tournament_subtitle(
+            result,
+            request.tournament,
+            self.font,
+            mode.layout_count,
+            center_subtitle,
+            request.text_settings.heading_color,
+            request.text_settings.heading_metallic,
+            size_adjustment=request.text_settings.subtitle_font_size_adjustment,
+        )
+        self._draw_entrant_content(result, request, preferences, mode)
+        self._draw_tournament_text(result, request, mode, center_title)
+        return (RenderLayer("content", result),)
 
-        if assigned_header:
-            self._draw_assigned_subtitle(result, request)
+    def _draw_entrant_content(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+        mode: PodiumMode,
+    ) -> None:
+        if request.selection.options.event_format is TournamentFormat.DOUBLES:
+            self._draw_doubles(canvas, request, preferences, mode)
         else:
-            _draw_tournament_subtitle(
-                result,
-                request.tournament,
-                self.font,
-                mode.layout_count,
-                center_subtitle,
-                request.text_settings.heading_color,
-                request.text_settings.heading_metallic,
-                size_adjustment=request.text_settings.subtitle_font_size_adjustment,
-            )
-        if is_doubles:
-            self._draw_doubles(result, request, preferences, mode)
-        else:
-            self._draw_singles(result, request, preferences, mode)
-        self._draw_preference_text(result, request, preferences, mode)
-        if assigned_header:
-            self._draw_assigned_tournament_text(result, request, mode)
-        else:
-            self._draw_tournament_text(result, request, mode, center_title)
-        return result
+            self._draw_singles(canvas, request, preferences, mode)
+        self._draw_preference_text(canvas, request, preferences, mode)
+
+    def _assigned_subtitle_layer(self, size: tuple[int, int], request: CreationRequest) -> Image.Image:
+        layer = transparent_layer(size)
+        self._draw_assigned_subtitle(layer, request)
+        return layer
+
+    def _assigned_header_layer(self, size: tuple[int, int], request: CreationRequest) -> Image.Image:
+        layer = transparent_layer(size)
+        self._draw_assigned_header(layer, request)
+        return layer
 
     def _assigned_title(self, request: CreationRequest, max_width: int) -> tuple[str, int]:
         adjustment = request.text_settings.title_font_size_adjustment
@@ -455,6 +506,16 @@ class LegacyPodiumContentRenderer:
         request: CreationRequest,
         mode: PodiumMode,
     ) -> None:
+        self._draw_assigned_header(canvas, request)
+        self._draw_attribution(canvas, request, mode)
+
+    def _draw_assigned_header(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+    ) -> None:
+        """Draw the assigned title and metadata blocks."""
+
         assert request.header_layout is not None
         draw = ImageDraw.Draw(canvas)
         draw_text = partial(_draw_text, font=self.font)
@@ -549,7 +610,6 @@ class LegacyPodiumContentRenderer:
                 y += max(27, row_height + 7)
                 continue
             y += max(27, preferred_size + 7)
-        self._draw_attribution(canvas, request, mode)
 
     def _draw_joined_metadata_row(
         self,

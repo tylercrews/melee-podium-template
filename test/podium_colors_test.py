@@ -2,16 +2,55 @@
 
 import unittest
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 from color_values import parse_rgba_hex
 from podium_colors import (
+    BASE_MASK_COLOR,
     FACE_LIGHTNESS_RATIO,
+    FACE_MASK_COLOR,
+    MAIN_MASK_COLOR,
     PodiumColorConfiguration,
     PodiumColorPreset,
     PodiumColorSelection,
     apply_podium_colors,
 )
+
+
+def _per_pixel_podium_colors(mask: Image.Image, selection: PodiumColorSelection) -> Image.Image:
+    """The original per-pixel recolor, kept as the reference for the fast path."""
+
+    colors = selection.resolve()
+    replacements = {
+        MAIN_MASK_COLOR: parse_rgba_hex(colors.main_color),
+        FACE_MASK_COLOR: parse_rgba_hex(colors.face_color),
+        BASE_MASK_COLOR: parse_rgba_hex(colors.base_color),
+    }
+    source = mask.convert("RGBA")
+    output = []
+    for pixel_index, (red, green, blue, source_alpha) in enumerate(source.getdata()):
+        if red >= 2 * max(green, blue) and red > 0:
+            semantic = MAIN_MASK_COLOR
+        elif min(green, blue) >= 2 * red and min(green, blue) > 0:
+            semantic = FACE_MASK_COLOR
+        elif blue >= 2 * max(red, green) and blue > 0:
+            semantic = BASE_MASK_COLOR
+        else:
+            output.append((red, green, blue, source_alpha))
+            continue
+        replacement = replacements[semantic]
+        active = tuple(index for index, channel in enumerate(semantic) if channel)
+        intensity = sum((red, green, blue)[index] for index in active) / (255 * len(active))
+        rendered = tuple(round(channel * intensity) for channel in replacement[:3])
+        if colors.metallic and semantic == MAIN_MASK_COLOR:
+            x, y = pixel_index % source.width, pixel_index // source.width
+            diagonal = x / max(1, source.width - 1) + 0.3 * y / max(1, source.height - 1)
+            highlight = max(0.0, 1.0 - abs(diagonal - 0.62) / 0.13) * 0.32
+            rendered = tuple(round(channel + (255 - channel) * highlight) for channel in rendered)
+        output.append((*rendered, round(source_alpha * replacement[3] / 255)))
+    result = Image.new("RGBA", source.size)
+    result.putdata(output)
+    return result
 
 
 class PodiumColorsTest(unittest.TestCase):
@@ -129,6 +168,31 @@ class PodiumColorsTest(unittest.TestCase):
         )
         self.assertNotEqual(list(flat.getdata()), list(metallic.getdata()))
         self.assertGreater(max(red for red, _, _, _ in metallic.getdata()), 128)
+
+    def test_channel_operations_match_the_per_pixel_recolor(self) -> None:
+        # Every red/green/blue combination at several alphas crosses each
+        # class boundary, including gray, shaded, and unrecognized pixels.
+        mask = Image.new("RGBA", (256, 256))
+        mask.putdata([
+            (x, (y % 16) * 17, (y // 16) * 17, (x * 7 + y * 13) % 256)
+            for y in range(256) for x in range(256)
+        ])
+        selections = (
+            PodiumColorSelection("#D90300FF"),
+            PodiumColorSelection("#10203040", "#50607080", "#90A0B0C0"),
+            PodiumColorSelection("#C9A227FF", metallic=True),
+            PodiumColorSelection("#7F7F7F80", "#33445566", metallic=True),
+        )
+        for selection in selections:
+            with self.subTest(selection=selection):
+                difference = ImageChops.difference(
+                    apply_podium_colors(mask, selection),
+                    _per_pixel_podium_colors(mask, selection),
+                )
+                worst = max(high for _low, high in difference.getextrema())
+                # The metallic highlight is sampled along its diagonal, which
+                # may round one channel level differently.
+                self.assertLessEqual(worst, 1 if selection.metallic else 0)
 
     def test_legacy_and_medal_presets_resolve_all_eight_slots(self) -> None:
         legacy = PodiumColorConfiguration.from_preset(PodiumColorPreset.LEGACY)

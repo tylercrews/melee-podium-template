@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import random
 from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any
 
 from PIL import Image
 
@@ -31,10 +33,11 @@ from clapping_grid_renderer import ClappingGridContentRenderer
 from clapping_grid_layouts import GRID_LAYOUTS, GRID_VARIANTS
 from entrant_visibility import apply_visibility, visible_preferences
 from layout_text_defaults import layout_text_defaults
-from mode_preferences import ModePreferenceRepository
+from mode_preferences import ModePreferenceRepository, ModePreferences
 from radial_content_renderer import RadialContentRenderer
 from flying_v_content_renderer import FlyingVContentRenderer
 from models import DoublesTeam, SinglesEntrant, Tournament, TournamentFormat
+from render_layers import RenderLayer
 from podium_colors import PodiumColorConfiguration, PodiumColorPreset
 from sample_creation_data import (
     sample_singles_entrants,
@@ -79,7 +82,75 @@ SUPPORTED_EYES_LAYOUTS = frozenset(
 )
 
 
+@dataclass(frozen=True)
+class FormatPreviewLayers:
+    """An exact preview as ordered layers the browser composites itself.
+
+    ``logo_index`` is the layer the browser draws its selected logo beneath;
+    ``None`` draws the logo above every layer. Animated selections also keep
+    the clapping layout so the same request can encode their GIF.
+    """
+
+    layers: tuple[RenderLayer, ...]
+    logo_index: int | None = None
+    animation: ClappingLayout | None = None
+
+
+@dataclass(frozen=True)
+class _PreviewSetup:
+    background: BackgroundRequest
+    preferences: ModePreferences
+    request: CreationRequest
+    colors: PodiumColorConfiguration | GeometricFormattingColors | None
+    renderer: Any
+    clapping: bool
+
+    def formatted_canvas(self) -> Image.Image:
+        return FormattingAssetRenderer().draw(create_background(self.background), self.preferences, self.colors)
+
+
 def prepare_format_preview(
+    *args: Any,
+    composite_background: Image.Image | None = None,
+    composite_overlay: Image.Image | None = None,
+    **kwargs: Any,
+) -> Image.Image | ClappingLayout:
+    """Return a full example render for one supported frontend format."""
+
+    setup = _preview_setup(*args, **kwargs)
+    if setup.clapping:
+        return setup.renderer.prepare(setup.formatted_canvas(), setup.request, setup.preferences,
+                                      background=composite_background, overlay=composite_overlay)
+    return setup.renderer.draw(setup.formatted_canvas(), setup.request, setup.preferences)
+
+
+def prepare_format_preview_layers(
+    *args: Any,
+    composite_background: Image.Image | None = None,
+    composite_overlay: Image.Image | None = None,
+    **kwargs: Any,
+) -> FormatPreviewLayers:
+    """Return the exact preview's layers, plus its animation when one applies."""
+
+    setup = _preview_setup(*args, **kwargs)
+    if not setup.clapping:
+        return FormatPreviewLayers(setup.renderer.draw_layers(setup.formatted_canvas(), setup.request, setup.preferences))
+    layout = setup.renderer.prepare(setup.formatted_canvas(), setup.request, setup.preferences,
+                                    background=composite_background, overlay=composite_overlay)
+    if setup.request.selection.options.animated is False:
+        return FormatPreviewLayers(layout.still_layers())
+    # Animated GIFs compose the logo beneath the lower panels; keep that order.
+    return FormatPreviewLayers(layout.still_layers(), logo_index=len(layout.layers), animation=layout)
+
+
+def render_format_preview_header(*args: Any, **kwargs: Any) -> tuple[Image.Image, ...]:
+    """Return only the header layers, skipping formatting assets and entrants."""
+
+    setup = _preview_setup(*args, **kwargs)
+    return setup.renderer.draw_header_layers(setup.preferences.canvas_size.as_tuple(), setup.request, setup.preferences)
+
+
+def _preview_setup(
     style: PodiumStyle,
     event_format: TournamentFormat,
     entrant_count: int,
@@ -98,12 +169,8 @@ def prepare_format_preview(
     tournament_logo: Image.Image | None = None,
     logo_scale: float | None = None,
     animated: bool | None = None,
-    composite_background: Image.Image | None = None,
-    composite_overlay: Image.Image | None = None,
     entrant_visibility: list[dict] | None = None,
-) -> Image.Image | ClappingLayout:
-    """Return a full example render for one supported frontend format."""
-
+) -> _PreviewSetup:
     if not isinstance(style, PodiumStyle):
         raise TypeError("style must be a PodiumStyle")
     layout = (event_format, entrant_count, variant)
@@ -188,13 +255,8 @@ def prepare_format_preview(
     # Format previews intentionally use the preview rendering path while these
     # reviewed preference files remain marked ready:false. Production creation
     # continues to refuse unfinished preference sets in CreationPipeline.
-    canvas = create_background(background)
-    formatted = FormattingAssetRenderer().draw(
-        canvas,
-        preferences,
-        podium_colors or formatting_colors,
-    )
-    if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping", *GRID_VARIANTS}:
+    clapping = creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping", *GRID_VARIANTS}
+    if clapping:
         renderer_type = (
             ClappingGridContentRenderer if variant in GRID_VARIANTS
             else DoublesClappingContentRenderer if event_format is TournamentFormat.DOUBLES
@@ -202,19 +264,19 @@ def prepare_format_preview(
             else PodiumsClappingContentRenderer
         )
         renderer = renderer_type(font=font, custom_font_bytes=custom_font_bytes)
-        return renderer.prepare(formatted, request, preferences, background=composite_background, overlay=composite_overlay)
-    renderer = (
-        LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
-        if creation_mode is CreationMode.PODIUM
-        else EyesContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
-        if creation_mode is CreationMode.EYES
-        else RadialContentRenderer(font=font, tournament_logo=tournament_logo, custom_font_bytes=custom_font_bytes, logo_scale=logo_scale)
-        if creation_mode is CreationMode.RADIAL
-        else FlyingVContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
-        if creation_mode is CreationMode.FLYING_V
-        else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
-    )
-    return renderer.draw(formatted, request, preferences)
+    else:
+        renderer = (
+            LegacyPodiumContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+            if creation_mode is CreationMode.PODIUM
+            else EyesContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+            if creation_mode is CreationMode.EYES
+            else RadialContentRenderer(font=font, tournament_logo=tournament_logo, custom_font_bytes=custom_font_bytes, logo_scale=logo_scale)
+            if creation_mode is CreationMode.RADIAL
+            else FlyingVContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+            if creation_mode is CreationMode.FLYING_V
+            else SquaresContentRenderer(font=font, custom_font_bytes=custom_font_bytes)
+        )
+    return _PreviewSetup(background, preferences, request, podium_colors or formatting_colors, renderer, clapping)
 
 
 def render_format_preview(*args, **kwargs) -> Image.Image:

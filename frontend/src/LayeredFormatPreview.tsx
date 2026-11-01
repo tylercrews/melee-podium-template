@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl, recordDownload } from "./api";
 import { previewDownloadName } from "./previewDownload";
 import { drawRadialWatermark } from "./radialWatermark";
+import { dataUrlBlob, exactPreviewKeys, layersWithLogo, replaceHeaderLayers } from "./exactPreviewLayers";
 import { flyingVHeaderGeometryId, flyingVLayoutId, isFlyingVVerticallyReversed } from "./flyingVFormat";
 import { drawPodiumPreviewFooter, podiumHeaderWithoutFooter } from "./podiumPreviewFooter";
 import { placementNumberPreviewPath } from "./placementNumbering";
@@ -230,8 +231,37 @@ function previewEntrants(entrants: EntrantDraft[], entrantCount: number, include
   });
 }
 
-async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: FormatFontInfo | null, tournament: TournamentDetails, entrants: EntrantDraft[], tournamentComplete: boolean, entrantsComplete: boolean, logoImage: FormatImageInfo | null, composition?: { background: Blob; overlay: Blob }): Promise<Blob> {
-  const entrantCount = format.selection.options.entrant_count ?? fixedEntrantCount(format.selection.mode, format.selection.options.event_format ?? "singles") ?? 8;
+function previewEntrantCount(format: FormatConfiguration): number {
+  return format.selection.options.entrant_count ?? fixedEntrantCount(format.selection.mode, format.selection.options.event_format ?? "singles") ?? 8;
+}
+
+const fileCache = new Map<string, Promise<Blob>>();
+
+/** Header refreshes re-send the same font and logo files, so fetch each only once. */
+function loadFile(url: string, failure: string): Promise<Blob> {
+  const cached = fileCache.get(url);
+  if (cached) return cached;
+  const loading = fetch(url).then((response) => {
+    if (!response.ok) throw new Error(failure);
+    return response.blob();
+  });
+  loading.catch(() => fileCache.delete(url));
+  fileCache.set(url, loading);
+  return loading;
+}
+
+interface PreviewData {
+  format: FormatConfiguration;
+  fontAsset: FormatFontInfo | null;
+  tournament: TournamentDetails;
+  entrants: EntrantDraft[];
+  tournamentComplete: boolean;
+  entrantsComplete: boolean;
+  logoImage: FormatImageInfo | null;
+}
+
+async function previewRequestInit({ format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage }: PreviewData, composition?: { background: Blob; overlay: Blob }): Promise<RequestInit> {
+  const entrantCount = previewEntrantCount(format);
   const config = {
     mode: format.selection.mode,
     style: format.selection.options.podium_style ?? "legacy",
@@ -269,45 +299,54 @@ async function loadConfiguredForeground(format: FormatConfiguration, fontAsset: 
     entrant_visibility: entrantsComplete ? undefined : entrants.slice(0, entrantCount).map((entrant) => ({
       omit_entrant: entrant.omitEntrant === true, omit_placement: entrant.omitPlacement === true })),
   };
-  let init: RequestInit;
-  if (fontAsset?.custom || (format.selection.mode === "radial" && logoImage) || composition) {
-    const form = new FormData();
-    form.append("config", JSON.stringify(config));
-    if (composition) {
-      form.append("composite_background", composition.background, "background.png");
-      form.append("composite_overlay", composition.overlay, "overlay.png");
-    }
-    if (fontAsset?.custom) {
-      const fontResponse = await fetch(fontAsset.url);
-      if (!fontResponse.ok) throw new Error("Could not load the selected custom font.");
-      form.append("font_file", await fontResponse.blob(), fontAsset.name);
-    }
-    if (format.selection.mode === "radial" && logoImage) {
-      const logoResponse = await fetch(logoImage.url);
-      if (!logoResponse.ok) throw new Error("Could not load the selected tournament logo.");
-      form.append("logo_file", await logoResponse.blob(), "logo.png");
-    }
-    init = { method: "POST", body: form };
-  } else {
-    init = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) };
+  if (!fontAsset?.custom && !(format.selection.mode === "radial" && logoImage) && !composition) {
+    return { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) };
   }
-  const response = await fetch(apiUrl("format-preview"), init);
-  if (!response.ok) throw new Error("Could not render the configured format preview.");
-  return response.blob();
+  const form = new FormData();
+  form.append("config", JSON.stringify(config));
+  if (composition) {
+    form.append("composite_background", composition.background, "background.png");
+    form.append("composite_overlay", composition.overlay, "overlay.png");
+  }
+  if (fontAsset?.custom) form.append("font_file", await loadFile(fontAsset.url, "Could not load the selected custom font."), fontAsset.name);
+  if (format.selection.mode === "radial" && logoImage) form.append("logo_file", await loadFile(logoImage.url, "Could not load the selected tournament logo."), "logo.png");
+  return { method: "POST", body: form };
 }
 
-async function decodePreview(blob: Blob): Promise<HTMLImageElement> {
-  const objectUrl = URL.createObjectURL(blob);
-  try {
-    return await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Could not decode the configured preview."));
-      image.src = objectUrl;
-    });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
+interface LayerPayload { kind: "content" | "header"; left: number; top: number; image: string | null }
+interface LayersResponse { width: number; height: number; logo_index: number; layers: LayerPayload[]; animation: string | null }
+interface ExactLayer { kind: "content" | "header"; left: number; top: number; image: HTMLImageElement | null }
+
+/** The last exact render, kept as layers so header-only changes can replace just their layers. */
+interface ExactRender {
+  contentKey: string;
+  headerKey: string;
+  headerSequence: number;
+  canvasSize: PixelSize;
+  layers: ExactLayer[];
+  logoIndex: number;
+  animation: { blob: Blob; url: string; signature: string } | null;
+}
+
+async function fetchPreviewJson<T>(path: string, init: RequestInit): Promise<T> {
+  const response = await fetch(apiUrl(path), init);
+  if (!response.ok) throw new Error("Could not render the configured format preview.");
+  return response.json() as Promise<T>;
+}
+
+function decodeImage(url: string): Promise<HTMLImageElement> {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not decode the configured preview."));
+    image.src = url;
+  });
+}
+
+function decodeLayers(layers: LayerPayload[]): Promise<ExactLayer[]> {
+  return Promise.all(layers.map(async (layer) => ({
+    kind: layer.kind, left: layer.left, top: layer.top, image: layer.image ? await decodeImage(layer.image) : null,
+  })));
 }
 
 function drawBackground(context: CanvasRenderingContext2D, format: FormatConfiguration, outputSize: PixelSize, background: HTMLImageElement | null, backgroundImage: FormatImageInfo | null) {
@@ -340,6 +379,25 @@ function drawLogo(context: CanvasRenderingContext2D, format: FormatConfiguration
   } else {
     const left = position === "top_middle" ? (outputSize.width - width) / 2 : position === "top_right" ? outputSize.width - width - 20 : 20;
     context.drawImage(logo, left, 20, width, height);
+  }
+}
+
+/** Composite the selected background, the exact layers, and the browser-drawn logo. */
+function drawExactPreview(target: HTMLCanvasElement, render: ExactRender, format: FormatConfiguration, request: LayerRequest, background: HTMLImageElement | null, backgroundImage: FormatImageInfo | null, logo: HTMLImageElement | null, logoImage: FormatImageInfo | null) {
+  target.width = request.outputSize.width;
+  target.height = request.outputSize.height;
+  const context = target.getContext("2d");
+  if (!context) throw new Error("Canvas preview is unavailable.");
+  drawBackground(context, format, request.outputSize, background, backgroundImage);
+  const scaleX = request.outputSize.width / render.canvasSize.width;
+  const scaleY = request.outputSize.height / render.canvasSize.height;
+  for (const layer of layersWithLogo(render.layers, render.logoIndex)) {
+    if (layer === "logo") {
+      // Radial composes its logo beneath the header text on the server.
+      if (format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
+    } else if (layer.image) {
+      context.drawImage(layer.image, layer.left * scaleX, layer.top * scaleY, layer.image.naturalWidth * scaleX, layer.image.naturalHeight * scaleY);
+    }
   }
 }
 
@@ -391,26 +449,40 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [exactPreview, setExactPreview] = useState(false);
-  const [animatedPreviewUrl, setAnimatedPreviewUrl] = useState<string | null>(null);
-  const [refreshedSignature, setRefreshedSignature] = useState<string | null>(null);
+  const [exact, setExact] = useState<ExactRender | null>(null);
+  const [headerFailedKey, setHeaderFailedKey] = useState<string | null>(null);
+  const headerSequence = useRef(0);
   const renderInFlight = useRef(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const expandedDialog = useRef<HTMLDialogElement>(null);
   const expandedCanvas = useRef<HTMLCanvasElement>(null);
-  const previewSignature = JSON.stringify({ format, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null, fontId: fontAsset?.id ?? null, tournament: tournamentComplete ? tournament : null, entrants: entrantsComplete ? entrants.slice(0, format.selection.options.entrant_count ?? 0) : null,
-    visibility: entrants.slice(0, format.selection.options.entrant_count ?? 0).map((entrant) => [entrant.omitEntrant === true, entrant.omitPlacement === true]) });
-  const needsRefresh = refreshedSignature !== previewSignature;
+  const entrantCount = previewEntrantCount(format);
+  const visibleEntrants = entrants.slice(0, entrantCount);
+  const visibility = visibleEntrants.map((entrant) => [entrant.omitEntrant === true, entrant.omitPlacement === true]);
+  const { contentKey, headerKey } = exactPreviewKeys({
+    format, fontId: fontAsset?.id ?? null, tournament: tournamentComplete ? tournament : null,
+    entrants: entrantsComplete ? visibleEntrants : null, visibility, logoId: logoImage?.id ?? null,
+  });
+  const previewSignature = JSON.stringify({ contentKey, headerKey, imageSettings: format.image_settings, backgroundId: backgroundImage?.id ?? null, backgroundUrl: backgroundImage?.url ?? null, logoId: logoImage?.id ?? null, logoUrl: logoImage?.url ?? null });
+  const exactCurrent = exact?.contentKey === contentKey;
+  const headerFailed = exactCurrent && headerFailedKey === headerKey;
+  const headerPending = exactCurrent && exact.headerKey !== headerKey && !headerFailed;
+  const animatedPreviewUrl = exactCurrent && exact.animation?.signature === previewSignature ? exact.animation.url : null;
+  const animatedSelection = isPodiumsClapping(format.selection) && format.selection.options.animated !== false;
+  // Header and image edits update an exact still in place; an animation needs a new render to catch up.
+  const needsRefresh = !exactCurrent || headerFailed || (animatedSelection && !animatedPreviewUrl);
+  const animationUrl = exact?.animation?.url;
 
-  useEffect(() => () => { if (animatedPreviewUrl) URL.revokeObjectURL(animatedPreviewUrl); }, [animatedPreviewUrl]);
+  useEffect(() => () => { if (animationUrl) URL.revokeObjectURL(animationUrl); }, [animationUrl]);
 
   useEffect(() => {
+    if (exactCurrent) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setFailed(false);
-    setExactPreview(false);
-    setAnimatedPreviewUrl(null);
-    setRefreshedSignature(null);
     const timeout = window.setTimeout(async () => {
       try {
         const [foregrounds, header, background, logo, logoPlaceholder, resultLabels, watermark] = await Promise.all([
@@ -448,45 +520,97 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
       }
     }, 80);
     return () => { cancelled = true; window.clearTimeout(timeout); };
-  }, [backgroundImage, format, logoImage, request]);
+  }, [backgroundImage, exactCurrent, format, logoImage, request]);
+
+  // While the content layers still match, background, logo, and header edits recomposite the exact layers.
+  useEffect(() => {
+    if (!exact || !exactCurrent) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [background, logo] = await Promise.all([
+          backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
+          logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
+        ]);
+        if (!cancelled && canvas.current) drawExactPreview(canvas.current, exact, format, request, background, backgroundImage, logo, logoImage);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [backgroundImage, exact, exactCurrent, format, logoImage, request]);
+
+  useEffect(() => {
+    if (!exact || !exactCurrent || exact.headerKey === headerKey || headerFailedKey === headerKey) return;
+    const sequence = ++headerSequence.current;
+    const requestedContentKey = contentKey;
+    const requestedHeaderKey = headerKey;
+    const data = { format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage };
+    // Responses are applied in request order, so dragging a slider keeps updating instead of waiting for it to stop.
+    const timeout = window.setTimeout(async () => {
+      try {
+        const body = await fetchPreviewJson<{ layers: LayerPayload[] }>("format-preview/header", await previewRequestInit(data));
+        const headers = await decodeLayers(body.layers);
+        setExact((current) => {
+          if (!current || current.contentKey !== requestedContentKey || sequence < current.headerSequence) return current;
+          const layers = replaceHeaderLayers(current.layers, headers);
+          return layers ? { ...current, layers, headerKey: requestedHeaderKey, headerSequence: sequence } : current;
+        });
+      } catch {
+        if (sequence === headerSequence.current) setHeaderFailedKey(requestedHeaderKey);
+      }
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [contentKey, entrants, entrantsComplete, exact, exactCurrent, fontAsset, format, headerFailedKey, headerKey, logoImage, tournament, tournamentComplete]);
 
   async function refreshWithSelectedImages(download = false) {
     if (renderInFlight.current) return;
-    const target = canvas.current;
-    if (!target) return;
     renderInFlight.current = true;
     setRefreshing(true);
     setFailed(false);
+    const keys = { contentKey, headerKey, signature: previewSignature };
     try {
       const [background, logo] = await Promise.all([
         backgroundImage ? loadImage(backgroundImage.url) : Promise.resolve(null),
         logoImage ? loadImage(logoImage.url) : Promise.resolve(null),
       ]);
-      target.width = request.outputSize.width;
-      target.height = request.outputSize.height;
-      const context = target.getContext("2d");
-      if (!context) throw new Error("Canvas preview is unavailable.");
-      drawBackground(context, format, request.outputSize, background, backgroundImage);
-      const animated = isPodiumsClapping(format.selection) && format.selection.options.animated !== false;
       let composition: { background: Blob; overlay: Blob } | undefined;
-      if (animated) {
+      if (animatedSelection) {
+        // GIF frames need the background and logo composed on the server.
+        const backgroundLayer = document.createElement("canvas");
         const overlay = document.createElement("canvas");
-        overlay.width = target.width;
-        overlay.height = target.height;
+        backgroundLayer.width = overlay.width = request.outputSize.width;
+        backgroundLayer.height = overlay.height = request.outputSize.height;
+        const backgroundContext = backgroundLayer.getContext("2d");
         const overlayContext = overlay.getContext("2d");
-        if (!overlayContext) throw new Error("Canvas preview is unavailable.");
+        if (!backgroundContext || !overlayContext) throw new Error("Canvas preview is unavailable.");
+        drawBackground(backgroundContext, format, request.outputSize, background, backgroundImage);
         drawLogo(overlayContext, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
-        composition = { background: await canvasPng(target), overlay: await canvasPng(overlay) };
+        composition = { background: await canvasPng(backgroundLayer), overlay: await canvasPng(overlay) };
       }
-      const foregroundBlob = await loadConfiguredForeground(format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage, composition);
-      const foreground = await decodePreview(foregroundBlob);
-      context.drawImage(foreground, 0, 0, request.outputSize.width, request.outputSize.height);
-      if (!animated && format.selection.mode !== "radial") drawLogo(context, format, logo, logoImage, request.outputSize, request.logoPosition, request.logoBox);
-      setAnimatedPreviewUrl(animated ? URL.createObjectURL(foregroundBlob) : null);
-      setExactPreview(true);
-      setRefreshedSignature(previewSignature);
+      const init = await previewRequestInit({ format, fontAsset, tournament, entrants, tournamentComplete, entrantsComplete, logoImage }, composition);
+      const body = await fetchPreviewJson<LayersResponse>("format-preview/layers", init);
+      const animationBlob = body.animation ? dataUrlBlob(body.animation) : null;
+      const render: ExactRender = {
+        contentKey: keys.contentKey,
+        headerKey: keys.headerKey,
+        // Discard header responses requested before this render.
+        headerSequence: ++headerSequence.current,
+        canvasSize: { width: body.width, height: body.height },
+        layers: await decodeLayers(body.layers),
+        logoIndex: body.logo_index,
+        animation: animationBlob ? { blob: animationBlob, url: URL.createObjectURL(animationBlob), signature: keys.signature } : null,
+      };
+      // The visible canvas redraws from this render once it matches the current inputs.
+      setExact(render);
+      setHeaderFailedKey(null);
       if (download) {
-        const blob = animated ? foregroundBlob : await canvasPng(target);
+        let blob = render.animation?.blob;
+        if (!blob) {
+          const composite = document.createElement("canvas");
+          drawExactPreview(composite, render, format, request, background, backgroundImage, logo, logoImage);
+          blob = await canvasPng(composite);
+        }
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = downloadUrl;
@@ -525,10 +649,10 @@ export default function LayeredFormatPreview({ format, backgroundImage, logoImag
   }
 
   return <div className="format-preview">
-    <button className="format-preview__frame" type="button" onClick={openExpandedPreview} aria-label="Open a larger format preview"><canvas className="format-preview__canvas" ref={canvas} hidden={Boolean(animatedPreviewUrl)} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Layered format preview: ${request.label}`} />{animatedPreviewUrl && <img className="format-preview__canvas" src={animatedPreviewUrl} alt={`Animated format preview: ${request.label}`} />}{loading && <span className="format-preview__loading">Updating layers…</span>}</button>
+    <button className="format-preview__frame" type="button" onClick={openExpandedPreview} aria-label="Open a larger format preview"><canvas className="format-preview__canvas" ref={canvas} hidden={Boolean(animatedPreviewUrl)} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Layered format preview: ${request.label}`} />{animatedPreviewUrl && <img className="format-preview__canvas" src={animatedPreviewUrl} alt={`Animated format preview: ${request.label}`} />}{loading && <span className="format-preview__loading">Updating layers…</span>}{headerPending && <span className="format-preview__loading">Updating header…</span>}</button>
     <button className={`button button--outline format-preview__refresh${needsRefresh ? " format-preview__refresh--needed" : ""}`} type="button" onClick={() => void refreshWithSelectedImages()} disabled={refreshing} aria-label={needsRefresh ? "Refresh Format Preview; exact render is available" : "Refresh Format Preview; preview is up to date"}><span>{refreshing ? "Refreshing preview…" : "Refresh Format Preview"}</span>{needsRefresh && !refreshing && <span className="format-preview__refresh-status">Exact render available</span>}</button>
-    <p><strong>{exactPreview ? "Exact entrant preview" : "Fast layered preview"}</strong> · {request.label}</p>
-    {failed && <span className="format-preview__waiting" role="alert">The preview could not be updated. The previous preview is still shown.</span>}
+    <p><strong>{exactCurrent ? "Exact entrant preview" : "Fast layered preview"}</strong> · {request.label}</p>
+    {(failed || headerFailed) && <span className="format-preview__waiting" role="alert">The preview could not be updated. The previous preview is still shown.</span>}
     <dialog className="modal format-preview-modal" ref={expandedDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><div className="modal__content"><button className="modal__close" type="button" onClick={() => expandedDialog.current?.close()} aria-label="Close enlarged preview">×</button><canvas className="format-preview-modal__image" ref={expandedCanvas} hidden={Boolean(animatedPreviewUrl)} width={request.outputSize.width} height={request.outputSize.height} aria-label={`Enlarged format preview: ${request.label}`} />{animatedPreviewUrl && <img className="format-preview-modal__image" src={animatedPreviewUrl} alt={`Enlarged animated format preview: ${request.label}`} />}</div></dialog>
   </div>;
 }

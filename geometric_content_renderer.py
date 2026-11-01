@@ -26,6 +26,7 @@ from header_title_wrapping import wrap_enlarged_title
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, TournamentFormat
 from portrait_assets import with_team_color
+from render_layers import RenderLayer, drawn_layer, flatten_layers, transparent_layer
 from square_portrait_renderer import (
     render_square_portrait_group,
     square_portrait_scale_key,
@@ -383,11 +384,20 @@ class EyesContentRenderer:
         request: CreationRequest,
         preferences: ModePreferences,
     ) -> Image.Image:
+        return flatten_layers(self.draw_layers(canvas, request, preferences))
+
+    def draw_layers(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> tuple[RenderLayer, ...]:
         if request.selection.mode is not CreationMode.EYES:
             raise ValueError("EyesContentRenderer requires Eyes mode")
         result = canvas.convert("RGBA")
         watermark_box = PixelRect(20, result.height - 50, result.width * 2 // 3, result.height)
         watermark_color = _watermark_color(result, watermark_box)
+        watermark = transparent_layer(result.size)
         with _temporary_font_settings(
             request.text_settings.font_size_adjustment,
             self.custom_font_bytes,
@@ -399,16 +409,25 @@ class EyesContentRenderer:
             ):
                 self._draw_character(result, request, placement, cards)
             _draw_result_text(result, request, preferences, self.font)
-            self._draw_header(result, request, preferences)
+            header = drawn_layer(result.size, lambda layer: self._draw_header(layer, request, preferences))
             _composite_watermark(
-                result,
+                watermark,
                 position=(20, result.height - 12),
                 anchor="ls",
                 max_width=watermark_box.width,
                 font=self.font,
                 fill=watermark_color,
             )
-        return result
+        return (RenderLayer("content", result), RenderLayer("header", header), RenderLayer("content", watermark))
+
+    def draw_header_layers(
+        self,
+        size: tuple[int, int],
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> tuple[Image.Image, ...]:
+        with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
+            return (drawn_layer(size, lambda layer: self._draw_header(layer, request, preferences)),)
 
     @staticmethod
     def _draw_character(
@@ -538,11 +557,29 @@ class SquaresContentRenderer:
         request: CreationRequest,
         preferences: ModePreferences,
     ) -> Image.Image:
+        return flatten_layers(self.draw_layers(canvas, request, preferences))
+
+    def draw_header_layers(
+        self,
+        size: tuple[int, int],
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> tuple[Image.Image, ...]:
+        with _temporary_font_settings(request.text_settings.font_size_adjustment, self.custom_font_bytes):
+            return (drawn_layer(size, lambda layer: self._draw_header(layer, request, preferences)),)
+
+    def draw_layers(
+        self,
+        canvas: Image.Image,
+        request: CreationRequest,
+        preferences: ModePreferences,
+    ) -> tuple[RenderLayer, ...]:
         if request.selection.mode is not CreationMode.SQUARES:
             raise ValueError("SquaresContentRenderer requires Squares mode")
         result = canvas.convert("RGBA")
         watermark_box = PixelRect(result.width // 2, 0, result.width - 40, 45)
         watermark_color = _watermark_color(result, watermark_box)
+        watermark = transparent_layer(result.size)
         with _temporary_font_settings(
             request.text_settings.font_size_adjustment,
             self.custom_font_bytes,
@@ -581,16 +618,16 @@ class SquaresContentRenderer:
                 self.font,
                 foreground_text,
             )
-            self._draw_header(result, request, preferences)
+            header = drawn_layer(result.size, lambda layer: self._draw_header(layer, request, preferences))
             _composite_watermark(
-                result,
+                watermark,
                 position=(result.width - 40, 8),
                 anchor="ra",
                 max_width=watermark_box.width,
                 font=self.font,
                 fill=watermark_color,
             )
-        return result
+        return (RenderLayer("content", result), RenderLayer("header", header), RenderLayer("content", watermark))
 
     @staticmethod
     def _draw_character(

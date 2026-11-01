@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from io import BytesIO
 from PIL import Image
 import json
@@ -25,7 +26,7 @@ from geometric_formatting_colors import GeometricFormattingColor, GeometricForma
 from radial_palette import radial_palette_color
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, Tournament, TournamentFormat
 from portrait_pose_labels import POSE_LABELS
-from format_preview import prepare_format_preview, render_format_preview
+from format_preview import prepare_format_preview, prepare_format_preview_layers, render_format_preview, render_format_preview_header
 from podiums_clapping_renderer import ClappingLayout
 from clapping_grid_layouts import GRID_VARIANTS
 from entrant_visibility import visibility_flags
@@ -598,8 +599,9 @@ def _preview_entrants(value: Any, event_format: TournamentFormat) -> list[Single
     return entrants
 
 
-@app.post("/api/format-preview")
-def customized_format_preview() -> Any:
+def _format_preview_arguments() -> tuple[tuple[Any, ...], dict[str, Any], dict[str, Image.Image], bool]:
+    """Translate a preview request into renderer arguments and composition images."""
+
     custom_font_bytes = None
     tournament_logo = None
     composition_images = {}
@@ -625,7 +627,7 @@ def customized_format_preview() -> Any:
     else:
         payload = request.get_json(silent=True)
     if not isinstance(payload, Mapping):
-        return jsonify(error="Request body must be a JSON object"), 400
+        raise ValueError("Request body must be a JSON object")
     try:
         creation_mode = CreationMode(payload.get("mode", "podium"))
         style = PodiumStyle(payload.get("style", "legacy"))
@@ -703,12 +705,8 @@ def customized_format_preview() -> Any:
     animated = payload.get("animated")
     if "animated" in payload and not isinstance(animated, bool):
         raise ValueError("animated must be a boolean")
-    preview_renderer = prepare_format_preview if creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping", *GRID_VARIANTS} else render_format_preview
-    image = preview_renderer(
-        style,
-        event_format,
-        entrant_count,
-        variant,
+    clapping = creation_mode is CreationMode.PODIUM and variant in {"four_podium", "clapping", *GRID_VARIANTS}
+    arguments = dict(
         transparent=bool(payload.get("transparent", True)),
         podium_colors=podium_colors,
         header_layout=payload.get("header_layout") if isinstance(payload.get("header_layout"), Mapping) else None,
@@ -723,8 +721,16 @@ def customized_format_preview() -> Any:
         logo_scale=logo_scale if tournament_logo is not None else None,
         animated=animated,
         entrant_visibility=payload.get("entrant_visibility"),
-        **composition_images,
     )
+    return (style, event_format, entrant_count, variant), arguments, composition_images, clapping
+
+
+@app.post("/api/format-preview")
+def customized_format_preview() -> Any:
+    positional, arguments, composition_images, clapping = _format_preview_arguments()
+    animated = arguments["animated"]
+    preview_renderer = prepare_format_preview if clapping else render_format_preview
+    image = preview_renderer(*positional, **arguments, **composition_images)
     output = BytesIO()
     media_type = "image/png"
     if isinstance(image, ClappingLayout):
@@ -740,6 +746,56 @@ def customized_format_preview() -> Any:
         mimetype=media_type,
         headers={"Cache-Control": "no-store", "Content-Disposition": f"inline; filename=melee-podium.{'gif' if media_type == 'image/gif' else 'png'}"},
     )
+
+
+def _preview_layer_payload(kind: str, image: Image.Image) -> dict[str, Any]:
+    """Send only a layer's visible bounds; the browser places it at its offset."""
+
+    bounds = image.getbbox()
+    if bounds is None:
+        return {"kind": kind, "left": 0, "top": 0, "image": None}
+    output = BytesIO()
+    image.crop(bounds).save(output, format="PNG")
+    return {
+        "kind": kind,
+        "left": bounds[0],
+        "top": bounds[1],
+        "image": f"data:image/png;base64,{base64.b64encode(output.getvalue()).decode('ascii')}",
+    }
+
+
+@app.post("/api/format-preview/layers")
+def format_preview_layers() -> Any:
+    """Return an exact preview as content and header layers.
+
+    The browser keeps the content layers and replaces only the header layers
+    when the tournament text or its settings change.
+    """
+
+    positional, arguments, composition_images, _clapping = _format_preview_arguments()
+    result = prepare_format_preview_layers(*positional, **arguments, **composition_images)
+    width, height = result.layers[0].image.size
+    animation = None
+    if result.animation is not None:
+        animation = f"data:image/gif;base64,{base64.b64encode(result.animation.gif()).decode('ascii')}"
+    response = jsonify(
+        width=width,
+        height=height,
+        logo_index=len(result.layers) if result.logo_index is None else result.logo_index,
+        layers=[_preview_layer_payload(layer.kind, layer.image) for layer in result.layers],
+        animation=animation,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.post("/api/format-preview/header")
+def format_preview_header() -> Any:
+    positional, arguments, _composition_images, _clapping = _format_preview_arguments()
+    images = render_format_preview_header(*positional, **arguments)
+    response = jsonify(layers=[_preview_layer_payload("header", image) for image in images])
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.post("/api/render")
