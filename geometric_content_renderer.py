@@ -22,6 +22,7 @@ from DrawPodium import (
     _temporary_font_settings,
 )
 from eyes_portrait_renderer import render_eye_portrait
+from header_title_wrapping import wrap_enlarged_title
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import Character, DoublesTeam, Entrant, SinglesEntrant, TournamentFormat
 from portrait_assets import with_team_color
@@ -334,9 +335,16 @@ def _draw_header_lines(canvas: Image.Image, request: CreationRequest, content: s
     anchor = {"ls": "la", "rs": "ra"}.get(anchor, anchor)
     x = box.left if anchor == "la" else box.right if anchor == "ra" else (box.left + box.right) // 2
     align = "left" if anchor.startswith("l") else "right" if anchor.startswith("r") else "center"
+    if content == "tournament_title":
+        # An enlarged title may wrap only into the height its subtitle leaves free.
+        below = sum(_font_to_fit(text, box.width, size, font).getbbox(text)[3] + 5 for text, size in lines[1:])
+        lines[0] = wrap_enlarged_title(lines[0][0], max_width=box.width, max_height=box.height - below,
+                                       preferred_size=lines[0][1], font=font,
+                                       adjustment=request.text_settings.title_font_size_adjustment)
     loaded = [_font_to_fit(text, box.width, size, font) for text, size in lines]
     # Ascender-based spacing keeps independently sized rows clear of one another.
-    heights = [face.getbbox(text)[3] for (text, _size), face in zip(lines, loaded)]
+    heights = [draw.multiline_textbbox((0, 0), text, font=face, anchor="la")[3]
+               for (text, _size), face in zip(lines, loaded)]
     y = box.top + (max(0, (box.height - sum(heights) - 5 * (len(lines) - 1)) // 2) if center_vertical else 0)
     for (text, size), height in zip(lines, heights):
         _draw_text(draw, (x, y), text, anchor=anchor, max_width=box.width,

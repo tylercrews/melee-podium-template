@@ -42,6 +42,7 @@ FILES = (
     "geometric_content_renderer.py",
     "geometric_creation.py",
     "geometric_formatting_colors.py",
+    "header_title_wrapping.py",
     "gif_animation.py",
     "legacy_podium_content_renderer.py",
     "layout_text_defaults.py",

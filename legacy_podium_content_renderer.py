@@ -54,6 +54,7 @@ from DrawPodium import (
     _validate_placements,
     _wrap_url,
 )
+from header_title_wrapping import added_title_height, wrap_enlarged_title
 from mode_preferences import CharacterPlacement, ModePreferences, TextPlacement
 from models import DoublesTeam, SinglesEntrant, TournamentFormat
 from entrant_visibility import validation_entrants
@@ -202,6 +203,16 @@ class LegacyPodiumContentRenderer:
             self._draw_tournament_text(result, request, mode, center_title)
         return result
 
+    def _assigned_title(self, request: CreationRequest, max_width: int) -> tuple[str, int]:
+        adjustment = request.text_settings.title_font_size_adjustment
+        return wrap_enlarged_title(
+            request.tournament.title,
+            max_width=max_width,
+            preferred_size=adjusted_size(72, adjustment),
+            adjustment=adjustment,
+            font=self.font,
+        )
+
     def _draw_assigned_subtitle(
         self,
         canvas: Image.Image,
@@ -214,9 +225,10 @@ class LegacyPodiumContentRenderer:
             if content == "tournament_title"
         )
         (x, _), anchor, max_width, align = _header_geometry(position, canvas.width)
+        title, title_size = self._assigned_title(request, max_width)
         _draw_text(
             ImageDraw.Draw(canvas),
-            (x, 110),
+            (x, 110 + added_title_height(title, max_width=max_width, preferred_size=title_size, font=self.font)),
             request.tournament.subtitle,
             anchor=anchor,
             max_width=max_width,
@@ -454,13 +466,14 @@ class LegacyPodiumContentRenderer:
         (title_x, _), title_anchor, title_width, title_align = _header_geometry(
             title_position, width
         )
+        title, title_size = self._assigned_title(request, title_width)
         draw_text(
             draw,
             (title_x, 5),
-            request.tournament.title,
+            title,
             anchor=title_anchor,
             max_width=title_width,
-            preferred_size=adjusted_size(72, request.text_settings.title_font_size_adjustment),
+            preferred_size=title_size,
             align=title_align,
             fill=request.text_settings.heading_color,
             metallic=request.text_settings.heading_metallic,
