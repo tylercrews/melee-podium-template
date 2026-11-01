@@ -80,6 +80,8 @@ npm run build
 
 
 TODO LIST:
+* animated gif is stripping a TON of colors out.
+* the title font size slider seems to be not adjusting past a certain point, would be nice if it can split lines and become larger.
 * adjust the top 8 medals template to have a lighter dark gray for 4th (matches podium) and then darker dark gray for 5th onward?
 * can you make it so instead of refreshing the entire drawing you JUST refresh what elements have changed?
 * when reselecting/selecting all text colors default to match the podiums instead of always defaulting to controller colors
