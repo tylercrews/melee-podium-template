@@ -1,10 +1,12 @@
 """Verify persistence, animation compositing, and the reviewed portrait geometry."""
 
+import colorsys
 from dataclasses import replace
 from io import BytesIO
+import random
 import unittest
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageStat
 
 from creation_modes import CreationMode, ModeOptions, ModeSelection, PodiumStyle
 from DrawPodium import PodiumFont
@@ -81,6 +83,22 @@ class PodiumsClappingTest(unittest.TestCase):
             self.assertEqual(animation.info["duration"], 30)
             self.assertEqual(animation.convert("RGBA").getpixel((3, 2)), (0, 0, 0, 0))
             self.assertEqual(animation.convert("RGBA").getpixel((0, 0)), first.getpixel((0, 0)))
+
+    def test_gif_palette_keeps_small_vivid_region_colors_beside_dominant_dark_background(self):
+        # A noisy dark background owns almost every pixel, like a space stage
+        # behind a small logo photo whose hues would otherwise collapse to gray.
+        rng = random.Random(3)
+        frame = Image.new("RGBA", (480, 240))
+        frame.putdata([(x * 50 // 480 + rng.randrange(12), y * 20 // 240 + rng.randrange(10),
+                        30 + x * y % 70 + rng.randrange(12), 255) for y in range(240) for x in range(480)])
+        photo = Image.new("RGBA", (72, 48))
+        photo.putdata([tuple(round(channel * 255) for channel in colorsys.hls_to_rgb(x / 72, 0.3 + y / 120, 0.75))
+                       + (255,) for y in range(48) for x in range(72)])
+        frame.paste(photo, (396, 12))
+        with Image.open(BytesIO(encode_animated_gif(lambda index: frame, [20]))) as animation:
+            decoded = animation.convert("RGB")
+        error = ImageStat.Stat(ImageChops.difference(frame.convert("RGB"), decoded).crop((396, 12, 468, 60))).mean
+        self.assertLess(sum(error) / 3, 28)
 
     def test_real_layout_uses_all_frames_and_only_portraits_move(self):
         layout = prepare_format_preview(PodiumStyle.LEGACY, TournamentFormat.SINGLES, 8, "four_podium",

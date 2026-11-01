@@ -37,7 +37,13 @@ def encode_animated_gif(frame_at: Callable[[int], Image.Image], durations: Seque
     atlas.paste(sample)
     for index, image in enumerate(samples):
         atlas.paste(image, (index % columns * 48, sample.height + index // columns * row_height))
-    palette = atlas.quantize(colors=255, method=Image.Quantize.MEDIANCUT)
+    # Median cut alone spends most entries on whatever covers the most pixels,
+    # so a dark background could absorb a logo photo's greens into grays.
+    # K-means refinement moves entries toward the colors actually present.
+    # Pillow's kmeans value is a stop threshold in changed pixels, not an
+    # iteration count; ~0.5% of the atlas keeps nearly all of the gain.
+    palette = atlas.quantize(colors=255, method=Image.Quantize.MEDIANCUT,
+                             kmeans=max(1, atlas.width * atlas.height // 200))
     colors = palette.getpalette()[:765]
     colors.extend([0] * (765 - len(colors)))
     palette.putpalette(colors + [0, 0, 0])
